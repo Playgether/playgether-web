@@ -155,6 +155,7 @@ myapp/__pycache__
 myapp/migrations
 SocialGame/__pycache__
 
+media/
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
