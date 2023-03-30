@@ -155,9 +155,12 @@ myapp/__pycache__
 myapp/migrations
 SocialGame/__pycache__
 
-media/posts/images/
-media/posts/videos/
-media/profile/
+media/posts/images/*
+!media/posts/images/.gitkeep 
+media/posts/videos/*
+!media/posts/videos/.gitkeep 
+media/profile/*
+!media/profile/.gitkeep 
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can

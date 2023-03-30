@@ -72,12 +72,14 @@ def subtract_like_quantity(post):
         post.save()
     return 
 
+#Create a generic notification for all types of generic notifications have (Implements a Design Pattern : Strategy for that).
 def create_generic_notification(instance, classContentType, classStrategyNotification, Notification):
     obj = classStrategyNotification()
     content_type = ContentType.objects.get_for_model(classContentType)
     Notification.objects.create(user=instance.user, message = obj.get_notification(instance.user.name, instance.post.subtitle), content_type = content_type, object_id = instance.id)
     return
 
+#Delete a generic notification for all types of generic notifications have when the event is deleted.
 def delete_generic_notification(Notification, instance, classContentType):
     content_type = ContentType.objects.get_for_model(classContentType)
     Notification.objects.filter(content_type = content_type, object_id = instance.id).delete()
