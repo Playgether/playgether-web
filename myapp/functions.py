@@ -1,10 +1,10 @@
 #This file holds all functions used in models.py
+
 from datetime import datetime
 import uuid
 import os
 from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import make_password
-from django.contrib.contenttypes.models import ContentType
 
 
 
@@ -71,14 +71,3 @@ def subtract_like_quantity(post):
         post.quantity_likes = post.quantity_likes - 1
         post.save()
     return 
-
-def create_generic_notification(instance, classContentType, classStrategyNotification, Notification):
-    obj = classStrategyNotification()
-    content_type = ContentType.objects.get_for_model(classContentType)
-    Notification.objects.create(user=instance.user, message = obj.get_notification(instance.user.name, instance.post.subtitle), content_type = content_type, object_id = instance.id)
-    return
-
-def delete_generic_notification(Notification, instance, classContentType):
-    content_type = ContentType.objects.get_for_model(classContentType)
-    Notification.objects.filter(content_type = content_type, object_id = instance.id).delete()
-    return

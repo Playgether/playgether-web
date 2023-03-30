@@ -2,8 +2,6 @@ from django.db import models
 from stdimage import StdImageField
 from .functions import *
 from django.utils import timezone
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericForeignKey
   
 # Create your models here.
 class User(models.Model):
@@ -12,8 +10,7 @@ class User(models.Model):
     password = models.CharField("Senha", max_length=88)
     email = models.EmailField("Email", max_length=256, unique=True)
     profile_photo = StdImageField('Foto de perfil', null=True, blank=True, upload_to=get_file_profile_path, variations={'thumb': {'width': 480, 'height': 480, 'crop': True}}, unique=True)
-    #created_by_date = models.DateField("Data de criação da conta", help_text="Formato DD/MM/AAAA", default=datetime.today)
-    timestamp = models.DateField(auto_now_add=True)
+    created_by_date = models.DateField("Data de criação da conta", help_text="Formato DD/MM/AAAA", default=datetime.today)
     bio = models.TextField("Bio", blank=True, null=True, max_length=500)
     hours_played = models.FloatField("Horas jogadas", default=0)
     matches_played = models.IntegerField("Número de partidas jogadas", default=0)
@@ -36,13 +33,12 @@ class User(models.Model):
 
 class Post (models.Model):
     created_by_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user")
-    timestamp = models.DateTimeField(auto_now_add=True)
+    created_by_datetime = models.DateTimeField("Data e horário da postagem", help_text="Formato DD/MM/AAAA", default=timezone.now)
     quantity_visualization = models.IntegerField("Quantidade de visualizações", default=0)
     quantity_comment = models.IntegerField("Quantidade de comentários", default=0)
     quantity_likes = models.IntegerField("Quantidade de curtidas", default=0)  
     quantity_shares = models.IntegerField("Quantidade de compartilhamentos", default=0)
     subtitle = models.TextField("Legenda", null=True, blank=True)
-    has_post_media = models.BooleanField("Post Media", default=False)
 
     class Meta:
         verbose_name = "Post"
@@ -52,7 +48,7 @@ class Post (models.Model):
         if self.subtitle == "":
             return f'Este post não tem uma legenda. Usuário: {self.created_by_user.username}'
         else:
-            return f'{self.subtitle} / Quem Postou: {self.created_by_user.username} '
+            return f'{self.subtitle} / Usuário: {self.created_by_user.username} '
 
 class PostMedia (models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='medias')
@@ -82,7 +78,7 @@ class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comments")
     comment = models.TextField("Comentário", max_length=2200)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(auto_now_add=True)
+    created_by_datetime = models.DateTimeField("Data e hora do comentário", help_text="Formato DD/MM/AAAA", default=timezone.now)
     likes_quantity = models.IntegerField("Quantidades de curtidas", default=0)
 
 
@@ -91,20 +87,20 @@ class Comment(models.Model):
         verbose_name_plural = "Comments"
 
     def __str__(self):
-        return f'Post: {self.post.__str__()} / Comentado por: {self.user.username} / Comentário: {self.comment} / ID: {self.id}'
+        return f'Post: {self.post.__str__()} / Comentado por: {self.user.username} / Comentário: {self.comment}'
 
  
 class Like(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="likes")
-    timestamp = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="users")
+    created_by_datetime = models.DateTimeField("Data e hora do comentário", help_text="Formato DD/MM/AAAA", default=timezone.now)
 
     class Meta:
         verbose_name = "Like"
         verbose_name_plural = "Likes"
 
     def __str__(self):
-        return f'Post: {self.post.__str__()} / Curtido por: {self.user.username} / ID: {self.id}'
+        return f'Post: {self.post.__str__()} / Curtido por: {self.user.username}'
 
     def clean(self):
         is_like_exists = Like.objects.filter(post=self.post.id, user=self.user.id).exists()
@@ -117,30 +113,6 @@ class Like(models.Model):
         except IndexError:
             raise ValidationError
 
-
-class Notification(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
-    is_read = models.BooleanField(default=False)
-    message = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
-    content_object = GenericForeignKey('content_type', 'object_id')
-
-    class Meta:
-        verbose_name = "Notification"
-        verbose_name_plural = "Notifications"
-
-    def clean(self):
-        is_notification_exists = Notification.objects.filter(content_type=self.content_type, object_id=self.content_object.id).exists()
-        if is_notification_exists:
-            raise ValidationError('Já existe uma notificação sobre isso')
-        
-    def save(self, *args, **kwargs):
-        try:
-            super(Notification, self).save(*args, **kwargs)
-        except IndexError:
-            raise ValidationError
 
 
 
