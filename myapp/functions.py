@@ -5,6 +5,7 @@ import os
 from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import make_password
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import User
 
 
 
@@ -84,3 +85,10 @@ def delete_generic_notification(Notification, instance, classContentType):
     content_type = ContentType.objects.get_for_model(classContentType)
     Notification.objects.filter(content_type = content_type, object_id = instance.id).delete()
     return
+
+#Function "post_save_created_user" in "signals.py" definition
+def post_save_created_user_definition(classProfile, instance):
+        user_profile = classProfile(user=instance)
+        user_profile.save()
+        user_profile.follows.set([instance.profile.id])
+        user_profile.save()

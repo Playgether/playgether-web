@@ -4,35 +4,27 @@ from .functions import *
 from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.auth.models import User
   
 # Create your models here.
-class User(models.Model):
-    name = models.CharField("Nome", max_length = 100)
-    username = models.CharField("Nome de usuário", max_length=15, unique=True)
-    password = models.CharField("Senha", max_length=88)
-    email = models.EmailField("Email", max_length=256, unique=True)
-    profile_photo = StdImageField('Foto de perfil', null=True, blank=True, upload_to=get_file_profile_path, variations={'thumb': {'width': 480, 'height': 480, 'crop': True}}, unique=True)
-    #created_by_date = models.DateField("Data de criação da conta", help_text="Formato DD/MM/AAAA", default=datetime.today)
-    timestamp = models.DateField(auto_now_add=True)
+    
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    follows = models.ManyToManyField("self", related_name="followed_by", symmetrical=False, blank=True)
     bio = models.TextField("Bio", blank=True, null=True, max_length=500)
+    profile_photo = StdImageField('Foto de perfil', null=True, blank=True, upload_to=get_file_profile_path, variations={'thumb': {'width': 480, 'height': 480, 'crop': True}})
     hours_played = models.FloatField("Horas jogadas", default=0)
     matches_played = models.IntegerField("Número de partidas jogadas", default=0)
     performance = models.CharField("Performance", max_length=30, default="Iniciante")
     gamer_nivel = models.IntegerField("Nível gamer", default=1)
     verified = models.BooleanField("Verified", default=False)
 
-
     class Meta:
-        verbose_name = "User"
-        verbose_name_plural = "Users"
+        verbose_name = "Profile"
+        verbose_name_plural = "Profiles"
 
     def __str__(self):
-        return self.username
-
-    def save(self, *args, **kwargs):
-        self.password = make_password(self.password)
-        super(User, self).save(*args, **kwargs)
-        return
+        return self.user.username
 
 class Post (models.Model):
     created_by_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user")
@@ -40,9 +32,10 @@ class Post (models.Model):
     quantity_visualization = models.IntegerField("Quantidade de visualizações", default=0)
     quantity_comment = models.IntegerField("Quantidade de comentários", default=0)
     quantity_likes = models.IntegerField("Quantidade de curtidas", default=0)  
-    quantity_shares = models.IntegerField("Quantidade de compartilhamentos", default=0)
+    quantity_reposts = models.IntegerField("Quantidade de compartilhamentos", default=0)
     subtitle = models.TextField("Legenda", null=True, blank=True)
     has_post_media = models.BooleanField("Post Media", default=False)
+    link = models.CharField("Link", max_length=1000)
 
     class Meta:
         verbose_name = "Post"
@@ -58,7 +51,6 @@ class PostMedia (models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='medias')
     media_file = models.FileField("Media File", upload_to=get_file_post_media_path, unique=True, validators=[validate_file_extension])
     position = models.IntegerField("Position")
-
 
     class Meta:
         verbose_name = "PostMedia"
@@ -79,12 +71,14 @@ class PostMedia (models.Model):
             raise ValidationError
 
 class Comment(models.Model):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comments")
+    limit = models.Q(app_label = 'myapp', model = 'Post') | models.Q(app_label = 'myapp', model = 'Comment') | models.Q(app_label = 'myapp', model = 'Profile')
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
     comment = models.TextField("Comentário", max_length=2200)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
     likes_quantity = models.IntegerField("Quantidades de curtidas", default=0)
-
 
     class Meta:
         verbose_name = "Comment"
@@ -93,8 +87,11 @@ class Comment(models.Model):
     def __str__(self):
         return f'Post: {self.post.__str__()} / Comentado por: {self.user.username} / Comentário: {self.comment} / ID: {self.id}'
 
- 
 class Like(models.Model):
+    limit = models.Q(app_label = 'myapp', model = 'Post') | models.Q(app_label = 'myapp', model = 'Comment') | models.Q(app_label = 'myapp', model = 'Repost')
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="likes")
     timestamp = models.DateTimeField(auto_now_add=True)
@@ -117,6 +114,30 @@ class Like(models.Model):
         except IndexError:
             raise ValidationError
 
+class Repost(models.Model):
+    timestamp = models.DateTimeField(auto_now_add=True)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="shares") 
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="shares")
+    quantity_visualization = models.IntegerField("Quantidade de visualizações", default=0)
+    quantity_comment = models.IntegerField("Quantidade de comentários", default=0)
+    quantity_likes = models.IntegerField("Quantidade de curtidas", default=0)  
+    quantity_shares = models.IntegerField("Quantidade de compartilhamentos", default=0)
+    subtitle = models.TextField("Legenda", null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Repost"
+        verbose_name_plural = "Reposts"
+
+    def clean(self):
+        is_repost_exists = Repost.objects.filter(post=self.post.id, user=self.user.id, subtitle=self.subtitle).exists()
+        if is_repost_exists:
+            raise ValidationError('Você já compartilhou esta publicação dizendo a mesma coisa')
+
+    def save(self, *args, **kwargs):
+        try:
+            super(Like, self).save(*args, **kwargs)
+        except IndexError:
+            raise ValidationError
 
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")

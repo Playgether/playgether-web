@@ -1,8 +1,12 @@
 from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from .functions import *
-from .models import Like, Comment, Notification
+from .models import Like, Comment, Notification, Profile
 from .patterns.strategy.notifications import LikeNotification, CommentNotification, ShareNotification
+
+def post_save_created_user(sender, instance, created, **kwargs):
+    if created:
+        post_save_created_user_definition(Profile, instance)
 
 def post_save_like(sender, instance, created, **kwargs):
     if created:
@@ -26,3 +30,4 @@ def post_delete_comment(sender, instance, **kwargs):
 
 post_save.connect(post_save_like, sender=Like)
 post_save.connect(post_save_comment, sender=Comment)
+post_save.connect(post_save_created_user, sender=User)
