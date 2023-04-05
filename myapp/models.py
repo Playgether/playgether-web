@@ -71,28 +71,27 @@ class PostMedia (models.Model):
             raise ValidationError
 
 class Comment(models.Model):
-    limit = models.Q(app_label = 'myapp', model = 'Post') | models.Q(app_label = 'myapp', model = 'Comment') | models.Q(app_label = 'myapp', model = 'Profile')
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    limit = models.Q(app_label = 'myapp', model = 'post') | models.Q(app_label = 'myapp', model = 'comment') | models.Q(app_label = 'myapp', model = 'profile') | models.Q(app_label = 'myapp', model = 'repost')
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, limit_choices_to = limit)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
     comment = models.TextField("Comentário", max_length=2200)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
-    likes_quantity = models.IntegerField("Quantidades de curtidas", default=0)
+    quantity_likes = models.IntegerField("Quantidades de curtidas", default=0)
 
     class Meta:
         verbose_name = "Comment"
         verbose_name_plural = "Comments"
 
     def __str__(self):
-        return f'Post: {self.post.__str__()} / Comentado por: {self.user.username} / Comentário: {self.comment} / ID: {self.id}'
+        return f'Post: {self.content_object.__str__()} / Comentado por: {self.user.username} / Comentário: {self.comment} / ID: {self.id}'
 
 class Like(models.Model):
-    limit = models.Q(app_label = 'myapp', model = 'Post') | models.Q(app_label = 'myapp', model = 'Comment') | models.Q(app_label = 'myapp', model = 'Repost')
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    limit = models.Q(app_label = 'myapp', model = 'post') | models.Q(app_label = 'myapp', model = 'comment') | models.Q(app_label = 'myapp', model = 'repost')
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, limit_choices_to = limit)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
-    post = models.ForeignKey(Post, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="likes")
     timestamp = models.DateTimeField(auto_now_add=True)
 
@@ -101,10 +100,10 @@ class Like(models.Model):
         verbose_name_plural = "Likes"
 
     def __str__(self):
-        return f'Post: {self.post.__str__()} / Curtido por: {self.user.username} / ID: {self.id}'
+        return f'Post: {self.content_object.__str__()} / Curtido por: {self.user.username} / ID: {self.id}'
 
     def clean(self):
-        is_like_exists = Like.objects.filter(post=self.post.id, user=self.user.id).exists()
+        is_like_exists = Like.objects.filter(object_id=self.object_id, user=self.user.id).exists()
         if is_like_exists:
             raise ValidationError('Este usuário já curtiu esta publicação')
 

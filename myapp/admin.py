@@ -11,7 +11,7 @@ class ProfileInline(admin.StackedInline):
 
 class UserAdmin(admin.ModelAdmin):
     model = User
-    fields = ['username']
+    fields = ['username', 'first_name']
     inlines = [ProfileInline]
 
 @admin.register(Profile)

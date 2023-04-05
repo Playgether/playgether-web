@@ -10,22 +10,22 @@ def post_save_created_user(sender, instance, created, **kwargs):
 
 def post_save_like(sender, instance, created, **kwargs):
     if created:
-        add_like_quantity(instance.post)
+        add_like_quantity(instance)
         create_generic_notification(instance, Like, LikeNotification.LikeNotification, Notification)
 
 def post_save_comment(sender, instance, created, **kwargs):
     if created:
-        add_comment_quantity(instance.post)
+        add_comment_quantity(instance)
         create_generic_notification(instance, Comment, CommentNotification.CommentNotification, Notification)
 
 @receiver(post_delete, sender = Like)
 def post_delete_like(sender, instance, **kwargs):
-    subtract_like_quantity(instance.post)
+    subtract_like_quantity(instance)
     delete_generic_notification(Notification, instance, Like)
 
 @receiver(post_delete, sender = Comment)
 def post_delete_comment(sender, instance, **kwargs):
-    subtract_comment_quantity(instance.post)
+    subtract_comment_quantity(instance)
     delete_generic_notification(Notification, instance, Comment)
 
 post_save.connect(post_save_like, sender=Like)

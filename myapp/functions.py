@@ -44,40 +44,41 @@ def validate_file_extension(value):
         raise ValidationError('Unsupported file extension.')
 
 #Update likes quantity of posts
-def add_like_quantity(post):
-    post.quantity_likes = post.quantity_likes + 1
-    post.save()
+def add_like_quantity(instance):
+    instance.content_object.quantity_likes = instance.content_object.quantity_likes + 1
+    instance.content_object.save()
     return
 
 #Update comment quantity for posts
-def add_comment_quantity(post):
-    post.quantity_comment = post.quantity_comment + 1
-    post.save()
+def add_comment_quantity(instance):
+    instance.content_object.quantity_comment = instance.content_object.quantity_comment + 1
+    instance.content_object.save()
     return 
 
 #Subtract comment quantity when some comment is exclude
-def subtract_comment_quantity(post):
-    if post.quantity_comment == 0:
+def subtract_comment_quantity(instance):
+    if instance.content_object.quantity_comment == 0:
         pass
     else:
-        post.quantity_comment = post.quantity_comment - 1
-        post.save()
+        instance.content_object.quantity_comment = instance.content_object.quantity_comment - 1
+        instance.content_object.save()
     return 
 
 #Subtract like quantity when some like is removed
-def subtract_like_quantity(post):
-    if post.quantity_likes == 0:
+def subtract_like_quantity(instance):
+    if instance.content_object.quantity_likes == 0:
         pass
     else:
-        post.quantity_likes = post.quantity_likes - 1
-        post.save()
+        instance.content_object.quantity_likes = instance.content_object.quantity_likes - 1
+        instance.content_object.save()
     return 
+
 
 #Create a generic notification for all types of generic notifications have (Implements a Design Pattern : Strategy for that).
 def create_generic_notification(instance, classContentType, classStrategyNotification, Notification):
     obj = classStrategyNotification()
     content_type = ContentType.objects.get_for_model(classContentType)
-    Notification.objects.create(user=instance.user, message = obj.get_notification(instance.user.name, instance.post.subtitle), content_type = content_type, object_id = instance.id)
+    Notification.objects.create(user=instance.user, message = obj.get_notification(instance.user.first_name, instance.content_object.subtitle), content_type = content_type, object_id = instance.id)
     return
 
 #Delete a generic notification for all types of generic notifications have when the event is deleted.
