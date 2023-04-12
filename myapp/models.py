@@ -5,6 +5,8 @@ from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.auth.models import User
+from .patterns.strategy.notifications import CommentPostNotification, LikeCommentNotification, LikePostNotification, LikeProfileNotification, LikeRepostNotification, CommentOtherComment, CommentProfileNotification, CommentRepost, RepostNotification
+
   
 # Create your models here.
     
@@ -18,13 +20,22 @@ class Profile(models.Model):
     performance = models.CharField("Performance", max_length=30, default="Iniciante")
     gamer_nivel = models.IntegerField("Nível gamer", default=1)
     verified = models.BooleanField("Verified", default=False)
+    quantity_comment = models.IntegerField("Quantidade de comentários", default=0)
+    quantity_likes = models.IntegerField("Quantidade de curtidas", default=0)  
 
     class Meta:
         verbose_name = "Profile"
         verbose_name_plural = "Profiles"
 
     def __str__(self):
-        return self.user.username
+        return f"Usuário: {self.user.username} ID: {self.id}"
+    
+        
+    def get_like_notification_interface(self):
+        return LikeProfileNotification.LikeProfileNotification()
+    
+    def get_comment_notification_interface(self):
+        return CommentProfileNotification.CommentProfileNotification()
 
 class Post (models.Model):
     created_by_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user")
@@ -33,7 +44,7 @@ class Post (models.Model):
     quantity_comment = models.IntegerField("Quantidade de comentários", default=0)
     quantity_likes = models.IntegerField("Quantidade de curtidas", default=0)  
     quantity_reposts = models.IntegerField("Quantidade de compartilhamentos", default=0)
-    subtitle = models.TextField("Legenda", null=True, blank=True)
+    comment = models.TextField("Legenda", null=True, blank=True)
     has_post_media = models.BooleanField("Post Media", default=False)
     link = models.CharField("Link", max_length=1000)
 
@@ -42,10 +53,20 @@ class Post (models.Model):
         verbose_name_plural = "Posts"
 
     def __str__(self):
-        if self.subtitle == "":
+        if self.comment == "":
             return f'Este post não tem uma legenda. Usuário: {self.created_by_user.username}'
         else:
-            return f'{self.subtitle} / Quem Postou: {self.created_by_user.username} '
+            return f'{self.comment} / Quem Postou: {self.created_by_user.username} '
+        
+    def get_like_notification_interface(self):
+        return LikePostNotification.LikePostNotification()
+    
+    def get_comment_notification_interface(self):
+        return CommentPostNotification.CommentPostNotification()
+    
+    def get_repost_notification_interface(self):
+        return RepostNotification.RepostNotification()
+        
 
 class PostMedia (models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='medias')
@@ -79,6 +100,7 @@ class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
     quantity_likes = models.IntegerField("Quantidades de curtidas", default=0)
+    quantity_comment = models.IntegerField("Quantidade de comentários", default=0)
 
     class Meta:
         verbose_name = "Comment"
@@ -86,9 +108,15 @@ class Comment(models.Model):
 
     def __str__(self):
         return f'Post: {self.content_object.__str__()} / Comentado por: {self.user.username} / Comentário: {self.comment} / ID: {self.id}'
+    
+    def get_like_notification_interface(self):
+        return LikeCommentNotification.LikeCommentNotification()
+    
+    def get_comment_notification_interface(self):
+        return CommentOtherComment.CommentOtherNotification()
 
 class Like(models.Model):
-    limit = models.Q(app_label = 'myapp', model = 'post') | models.Q(app_label = 'myapp', model = 'comment') | models.Q(app_label = 'myapp', model = 'repost')
+    limit = models.Q(app_label = 'myapp', model = 'post') | models.Q(app_label = 'myapp', model = 'comment') | models.Q(app_label = 'myapp', model = 'repost') | models.Q(app_label = 'myapp', model = 'profile')
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, limit_choices_to = limit)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
@@ -115,28 +143,41 @@ class Like(models.Model):
 
 class Repost(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="shares") 
+    limit = models.Q(app_label = 'myapp', model = 'post')
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, limit_choices_to = limit)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="shares")
     quantity_visualization = models.IntegerField("Quantidade de visualizações", default=0)
     quantity_comment = models.IntegerField("Quantidade de comentários", default=0)
     quantity_likes = models.IntegerField("Quantidade de curtidas", default=0)  
     quantity_shares = models.IntegerField("Quantidade de compartilhamentos", default=0)
-    subtitle = models.TextField("Legenda", null=True, blank=True)
+    comment = models.TextField("Legenda", null=True, blank=True)
+    
 
     class Meta:
         verbose_name = "Repost"
         verbose_name_plural = "Reposts"
 
     def clean(self):
-        is_repost_exists = Repost.objects.filter(post=self.post.id, user=self.user.id, subtitle=self.subtitle).exists()
+        is_repost_exists = Repost.objects.filter(content_type=self.content_type, user=self.user.id, comment=self.comment).exists()
         if is_repost_exists:
             raise ValidationError('Você já compartilhou esta publicação dizendo a mesma coisa')
 
     def save(self, *args, **kwargs):
         try:
-            super(Like, self).save(*args, **kwargs)
+            super(Repost, self).save(*args, **kwargs)
         except IndexError:
             raise ValidationError
+    
+    def __str__(self):
+        return f'Repostado por: {self.user.username} / Comentário do repost: {self.comment} Post: {self.content_object.comment} / ID: {self.id}'
+    
+    def get_like_notification_interface(self):
+        return LikeRepostNotification.LikeRepostNotification()
+    
+    def get_comment_notification_interface(self):
+        return CommentRepost.CommentRepostNotification()
 
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
@@ -161,6 +202,8 @@ class Notification(models.Model):
             super(Notification, self).save(*args, **kwargs)
         except IndexError:
             raise ValidationError
+        
+    
 
 
 

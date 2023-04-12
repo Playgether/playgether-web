@@ -50,18 +50,38 @@ def add_like_quantity(instance):
     return
 
 #Update comment quantity for posts
-def add_comment_quantity(instance):
-    instance.content_object.quantity_comment = instance.content_object.quantity_comment + 1
-    instance.content_object.save()
+def add_comment_quantity(instance, classPost):
+    content_type = ContentType.objects.get_for_model(classPost)
+    instance_content_type = ContentType.objects.get_for_model(instance.content_object.content_type)
+    if isinstance(content_type, type(instance_content_type)):
+        instance.content_object.quantity_comment = instance.content_object.quantity_comment + 1
+        instance.content_object.save()
+        instance.content_object.content_object.quantity_comment = instance.content_object.content_object.quantity_comment + 1
+        instance.content_object.content_object.save()
+    else:
+        instance.content_object.quantity_comment = instance.content_object.quantity_comment + 1
+        instance.content_object.save()
     return 
 
 #Subtract comment quantity when some comment is exclude
-def subtract_comment_quantity(instance):
+def subtract_comment_quantity(instance, classPost):
     if instance.content_object.quantity_comment == 0:
         pass
     else:
-        instance.content_object.quantity_comment = instance.content_object.quantity_comment - 1
-        instance.content_object.save()
+        try:
+            content_type = ContentType.objects.get_for_model(classPost)
+            instance_content_type = ContentType.objects.get_for_model(instance.content_object.content_type)
+            if isinstance(content_type, type(instance_content_type)):
+                instance.content_object.quantity_comment = instance.content_object.quantity_comment - 1
+                instance.content_object.save()
+                instance.content_object.content_object.quantity_comment = instance.content_object.content_object.quantity_comment - 1
+                instance.content_object.content_object.save()
+            else:
+                instance.content_object.quantity_comment = instance.content_object.quantity_comment - 1
+                instance.content_object.save()
+        except AttributeError:
+            instance.content_object.quantity_comment = instance.content_object.quantity_comment - 1
+            instance.content_object.save()
     return 
 
 #Subtract like quantity when some like is removed
@@ -73,23 +93,35 @@ def subtract_like_quantity(instance):
         instance.content_object.save()
     return 
 
+def add_repost_quantity(instance):
+    instance.content_object.quantity_reposts = instance.content_object.quantity_reposts + 1
+    instance.content_object.save()
+    return 
+
+def subtract_repost_quantity(instance):
+    if instance.content_object.quantity_reposts == 0:
+        pass
+    else:
+        instance.content_object.quantity_reposts = instance.content_object.quantity_reposts - 1
+        instance.content_object.save()
+        return
+
 
 #Create a generic notification for all types of generic notifications have (Implements a Design Pattern : Strategy for that).
-def create_generic_notification(instance, classContentType, classStrategyNotification, Notification):
-    obj = classStrategyNotification()
-    content_type = ContentType.objects.get_for_model(classContentType)
-    Notification.objects.create(user=instance.user, message = obj.get_notification(instance.user.first_name, instance.content_object.subtitle), content_type = content_type, object_id = instance.id)
+def create_generic_notification(instance, Notification, strategy):
+    strategy.generate_notification(instance, Notification)
     return
 
+
 #Delete a generic notification for all types of generic notifications have when the event is deleted.
-def delete_generic_notification(Notification, instance, classContentType):
-    content_type = ContentType.objects.get_for_model(classContentType)
+def delete_generic_notification(Notification, instance):
+    content_type = ContentType.objects.get_for_model(instance.content_type)
     Notification.objects.filter(content_type = content_type, object_id = instance.id).delete()
     return
 
 #Function "post_save_created_user" in "signals.py" definition
 def post_save_created_user_definition(classProfile, instance):
-        user_profile = classProfile(user=instance)
-        user_profile.save()
-        user_profile.follows.set([instance.profile.id])
-        user_profile.save()
+    user_profile = classProfile(user=instance)
+    user_profile.save()
+    user_profile.follows.set([instance.profile.id])
+    user_profile.save()

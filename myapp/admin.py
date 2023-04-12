@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
 
-from .models import Post, PostMedia, Comment, Like, Notification, Profile
+from .models import Post, PostMedia, Comment, Like, Notification, Profile, Repost
 
 from .forms import UserForm
 
@@ -13,6 +13,10 @@ class UserAdmin(admin.ModelAdmin):
     model = User
     fields = ['username', 'first_name']
     inlines = [ProfileInline]
+
+@admin.register(Repost)
+class RepostAdmin(admin.ModelAdmin):
+    display = ('user', 'post', 'subtitle')
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
