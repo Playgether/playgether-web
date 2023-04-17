@@ -32,7 +32,7 @@ def post_delete_like(sender, instance, **kwargs):
 
 @receiver(post_delete, sender = Comment)
 def post_delete_comment(sender, instance, **kwargs):
-    subtract_comment_quantity(instance)
+    subtract_comment_quantity(instance, Post)
     delete_generic_notification(Notification, instance)
 
 @receiver(post_delete, sender = Repost)

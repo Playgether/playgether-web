@@ -51,13 +51,17 @@ def add_like_quantity(instance):
 
 #Update comment quantity for posts
 def add_comment_quantity(instance, classPost):
-    content_type = ContentType.objects.get_for_model(classPost)
-    instance_content_type = ContentType.objects.get_for_model(instance.content_object.content_type)
-    if isinstance(content_type, type(instance_content_type)):
-        instance.content_object.quantity_comment = instance.content_object.quantity_comment + 1
-        instance.content_object.save()
-        instance.content_object.content_object.quantity_comment = instance.content_object.content_object.quantity_comment + 1
-        instance.content_object.content_object.save()
+    if hasattr(ContentType.objects.get_for_model(instance.content_object), 'content_type'):
+        content_type = ContentType.objects.get_for_model(classPost)
+        instance_content_type = ContentType.objects.get_for_model(instance.content_object.content_type)
+        if isinstance(content_type, type(instance_content_type)):
+            instance.content_object.quantity_comment = instance.content_object.quantity_comment + 1
+            instance.content_object.save()
+            instance.content_object.content_object.quantity_comment = instance.content_object.content_object.quantity_comment + 1
+            instance.content_object.content_object.save()
+        else:
+            instance.content_object.quantity_comment = instance.content_object.quantity_comment + 1
+            instance.content_object.save()
     else:
         instance.content_object.quantity_comment = instance.content_object.quantity_comment + 1
         instance.content_object.save()
