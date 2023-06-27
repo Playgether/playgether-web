@@ -3,7 +3,7 @@ import '../app/globals.css'
 export default function Test() {
   return (
     <div className='container h-screen w-screen'>
-      <div className='h-5/6 w-screen bg-cover bg-center bg-[url("../img/test.gif")] '> 
+      <div className='h-5/6 w-screen bg-cover bg-center bg-white '> 
       <video src='../img/videotest.webm'></video>  
       </div>
       <div className='h-1/6 w-screen grid grid-cols-3 shadow-md gap-0'>
@@ -40,7 +40,7 @@ export default function Test() {
         <div className='w-screen bg-blue-500  '></div>
         <div className='w-screen bg-blue-500 '></div>
       </div>
-      <footer className='w-screen h-3/6 bg-purple-600'>
+      <footer className='w-screen h-3/6 bg-purple-600 bg'>
 
       </footer>
     </div>
