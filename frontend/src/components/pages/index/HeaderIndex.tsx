@@ -1,7 +1,7 @@
 import React from "react";
 import ImageComponent from "../../elements/ImageComponent";
 
-const Header = ({onClickLogo, onClickSobre}) => {
+const HeaderIndex = ({onClickLogo, onClickSobre}) => {
     return (
         <header className="flex justify-between w-screen pl-8 pr-16 items-center">
             <div className='w-28 sm:w-32 md:w-40 lg:w-32 xl:w-48 2xl:w-56'>
@@ -16,4 +16,4 @@ const Header = ({onClickLogo, onClickSobre}) => {
     );
 };
 
-export default Header;
+export default HeaderIndex;

@@ -4,13 +4,13 @@ import Cadastro from "./Cadastro";
 import Login from "./Login";
 import Normal from "./Normal";
 import useActiveButton from './Function';
-import Header from "./Header";
+import HeaderIndex from "./HeaderIndex";
 
 const ContentSection = () => {
     const { getActiveButton, handleButtonClick } = useActiveButton();
     return (
         <>
-           <Header onClickLogo={() => handleButtonClick('normal')} onClickSobre={() => handleButtonClick('sobre')}/>
+           <HeaderIndex onClickLogo={() => handleButtonClick('normal')} onClickSobre={() => handleButtonClick('sobre')}/>
            {getActiveButton() === 'sobre' && (
 
                 <Sobre onClickVoltar={() => handleButtonClick('normal')}/>
