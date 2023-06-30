@@ -6,7 +6,7 @@ const ProfileCard = ({}) => {
     return (
 
         <div className="bg-white-200 h-3/6 flex pt-2 flex-col items-center space-y-2 rounded-lg shadow-lg">
-            <div className="rounded-full h-24 w-24 bg-red-200 flex items-center justify-center relative">
+            <div className="rounded-full h-20 w-20 bg-red-200 flex items-center justify-center relative">
                 <h1 className="text-sm">pic</h1>
             </div>
             <div className="text-center w-full">
@@ -14,7 +14,7 @@ const ProfileCard = ({}) => {
                 <p className="text-sm text-black-200 opacity-90">@henryjames13</p>
             </div>
             <div className="w-full">
-                <p className=" text-sm text-center text-black-200 opacity-90">Lorem Ipsum is simply dummy text of the printing and typesetting industry.</p>
+                <p className=" text-xs text-center text-black-200 opacity-90">Lorem Ipsum is simply dummy text of the printing and typesetting industry.</p>
             </div>
             <div className="flex space-x-3">
                 <SiValorant/>
