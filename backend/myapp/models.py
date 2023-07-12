@@ -11,7 +11,7 @@ from .patterns.strategy.notifications import CommentPostNotification, LikeCommen
 # Create your models here.
     
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     follows = models.ManyToManyField("self", related_name="followed_by", symmetrical=False, blank=True)
     bio = models.TextField("Bio", blank=True, null=True, max_length=500)
     profile_photo = StdImageField('Foto de perfil', null=True, blank=True, upload_to=get_file_profile_path, variations={'thumb': {'width': 480, 'height': 480, 'crop': True}})
@@ -38,7 +38,7 @@ class Profile(models.Model):
         return CommentProfileNotification.CommentProfileNotification()
 
 class Post (models.Model):
-    created_by_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user")
+    created_by_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="posts")
     timestamp = models.DateTimeField(auto_now_add=True)
     quantity_visualization = models.IntegerField("Quantidade de visualizações", default=0)
     quantity_comment = models.IntegerField("Quantidade de comentários", default=0)
@@ -191,6 +191,7 @@ class Notification(models.Model):
     class Meta:
         verbose_name = "Notification"
         verbose_name_plural = "Notifications"
+        ordering = ['timestamp']
 
     def clean(self):
         is_notification_exists = Notification.objects.filter(content_type=self.content_type, object_id=self.content_object.id).exists()
