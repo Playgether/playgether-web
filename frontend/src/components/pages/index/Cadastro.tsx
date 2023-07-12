@@ -13,7 +13,7 @@ const Cadastro = ({onClickX, onClickAqui}) => {
                 <ButtonClose onClick={onClickX}>X</ButtonClose>
                 <ImageComponent src={"/index/logoWhiteBackground.png"} width={400} height={400} alt={"Logo com Background"}/>
             </div>
-            <FormCadastro onClickAqui={onClickAqui} action={null}/>
+            <FormCadastro onClickAqui={onClickAqui}/>
         </div>
     </div>
     );
