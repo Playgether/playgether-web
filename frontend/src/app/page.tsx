@@ -1,37 +1,16 @@
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
+import '../app/globals.css'
+import Video from '../components/pages/index/Video';
+import Footer from '../components/pages/index/Footer';
+import ContentSection from '../components/pages/index/ContentSection';
 
-const inter = Inter({ subsets: ['latin'] })
-
-export default function Home() {
+export default function Initial() {
   return (
-    <div className="h-screen flex flex-col">
-      <div className="flex flex-1">
-        <aside className="w-72 bg-zinc-950 p-6">
-          <nav className='space-y-5'> 
-            <a href='' className='flex items-center gap-3 text-sm font-semibold text-zinc-200'>
-              icon
-              Home
-            </a>
-            <a href='' className='flex items-center gap-3 text-sm font-semibold text-zinc-200'>
-              icon
-              Search
-            </a>
-            <a href='' className='flex items-center gap-3 text-sm font-semibold text-zinc-200'>
-              icon
-              Your Library
-            </a>
-          </nav>
-
-        </aside>
-        <main className="flex-1 p-6">
-          main
-        </main>
-      </div>
-      <footer className="bg-zinc-800 border-t border-zinc-700 px-6 p-6">
-        foooter
-        <p className='text-9xl'>The quick brown fox ...</p>
-      </footer>
+    <div className="flex w-screen">
+        <section className="relative h-[100vh] shrink-0 grid grid-rows-3 w-full">
+            <Video />
+            <ContentSection />
+            <Footer />
+        </section>
     </div>
   )
 }

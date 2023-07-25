@@ -1,7 +1,8 @@
+
 import './globals.css'
+import { AppProvider } from '../context'
 
 export const metadata = {
-  title: 'Social Game',
   description: 'Create by gamers for gamers',
 }
 
@@ -12,7 +13,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="text-zinc-50">{children}</body>
+      <body className="text-zinc-50">
+        <AppProvider>
+          <main>{children}</main>
+        </AppProvider>
+      </body>
     </html>
   )
 }

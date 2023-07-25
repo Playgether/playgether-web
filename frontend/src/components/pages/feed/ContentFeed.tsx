@@ -1,3 +1,5 @@
+'use client'
+
 import React from "react";
 import AsideFeed from "./AsideFeed";
 import ProfileCard from "./ProfileCard";
@@ -7,7 +9,7 @@ import FeedComponent from "./FeedComponent";
 import { useState } from 'react';
 import { IoArrowDownCircleSharp, IoArrowUpCircle } from "react-icons/io5";
 
-const ContentFeed = ({}) => {
+const ContentFeed = () => {
     const [isComponentVisible, setComponentVisible] = useState(false);
 
     const toggleComponentVisibility = () => {

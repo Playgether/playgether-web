@@ -1,7 +1,7 @@
 import React from "react";
-import Image from "next/image";
+import Image from "next/legacy/image";
 
-const ImageComponent = ({src, width, height, alt, layout="responsive"}) => {
+const ImageComponent = ({src, width, height, alt, layout, objectFit}) => {
     
     return (
         <Image
@@ -10,6 +10,7 @@ const ImageComponent = ({src, width, height, alt, layout="responsive"}) => {
             height={height}
             alt={alt}
             layout={layout}
+            objectFit={objectFit}
         />
     );
 };

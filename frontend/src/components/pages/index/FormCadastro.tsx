@@ -13,7 +13,7 @@ const FormCadastro = ({ onClickAqui }) => {
     const [availableUsernameResult, setAvailableUsernameResult] = useState(<span></span>);
     const createUserFormSchema = z.object({
       email: z.string()
-      .nonempty('O email é obrigatório').email('Formato de e-mail inválido').max(256, 'o email só pode ter 256 caracteres'),
+      .nonempty('O email é obrigatório').email('Formato de e-mail inválido').max(254, 'o email só pode ter 256 caracteres'),
 
       password:z.string()
       .nonempty('A senha é obrigatória').min(8, 'A senha precisa de no mínimo 8 caracteres').max(128, 'a senha deve ter no máximo 128 caracteres').refine((value) => {
@@ -32,8 +32,10 @@ const FormCadastro = ({ onClickAqui }) => {
       repeatPassword: z.string()
       .nonempty('A senha é obrigatória').min(8, 'A senha precisa de no mínimo 8 caracteres').max(128, 'a senha deve ter no máximo 128 caracteres'),
 
+      agree: z.boolean(),
+
       first_name: z.string()
-      .nonempty('O nome é obrigatório').min(1, 'O nome não pode estar vazio').max(150, 'O nome pode ter no máximo 100 caracteres').transform(first_name => {
+      .nonempty('O nome é obrigatório').min(1, 'O nome não pode estar vazio').max(150, 'O nome pode ter no máximo 150 caracteres').transform(first_name => {
         return first_name.charAt(0).toLocaleUpperCase() + first_name.slice(1).toLowerCase()
       }).refine((value) => {
 
@@ -49,7 +51,7 @@ const FormCadastro = ({ onClickAqui }) => {
 
       last_name: z.string()
       .min(1, "O sobrenome não pode estar vazio")
-      .max(150, 'O sobrenome pode ter no máximo 100 caracteres').transform(last_name => {
+      .max(150, 'O sobrenome pode ter no máximo 150 caracteres').transform(last_name => {
         return last_name.charAt(0).toLocaleUpperCase() + last_name.slice(1).toLowerCase()
       }).refine((value) => {
 
@@ -64,7 +66,7 @@ const FormCadastro = ({ onClickAqui }) => {
       }),
 
       username: z.string()
-      .nonempty('O username é obrigatório').min(6, 'O nome de usuário precisa ter no mínimo 6 caracteres').max(15, 'o nome de usuário deve ter no máximo 15 caracteres').refine((value) => {
+      .nonempty('O username é obrigatório').min(6, 'O nome de usuário precisa ter no mínimo 6 caracteres').max(150, 'o nome de usuário deve ter no máximo 150 caracteres').refine((value) => {
 
         const letterRegex = /^[a-zA-Z0-9]+$/;
         return (
@@ -73,7 +75,13 @@ const FormCadastro = ({ onClickAqui }) => {
         }, {
         message: 'Este campo aceita apenas letras e números',
       }),
-    })
+    }).refine((fields) => fields.password == fields.repeatPassword, {
+      path: ['repeatPassword'],
+      message: 'As senhas precisam ser iguais'
+    }).refine((fields) => fields.agree == true, {
+      path: ['agree'],
+      message: 'Você precisa aceitar os termos antes de se cadastrar'
+    });;
 
     type CreateUserFormData = z.infer<typeof createUserFormSchema>
 
@@ -200,6 +208,13 @@ const FormCadastro = ({ onClickAqui }) => {
               {errors.last_name && <span className="text-xs text-red-400">{errors.last_name.message}</span>}
             </div>
             <div className="mb-4">
+              <div className= "flex flex-row gap-2 text-black-300">
+                <input type="checkbox"{...register('agree')}/>
+                <p>Concordo com os termos</p>
+              </div>
+              {errors.agree && <span className="text-xs text-red-400">{errors.agree.message}</span>}
+            </div>
+            <div className="mb-4">
               <Button
                 onClick={null}
                 pxValue={8}
@@ -210,7 +225,7 @@ const FormCadastro = ({ onClickAqui }) => {
               </Button>
             </div>
             <div className="nb-4">
-              <p>
+              <p className="text-black-300">
                 Já possui uma conta?{' '}
                 <a href="#" onClick={onClickAqui} className="text-blue-600">
                   Entre aqui.

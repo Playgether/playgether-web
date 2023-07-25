@@ -1,4 +1,4 @@
-import Image from 'next/image'
+import Image from 'next/legacy/image'
 
 const LogoName = () => {
     return(
@@ -7,7 +7,8 @@ const LogoName = () => {
             width={0}
             height={0}
             alt="Picture of the author"
-            layout='responsive'
+            layout='fill'
+            objectFit='contain'
         />
     );
 };

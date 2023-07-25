@@ -3,6 +3,7 @@ import ButtonClose from "../../elements/ButtonClose";
 import ImageComponent from "../../elements/ImageComponent";
 import FormLogin from "./FormLogin";
 
+
 const Login = ({onClickX, onClickAqui}) => {
     return (
         <div className='h-screen flex flex-col justify-center bg-blue-400 bg-opacity-30 absolute w-screen'>
@@ -11,7 +12,7 @@ const Login = ({onClickX, onClickAqui}) => {
                 <ButtonClose onClick={onClickX}>X</ButtonClose>
                 <ImageComponent src={"/index/logoWhiteBackground.png"} width={400} height={400} alt={"Logo com Background"}/>
                 </div>
-                <FormLogin onClickAqui={onClickAqui} action={null}/>
+                <FormLogin onClickAqui={onClickAqui}/>
             </div>
     </div>
 

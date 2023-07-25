@@ -10,7 +10,7 @@ const ProfileCard = ({}) => {
                 <h1 className="text-sm">pic</h1>
             </div>
             <div className="text-center w-full">
-                <h1 className="text-xl">Henry James</h1>
+                <h1 className="text-xl text-black-300">Henry James</h1>
                 <p className="text-sm text-black-200 opacity-90">@henryjames13</p>
             </div>
             <div className="w-full">

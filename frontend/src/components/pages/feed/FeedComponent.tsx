@@ -3,7 +3,7 @@ import ImageComponent from "../../elements/ImageComponent";
 import { PiHeartFill } from "react-icons/pi";
 import { FaComment } from "react-icons/fa";
 import { AiOutlineRetweet } from "react-icons/ai";
-import Image from "next/image";
+import Image from "next/legacy/image";
 
 const FeedComponent = ({}) => {
     return (
