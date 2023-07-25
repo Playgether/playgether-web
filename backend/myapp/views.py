@@ -1,12 +1,17 @@
 from django.views.generic import TemplateView
 from rest_framework import viewsets
 from .models import Notification, User, Profile, Post
-from .serializers import NotificationSerializer, UserSerializer, ProfileSerializer, PostSerializer, LikeSerializer
+from .serializers import NotificationSerializer, UserSerializer, ProfileSerializer, PostSerializer, LikeSerializer, MyTokenObtainPairSerializer
 from rest_framework.response import Response
-from rest_framework.decorators import action, permission_classes, api_view, authentication_classes
+from rest_framework.decorators import action, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .permissions import SkipAuth
-from rest_framework.authentication import BasicAuthentication
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+  
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+    
 
 class IndexView(TemplateView):
     template_name = 'index.html'
@@ -28,8 +33,6 @@ class UserViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated()]
     
     @action(detail=True, methods=['get'])
-    @authentication_classes([SkipAuth])
-    @permission_classes([SkipAuth])
     def notifications(self, request, pk=None):
         notification = Notification.objects.filter(user_id=pk)
         serializer = NotificationSerializer(notification, many=True)
@@ -57,7 +60,6 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     @action(detail=True, methods=['get'])
-    @permission_classes([SkipAuth])
     def usernames(self, request, pk=None):
         is_username_exists = User.objects.filter(username=pk).exists()
         if is_username_exists :

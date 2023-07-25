@@ -3,9 +3,11 @@ from datetime import datetime
 import uuid
 import os
 from django.core.exceptions import ValidationError
-from django.contrib.auth.hashers import make_password
 from django.contrib.contenttypes.models import ContentType
+from django import forms
 from django.contrib.auth.models import User
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 
 
 
@@ -129,3 +131,50 @@ def post_save_created_user_definition(classProfile, instance):
     user_profile.save()
     user_profile.follows.set([instance.profile.id])
     user_profile.save()
+
+#clean password of User table before save
+def clean_password_implementation(password):
+    if len(password) < 8:
+        raise forms.ValidationError("A senha precisa ter pelo menos 8 caracteres.")
+    if not any(char.isdigit() for char in password):
+        raise forms.ValidationError("A senha precisa conter pelo menos um número.")
+    if not any(char.isupper() for char in password):
+        raise forms.ValidationError("A senha precisa conter pelo menos uma letra maiúscula.")
+    if not any(char.islower() for char in password):
+        raise forms.ValidationError("A senha precisa conter pelo menos uma letra minúscula.")
+    if len(password) > 128:
+        raise forms.ValidationError("A senha pode ter no máximo 128 caracteres")
+    return password
+
+#clean email data of table User before save
+def clean_email_implementation(email):
+    if len(email) > 254:
+        raise forms.ValidationError("O email não pode ter mais de 254 caracteres.")
+    try:
+        validate_email(email)
+    except ValidationError:
+        raise forms.ValidationError("O email informado não é válido.")
+    return email
+
+#clean first_name of table User before save
+def clean_first_name_implementation(first_name):
+    if len(first_name) > 150:
+        raise forms.ValidationError("O nome não pode ter mais de 150 caracteres.")
+    if not first_name.isalpha():
+        raise forms.ValidationError("O nome só pode conter letras.")
+    return first_name
+
+#clean last_name of table User before save
+def clean_last_name_implementation(last_name):
+    if len(last_name) > 150:
+        raise forms.ValidationError("O sobrenome não pode ter mais de 150 caracteres.")
+    if not last_name.isalpha():
+        raise forms.ValidationError("O sobrenome só pode conter letras.")
+    return last_name
+
+#clean username of table User before save
+def clean_username_implementation(username):
+    if not username.isalnum():
+        raise forms.ValidationError("O nome de usuário só pode conter letras e números.")
+    return username
+
