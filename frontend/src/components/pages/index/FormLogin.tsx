@@ -30,7 +30,7 @@ const FormLogin = ({onClickAqui}) => {
 
     const Submiting = (data: LoginUserFormData) => {
         try {
-          setSuccess('Deu certo!');
+          login(data);
         } catch (error) {
           console.log(error);
         }

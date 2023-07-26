@@ -4,7 +4,7 @@
 import Image from 'next/image'
 import { Inter } from 'next/font/google'
 import '../globals.css'
-import { useState, useContext } from 'react';
+import { useState, useContext, Suspense, useEffect } from 'react';
 import Button from '../../components/elements/Button';
 import { getPosts } from '../../services/getPosts';
 import ReactTimeAgo from 'react-time-ago';
@@ -19,11 +19,17 @@ import { AppProvider } from '../../context';
 TimeAgo.addDefaultLocale(pt);
 TimeAgo.addLocale(ru);
 
+
+
 export default function Page() {
 
   const [userId, setUserId] = useState ('')
   const [posts, setPosts] = useState<PostProps[]>([])
   const { user, login, logout } = useAuthContext();
+
+  useEffect(() => {
+    console.log(user?.username);
+  }, [user]); 
 
   const handleButtonClick = async () => {
     try{
@@ -36,16 +42,23 @@ export default function Page() {
     }
 
   }
-  console.log(user)
+  
+  console.log(user?.username)
+
   return (
     <>
       <div>
           <div>
-            <h2>Context</h2>
-            <p>{user?.name}</p>
-            <button onClick={logout}>Click</button>
+            <h2 className='text-black-400'>Context</h2>
+            <Suspense fallback={<p>Carregando...</p>}>
+              {user && <p className='text-black-400'>{user?.username}</p>}
+            </Suspense>
+            <Suspense fallback={<p>Carregando...</p>}>
+              <p className='text-black-400'>{user?.username}</p>
+            </Suspense>
+            <button onClick={logout} className='text-black-400'>Click</button>
           </div>
-          <input type='search' placeholder='ID' className="bg-white-200 bg-opacity-10 w-full h-full rounded-lg focus:outline-none text-black-400" onChange={(e) => setUserId(e.target.value)}></input>
+          <input type='search' placeholder='ID' className="text-black-400 bg-white-200 bg-opacity-10 w-full h-full rounded-lg focus:outline-none " onChange={(e) => setUserId(e.target.value)}></input>
           <Button
                   onClick={handleButtonClick}
                   pxValue={8}

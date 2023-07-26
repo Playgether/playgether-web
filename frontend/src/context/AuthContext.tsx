@@ -1,18 +1,16 @@
-
-
-import { createContext, useContext, useState } from "react";
-import { login } from "../services/loginUser";
+import { createContext, useContext, useEffect, useState } from "react";
 import jwt_decode from 'jwt-decode';
 import { loginUser } from "../services/loginUser";
+import { loginUserProps } from "../services/loginUser";
 
 export type UserProps = {
-  name: string;
+  username: string;
   token: string;
 };
 
 type AuthContextProps = {
   user: UserProps | null;
-  login: (user: UserProps) => void;
+  login: (user: loginUserProps) => void;
   logout: () => void;
 }
 
@@ -21,14 +19,28 @@ const AuthContext = createContext<AuthContextProps>({} as AuthContextProps);
 
 const AuthProvider = ({children}: {children: React.ReactNode}) => {
   const [user, setUser] = useState<UserProps | null>({
-    name: 'Junior',
-    token: '123',
-  });
+    username:"test",
+    token:"test"
+  } as UserProps);
+  const [authTokens, setAuthTokens] = useState<UserProps | null>({} as UserProps);
+  const [loading, setLoading] = useState(true);
 
-  const login = (user: UserProps) => {
-    setUser(user);
-    console.log(user);
+
+  const login = async (user: loginUserProps) => {
+    const response = await loginUser(user)
+    if (response?.status === 200){
+      setAuthTokens(response.data)
+      setUser(jwt_decode(response?.data.access))
+    } else {
+      alert('Algo deu errado')
+    }
+    console.log(user.username)
   };
+
+  useEffect(() => {
+    setLoading(false);
+  }, []);
+
 
   const logout = () => {
     console.log('logout');
@@ -36,11 +48,11 @@ const AuthProvider = ({children}: {children: React.ReactNode}) => {
 
   return (
     <AuthContext.Provider value={{
-      user,
+      user:user,
       login,
       logout
     }}>
-      <>{children}</>
+      <>{!loading && children}</>
     </AuthContext.Provider>
   )
 }

@@ -1,18 +1,17 @@
 import { api } from "./api";
 
-export interface loginUser {
+export interface loginUserProps {
     username: string;
     password: string;
 }
 
-export const login = async (data: loginUser) => {
-            
-    try{
-        const response = await api.post('/api/token/', data) 
-        return response.data
-    } catch (error) { 
-        console.log(error);
-    }
-   
+export const loginUser = async (data: loginUserProps) => {
+        
+    const response = await api.post('/api/token/', data)
+    .catch((error) => {
+        console.log(error)
+    }) 
+    return response
+     
 };
 
