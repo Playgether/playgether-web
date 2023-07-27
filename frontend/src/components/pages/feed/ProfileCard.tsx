@@ -1,8 +1,11 @@
 import React from "react";
 import Button from "../../elements/Button";
 import { SiValorant, SiCounterstrike } from "react-icons/si";
+import { useAuthContext } from "../../../context/AuthContext";
+
 
 const ProfileCard = ({}) => {
+    const {user} = useAuthContext()
     return (
 
         <div className="bg-white-200 h-3/6 flex pt-2 flex-col items-center space-y-2 rounded-lg shadow-lg">
@@ -11,7 +14,7 @@ const ProfileCard = ({}) => {
             </div>
             <div className="text-center w-full">
                 <h1 className="text-xl text-black-300">Henry James</h1>
-                <p className="text-sm text-black-200 opacity-90">@henryjames13</p>
+                <p className="text-sm text-black-200 opacity-90">{user?.username}</p>
             </div>
             <div className="w-full">
                 <p className=" text-xs text-center text-black-200 opacity-90">Lorem Ipsum is simply dummy text of the printing and typesetting industry.</p>

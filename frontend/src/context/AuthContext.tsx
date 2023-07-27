@@ -2,86 +2,129 @@ import { createContext, useContext, useEffect, useState } from "react";
 import jwt_decode from 'jwt-decode';
 import { loginUser } from "../services/loginUser";
 import { loginUserProps } from "../services/loginUser";
+import { useRouter } from "next/navigation";
+import { updateTokenRequest, TokenData } from "../services/updateTokenRequest";
 
 export type UserProps = {
   username: string;
-  token: string;
+  user_id: number;
 };
 
 type AuthContextProps = {
   user: UserProps | null;
   login: (user: loginUserProps) => void;
   logout: () => void;
+  wrongPassword: string | null
+  authTokens: TokenData | null
+  isLoggedOut : boolean
 }
-
 
 const AuthContext = createContext<AuthContextProps>({} as AuthContextProps);
 
 const AuthProvider = ({children}: {children: React.ReactNode}) => {
-  const [user, setUser] = useState<UserProps | null>({
-    username:"test",
-    token:"test"
-  } as UserProps);
-  const [authTokens, setAuthTokens] = useState<UserProps | null>({} as UserProps);
-  const [loading, setLoading] = useState(true);
-
-
-  const login = async (user: loginUserProps) => {
-    const response = await loginUser(user)
-    if (response?.status === 200){
-      setAuthTokens(response.data)
-      setUser(jwt_decode(response?.data.access))
-    } else {
-      alert('Algo deu errado')
-    }
-    console.log(user.username)
-  };
+  const router = useRouter()
+  const [authTokens, setAuthTokens] = useState<TokenData | null>();
+  const [user, setUser] = useState<UserProps | null>();
+  const [loading, setLoading] = useState(true)
+  const [wrongPassword, setWrongPassword] = useState<string | null>(null)
+  const [isLoggedOut, setIsLoggedOut] = useState(false);
 
   useEffect(() => {
+    if (typeof localStorage !== 'undefined') {
+      const savedTokens = localStorage.getItem('authTokens');
+      const initialTokenState = savedTokens ? JSON.parse(savedTokens) : null;
+      const initialUserState = savedTokens ? jwt_decode(savedTokens) as UserProps: null;
+      setAuthTokens(() => initialTokenState);
+      setUser(() => initialUserState);
+    }
     setLoading(false);
   }, []);
 
+  const login = async (user: loginUserProps) => {
+    const response = await loginUser(user)
+    setWrongPassword(null)
+    if (response?.status === 200){
+      const tokens = response.data
+      const user = response?.data.access
+      setAuthTokens(tokens)
+      setUser(jwt_decode(user))
+      localStorage.setItem('authTokens', JSON.stringify(tokens))
+      router.push('/feed');
+
+    } else {
+      if (response?.response.status === 401){
+      const wrongText = 'Username ou senha incorreta'
+      setWrongPassword(wrongText)
+      } else {
+        alert('Algo deu errado !')
+      }
+    }
+  };
+
+
 
   const logout = () => {
-    console.log('logout');
+    setIsLoggedOut(true);
+    setAuthTokens(null)
+    setUser(null)
+    localStorage.removeItem('authTokens')
+    router.push('/')
+  
   };
+
+  const updateToken = async ()=> {
+    console.log('Update token colled')
+    console.log(user)
+    console.log(authTokens)
+    if (authTokens && authTokens.refresh) {
+      const response = await updateTokenRequest(authTokens)
+      if (response?.status === 200) {
+        const tokens = response.data
+        const user = response?.data.access
+        setAuthTokens(tokens)
+        setUser(jwt_decode(user))
+        localStorage.setItem('authTokens', JSON.stringify(tokens))
+      }
+      else {
+        logout()
+      }
+
+      if (loading) {
+        setLoading(false)
+      }
+    }
+    else {
+      return 'Token inválido ou inexistente'
+    }
+  }
+
+  useEffect(() => {
+    if (authTokens) {
+      if (loading) {
+        updateToken()
+      }
+      const fourMinutes = 1000 * 60 * 4
+      const interval = setInterval(() => {
+        updateToken();
+      }, fourMinutes);
+  
+      return () => clearInterval(interval);
+    }
+  }, [authTokens, loading]);
 
   return (
     <AuthContext.Provider value={{
       user:user,
       login,
-      logout
+      logout, 
+      wrongPassword,
+      authTokens,
+      isLoggedOut,
     }}>
-      <>{!loading && children}</>
+      <>{loading ? null : children}</>
     </AuthContext.Provider>
   )
 }
 
 export const useAuthContext =  () => useContext(AuthContext);
 export {AuthProvider};
-
-// const AuthContext = createContext<loginUser>({
-//     username: '',
-//     password: '',
-// });
-
-// export default AuthContext;
-
-// export const AuthProvider = ({ children }) => {
-//   const [user, setUser] = useState(null);
-//   const [authTokens, setAuthTokens] = useState(null);
-
-//   const loginUser = async (e, data) => {
-//     try {
-//       const response = await login(data); 
-//       setAuthTokens(response);
-//       setUser(jwt_decode(response.access));
-//     } catch {
-//       alert('Algo não deu certo');
-//     }
-//   };
-
-//   const contextData = {
-//     loginUser: loginUser,
-//   };
-// };

@@ -8,7 +8,7 @@ import { useAuthContext } from "../../../context/AuthContext";
 
 const FormLogin = ({onClickAqui}) => {
     const [success, setSuccess] = useState('');
-    const { user, login, logout } = useAuthContext();
+    const { user, login, logout, wrongPassword } = useAuthContext();
 
     const LoginUserSchema = z.object({
         username: z.string()
@@ -38,6 +38,9 @@ const FormLogin = ({onClickAqui}) => {
 
     return (
         <form onSubmit={handleSubmit(Submiting)}>
+            <div className="text-center pb-2">
+                {wrongPassword && <p className="text-red-400 ">{wrongPassword}</p>}    
+            </div> 
             <div className='mb-4'>
                 <input type='text'
                 placeholder='Username' 
@@ -55,8 +58,7 @@ const FormLogin = ({onClickAqui}) => {
                 {...register('password')}></input>
                 <div className="flex flex-col gap-2">
                   {errors.password && <span className="text-xs text-red-400">{errors.password.message}</span>}
-                </div>
-                
+                </div> 
             </div>
             <div className='mb-4'>
                 <Button

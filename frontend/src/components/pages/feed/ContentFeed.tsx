@@ -1,21 +1,36 @@
 'use client'
-
 import React from "react";
 import AsideFeed from "./AsideFeed";
 import ProfileCard from "./ProfileCard";
 import OnlineFriendsCard from "./OnlineFriendsCard";
 import PostComponent from "./PostComponent";
 import FeedComponent from "./FeedComponent";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { IoArrowDownCircleSharp, IoArrowUpCircle } from "react-icons/io5";
+import { getNotifications, getNotificationsProps } from "../../../services/getNotifications";
+import { useAuthContext } from "../../../context/AuthContext";
 
 const ContentFeed = () => {
     const [isComponentVisible, setComponentVisible] = useState(false);
-
+    const [notifications, setNotifications] = useState<getNotificationsProps[]>([]);
+  
+    const { authTokens, user } = useAuthContext();
+  
     const toggleComponentVisibility = () => {
       setComponentVisible(!isComponentVisible);
     };
-
+  
+    const handleNotifications = async () => {
+        if (authTokens) {
+            const response = await getNotifications(authTokens, user);
+            setNotifications(response);
+        }
+    };
+  
+    useEffect(() => {
+      handleNotifications();
+    }, [authTokens, user]);
+    
     return (
         <div className="flex-1 grid grid-cols-4 gap-2">
             <div>
@@ -47,6 +62,11 @@ const ContentFeed = () => {
                         </div>
                         <div className="flex flex-col w-full pl-2 flex-wrap divide-y-2 flex-grow justify-center 2xl:space-y-4">
                             <div className="flex items-center justify-start space-x-2 pt-2 flex-wrap">
+                                <div>
+                                    {authTokens && notifications.map((notification) => (
+                                        <p key={notification.id} className="text-black-200">{notification.message}</p>
+                                    ))}
+                                </div>
                                 <div className="rounded-full h-8 w-8 bg-red-200 flex items-center justify-center relative flex-wrap">
                                     <a href=""><h1 className="text-sm">pic</h1></a>
                                 </div>
@@ -154,3 +174,5 @@ const ContentFeed = () => {
 };
 
 export default ContentFeed;
+
+

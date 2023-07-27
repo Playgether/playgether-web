@@ -15,6 +15,7 @@ import { PostProps } from '../../services/getPosts';
 // import { AuthContext } from '../context/AuthContext';
 import { useAuthContext } from '../../context/AuthContext';
 import { AppProvider } from '../../context';
+import { getNotifications, getNotificationsProps } from '../../services/getNotifications';
 
 TimeAgo.addDefaultLocale(pt);
 TimeAgo.addLocale(ru);
@@ -25,11 +26,24 @@ export default function Page() {
 
   const [userId, setUserId] = useState ('')
   const [posts, setPosts] = useState<PostProps[]>([])
-  const { user, login, logout } = useAuthContext();
+  const { user, login, logout, authTokens } = useAuthContext();
+  const [notifications, setNotifications] = useState<getNotificationsProps[]>([]);
+
+  const handleTest = () => {
+    console.log(user?.username);
+  }
+
+  const handleNotifications = async () => {
+    if (authTokens) {
+      const response = await getNotifications(authTokens, user);
+      setNotifications(response);
+    }
+  };
 
   useEffect(() => {
-    console.log(user?.username);
-  }, [user]); 
+    handleNotifications();
+  }, [authTokens, user]);
+
 
   const handleButtonClick = async () => {
     try{
@@ -42,13 +56,12 @@ export default function Page() {
     }
 
   }
-  
-  console.log(user?.username)
 
   return (
     <>
       <div>
           <div>
+            <button onClick={handleTest} className='text-black-400'>TESTE</button>
             <h2 className='text-black-400'>Context</h2>
             <Suspense fallback={<p>Carregando...</p>}>
               {user && <p className='text-black-400'>{user?.username}</p>}
@@ -79,7 +92,12 @@ export default function Page() {
                   <h1>{post.comment}</h1>
                   <h1>{post.has_post_media}</h1>
                 </div>
-              ))}   
+              ))}  
+              <div>
+                  {authTokens && notifications.map((notification) => (
+                      <p key={notification.id} className="text-black-200">{notification.message}</p>
+                  ))}
+              </div>
           </div>
       </div>
     </>
