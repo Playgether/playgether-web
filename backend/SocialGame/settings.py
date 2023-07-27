@@ -164,10 +164,10 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.AnonRateThrottle',
         'rest_framework.throttling.UserRateThrottle',
     ),
-    'DEFAULT_THROTTLE_RATES' : {
-        'anon': '5/minute', # Can be second, day, month or year.
-        'user': '10/minute'
-    }
+    # 'DEFAULT_THROTTLE_RATES' : {
+    #     'anon': '5/minute', # Can be second, day, month or year.
+    #     'user': '10/minute'
+    # }
 }
 
 SIMPLE_JWT = {

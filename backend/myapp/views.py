@@ -52,10 +52,9 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'])
     def posts(self, request, pk=None):
-        #profile = Profile.objects.get(user_id=pk)
-        #posts = Post.objects.filter(created_by_user=profile.id)
-        #serializer = PostSerializer(posts, many=True)
-        posts = User.objects.get(id=pk).posts.all()
+        user = request.user
+        posts = user.posts_set.all()
+        # posts = User.objects.get(id=pk).posts.all()
         serializer = PostSerializer(posts, many=True)
         return Response(serializer.data)
     

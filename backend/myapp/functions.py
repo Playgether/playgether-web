@@ -1,4 +1,4 @@
-#This file holds all functions used in models.py
+#This file holds some functions used in the entire project
 from datetime import datetime
 import uuid
 import os
