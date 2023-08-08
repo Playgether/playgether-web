@@ -1,5 +1,5 @@
 import React from "react";
-import Button from "../../elements/Button";
+import Button from "../../elements/OrangeButton";
 import { SiValorant, SiCounterstrike } from "react-icons/si";
 import { useAuthContext } from "../../../context/AuthContext";
 

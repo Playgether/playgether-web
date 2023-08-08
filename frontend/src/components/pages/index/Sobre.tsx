@@ -1,7 +1,6 @@
 import React from "react";
-import ImageComponent from "../../elements/ImageComponent";
-import Button from "../../elements/Button";
 import Image from "next/legacy/image";
+import OrangeButton from "../../elements/OrangeButton";
 
 const Sobre = ({onClickVoltar}) => {
     return (
@@ -16,7 +15,11 @@ const Sobre = ({onClickVoltar}) => {
                     atualizações e muito mais.</p>
                 </div>
                 <div className="pb-2">
-                    <Button onClick={onClickVoltar} pxValue={14} pyValue={2} extraClassName={null}> Voltar </Button>
+                    <OrangeButton
+                        onClick={onClickVoltar} 
+                        className="py-2 px-14"> 
+                        Voltar 
+                     </OrangeButton>
                 </div>
             </div>
         </div>

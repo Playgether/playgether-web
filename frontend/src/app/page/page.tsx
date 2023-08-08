@@ -1,24 +1,21 @@
 'use client';
 
-
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
+import OrangeButton from '../../components/elements/OrangeButton';
 import '../globals.css'
-import { useState, useContext, Suspense, useEffect } from 'react';
-import Button from '../../components/elements/Button';
+import { useState, Suspense, useEffect } from 'react';
+import Button from '../../components/elements/OrangeButton';
 import { getPosts } from '../../services/getPosts';
 import ReactTimeAgo from 'react-time-ago';
 import TimeAgo from "javascript-time-ago"
 import pt from "javascript-time-ago/locale/pt.json"
 import ru from "javascript-time-ago/locale/ru.json"
 import { PostProps } from '../../services/getPosts';
-// import { AuthContext } from '../context/AuthContext';
 import { useAuthContext } from '../../context/AuthContext';
-import { AppProvider } from '../../context';
 import { getNotifications, getNotificationsProps } from '../../services/getNotifications';
 
 TimeAgo.addDefaultLocale(pt);
 TimeAgo.addLocale(ru);
+
 
 
 
@@ -44,6 +41,9 @@ export default function Page() {
     handleNotifications();
   }, [authTokens, user]);
 
+  const TestButton = () => {
+    console.log('sucess')
+  }
 
   const handleButtonClick = async () => {
     try{
@@ -72,14 +72,12 @@ export default function Page() {
             <button onClick={logout} className='text-black-400'>Click</button>
           </div>
           <input type='search' placeholder='ID' className="text-black-400 bg-white-200 bg-opacity-10 w-full h-full rounded-lg focus:outline-none " onChange={(e) => setUserId(e.target.value)}></input>
-          <Button
-                  onClick={handleButtonClick}
-                  pxValue={8}
-                  pyValue={4}
-                  extraClassName={'inline-block w-full leading-none shadow'}          
-                  >
-                  LOGAR
-          </Button>
+          <div>
+            <OrangeButton onClick={() => TestButton()} className='text-md py-4 px-6'>
+              CLICK TEST
+            </OrangeButton>
+          </div>
+
           <div className='flex flex-col space-y-2'>         
               {posts.map((post) => (
                 <div key={post.id}>

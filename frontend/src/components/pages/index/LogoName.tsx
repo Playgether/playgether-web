@@ -6,7 +6,7 @@ const LogoName = () => {
             src={"/index/name.png"}
             width={0}
             height={0}
-            alt="Picture of the author"
+            alt="Logo com nome"
             layout='fill'
             objectFit='contain'
         />

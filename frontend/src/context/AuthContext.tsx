@@ -11,11 +11,11 @@ export type UserProps = {
 };
 
 type AuthContextProps = {
-  user: UserProps | null;
+  user: UserProps | undefined | null;
   login: (user: loginUserProps) => void;
   logout: () => void;
   wrongPassword: string | null
-  authTokens: TokenData | null
+  authTokens: TokenData | null | undefined
   isLoggedOut : boolean
 }
 

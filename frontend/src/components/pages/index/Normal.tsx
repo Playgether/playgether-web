@@ -1,6 +1,6 @@
 import React from "react";
 import LogoName from "./LogoName";
-import Button from "../../elements/Button";
+import OrangeButton from "../../elements/OrangeButton";
 
 const Normal = ({onclickCadastrar, onClickLogar}) => {
     return (
@@ -10,23 +10,19 @@ const Normal = ({onclickCadastrar, onClickLogar}) => {
         </div>
         <div className="space-x-10 w-screen flex items-center justify-center">
             <div className=''>
-                <Button
+                <OrangeButton
                 onClick={onclickCadastrar}
-                pxValue={4}
-                pyValue={4}
-                extraClassName={null}
+                className='text-md py-4 px-6'
                 >
                 CADASTRAR
-                </Button>
+                </OrangeButton>
             </div>
-            <Button
+            <OrangeButton
             onClick={onClickLogar}
-            pxValue={8}
-            pyValue={4}
-            extraClassName={null}
+            className='text-md py-4 px-6'
             >
             LOGAR
-            </Button>
+            </OrangeButton>
         </div>
     </div>
     );
