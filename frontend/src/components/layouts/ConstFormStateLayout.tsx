@@ -1,7 +1,9 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod'
+import { ZodType } from 'zod';
 
-export const UseFormState = (FormData, Schema) => {
+
+export const UseFormState = (FormData : (Schema : any) => void , Schema : ZodType<any>) => {
     const { register, 
         handleSubmit,
         getValues,

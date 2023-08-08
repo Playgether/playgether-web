@@ -5,7 +5,7 @@ import Sobre from "./Sobre";
 import Cadastro from "./Cadastro";
 import Login from "./Login";
 import Normal from "./Normal";
-import useActiveButton from './Function';
+import useActiveButton from './UseActiveButton';
 import HeaderIndex from "./HeaderIndex";
 
 const ContentSection = () => {
@@ -19,7 +19,7 @@ const ContentSection = () => {
             )}  
             {getActiveButton() === 'normal' && (
 
-                <Normal onClickLogar={() => handleButtonClick('login')} onclickCadastrar={() => handleButtonClick ('cadastro')} />
+                <Normal onClickLogar={() => handleButtonClick('login')} onClickCadastrar={() => handleButtonClick ('cadastro')} />
             )}
 
             {getActiveButton() === 'cadastro' && (

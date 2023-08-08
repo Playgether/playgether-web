@@ -2,7 +2,11 @@ import React from "react";
 import Image from "next/legacy/image";
 import OrangeButton from "../../elements/OrangeButton";
 
-const Sobre = ({onClickVoltar}) => {
+interface SobreProps {
+    onClickVoltar: () => void
+}
+
+const Sobre = ({onClickVoltar} : SobreProps) => {
     return (
         <div className='flex row-span-2 w-screen'>
             <div className='w-screen flex flex-col items-center justify-center space-y-3 lg:space-y-4 xl:space-y-6 2xl:space-y-8 bg-gray-600 bg-opacity-60'>

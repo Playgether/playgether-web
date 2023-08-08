@@ -4,7 +4,12 @@ import FormLogin from "./FormLogin";
 import Image from "next/legacy/image";
 
 
-const Login = ({onClickX, onClickAqui}) => {
+interface LoginProps {
+    onClickX: () => void
+    onClickAqui: () => void
+}
+
+const Login = ({onClickX, onClickAqui} : LoginProps) => {
     return (
         <div className='h-screen flex flex-col justify-center bg-blue-400 bg-opacity-30 absolute w-screen'>
             <div className='bg-white-200 mx-auto max-w-md py-8 px-10 shadow rounded-lg overflow-auto'>

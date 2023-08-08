@@ -3,8 +3,18 @@ import { ErrosInput } from "../../layouts/ErrorsInputLayout";
 import InputLayout from "../../layouts/InputLayout";
 import { WrongPasswordComponent } from "./WrongPassword";
 import NoHaveAccount from "./NoHaveAccount";
+import { UseFormHandleSubmit, FieldErrors } from "react-hook-form";
 
-export const FormLoginImplementation = ({handleSubmit, wrongPassword, register, errors, Submiting, onClickAqui}) => {
+interface FormLoginImplementationProps {
+    handleSubmit: UseFormHandleSubmit<any | undefined>;
+    wrongPassword: string | null;
+    register: void | any;
+    errors: FieldErrors<any>;
+    Submiting: any;
+    onClickAqui: () => void;
+}
+
+export const FormLoginImplementation = ({handleSubmit, wrongPassword, register, errors, Submiting, onClickAqui} : FormLoginImplementationProps) => {
     return (
         <form onSubmit={handleSubmit(Submiting)}>
             <WrongPasswordComponent wrongPassword={wrongPassword} />
@@ -18,7 +28,7 @@ export const FormLoginImplementation = ({handleSubmit, wrongPassword, register, 
         
         
             <InputLayout
-                type='text'
+                type='password'
                 placeholder='Password' 
                 register={...register('password')} 
             />

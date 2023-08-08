@@ -3,7 +3,7 @@ import { useState } from 'react';
 const useActiveButton = () => {
     const [activeButton, setActiveButton] = useState('normal');
   
-    const handleButtonClick = (buttonName) => {
+    const handleButtonClick = (buttonName:string) => {
       setActiveButton(buttonName);
     };
 

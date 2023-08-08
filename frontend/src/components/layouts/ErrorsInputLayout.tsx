@@ -1,21 +1,15 @@
-import OrangeButton from "../elements/OrangeButton"
+import { FieldError, FieldErrorsImpl, Merge } from "react-hook-form"
 
 interface ErrosInputProps {
-    field: {
-        message: any
-    }
+    field: FieldError | Merge<FieldError, FieldErrorsImpl<any>> | undefined;
+  
 }
 
-
-
-export const ErrosInput = ({field}) => {
+export const ErrosInput = ({field} : ErrosInputProps) => {
 
     return (
-        // <div className="flex flex-col gap-2">
-        //     <span className="text-xs text-red-400">{children}</span>
-        // </div>
         <div>
-            {field && <span className="text-xs text-red-400">{field.message}</span>}
+            {field && <span className="text-xs text-red-400">{String(field.message)}</span>}
         </div>
     )
 }

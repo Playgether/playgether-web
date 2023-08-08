@@ -9,15 +9,18 @@ import { FormRegisterImplementation } from "./FormRegisterImplementation";
 import SuccessfullyRegistered from "./SuccessfullyRegistered";
 import  HandleAvailableUsernames  from "./HandleAvailableUsername";
 
+interface FormCadastroProps {
+  onClickAqui: () => void
+}
 
-const FormCadastro = ({ onClickAqui }) => {
+const FormCadastro = ({ onClickAqui }: FormCadastroProps) => {
     const [success, setSuccess] = useState('');
     const [availableUsernameResult, setAvailableUsernameResult] = useState(<span></span>);
     const RegisterUserSchema = RegisterFormSchema()
     const RegisterUserFormData = zInferForm(RegisterUserSchema)
     const { register, handleSubmit, errors, getValues } = UseFormState(RegisterUserFormData, RegisterUserSchema);
 
-    const handleAvailableUsernames = async (username) => {
+    const handleAvailableUsernames = async (username : string) => {
         HandleAvailableUsernames(username, errors, setAvailableUsernameResult)
       };
    

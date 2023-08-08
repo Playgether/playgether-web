@@ -3,6 +3,12 @@ import ButtonClose from "../../elements/ButtonClose";
 import FormCadastro from "./FormCadastro";
 import Image from "next/legacy/image";
 
+interface CadastroProps {
+    onClickX: () => void
+    onClickAqui: () => void
+}
+
+
 const Cadastro = ({onClickX, onClickAqui}) => {
     return (
         <div className='h-screen lg:h-screen flex flex-col justify-center bg-blue-400 bg-opacity-30 absolute w-screen'>

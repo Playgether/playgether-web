@@ -1,12 +1,13 @@
+import { FieldErrors } from "react-hook-form";
 import { getAvailableUsernames } from "../../../services/getAvailableUsernames";
 
 
-const HandleAvailableUsernames = async (username, errors, setAvailableUsernameResult) => {
+const HandleAvailableUsernames = async (username:string, errors: FieldErrors<any>, setAvailableUsernameResult : (string) => void) => {
     if (!username) {
         setAvailableUsernameResult(<span className="text-red-400 text-xs">Digite um nome de usuário para ser testado</span>)
         } 
         if (errors.username) {
-            setAvailableUsernameResult(<span className="text-red-400 text-xs">Corrija os erros acima antes de testar</span>)
+            setAvailableUsernameResult(<span className="text-red-400 text-xs">Corrija os erros abaixo antes de testar</span>)
         }
         const result = await getAvailableUsernames(username);
         if (result == true) {

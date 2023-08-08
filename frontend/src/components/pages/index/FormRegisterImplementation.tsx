@@ -1,8 +1,21 @@
+import { FieldErrors, UseFormGetValues, UseFormHandleSubmit } from "react-hook-form";
 import OrangeButton from "../../elements/OrangeButton";
 import { ErrosInput } from "../../layouts/ErrorsInputLayout";
 import InputLayout from "../../layouts/InputLayout";
 import AlreadyHaveAccount from "./AlreadyHaveAccount";
-export const FormRegisterImplementation = ({handleSubmit, handleAvailableUsernames, register, errors, Submiting, onClickAqui, availableUsernameResult, getValues}) => {
+
+interface FormCadastroImplementationProps {
+    handleSubmit: UseFormHandleSubmit<any | undefined>;
+    register: void | any;
+    errors: FieldErrors<any>;
+    Submiting: any;
+    onClickAqui: () => void;
+    handleAvailableUsernames: (username: string) => Promise<void>;
+    availableUsernameResult: React.ReactNode
+    getValues: UseFormGetValues<any>
+}
+
+export const FormRegisterImplementation = ({handleSubmit, handleAvailableUsernames, register, errors, Submiting, onClickAqui, availableUsernameResult, getValues} : FormCadastroImplementationProps) => {
     return (
         <form onSubmit={handleSubmit(Submiting)}>
             <div className="mb-4 grid grid-row-2 grid-cols-6 space-x-1 w-full">

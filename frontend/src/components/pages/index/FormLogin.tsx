@@ -6,7 +6,11 @@ import { UseFormState } from "../../layouts/ConstFormStateLayout";
 import { SubmitingForm } from "../../layouts/SubmitingFormLayout";
 import { FormLoginImplementation } from "./FormLoginImplementation";
 
-const FormLogin = ({onClickAqui}) => {
+interface FormLoginProps {
+    onClickAqui: () => void
+}
+
+const FormLogin = ({onClickAqui}: FormLoginProps) => {
     const { login, wrongPassword } = useAuthContext();
     const LoginUserSchema = LoginFormSchema()
     const LoginUserFormData = zInferForm(LoginUserSchema)
