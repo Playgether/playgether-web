@@ -1,8 +1,7 @@
 import React from "react";
-import Button from "../../elements/OrangeButton";
 import { SiValorant, SiCounterstrike } from "react-icons/si";
 import { useAuthContext } from "../../../context/AuthContext";
-
+import OrangeButton from "../../elements/OrangeButton";
 
 const ProfileCard = ({}) => {
     const {user} = useAuthContext()
@@ -24,7 +23,7 @@ const ProfileCard = ({}) => {
                 <SiCounterstrike />
             </div>
             <div>
-                <Button onClick={null} extraClassName={"text-sm font-semibold"} pxValue={6} pyValue={3}>Ver Perfil</Button>
+                <OrangeButton className="text-sm font-semibold px-6 py-3">Ver Perfil</OrangeButton>
             </div>
         </div>
 

@@ -1,0 +1,20 @@
+import Notifications from "./Notifications"
+import TopicsOfMoment from "./TopicsOfMoment"
+
+const Right = () => {
+    return (
+        <div className="bg-white-300">
+            <div className="bg-white-300 flex-1 h-5/6 flex flex-col space-y-4">
+                <div className="bg-white-200 h-3/6 flex mt-2 flex-col items-center space-y-2 rounded-lg shadow-lg overflow-y-auto">
+                    <div>
+                        <h1 className="font-medium text-black-200 text-center pt-2 border-b border-black-200 border-opacity-30 text-md">Notificações Recentes</h1>
+                    </div>
+                    <Notifications />
+                </div>
+                <TopicsOfMoment />
+            </div>
+        </div>
+    )
+}
+
+export default Right

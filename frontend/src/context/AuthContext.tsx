@@ -24,7 +24,7 @@ const AuthContext = createContext<AuthContextProps>({} as AuthContextProps);
 const AuthProvider = ({children}: {children: React.ReactNode}) => {
   const router = useRouter()
   const [authTokens, setAuthTokens] = useState<TokenData | null>();
-  const [user, setUser] = useState<UserProps | null>();
+  const [user, setUser] = useState<UserProps | null>(null);
   const [loading, setLoading] = useState(true)
   const [wrongPassword, setWrongPassword] = useState<string | null>(null)
   const [isLoggedOut, setIsLoggedOut] = useState(false);

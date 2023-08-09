@@ -10,7 +10,7 @@ export interface getNotificationsProps {
     user: number;
 }
 
-export const getNotifications = async (authTokens : TokenData | null, user : UserProps | null) => {
+export const getNotifications = async (authTokens : TokenData | null, user : UserProps | null | undefined) => {
     console.log(user?.user_id, authTokens)
     const response = await api.get(`/api/v1/users/${user?.user_id}/notifications/`, {
     headers: {

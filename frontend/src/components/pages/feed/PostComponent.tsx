@@ -1,6 +1,6 @@
 import React from 'react'
 import { GoFileMedia } from "react-icons/go";
-import Button from '../../elements/OrangeButton';
+import OrangeButton from '../../elements/OrangeButton';
 
 const PostComponent = ({}) => {
 
@@ -27,7 +27,7 @@ const PostComponent = ({}) => {
                 </div>
             </div>
             <div className='pb-4 w-full flex items-center justify-center'>
-                <Button onClick={null} extraClassName={"w-5/6"}>Compartilhar</Button>
+                <OrangeButton className="w-5/6">Compartilhar</OrangeButton>
             </div>
         </div>
 
