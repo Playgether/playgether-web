@@ -1,5 +1,4 @@
 import React from "react";
-import ImageComponent from "../../elements/ImageComponent";
 import { PiHeartFill } from "react-icons/pi";
 import { FaComment } from "react-icons/fa";
 import { AiOutlineRetweet } from "react-icons/ai";

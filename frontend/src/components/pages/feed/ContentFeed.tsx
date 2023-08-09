@@ -1,6 +1,6 @@
 'use client'
 import React from "react";
-import AsideFeed from "./AsideFeed";
+import AsideFeed from "../../layouts/AsideBase";
 import ProfileCard from "./ProfileCard";
 import OnlineFriendsCard from "./OnlineFriendsCard";
 import PostComponent from "./PostComponent";
@@ -34,8 +34,7 @@ const ContentFeed = () => {
     return (
         <div className="flex-1 grid grid-cols-4 gap-2">
             <div>
-                <div className="flex flex-row h-full pt-2 pl-4 space-x-2">
-                    <AsideFeed />
+                <div className="flex flex-row h-full pt-2 space-x-2">
                     <div className="bg-white-300 flex-1 h-5/6 flex flex-col space-y-4">
                         <ProfileCard />
                         <OnlineFriendsCard />

@@ -1,15 +1,11 @@
-import HeaderFeed from '../../components/pages/feed/HeaderFeed';
-import GlobalChat from '../../components/pages/feed/GlobalChat';
+import BaseLayout from '../../components/layouts/BaseLayout';
 import ContentFeed from '../../components/pages/feed/ContentFeed';
 
 
 export default function Feed() {
   return (
-    <div className='h-screen w-screen bg-white-300 flex flex-col overflow-x-hidden'>
-      <HeaderFeed />
-      <GlobalChat />
+    <BaseLayout>  
       <ContentFeed />
-
-    </div>
+    </BaseLayout>
     )
 }

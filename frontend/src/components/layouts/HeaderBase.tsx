@@ -1,9 +1,9 @@
 import React from "react";
-import SearchElement from "./SearchElementHeader";
-import IconsHeader from "./IconsHeader";
+import SearchElement from "../pages/feed/SearchElementHeader";
+import IconsHeader from "../pages/feed/IconsHeader";
 import Image from "next/legacy/image";
 
-const HeaderFeed = ({}) => {
+const HeaderBase = ({}) => {
     return (
         <div className="w-full bg-blue-300 h-14 flex flex-row space-x-16">
             <div className="w-32 h-full ml-6 ">
@@ -17,4 +17,4 @@ const HeaderFeed = ({}) => {
     );
 }
 
-export default HeaderFeed
+export default HeaderBase

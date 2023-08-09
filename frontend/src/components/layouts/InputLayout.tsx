@@ -1,9 +1,9 @@
 import React, { InputHTMLAttributes } from "react";
-import { ButtonHTMLAttributes } from "react";
 import { twMerge } from "tailwind-merge";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement>{
     register: () => void
+    children: React.ReactNode;
 }
 
 
