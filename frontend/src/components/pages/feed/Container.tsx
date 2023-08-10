@@ -1,6 +1,6 @@
 const Container = ({children}: {children: React.ReactNode}) => {
     return (
-        <div className="flex-1 grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-4 gap-2 h-screen w-full bg-white-200">
             {children}
         </div>
     )

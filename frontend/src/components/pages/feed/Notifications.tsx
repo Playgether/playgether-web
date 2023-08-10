@@ -5,7 +5,7 @@ const Notifications = () => {
     const { notifications, authTokens } = useNotifications()
 
     return (
-        <div className="flex flex-col w-full pl-2 flex-wrap divide-y-2 flex-grow justify-center 2xl:space-y-4">
+        <div className="flex flex-col w-full pl-2 flex-wrap divide-y-2 flex-grow justify-center 2xl:space-y-4 bg-white-200">
             <div className="flex items-center justify-start space-x-2 pt-2 flex-wrap">
                 <div>
                     {authTokens && notifications.map((notification) => (

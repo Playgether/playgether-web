@@ -6,7 +6,7 @@ const PostComponent = ({}) => {
 
     return (
 
-        <div className='w-full bg-white-200 h-2/6 mt-2 rounded-lg flex flex-col shadow-lg'>
+        <div className='w-full bg-white-200 h-2/6 mt-2 rounded-lg flex flex-col shadow-lg mb-4'>
             <div className='w-full text-center text-black-200 pt-1'>
                 <h1>Postar</h1>
                 <div className="border-b border-black-200 border-opacity-30 pt-1"></div>
@@ -16,13 +16,13 @@ const PostComponent = ({}) => {
                     <h1 className="text-sm">pic</h1>
                 </div>
                 <div className='w-full h-full flex-grow'>
-                    <div className='text-black-200 opacity-50 h-full w-full bg-white-200'>
-                        <textarea placeholder='Compartilhe algo conosco' className="bg-white-200 bg-opacity-10 w-full h-full rounded-lg focus:outline-none text-black-400"></textarea>
+                    <div className='text-black-200 opacity-50 h-full w-full bg-white-200 mt-4'>
+                        <textarea placeholder='Compartilhe algo conosco' className="bg-white-200 bg-opacity-10 w-full h-full rounded-lg focus:outline-none text-black-400 pt-6"></textarea>
                     </div>
                 </div>
                 <div className='flex-grow'>
                     <div className='flex justify-end pr-3'>
-                        <GoFileMedia className='h-12 w-12'/>
+                        <GoFileMedia className='h-12 w-12 text-black-200'/>
                     </div>   
                 </div>
             </div>

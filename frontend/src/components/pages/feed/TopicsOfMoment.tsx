@@ -1,10 +1,10 @@
 const TopicsOfMoment = () => {
     return (
-        <div className="bg-white-200 h-3/6 shadow-lg overflow-y-auto overflow-x-hidden">
-            <div className="flex flex-row items-center justify-center w-full pb-2">
+        <div className="bg-white-200 h-full shadow-lg overflow-y-auto overflow-x-hidden rounded-sm">
+            <div className="flex flex-row items-center justify-center w-full pb-2 bg-white-200">
                 <h1 className="font-medium text-black-200 text-center pt-2 border-b border-black-200 border-opacity-30 text-md w-4/6 text-md">Assuntos do Momento</h1>
             </div>
-            <div className="flex flex-col items-center h-full space-y-4 w-full flex-wrap">
+            <div className="flex flex-col items-center h-full space-y-4 w-full flex-wrap pt-2">
                 <div className="flex flex-row space-x-2 flex-wrap w-full items-center justify-center">
                     <h1 className="text-blue-500 font-semibold text-sm">Assunto: </h1>
                     <h2 className="text-orange-500 font-normal text-xs">Counter Strike 2</h2>

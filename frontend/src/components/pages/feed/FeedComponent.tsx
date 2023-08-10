@@ -6,32 +6,32 @@ import Image from "next/legacy/image";
 
 const FeedComponent = ({}) => {
     return (
-        <div className="w-full flex-grow bg-white-200 flex flex-col justify-between space-y-2 relative">
-                <div className="h-full shadow-lg flex flex-col space-y-6 w-full">
-                    <div className="flex flex-row">
-                        <div className="rounded-full h-16 w-16 bg-red-200 flex items-center justify-center relative mt-3 ml-3">
-                            <h1 className="text-sm">pic</h1>
-                        </div>
-                        <div className="text-center mt-5 ml-3">
-                            <h1 className="text-orange-500">Mia Jensen</h1>
-                            <p className="text-black-200 opacity-30 text-sm">2 hours ago</p>
-                        </div>
+        <div className="w-full flex-grow  flex flex-col justify-between space-y-2 relative h-full bg-white-200 overflow-x-visible">
+            <div className="h-5/6 shadow-lg flex flex-col space-y-6 w-full">
+                <div className="flex flex-row">
+                    <div className="rounded-full h-16 w-16 flex items-center justify-center relative mt-3 ml-3 bg-red-200">
+                        <h1 className="text-sm">pic</h1>
                     </div>
-                    <div className="w-full text-left pl-3 pr-6 text-black-300">
-                        <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. </p>
+                    <div className="text-center mt-5 ml-3">
+                        <h1 className="text-orange-500">Mia Jensen</h1>
+                        <p className="text-black-200 opacity-30 text-sm">2 hours ago</p>
                     </div>
-                    <div className="relative h-full w-full flex flex-col items-center justify-center bg-white-200 bg-opacity-20 flex-grow">
-                        <div className="w-5/6 h-full">
-                            <Image
-                                src={"/feed/p2.jpg"}
-                                alt={"TESTE"}
-                                layout="fill"
-                                objectFit="contain"
-                            />
-                        </div>
-                    </div>   
-                    <div className="border-b border-black-200 border-opacity-30"></div>
-                    <div className="pl-3 pr-3 text-orange-500 flex-1 h-4/6 pb-6 flex flex-row justify-center items-center">
+                </div>
+                <div className="w-full text-left pl-3 pr-6 text-black-300">
+                    <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. </p>
+                </div>
+                <div className="relative h-full w-full flex flex-col items-center justify-center bg-white-200 bg-opacity-20 flex-grow">
+                    <div className="w-5/6 h-full">
+                        <Image
+                            src={"/feed/p2.jpg"}
+                            alt={"TESTE"}
+                            layout="fill"
+                            objectFit="contain"
+                        />
+                    </div>
+                </div>   
+                <div className="border-b border-black-200 border-opacity-30 "></div>
+                    <div className="pl-3 pr-3 text-orange-500 flex-1 h-4/6 pb-6 flex flex-row justify-center items-center bg-white-200">
                         <div className="w-5/6 flex flex-row justify-between">
                             <div className="flex flex-row items-center justify-center space-x-2">
                                 <PiHeartFill className="h-6 w-6" />
@@ -47,10 +47,10 @@ const FeedComponent = ({}) => {
                             </div>
                         </div>
                     </div>
-                </div>
-                <div className="bg-white-300 h-12 flex justify-center items-center text-orange-500">
-                    <h1>Carregar Mais</h1>
-                </div>
+                </div>  
+                <div>
+                    <h1 className="text-orange-500">Carregar mais</h1>
+                </div>                           
             </div>
     );
 };
