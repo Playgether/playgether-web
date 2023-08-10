@@ -16,7 +16,7 @@ const PostComponent = ({}) => {
                     <h1 className="text-sm">pic</h1>
                 </div>
                 <div className='w-full h-full flex-grow'>
-                    <div className='text-black-200 opacity-50 h-full w-full bg-white-200 mt-4'>
+                    <div className='text-black-200 opacity-50 h-full w-full bg-white-200 mt-7'>
                         <textarea placeholder='Compartilhe algo conosco' className="bg-white-200 bg-opacity-10 w-full h-full rounded-lg focus:outline-none text-black-400 pt-6"></textarea>
                     </div>
                 </div>

@@ -1,3 +1,4 @@
+import TextLimitComponent from "../../layouts/TextLimitComponent"
 import { useNotifications } from "./useNotifications"
 
 const Notifications = () => {
@@ -40,8 +41,8 @@ const Notifications = () => {
                 <div>
                     <a href=""><h1 className="font-medium text-orange-500 text-sm">David Matthew</h1></a>
                 </div>
-                <div className="text-black-300 text-xs pt-2 pb-2">
-                    <p>entrou para o mesmo clã que você </p>
+                <div className="text-black-300 text-xs pt-2 pb-2 break-all w-5/6">
+                    <p><TextLimitComponent text="entrou para o mesmo clã que você dsadsadsadsadsadsadsadsadsadsadsadsadasds" maxCharacters={150} /></p>
                 </div>
             </div>
             <div className="flex items-center justify-start space-x-2  pt-2 flex-wrap">

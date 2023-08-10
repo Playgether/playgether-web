@@ -3,7 +3,7 @@ import {BiWorld} from "react-icons/bi";
 
 const GlobalChat = ({}) => {
     return (
-        <div className="bg-white-200 absolute w-full h-12 flex items-center border-b border-black-200 border-opacity-40 justify-center inset-x-0 bottom-0">
+        <div className="bg-white-300 absolute w-full h-14 flex items-center border-b border-black-200 border-opacity-40 justify-center inset-x-0 bottom-0 bg-blur-sm">
             <div className=" w-1/6 text-center flex space-x-4 items-center justify-center h-full text-blue-500">
                 <h1 className="uppercase bold font-semibold ml-6 lg:text-sm">global chat</h1>
                 <BiWorld className="w-1/6 h-3/6"/>

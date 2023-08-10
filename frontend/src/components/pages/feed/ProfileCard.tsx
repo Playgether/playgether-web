@@ -2,6 +2,7 @@ import React from "react";
 import { SiValorant, SiCounterstrike } from "react-icons/si";
 import { useAuthContext } from "../../../context/AuthContext";
 import OrangeButton from "../../elements/OrangeButton";
+import TextLimitComponent from "../../layouts/TextLimitComponent";
 
 const ProfileCard = ({}) => {
     const {user} = useAuthContext()
@@ -18,8 +19,10 @@ const ProfileCard = ({}) => {
                 <h1 className="text-xl text-black-300">Henry James</h1>
                 <p className="text-sm text-black-200 opacity-90">{user?.username}</p>
             </div>
-            <div className="w-full">
-                <p className=" text-xs text-center text-black-200 opacity-90">Lorem Ipsum is simply dummy text of the printing and typesetting industry.</p>
+            <div className="break-all w-5/6">
+                <p className=" text-xs text-center text-black-200 opacity-90">
+                    <TextLimitComponent text="Lorem Ipsum is simply dummy text of the printing and typesetting industry. ldpsald pkdspak kdo kdasodpkasko kdsaop kopaskdopsakdopaskdopaskopdksa dsaodaskpdksaop kppo koasdopdaskopdsa" maxCharacters={100}/>
+                </p>
             </div>
             <div className="flex space-x-3">
                 <SiValorant/>
