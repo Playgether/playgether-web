@@ -11,7 +11,7 @@ const Right = () => {
                     </div>
                     <Notifications />
                 </div>
-                <div className="bg-white-200 h-3/6 flex mt-2 flex-col items-center space-y-2 rounded-lg shadow-lg overflow-y-auto">
+                <div className="bg-white-200 h-3/6 flex mt-2 flex-col items-center space-y-2 rounded-lg shadow-lg ">
                     <TopicsOfMoment />
                 </div>
             </div>

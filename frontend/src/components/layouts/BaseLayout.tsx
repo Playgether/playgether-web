@@ -12,7 +12,7 @@ const BaseLayout = ({children, ...rest}) => {
             <div>
                 <HeaderBase />
             </div>
-            <div className="flex flex-row h-full w-full relative items-center justify-center">
+            <div className="flex flex-row h-5/6 w-full items-center justify-center">
                 <AsideBase />
                 {children}
             </div>    

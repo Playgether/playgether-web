@@ -2,7 +2,7 @@ import TextLimitComponent from "../../layouts/TextLimitComponent"
 
 const TopicsOfMoment = () => {
     return (
-        <div className="bg-white-200 h-full shadow-lg overflow-y-auto overflow-x-hidden rounded-sm w-full">
+        <div className="bg-white-200 h-full shadow-lg  overflow-y-auto rounded-sm w-full">
             <div className="flex flex-row items-center justify-center w-full pb-2 bg-white-200">
                 <h1 className="font-medium text-black-200 text-center pt-2 border-b border-black-200 border-opacity-30 text-md w-4/6 text-sm">Assuntos do Momento</h1>
             </div>
