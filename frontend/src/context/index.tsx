@@ -1,8 +1,11 @@
 'use client'
 
 import { AuthProvider } from "./AuthContext"
+import { ProfileContextProvider } from "./ProfileContext";
 
 export const AppProvider = ({ children } : { children: React.ReactNode }) => {
-    return <AuthProvider>{children}</AuthProvider>;
+    return <AuthProvider>   
+                    {children}
+            </AuthProvider>;
 };
 

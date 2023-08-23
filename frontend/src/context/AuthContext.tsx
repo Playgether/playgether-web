@@ -8,6 +8,8 @@ import { updateTokenRequest, TokenData } from "../services/updateTokenRequest";
 export type UserProps = {
   username: string;
   user_id: number;
+  first_name: string;
+  last_name:string;
 };
 
 type AuthContextProps = {
@@ -73,9 +75,6 @@ const AuthProvider = ({children}: {children: React.ReactNode}) => {
   };
 
   const updateToken = async ()=> {
-    console.log('Update token colled')
-    console.log(user)
-    console.log(authTokens)
     if (authTokens && authTokens.refresh) {
       const response = await updateTokenRequest(authTokens)
       if (response?.status === 200) {

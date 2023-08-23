@@ -20,7 +20,7 @@ const FeedComponent = ({}) => {
                 </div>
             </div>
             <div className="w-full text-left pl-6 pr-6 text-black-300 break-all lg:text-sm">
-                <p><TextLimitComponent text="Quinto campeonato de disputa de clãs eu quero saber eu quero testar comoissoquebraesequebralegalestacaralha dsadsadsadasdsadsadasdsad sdkapodksaopkdsoakdopsakdopsakodpskaopdksaopkdsaopkdopsakdopsak" maxCharacters={160}/></p>
+                <TextLimitComponent text="Quinto campeonato de disputa de clãs eu quero saber eu quero testar comoissoquebraesequebralegalestacaralha dsadsadsadasdsadsadasdsad sdkapodksaopkdsoakdopsakdopsakodpskaopdksaopkdsaopkdopsakdopsak" maxCharacters={160}/>
             </div>
             <div className="relative h-full w-full flex flex-col items-center justify-center">
                 <div className="w-5/6 h-full">
@@ -63,7 +63,7 @@ const FeedComponent = ({}) => {
                 </div>
             </div>
             <div className="w-full text-left pl-6 pr-6 text-black-300 break-all lg:text-sm">
-                <p><TextLimitComponent text="Quinto campeonato de disputa de clãs eu quero saber eu quero testar comoissoquebraesequebralegalestacaralha dsadsadsadasdsadsadasdsad sdkapodksaopkdsoakdopsakdopsakodpskaopdksaopkdsaopkdopsakdopsak" maxCharacters={160}/></p>
+                <TextLimitComponent text="Quinto campeonato de disputa de clãs eu quero saber eu quero testar comoissoquebraesequebralegalestacaralha dsadsadsadasdsadsadasdsad sdkapodksaopkdsoakdopsakdopsakodpskaopdksaopkdsaopkdopsakdopsak" maxCharacters={160}/>
             </div> 
             <div className="border-b border-black-200 border-opacity-30 "></div>
                 <div className="pl-3 pr-3 text-orange-500 flex-1 pb-6 flex flex-row justify-center items-center bg-white-200">
@@ -96,7 +96,7 @@ const FeedComponent = ({}) => {
                 </div>
             </div>
             <div className="w-full text-left pl-6 pr-6 text-black-300 break-all lg:text-sm">
-                <p><TextLimitComponent text="Quinto campeonato de disputa de clãs eu quero saber eu quero testar comoissoquebraesequebralegalestacaralha dsadsadsadasdsadsadasdsad sdkapodksaopkdsoakdopsakdopsakodpskaopdksaopkdsaopkdopsakdopsak" maxCharacters={160}/></p>
+                <TextLimitComponent text="Quinto campeonato de disputa de clãs eu quero saber eu quero testar comoissoquebraesequebralegalestacaralha dsadsadsadasdsadsadasdsad sdkapodksaopkdsoakdopsakdopsakodpskaopdksaopkdsaopkdopsakdopsak" maxCharacters={160}/>
             </div>
             <div className="relative h-full w-full flex flex-col items-center justify-center">
                 <div className="w-5/6 h-full">
@@ -139,7 +139,7 @@ const FeedComponent = ({}) => {
                 </div>
             </div>
             <div className="w-full text-left pl-6 pr-6 text-black-300 break-all lg:text-sm">
-                <p><TextLimitComponent text="Quinto campeonato de disputa de clãs eu quero saber eu quero testar comoissoquebraesequebralegalestacaralha dsadsadsadasdsadsadasdsad sdkapodksaopkdsoakdopsakdopsakodpskaopdksaopkdsaopkdopsakdopsak" maxCharacters={160}/></p>
+                <TextLimitComponent text="Quinto campeonato de disputa de clãs eu quero saber eu quero testar comoissoquebraesequebralegalestacaralha dsadsadsadasdsadsadasdsad sdkapodksaopkdsoakdopsakdopsakodpskaopdksaopkdsaopkdopsakdopsak" maxCharacters={160}/>
             </div>
             <div className="relative h-full w-full flex flex-col items-center justify-center">
                 <div className="w-5/6 h-full flex-1">
@@ -187,7 +187,7 @@ const FeedComponent = ({}) => {
                     </div>
                 </div>
                 <div className="w-full text-left pl-6 pr-6 text-black-300 break-all lg:text-sm">
-                    <p><TextLimitComponent text="Quinto campeonato de disputa de clãs eu quero saber eu quero testar comoissoquebraesequebralegalestacaralha dsadsadsadasdsadsadasdsad sdkapodksaopkdsoakdopsakdopsakodpskaopdksaopkdsaopkdopsakdopsak" maxCharacters={160}/></p>
+                    <TextLimitComponent text="Quinto campeonato de disputa de clãs eu quero saber eu quero testar comoissoquebraesequebralegalestacaralha dsadsadsadasdsadsadasdsad sdkapodksaopkdsoakdopsakdopsakodpskaopdksaopkdsaopkdopsakdopsak" maxCharacters={160}/>
                 </div>
                 <div className="relative h-full w-full flex flex-col items-center justify-center bg-white-200 bg-opacity-20 flex-grow">
                     <div className="w-5/6 h-full">
