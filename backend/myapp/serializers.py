@@ -20,6 +20,8 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
         token['username'] = user.username
+        token['first_name'] = user.first_name
+        token['last_name'] = user.last_name
 
         return token
 
@@ -66,7 +68,6 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = (
             'id',
-            'user',
             'bio',
             'profile_photo',
             'hours_played',

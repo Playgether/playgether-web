@@ -17,8 +17,15 @@ class IndexView(TemplateView):
     template_name = 'index.html'
 
 
-class ProfileListView(TemplateView):
-    template_name = 'profile_list.html'
+class ProfileViewSet(viewsets.ModelViewSet):
+    queryset = Profile.objects.all()
+    serializer_class = ProfileSerializer
+
+    @action(detail=True, methods=['get'])
+    def profiles(self, request, pk=None):
+        profile = Profile.objects.filter(user_id=pk)
+        serializer = ProfileSerializer(profile)
+        return Response(serializer.data)
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
