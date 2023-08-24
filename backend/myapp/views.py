@@ -17,6 +17,20 @@ class IndexView(TemplateView):
     template_name = 'index.html'
 
 
+class PostsViewSet(viewsets.ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = ProfileSerializer
+
+    @action(detail=True, methods=['get', 'post'])
+    def feed(self, request, pk=None):
+        following = Profile.objects.get(user_id=pk).follows.exclude(user_id=pk)
+        ids_seguindo = [user.id for user in following]
+        posts = Post.objects.filter(created_by_user__in=ids_seguindo)
+        serializer = PostSerializer(posts, many=True)
+        return Response(serializer.data)
+
+
+
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
@@ -57,13 +71,6 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = ProfileSerializer(followers, many=True)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['get'])
-    def posts(self, request, pk=None):
-        user = request.user
-        posts = user.posts_set.all()
-        # posts = User.objects.get(id=pk).posts.all()
-        serializer = PostSerializer(posts, many=True)
-        return Response(serializer.data)
     
     @action(detail=True, methods=['get'])
     def usernames(self, request, pk=None):

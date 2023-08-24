@@ -11,7 +11,7 @@ class ProfileInline(admin.StackedInline):
 
 class UserAdmin(admin.ModelAdmin):
     model = User
-    fields = ['username', 'first_name']
+    fields = ['username', 'first_name', 'password']
     inlines = [ProfileInline]
 
 @admin.register(Repost)
@@ -28,7 +28,8 @@ class PostAdmin(admin.ModelAdmin):
 
 @admin.register(PostMedia)
 class PostMediaAdmin(admin.ModelAdmin):
-    display = ('media_of_post')
+    display = ('post', 'media_file', 'position')
+    exclude = ('media_type',)
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):

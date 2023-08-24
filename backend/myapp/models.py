@@ -6,10 +6,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.auth.models import User
 from .patterns.strategy.notifications import CommentPostNotification, LikeCommentNotification, LikePostNotification, LikeProfileNotification, LikeRepostNotification, CommentOtherComment, CommentProfileNotification, CommentRepost, RepostNotification
-
-  
 # Create your models here.
-    
+
+
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     follows = models.ManyToManyField("self", related_name="followed_by", symmetrical=False, blank=True)
@@ -56,7 +55,7 @@ class Post (models.Model):
         if self.comment == "":
             return f'Este post não tem uma legenda. Usuário: {self.created_by_user.username}'
         else:
-            return f'{self.comment} / Quem Postou: {self.created_by_user.username} '
+            return f'{self.comment} / Quem Postou: {self.created_by_user.username} ID:{self.id}'
         
     def get_like_notification_interface(self):
         return LikePostNotification.LikePostNotification()
@@ -72,6 +71,7 @@ class PostMedia (models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='medias')
     media_file = models.FileField("Media File", upload_to=get_file_post_media_path, unique=True, validators=[validate_file_extension])
     position = models.IntegerField("Position")
+    media_type = models.CharField('Media Type', max_length=15)
 
     class Meta:
         verbose_name = "PostMedia"
@@ -85,15 +85,22 @@ class PostMedia (models.Model):
         if is_post_media_exists:
             raise ValidationError('Já existe um aquivo de media nesta posição para este post')
 
+        if self.position < 0:
+            raise ValidationError('O argumento position não pode ser negativo')
+        
+        if self.position > 10:
+            raise ValidationError('O argumento position não pode ser maior que 10')
+
     def save(self, *args, **kwargs):
         try:
+            self.media_type = define_media_type_of_post_media(self.media_file.name)
             super(PostMedia, self).save(*args, **kwargs)
         except IndexError:
-            raise ValidationError
+            raise ValidationError(IndexError)
 
 class Comment(models.Model):
     limit = models.Q(app_label = 'myapp', model = 'post') | models.Q(app_label = 'myapp', model = 'comment') | models.Q(app_label = 'myapp', model = 'profile') | models.Q(app_label = 'myapp', model = 'repost')
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, limit_choices_to = limit)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, limit_choices_to = limit, related_name='comments')
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
     comment = models.TextField("Comentário", max_length=2200)
@@ -117,7 +124,7 @@ class Comment(models.Model):
 
 class Like(models.Model):
     limit = models.Q(app_label = 'myapp', model = 'post') | models.Q(app_label = 'myapp', model = 'comment') | models.Q(app_label = 'myapp', model = 'repost') | models.Q(app_label = 'myapp', model = 'profile')
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, limit_choices_to = limit)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, limit_choices_to = limit, related_name='likes')
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="likes")
@@ -144,7 +151,7 @@ class Like(models.Model):
 class Repost(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     limit = models.Q(app_label = 'myapp', model = 'post')
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, limit_choices_to = limit)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, limit_choices_to = limit, related_name='reposts')
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="shares")
@@ -180,11 +187,11 @@ class Repost(models.Model):
         return CommentRepost.CommentRepostNotification()
 
 class Notification(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="notifications")
     is_read = models.BooleanField(default=False)
     message = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, related_name='notifications')
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
 

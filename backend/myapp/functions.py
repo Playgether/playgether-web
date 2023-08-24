@@ -18,6 +18,9 @@ def is_image(type):
     else:
         return True
 
+def post_media_type(filename):
+    pass
+
 #Return a path for profile images
 def get_file_profile_path(_instance, filename):
     ext = filename.split('.')[-1]
@@ -36,7 +39,16 @@ def get_file_post_media_path(_instance, filename):
         return f"posts/images/{filename}"
     else:
         return f"posts/videos/{filename}"
-    
+
+def define_media_type_of_post_media(filename):
+    parts = filename.split('.')[-1]
+    type = is_image(parts)
+    if type == True:
+        media_type = 'image'
+    else:
+        media_type = 'video'
+    return media_type
+
 
 #Validade if a extesion of post file is accepted
 def validate_file_extension(value):

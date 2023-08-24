@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from myapp.models import Profile, Notification, Post, Like
+from myapp.models import Profile, Notification, Post, Like, Comment, Repost, PostMedia
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from django import forms
@@ -93,20 +93,123 @@ class NotificationSerializer(serializers.ModelSerializer):
             'timestamp'
         )
 
-class PostSerializer(serializers.ModelSerializer):
 
+class PostSerializer(serializers.ModelSerializer):
+    created_by_user_name = serializers.ReadOnlyField(source='created_by_user.username')
+    created_by_user_photo = serializers.ReadOnlyField(source='profile.profile_photo')
+    #comments = serializers.SlugRelatedField(many=True, read_only=True, slug_field='comments')
+    comments = serializers.SerializerMethodField()
+    likes = serializers.SerializerMethodField()
+    reposts = serializers.SerializerMethodField()
+    medias = serializers.SerializerMethodField()
+
+    def get_reposts(self, obj):
+        try:
+            reposts = Repost.objects.filter(object_id=obj.id)
+            reposts_serializer = RepostSerializer(reposts, many=True)
+            return reposts_serializer.data
+        except Repost.DoesNotExist:
+            return []
+        
+    def get_medias(self, obj):
+        medias = obj.medias.all()
+        return PostMediaSerializer(medias, many=True).data   
+     
+    def get_likes(self, obj):
+        try:
+            likes = Like.objects.filter(object_id=obj.id)
+            likes_serializer = LikeSerializer(likes, many=True)
+            return likes_serializer.data
+        except Like.DoesNotExist:
+            []
+    
+    def get_comments(self, obj):
+        try:
+            comments = Comment.objects.filter(object_id=obj.id)
+            comment_serializer = CommentSerializer(comments, many=True)
+            return comment_serializer.data
+        except Comment.DoesNotExist:
+            return None
+
+        
     class Meta:
         model = Post
         fields = (
             '__all__'
         )
 
+class CommentSerializer(serializers.ModelSerializer):
+    created_by_user_name = serializers.ReadOnlyField(source='user.username')
+    created_by_user_photo = serializers.SerializerMethodField()
+
+    def get_created_by_user_photo(self, obj):
+        try:
+            profile = Profile.objects.get(user=obj.user)
+            return profile.profile_photo.url if profile.profile_photo else None
+        except Profile.DoesNotExist:
+            return None
+
+    def get_comments_of_comments(self, obj):
+        try:
+            comments = Comment.objects.filter(object_id=obj.id)
+            comment_serializer = CommentSerializer(comments, many=True)
+            return comment_serializer.data
+        except Comment.DoesNotExist:
+            return []
+
+    class Meta:
+        model = Comment
+        fields = (
+            '__all__'
+        )
+        
+    comments_of_comments = serializers.SerializerMethodField()
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        comments_of_comments = data.pop('comments_of_comments')
+        data['comments_of_comments'] = comments_of_comments
+        return data
+
 class LikeSerializer(serializers.ModelSerializer):
+    created_by_user_name = serializers.ReadOnlyField(source='user.username')
+    created_by_user_photo = serializers.SerializerMethodField()
+
+    def get_created_by_user_photo(self, obj):
+        try:
+            profile = Profile.objects.get(user=obj.user)
+            return profile.profile_photo.url if profile.profile_photo else None
+        except Profile.DoesNotExist:
+            return None
 
     class Meta:
         model = Like
         fields = (
-            'user',
-            'timestamp',
-            'content_type'
+            '__all__' 
         )
+
+class RepostSerializer(serializers.ModelSerializer):
+    created_by_user_name = serializers.ReadOnlyField(source='user.username')
+    created_by_user_photo = serializers.SerializerMethodField()
+
+    def get_created_by_user_photo(self, obj):
+        try:
+            profile = Profile.objects.get(user=obj.user)
+            return profile.profile_photo.url if profile.profile_photo else None
+        except Profile.DoesNotExist:
+            return None
+
+    class Meta:
+        model = Repost
+        fields = (
+            '__all__' 
+        )
+
+class PostMediaSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = PostMedia
+        fields = (
+            '__all__'
+        )
+
