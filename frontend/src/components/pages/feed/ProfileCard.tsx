@@ -13,6 +13,7 @@ const ProfileCard = ({}) => {
     const {user} = useAuthContext()
     const {profile, fetchProfile} = useProfileContext()
     useResource<ProfileProps>(() => fetchProfile())
+    console.log(useResource<ProfileProps>(() => fetchProfile()))
 
     return (
         
@@ -21,7 +22,7 @@ const ProfileCard = ({}) => {
                 <h1 className="font-medium text-black-200 text-center pt-2 border-b border-black-200 border-opacity-30 text-md w-4/6 text-md">Profile</h1>
             </div>
             <div className="rounded-full h-20 w-20 flex items-center justify-center relative bg-white-200">
-                {profile?.profile_photo === undefined ? (
+                {profile?.profile_photo === null || profile?.profile_photo === undefined ? (
                     <CgProfile className="h-full w-full text-gray-300"/>
                 ) : (
                     <Image src={`${profile?.profile_photo}`} 

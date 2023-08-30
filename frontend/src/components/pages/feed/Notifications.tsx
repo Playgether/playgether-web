@@ -3,7 +3,7 @@ import { useNotifications } from "./useNotifications"
 
 const Notifications = () => {
 
-    const { notifications, authTokens } = useNotifications()
+    // const { notifications, authTokens } = useNotifications()
 
     return (
         <div className="flex flex-col w-full pl-2 flex-wrap divide-y-2 flex-grow justify-center 2xl:space-y-4 bg-white-200">

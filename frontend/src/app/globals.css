@@ -9,7 +9,90 @@
     font-family: 'Poppins', sans-serif;
 }
 
-.showcase {
+/* .showcase {
     transition: .5s;
 }
+
+
+.swiper {
+    padding: 32px;
+}
+
+.swiper-slide {
+    display: flex;
+    justify-content: center;
+}
+
+.swiper-pagination-bullet-active {
+    background-color: #FF9147;
+}
+
+.swiper-button-next {
+    color: #718096
+}
+
+.swiper-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  
+.swiper-container {
+    width: 100%; 
+    height: 400px; 
+}
+
+
+.sample-slider .swiper-pagination-bullets .swiper-pagination{
+    color: #FF9147;
+    bottom: initial;
+    top: 10px;
+    
+} */
+
+.swiper-slide {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+
+.sample-slider-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+}
+
+/* Estilizar o bullet ativo */
+.swiper-pagination-bullet-active {
+    background-color: #FF9147;
+}
+
+/* Outros estilos do Swiper */
+.swiper-button-next {
+    color: #718096;
+}
+
+.swiper-container {
+    width: 100%;
+    height: 400px;
+}
+
+/* Ajustar a posição da páginação */
+.sample-slider .swiper-pagination-bullets .swiper-pagination {
+    color: #FF9147;
+    top: 10px;
+}
+
+.sample-slider-pagination .swiper-pagination-bullet {
+    margin: 0 5px; /* Ajuste o valor para adicionar o espaço desejado */
+    background-color: #008BF5;
+}
+
+.swiper-button-next {
+    color: #718096
+}
+
 

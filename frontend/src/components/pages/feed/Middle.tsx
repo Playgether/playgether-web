@@ -1,19 +1,32 @@
 'use client'
 
 import { useState } from "react";
-import FeedComponent from "./FeedComponent";
 import PostComponent from "./PostComponent";
 import { IoArrowDownCircleSharp, IoArrowUpCircle } from "react-icons/io5";
+import { medias } from "../../../app/page/page";
+import LoadMore from "./LoadMore";
+import { useResource } from "../../custom_hooks/useResource";
+import { getFeed } from "../../../services/getFeed";
+import { FeedProps } from "../../../services/getFeed";
+import { useAuthContext } from "../../../context/AuthContext";
+import Posts from "./Posts";
+import PostProperies from "./PostsProperies";
+import ProfileImagePost from "./ProfileImagePost";
+import UserNamePost from "./UserNamePost";
+import PostText from "../../layouts/PostText";
+import FeedComponent from "./FeedComponent";
 
 const Middle = () => {
     const [isComponentVisible, setComponentVisible] = useState(false);
+    const { user, authTokens } = useAuthContext();
+    const { resources } = useResource<FeedProps[]>(() => getFeed(authTokens, user?.user_id));
 
     const toggleComponentVisibility = () => {
         setComponentVisible(!isComponentVisible);
     };
-    
+     
     return (
-        <div className="bg-white-300 col-span-2 h-full mt-4 overflow-y-auto pb-14 scrollable">
+        <div className="bg-white-300 col-span-2 h-full w-full mt-4 overflow-y-auto pb-14 scrollable shadow-lg">
             <div className="flex flex-row w-full space-x-3 items-center justify-center text-orange-500">
                 <div className="text-sm bg-white-300 w-full flex flex-row justify-center items-center space-x-2 pt-1">
                     <h1>{isComponentVisible ? "Fechar" : "Compartilhe algo conosco"}</h1>
@@ -21,9 +34,11 @@ const Middle = () => {
                 </div>
             </div>
             {isComponentVisible && <PostComponent />}
-                <FeedComponent /> 
+           <FeedComponent />
+            <LoadMore />
         </div>
     )
 }
+<Posts media={medias} />
 
-export default Middle
+export default Middle;

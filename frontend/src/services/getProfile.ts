@@ -15,7 +15,7 @@ export interface ProfileProps {
 export const getProfile = async (authTokens : TokenData | undefined | null, userId : number | undefined) => {
 
     try {
-        const response = await api.get<ProfileProps[]>(`/api/v1/profiles/${userId}`, {
+        const response = await api.get<ProfileProps[]>(`/api/v1/profiles/${userId}/`, {
             headers: {
                 'Authorization':'Bearer ' + String(authTokens?.access)
             }})
