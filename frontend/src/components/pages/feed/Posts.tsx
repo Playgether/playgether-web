@@ -2,7 +2,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Scrollbar, A11y } from 'swiper/modules';
 import Image from "next/legacy/image";
 
-const Posts = ({ media }) => {
+const Posts = ({ media, onExpand }: {media: any, onExpand : (...props) => void}) => {
 
     const handleSlideChange = (swiper) => {
         const videos = document.querySelectorAll('video');
@@ -13,12 +13,10 @@ const Posts = ({ media }) => {
         });
     };
 
-    console.log(media)
-
     return (
         <>
         {media && media.length > 0 ? (
-            <div className="swiper-container relative pt-3 bg-white-200 h-full pb-5">
+            <div className="swiper-container relative pt-3 bg-white-200 h-full cursor-pointer" onClick={(event) => {onExpand(), event.stopPropagation();}}>
             <Swiper 
                 modules={[Navigation, Pagination, Scrollbar, A11y]}
                 slidesPerView={1}
@@ -29,8 +27,9 @@ const Posts = ({ media }) => {
                 >
                 {media.map(item => (
                     <SwiperSlide key={item.id} className="pb-5 -z-1 h-full">
+          
                         {item.media_type === "image" ? (
-                        <div className="h-full">
+                        <div className="h-full" >
                             <Image
                                 src={item.media_file}
                                 alt={"TESTE"}

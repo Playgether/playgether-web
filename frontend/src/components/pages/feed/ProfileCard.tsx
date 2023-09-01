@@ -13,7 +13,6 @@ const ProfileCard = ({}) => {
     const {user} = useAuthContext()
     const {profile, fetchProfile} = useProfileContext()
     useResource<ProfileProps>(() => fetchProfile())
-    console.log(useResource<ProfileProps>(() => fetchProfile()))
 
     return (
         

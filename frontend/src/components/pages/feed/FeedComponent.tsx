@@ -19,7 +19,7 @@ const FeedComponent = () => {
   const { user, authTokens } = useAuthContext();
   const { resources } = useResource<ApiResponse>(() => getFeed(authTokens, user?.user_id)); 
   const [openPostsExtend, setOpenPostsExtend] = useState(false)
-  const [resourceState, setResourceState] = useState<PostsExtendProps>()
+  const [resourceState, setResourceState] = useState<FeedProps>()
 
   const handlePostsCloseExtend = () => {
     setOpenPostsExtend(!openPostsExtend)
@@ -32,13 +32,13 @@ const FeedComponent = () => {
 
   return (
       <>
+      {openPostsExtend && !!resourceState && 
+        <div className="h-4/6">
+          <PostsExtend resource={resourceState} onClose={handlePostsCloseExtend}/>
+        </div>
+      }
         {resources && resources.data.map((resource) => (
           <>
-          {openPostsExtend && 
-          <div className="h-4/6">
-            <PostsExtend resource={resourceState} onClose={handlePostsCloseExtend}/>
-          </div>
-          }
           <div className="bg-white-200 flex items-start justify-start">
               <ProfileImagePost resource={resource} />
               <UserNamePost resource={resource}/>
@@ -48,8 +48,8 @@ const FeedComponent = () => {
           </div>
     
           {resource?.has_post_media ? (
-              <div className="bg-white-200 h-4/6" onClick={() => handlePostsExtend(resource)}>
-                <Posts media={resource.medias}/>
+              <div className="bg-white-200 h-4/6">
+                <Posts media={resource.medias} onExpand={() => handlePostsExtend(resource)}/>
               </div>
       ) : null}
   

@@ -1,5 +1,4 @@
 import { api } from "./api";
-import { useAuthContext } from "../context/AuthContext";
 import { TokenData } from "./updateTokenRequest";
 
 export interface FeedProps {
@@ -79,7 +78,6 @@ export const getFeed = async (authTokens : TokenData | undefined | null, userId 
             headers: {
                 'Authorization':'Bearer ' + String(authTokens?.access)
             }})
-        console.log(response)
         return response
     } catch (error) {   
         return error;

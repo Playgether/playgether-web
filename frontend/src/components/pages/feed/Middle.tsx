@@ -10,10 +10,6 @@ import { getFeed } from "../../../services/getFeed";
 import { FeedProps } from "../../../services/getFeed";
 import { useAuthContext } from "../../../context/AuthContext";
 import Posts from "./Posts";
-import PostProperies from "./PostsProperies";
-import ProfileImagePost from "./ProfileImagePost";
-import UserNamePost from "./UserNamePost";
-import PostText from "../../layouts/PostText";
 import FeedComponent from "./FeedComponent";
 
 const Middle = () => {

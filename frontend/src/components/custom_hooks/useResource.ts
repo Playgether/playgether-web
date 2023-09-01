@@ -9,8 +9,6 @@ export const useResource = <T>(getResourceFunc: (...props) => void | Promise<T |
     const handleGetApiResource = useCallback(async () => {
         if (user && authTokens) {
             const result = await getResourceFunc();
-            console.log(result)
-            console.log(getResourceFunc)
             setResource(result);
         } else {
             false
