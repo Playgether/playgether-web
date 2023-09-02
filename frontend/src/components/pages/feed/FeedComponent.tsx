@@ -40,7 +40,7 @@ const FeedComponent = () => {
         {resources && resources.data.map((resource) => (
           <>
           <div className="bg-white-200 flex items-start justify-start">
-              <ProfileImagePost resource={resource} />
+              <ProfileImagePost link_photo={resource.created_by_user_photo} className="mt-3 ml-3 h-16 w-16"/>
               <UserNamePost resource={resource}/>
           </div>
           <div className="pt-4 flex min-h-[5rem] pb-4 bg-white-200">

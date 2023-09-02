@@ -1,20 +1,29 @@
 import { CgProfile } from "react-icons/cg";
 import Image from "next/legacy/image";
+import { twJoin} from "tailwind-merge";
+import { HTMLAttributes } from "react";
 
-type ProfileImagePostProps = {
-    resource: {
-        created_by_user_photo:string
-    }
+
+interface DivProps extends HTMLAttributes<HTMLDivElement> {
+
+
 }
 
-const ProfileImagePost = ({ resource }: ProfileImagePostProps) => {
+type Resource = {
+    link_photo: string
+}
+
+
+const ProfileImagePost = ({ link_photo, ...rest }: Resource & DivProps) => {
     return (   
-        <div className="h-16 w-16 flex items-center justify-center relative mt-3 ml-3 bg-white-200 rounded-full">
-            {resource?.created_by_user_photo === null ? (
+        <div 
+        {...rest}
+        className = {twJoin("relative bg-white-200 rounded-full", rest.className)}>
+            {typeof link_photo !== 'string' ? (
                 <CgProfile className="h-full w-full text-gray-300" />
             ) : (
                 <Image
-                    src={`${resource?.created_by_user_photo}`}
+                    src={`${link_photo}`}
                     width={400}
                     height={400}
                     alt={"Imagem de perfil de quem postou um post no feed"}

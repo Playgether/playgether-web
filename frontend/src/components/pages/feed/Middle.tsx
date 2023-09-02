@@ -35,6 +35,6 @@ const Middle = () => {
         </div>
     )
 }
-<Posts media={medias} />
+<Posts media={medias}/>
 
 export default Middle;
