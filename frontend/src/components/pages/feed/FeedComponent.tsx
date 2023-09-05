@@ -33,7 +33,7 @@ const FeedComponent = () => {
   return (
       <>
       {openPostsExtend && !!resourceState && 
-        <div className="h-4/6">
+        <div className="h-5/6">
           <PostsExtend resource={resourceState} onClose={handlePostsCloseExtend}/>
         </div>
       }

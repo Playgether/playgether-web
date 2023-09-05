@@ -191,6 +191,9 @@ export default function Page() {
             </Slide>
           </Slider> */}
       </div>
+      <div className='w-4/6 bg-green-200 absolute top-0'>
+          <p>TESTE</p>
+      </div>
     </>
   )
 }
