@@ -1,3 +1,4 @@
+from urllib.parse import urljoin
 from rest_framework import serializers
 from myapp.models import Profile, Notification, Post, Like, Comment, Repost, PostMedia
 from django.contrib.auth.models import User
@@ -8,6 +9,7 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from .functions import clean_email_implementation, clean_first_name_implementation, clean_last_name_implementation, clean_password_implementation, clean_username_implementation
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.contenttypes.models import ContentType
 
 # atribute_name = ModelSerializerName(many=True, read_only=True) to add the entire object inside another object
 # atribute_name = serializers.PrimaryKeyRelatedField(many=True, read_only=True) to add just a primary key off the object inside another object
@@ -96,37 +98,48 @@ class NotificationSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     created_by_user_name = serializers.ReadOnlyField(source='created_by_user.username')
-    created_by_user_photo = serializers.ReadOnlyField(source='profile.profile_photo')
-    #comments = serializers.SlugRelatedField(many=True, read_only=True, slug_field='comments')
+    created_by_user_photo = serializers.SerializerMethodField()
     comments = serializers.SerializerMethodField()
     likes = serializers.SerializerMethodField()
     reposts = serializers.SerializerMethodField()
     medias = serializers.SerializerMethodField()
 
+    def get_created_by_user_photo(self, obj):
+        request = self.context.get('request')
+        if obj.created_by_user.profile.profile_photo:
+            return request.build_absolute_uri(obj.created_by_user.profile.profile_photo.url)
+        else:
+            return None
+
+
     def get_reposts(self, obj):
         try:
-            reposts = Repost.objects.filter(object_id=obj.id)
-            reposts_serializer = RepostSerializer(reposts, many=True)
+            request = self.context.get('request')
+            reposts = Repost.objects.filter(object_id=obj.id).order_by('-timestamp')
+            reposts_serializer = RepostSerializer(reposts, many=True, context={'request': request})
             return reposts_serializer.data
         except Repost.DoesNotExist:
             return []
         
     def get_medias(self, obj):
-        medias = obj.medias.all()
-        return PostMediaSerializer(medias, many=True).data   
+        request = self.context.get('request')
+        medias = obj.medias.all().order_by('position')
+        return PostMediaSerializer(medias, many=True, context={'request': request}).data   
      
     def get_likes(self, obj):
         try:
-            likes = Like.objects.filter(object_id=obj.id)
-            likes_serializer = LikeSerializer(likes, many=True)
+            request = self.context.get('request')
+            likes = Like.objects.filter(object_id=obj.id).order_by('-timestamp')
+            likes_serializer = LikeSerializer(likes, many=True, context={'request': request})
             return likes_serializer.data
         except Like.DoesNotExist:
             []
     
     def get_comments(self, obj):
         try:
-            comments = Comment.objects.filter(object_id=obj.id)
-            comment_serializer = CommentSerializer(comments, many=True)
+            request = self.context.get('request')
+            comments = Comment.objects.filter(object_id=obj.id).order_by('-timestamp')
+            comment_serializer = CommentSerializer(comments, many=True, context={'request': request})
             return comment_serializer.data
         except Comment.DoesNotExist:
             return None
@@ -141,18 +154,24 @@ class PostSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     created_by_user_name = serializers.ReadOnlyField(source='user.username')
     created_by_user_photo = serializers.SerializerMethodField()
+    content_type = serializers.SlugRelatedField(
+        queryset=ContentType.objects.all(),
+        slug_field='model',
+    )
 
     def get_created_by_user_photo(self, obj):
-        try:
-            profile = Profile.objects.get(user=obj.user)
-            return profile.profile_photo.url if profile.profile_photo else None
-        except Profile.DoesNotExist:
+        request = self.context.get('request')
+        if obj.user.profile.profile_photo:
+            return request.build_absolute_uri(obj.user.profile.profile_photo.url)
+        else:
             return None
 
+        
     def get_comments_of_comments(self, obj):
         try:
+            request = self.context.get('request')
             comments = Comment.objects.filter(object_id=obj.id)
-            comment_serializer = CommentSerializer(comments, many=True)
+            comment_serializer = CommentSerializer(comments, many=True, context={'request': request})
             return comment_serializer.data
         except Comment.DoesNotExist:
             return []
@@ -176,10 +195,10 @@ class LikeSerializer(serializers.ModelSerializer):
     created_by_user_photo = serializers.SerializerMethodField()
 
     def get_created_by_user_photo(self, obj):
-        try:
-            profile = Profile.objects.get(user=obj.user)
-            return profile.profile_photo.url if profile.profile_photo else None
-        except Profile.DoesNotExist:
+        request = self.context.get('request')
+        if obj.user.profile.profile_photo:
+            return request.build_absolute_uri(obj.user.profile.profile_photo.url)
+        else:
             return None
 
     class Meta:
@@ -193,10 +212,10 @@ class RepostSerializer(serializers.ModelSerializer):
     created_by_user_photo = serializers.SerializerMethodField()
 
     def get_created_by_user_photo(self, obj):
-        try:
-            profile = Profile.objects.get(user=obj.user)
-            return profile.profile_photo.url if profile.profile_photo else None
-        except Profile.DoesNotExist:
+        request = self.context.get('request')
+        if obj.user.profile.profile_photo:
+            return request.build_absolute_uri(obj.user.profile.profile_photo.url)
+        else:
             return None
 
     class Meta:
@@ -206,6 +225,15 @@ class RepostSerializer(serializers.ModelSerializer):
         )
 
 class PostMediaSerializer(serializers.ModelSerializer):
+    media_file = serializers.SerializerMethodField()
+
+    def get_media_file(self, obj):
+        request = self.context.get('request')
+        base_url = request.build_absolute_uri("/")
+        media_url = obj.media_file.url
+        
+        full_url = urljoin(base_url, media_url)
+        return full_url
 
     class Meta:
         model = PostMedia

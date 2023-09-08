@@ -1,12 +1,13 @@
 from django.views.generic import TemplateView
 from rest_framework import viewsets
-from .models import Notification, User, Profile, Post
-from .serializers import NotificationSerializer, UserSerializer, ProfileSerializer, PostSerializer, LikeSerializer, MyTokenObtainPairSerializer
+from .models import Notification, User, Profile, Post, Comment
+from .serializers import NotificationSerializer, UserSerializer, CommentSerializer, ProfileSerializer, PostSerializer, LikeSerializer, MyTokenObtainPairSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import action, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .permissions import SkipAuth
 from rest_framework_simplejwt.views import TokenObtainPairView
+from django.contrib.contenttypes.models import ContentType
 
   
 class MyTokenObtainPairView(TokenObtainPairView):
@@ -25,11 +26,13 @@ class PostsViewSet(viewsets.ModelViewSet):
     def feed(self, request, pk=None):
         following = Profile.objects.get(user_id=pk).follows.exclude(user_id=pk)
         ids_seguindo = [user.id for user in following]
-        posts = Post.objects.filter(created_by_user__in=ids_seguindo)
-        serializer = PostSerializer(posts, many=True)
+        posts = Post.objects.filter(created_by_user__in=ids_seguindo).order_by("-timestamp")
+        serializer = PostSerializer(posts, many=True, context={'request': request})
         return Response(serializer.data)
 
-
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
 
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
@@ -55,8 +58,8 @@ class UserViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['get'])
     def notifications(self, request, pk=None):
-        notification = Notification.objects.filter(user_id=pk)
-        serializer = NotificationSerializer(notification, many=True)
+        notification = Notification.objects.filter(profile_id=pk)
+        serializer = NotificationSerializer(notification, many=True).order_by('-timestamp')
         return Response(serializer.data)
     
     @action(detail=True, methods=['get'])
