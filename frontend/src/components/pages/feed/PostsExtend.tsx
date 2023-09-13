@@ -8,6 +8,10 @@ import { FaComment } from "react-icons/fa"
 import { useState } from "react"
 import InputLayout from "../../layouts/InputLayout"
 import FormComment from "../../layouts/Forms/FormComment"
+import { useAuthContext } from "../../../context/AuthContext"
+import { AiTwotoneEdit } from "react-icons/ai"
+import { MdDelete } from "react-icons/md"
+import EditComment from "./EditComment"
 
 export interface PostsExtendProps {
     onClose: () => void
@@ -52,7 +56,10 @@ const PostsExtend = ({onClose, resource}:PostsExtendProps) => {
                                 </div>
                                 <div className="w-full flex flex-col items-start justify-start text-sm">
                                     <div className="w-full flex justify-between pr-4 pl-1 pt-1">
-                                        <p key={item.id}>{item.comment}</p>
+                                        <div className="flex flex-col gap-2">
+                                            <p key={item.id}>{item.comment}</p>
+                                            <EditComment idUser={item.user} idComment={item.id}/>
+                                        </div>
                                         <div className="flex flex-row gap-2 items-center">
                                             <PiHeartFill className="h-4 w-4 text-orange-500" />
                                             <p>{item.quantity_likes}</p>
@@ -101,7 +108,7 @@ const PostsExtend = ({onClose, resource}:PostsExtendProps) => {
                     ))}
                 </div> 
                 <div className="container mx-auto w-full h-20 sticky inset-x-0 bottom-0">
-                    <FormComment/>
+                    <FormComment content_type="post" object_id={resource.id}/>
                 </div>
             </div>
             <div className="h-10 w-10">

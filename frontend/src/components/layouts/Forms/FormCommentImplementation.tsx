@@ -1,6 +1,5 @@
 import { FieldErrors, UseFormHandleSubmit } from "react-hook-form"
 import { ErrosInput } from "../ErrorsInputLayout"
-import InputLayout from "../InputLayout"
 import OrangeButton from "../../elements/OrangeButton";
 import TextAreaLayout from "../TextAreaLayout";
 
@@ -29,8 +28,8 @@ export const FormCommentImplementation = ({handleSubmit, register, errors, Submi
             </div>
             <div className="h-full flex items-center">
             <OrangeButton
-              type="submit"
               className="absolute right-0 top-0 h-full px-2"
+              type="submit"
             >
               Enviar
             </OrangeButton>

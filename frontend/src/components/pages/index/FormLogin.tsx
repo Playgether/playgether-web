@@ -17,7 +17,7 @@ const FormLogin = ({onClickAqui}: FormLoginProps) => {
     const { register, handleSubmit, errors } = UseFormState(LoginUserFormData, LoginUserSchema);
 
     const Submiting = (data: typeof LoginUserFormData) => {
-        SubmitingForm(data, login)   
+        SubmitingForm(() => login(data))   
     }
 
     return (

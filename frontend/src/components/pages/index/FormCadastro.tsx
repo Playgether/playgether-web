@@ -25,7 +25,7 @@ const FormCadastro = ({ onClickAqui }: FormCadastroProps) => {
       };
    
     const Submiting = (data: typeof RegisterUserFormData) => {
-      SubmitingForm(data, post)   
+      SubmitingForm(() => post(data))   
       setSuccess('O seu cadastro foi realizado com sucesso!');
   }
 
