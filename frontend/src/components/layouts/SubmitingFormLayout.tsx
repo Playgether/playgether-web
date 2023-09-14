@@ -9,9 +9,9 @@
 // }
 
 
-export const SubmitingForm = (funcWithArgs: (...args) => Promise<any>) => {
+export const SubmitingForm = async (funcWithArgs: (...args) => Promise<any>) => {
   try {
-      funcWithArgs();
+      await funcWithArgs();
   } catch (error) {
       console.log(error);
   }

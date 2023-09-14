@@ -14,7 +14,7 @@ export type UserProps = {
 
 type AuthContextProps = {
   user: UserProps | undefined | null;
-  login: (user: loginUserProps) => void;
+  login: (user: loginUserProps) => Promise<void>;
   logout: () => void;
   wrongPassword: string | null
   authTokens: TokenData | null | undefined

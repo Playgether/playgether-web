@@ -5,6 +5,7 @@ import { zInferForm } from "../../layouts/FormTypeLayout";
 import { UseFormState } from "../../layouts/ConstFormStateLayout";
 import { SubmitingForm } from "../../layouts/SubmitingFormLayout";
 import { FormLoginImplementation } from "./FormLoginImplementation";
+import { loginUserProps } from "../../../services/loginUser";
 
 interface FormLoginProps {
     onClickAqui: () => void
@@ -16,7 +17,7 @@ const FormLogin = ({onClickAqui}: FormLoginProps) => {
     const LoginUserFormData = zInferForm(LoginUserSchema)
     const { register, handleSubmit, errors } = UseFormState(LoginUserFormData, LoginUserSchema);
 
-    const Submiting = (data: typeof LoginUserFormData) => {
+    const Submiting = (data: loginUserProps) => {
         SubmitingForm(() => login(data))   
     }
 

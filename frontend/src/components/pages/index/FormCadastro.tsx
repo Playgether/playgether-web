@@ -1,6 +1,6 @@
 import React from "react";
 import { useState } from "react";
-import { post } from "../../../services/postCadastro";
+import { post, postCadastroProps } from "../../../services/postCadastro";
 import { zInferForm } from "../../layouts/FormTypeLayout";
 import { UseFormState } from "../../layouts/ConstFormStateLayout";
 import { RegisterFormSchema } from "./RegisterFormSchema";
@@ -8,6 +8,7 @@ import { SubmitingForm } from "../../layouts/SubmitingFormLayout";
 import { FormRegisterImplementation } from "./FormRegisterImplementation";
 import SuccessfullyRegistered from "./SuccessfullyRegistered";
 import  HandleAvailableUsernames  from "./HandleAvailableUsername";
+import { ZodSchema } from "zod";
 
 interface FormCadastroProps {
   onClickAqui: () => void
@@ -23,8 +24,9 @@ const FormCadastro = ({ onClickAqui }: FormCadastroProps) => {
     const handleAvailableUsernames = async (username : string) => {
         HandleAvailableUsernames(username, errors, setAvailableUsernameResult)
       };
-   
-    const Submiting = (data: typeof RegisterUserFormData) => {
+      
+      
+    const Submiting = (data: postCadastroProps) => {
       SubmitingForm(() => post(data))   
       setSuccess('O seu cadastro foi realizado com sucesso!');
   }
@@ -53,4 +55,4 @@ const FormCadastro = ({ onClickAqui }: FormCadastroProps) => {
     );
   };
   
-  export default FormCadastro;
+export default FormCadastro;

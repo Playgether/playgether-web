@@ -1,7 +1,7 @@
 import { api } from "./api";
 import { TokenData } from "./updateTokenRequest";
 
-interface commentProps {
+export interface commentProps {
     comment: string,
     user: number,
     content_type: string,
