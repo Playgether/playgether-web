@@ -2,12 +2,12 @@ import React, { InputHTMLAttributes } from "react";
 import { twMerge } from "tailwind-merge";
 
 interface InputProps extends InputHTMLAttributes<HTMLTextAreaElement>{
-    register: void | any;
+    register: any
 }
 
 
 const TextAreaLayout = ({ register, ...rest} : InputProps) => {
-
+    console.log(register)
     return (
         <div className={twMerge('mb-3', rest.className)}>
             <textarea

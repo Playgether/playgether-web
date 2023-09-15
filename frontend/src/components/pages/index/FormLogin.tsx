@@ -1,7 +1,6 @@
 import React from "react";
 import { useAuthContext } from "../../../context/AuthContext";
 import { LoginFormSchema } from "./LoginFormSchema";
-import { zInferForm } from "../../layouts/FormTypeLayout";
 import { UseFormState } from "../../layouts/ConstFormStateLayout";
 import { SubmitingForm } from "../../layouts/SubmitingFormLayout";
 import { FormLoginImplementation } from "./FormLoginImplementation";
@@ -14,8 +13,7 @@ interface FormLoginProps {
 const FormLogin = ({onClickAqui}: FormLoginProps) => {
     const { login, wrongPassword } = useAuthContext();
     const LoginUserSchema = LoginFormSchema()
-    const LoginUserFormData = zInferForm(LoginUserSchema)
-    const { register, handleSubmit, errors } = UseFormState(LoginUserFormData, LoginUserSchema);
+    const { register, handleSubmit, errors } = UseFormState(LoginUserSchema);
 
     const Submiting = (data: loginUserProps) => {
         SubmitingForm(() => login(data))   

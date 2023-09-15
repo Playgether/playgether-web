@@ -26,10 +26,9 @@ export const FormRegisterImplementation = ({handleSubmit, handleAvailableUsernam
                         register = {...register('username')}
                         className="mb-0"
                         
-                    >
-                        {availableUsernameResult}
-                        <ErrosInput field={errors.username}/>
-                    </InputLayout>
+                    />
+                    {availableUsernameResult}
+                    <ErrosInput field={errors.username}/>
                 </div>
                 <div className="col-span-1">
                     <OrangeButton
@@ -45,41 +44,41 @@ export const FormRegisterImplementation = ({handleSubmit, handleAvailableUsernam
                 type="email"
                 placeholder="Email"
                 register = {...register('email')}
-            >
-                <ErrosInput field={errors.email}/>
-            </InputLayout>
+            />
+            <ErrosInput field={errors.email}/>
+            
 
             <InputLayout
                 type="password"
                 placeholder="Senha"
                 register = {...register('password')}
-            >
-                <ErrosInput field={errors.password}/>
-            </InputLayout>
+            />
+            <ErrosInput field={errors.password}/>
+            
         
             <InputLayout
                 type="password"
                 placeholder="Repita a senha"
                 register = {...register('repeatPassword')}
-            >
-                <ErrosInput field={errors.repeatPassword}/>
-            </InputLayout>
+            />
+            <ErrosInput field={errors.repeatPassword}/>
+            
         
             <InputLayout
                 type="text"
                 placeholder="Primeiro nome"
                 register = {...register('first_name')}
-            >
-                <ErrosInput field={errors.first_name}/>
-            </InputLayout>
+            />
+            <ErrosInput field={errors.first_name}/>
+            
         
             <InputLayout
                 type="text"
                 placeholder="Sobrenome (OPCIONAL)"
                 register = {...register('last_name')}
-            >
-                <ErrosInput field={errors.last_name}/>
-            </InputLayout>
+            />
+            <ErrosInput field={errors.last_name}/>
+            
             
             <div className="mb-4">
                 <div className= "flex flex-row gap-2 text-black-300 items-center">

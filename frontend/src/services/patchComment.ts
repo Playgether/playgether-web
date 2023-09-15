@@ -5,7 +5,7 @@ interface commentPatchProps {
     comment: string
 }
 
-export const patchComment = async (data: commentPatchProps, authTokens : TokenData, object_id: number) => {
+export const patchComment = async (data: commentPatchProps, authTokens : TokenData | null | undefined, object_id: number) => {
     try{
         const response = await api.patch(`/api/v1/comments/${object_id}/`, data, {
             headers: {

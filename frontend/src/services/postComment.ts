@@ -8,7 +8,7 @@ export interface commentProps {
     object_id: number,
 }
 
-export const postComment = async (data: commentProps, authTokens : TokenData) => {
+export const postComment = async (data: commentProps, authTokens : TokenData | null | undefined) => {
     try{
         await api.post('/api/v1/comments/', data, {
             headers: {
