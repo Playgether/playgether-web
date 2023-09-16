@@ -1,5 +1,5 @@
 import { ReactNode } from "react"
-import OrangeButton from "./OrangeButton"
+import ButtonClose from "./ButtonClose";
 
 type ModalProps = {
     onClick: () => void;
@@ -12,7 +12,7 @@ const ModalBackground = ({onClick, children} : ModalProps) => {
     };
 
     return (
-        <div className="absolute z-1 w-full h-2/6 bg-slate-200" onClick={()=> handleClick}>
+        <div className="w-full h-2/6 bg-white-400" onClick={()=> handleClick}>
             {children}
         </div>
     );
@@ -24,7 +24,7 @@ const ModalBody = ({children}: ModalProps) => {
     }
 
     return (
-        <div className="bg-red-200 m-auto p-20 w-3/6" onClick={() => handleClick}>
+        <div className=" bg-white-300 m-auto h-full w-full overflow-y-auto" onClick={() => handleClick}>
             {children}
         </div>
     )
@@ -36,16 +36,14 @@ interface ControlledModalProps {
     children: ReactNode
     shouldShow: boolean
     onRequestClose: () => void
-    buttonHideChildren: string
 }
 
-const ControlledModal = ({shouldShow, onRequestClose, buttonHideChildren, children}:ControlledModalProps) => {
+const ControlledModal = ({shouldShow, onRequestClose, children}:ControlledModalProps) => {
     return (
         <>
         {shouldShow ? (
             <ModalBackground onClick={onRequestClose}>
                 <ModalBody onClick={()=> shouldShow}>
-                    <OrangeButton onClick={onRequestClose}>{buttonHideChildren}</OrangeButton>
                     {children}
                 </ModalBody>
             </ModalBackground>

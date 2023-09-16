@@ -1,7 +1,6 @@
 'use client'
 
 import { UseFormState } from "../ConstFormStateLayout"
-import { zInferForm } from "../FormTypeLayout"
 import { SubmitingForm } from "../SubmitingFormLayout";
 import { useCommentFormSchema } from "./CommentFormSchema"
 import { commentProps, postComment } from "../../../services/postComment";
@@ -14,16 +13,24 @@ type FormCommentProps = {
     object_id: number,
 }
 
+type dataProps = {
+    comment: string
+}
+
 const FormComment = ({content_type, object_id} : FormCommentProps) => {
     const CommentFormSchema = useCommentFormSchema();
-    // CommentFormSchema.transform({content_type: content_type, object_id: object_id, user:user})
-    const CommentFormData = zInferForm(CommentFormSchema);
-    const {register, handleSubmit, errors } = UseFormState(CommentFormData, CommentFormSchema);
+    const {register, handleSubmit, errors } = UseFormState(CommentFormSchema);
     const [success, setSuccess] = useState('')
     const { user, authTokens } = useAuthContext();
 
-    const Submiting = (data: commentProps) => {
-        SubmitingForm(() => postComment(data, authTokens));
+    const Submiting = (data: dataProps) => {
+        const newData = {
+            content_type: content_type,
+            object_id: object_id,
+            user: user?.user_id,
+            ...data
+        };
+        SubmitingForm(() => postComment(newData, authTokens));
         setSuccess('Comentário realizado com sucesso')
     }
 

@@ -2,8 +2,9 @@ import { api } from "./api";
 import { TokenData } from "./updateTokenRequest";
 
 export interface commentProps {
+    id: number,
     comment: string,
-    user: number,
+    user: number | undefined,
     content_type: string,
     object_id: number,
 }

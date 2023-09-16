@@ -7,7 +7,6 @@ interface InputProps extends InputHTMLAttributes<HTMLTextAreaElement>{
 
 
 const TextAreaLayout = ({ register, ...rest} : InputProps) => {
-    console.log(register)
     return (
         <div className={twMerge('mb-3', rest.className)}>
             <textarea

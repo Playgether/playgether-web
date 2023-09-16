@@ -6,12 +6,9 @@ import UserNamePost from "./UserNamePost"
 import { PiHeartFill } from "react-icons/pi"
 import { FaComment } from "react-icons/fa"
 import { useState } from "react"
-import InputLayout from "../../layouts/InputLayout"
 import FormComment from "../../layouts/Forms/FormComment"
-import { useAuthContext } from "../../../context/AuthContext"
-import { AiTwotoneEdit } from "react-icons/ai"
-import { MdDelete } from "react-icons/md"
 import EditComment from "./EditComment"
+import { CommentContentType } from "../../content_types/CommentContentType"
 
 export interface PostsExtendProps {
     onClose: () => void
@@ -48,24 +45,28 @@ const PostsExtend = ({onClose, resource}:PostsExtendProps) => {
                 </div> 
                 <div className="pt-8 w-full">
                     {resource.comments.map((item) => (
-                        <div className="text-gray-500 flex flex-row bg-white-200 items-center justify-start w-full" key={item.id}> 
-                            <div className="w-full pl-4">
+                        <div className="text-gray-500 flex flex-row bg-white-200 items-center justify-start w-full pl-4" key={item.id}> 
+                            <div className="w-full ">
                                 <div className="w-full flex flex-row items-center justify-start gap-2 pt-4">
                                     <ProfileImagePost link_photo={item.created_by_user_photo} className="h-6 w-6" />   
                                     <UserNamePost resource={item} />                                                
                                 </div>
                                 <div className="w-full flex flex-col items-start justify-start text-sm">
                                     <div className="w-full flex justify-between pr-4 pl-1 pt-1">
-                                        <div className="flex flex-col gap-2">
+                                        <div className=" w-full">
                                             <p key={item.id}>{item.comment}</p>
-                                            <EditComment idUser={item.user} idComment={item.id}/>
                                         </div>
-                                        <div className="flex flex-row gap-2 items-center">
+                                        <div className="flex flex-row gap-2 items-start">
+                                            <div className="flex justify-center gap-2 items-center">
                                             <PiHeartFill className="h-4 w-4 text-orange-500" />
                                             <p>{item.quantity_likes}</p>
-                                            <FaComment className="h-3 w-3 text-orange-500" />
+                                            <FaComment className="h-4 w-4 text-orange-500" />
                                             <p>{item.quantity_comment}</p>
+                                            </div>
                                         </div>
+                                    </div>
+                                    <div className="flex flex-col w-full -ml-5 mt-2 items-center justify-center gap-4">
+                                        <EditComment Comment={item}/>
                                     </div>
                                     <div className="w-full flex pt-4 pl-1">
                                         <p className="text-xs">Responder</p> 
@@ -108,7 +109,7 @@ const PostsExtend = ({onClose, resource}:PostsExtendProps) => {
                     ))}
                 </div> 
                 <div className="container mx-auto w-full h-20 sticky inset-x-0 bottom-0">
-                    <FormComment content_type="post" object_id={resource.id}/>
+                    <FormComment content_type={CommentContentType.post} object_id={resource.id}/>
                 </div>
             </div>
             <div className="h-10 w-10">
