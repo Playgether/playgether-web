@@ -20,7 +20,11 @@ import { EditCommentItens } from "./EditCommentItens";
 import { deleteComment } from "../../../services/deleteComment";
 
 
-const EditComment = ({Comment}:{Comment: commentProps}) => {
+interface EditCommentProps extends commentProps {
+    id: number,
+}
+
+const EditComment = ({Comment}:{Comment: EditCommentProps}) => {
     const { user, authTokens } = useAuthContext();
     const [openForm, setOpenForm] = useState(false)
     const CommentFormSchema = useCommentFormSchema();
@@ -38,8 +42,14 @@ const EditComment = ({Comment}:{Comment: commentProps}) => {
             {Comment.user === user?.user_id ? ( 
             <div className=" w-full -mr-5">
                 <EditCommentItens 
-                onClickEdit={()=> setOpenForm(!openForm)} 
-                onClickDelete={()=> setShouldShowModal(!shouldShowModal)} 
+                onClickEdit={()=> {
+                    setOpenForm(!openForm);
+                    setShouldShowModal(false)
+                }}
+                onClickDelete={()=> {
+                    setOpenForm(false);
+                    setShouldShowModal(!shouldShowModal)
+                }}
                 className="ml-4 pb-2"/>
                 <ControlledModal shouldShow={shouldShowModal} onRequestClose={()=> setShouldShowModal(false)}>
                    <div className=" flex flex-col justify-center items-center gap-6 pt-2">
