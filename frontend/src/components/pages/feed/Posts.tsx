@@ -1,9 +1,9 @@
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Scrollbar, A11y } from 'swiper/modules';
 import Image from "next/legacy/image";
-import { FeedProps } from '../../../services/getFeed';
+import { PostMedias } from '../../../services/getFeed';
 
-const Posts = ({ media, onExpand }: {media: FeedProps['medias'], onExpand? : (...props) => void}) => {
+const Posts = ({ media, onExpand }: {media: PostMedias[], onExpand? : (...props) => void}) => {
 
     const handleSlideChange = (swiper) => {
         const videos = document.querySelectorAll('video');

@@ -1,12 +1,12 @@
-import { FeedProps } from "../../../services/getFeed"
+import { PostComments } from "../../../services/getFeed"
 import EditComment from "./EditComment"
 import PostPropertiersPostsExpand from "./PostPropertiers"
 
 interface CommentsProps {
-    item: FeedProps['comments']
+    item: PostComments
 }
 
-export const Comments = ({item}) => {
+export const Comments = ({item}: CommentsProps) => {
 
     return (
         <>

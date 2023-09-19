@@ -9,7 +9,6 @@ import ProfileImagePost from "./ProfileImagePost";
 import UserNamePost from "./UserNamePost";
 import PostText from "../../layouts/PostText";
 import PostsExtend from "./PostsExtend";
-import { PostsExtendProps } from "./PostsExtend";
 
 interface ApiResponse {
   data: FeedProps[];
@@ -41,7 +40,7 @@ const FeedComponent = () => {
           <>
           <div className="bg-white-200 flex items-start justify-start">
               <ProfileImagePost link_photo={resource.created_by_user_photo} className="mt-3 ml-3 h-16 w-16"/>
-              <UserNamePost resource={resource}/>
+              <UserNamePost username={resource.created_by_user_name}/>
           </div>
           <div className="pt-4 flex min-h-[5rem] pb-4 bg-white-200">
               <PostText resource={resource} maxCharacteres={500}/>

@@ -1,8 +1,8 @@
 import Posts from "./Posts"
-import { FeedProps } from "../../../services/getFeed"
+import { PostMedias } from "../../../services/getFeed"
 
 interface SlidePostExpand {
-    medias: FeedProps['medias']
+    medias: PostMedias[]
 }
 
 export const SlidePostExpand = ({medias}:SlidePostExpand) => {
