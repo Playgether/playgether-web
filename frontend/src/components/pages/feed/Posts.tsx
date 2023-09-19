@@ -2,8 +2,16 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Scrollbar, A11y } from 'swiper/modules';
 import Image from "next/legacy/image";
 import { PostMedias } from '../../../services/getFeed';
+import { twJoin, twMerge } from 'tailwind-merge';
+import { HTMLAttributes } from 'react';
 
-const Posts = ({ media, onExpand }: {media: PostMedias[], onExpand? : (...props) => void}) => {
+interface PostsProps extends HTMLAttributes<HTMLDivElement>{
+    media: PostMedias[], 
+    onExpand? : (...props) => void, 
+    postsSize?: string
+}
+
+const Posts = ({ media, onExpand, postsSize="h-full", ...rest }: PostsProps) => {
 
     const handleSlideChange = (swiper) => {
         const videos = document.querySelectorAll('video');
@@ -17,20 +25,20 @@ const Posts = ({ media, onExpand }: {media: PostMedias[], onExpand? : (...props)
     return (
         <>
         {media && media.length > 0 ? (
-            <div className="swiper-container relative pt-3 bg-white-200 h-full cursor-pointer" onClick={(event) => {onExpand && onExpand(), event.stopPropagation();}}>
+            <div className={twMerge("bg-white-200 items-center justify-center relative pt-3 cursor-pointer", rest.className)} onClick={(event) => {onExpand && onExpand(), event.stopPropagation();}}>
             <Swiper 
                 modules={[Navigation, Pagination, Scrollbar, A11y]}
                 slidesPerView={1}
                 navigation
                 pagination={{ clickable: true, el: '.sample-slider', }}
-                className="swiper-container relative h-full"
+                className=" relative h-full"
                 onSlideChange={handleSlideChange}
                 >
                 {media.map(item => (
-                    <SwiperSlide key={item.id} className="pb-5 -z-1 h-full">
+                    <SwiperSlide key={item.id} className="-z-1 h-full">
           
                         {item.media_type === "image" ? (
-                        <div className="h-full" >
+                        <div className={twJoin("relative ", postsSize)} >
                             <Image
                                 src={item.media_file}
                                 alt={"TESTE"}
@@ -39,10 +47,12 @@ const Posts = ({ media, onExpand }: {media: PostMedias[], onExpand? : (...props)
                             />
                         </div>
                         ) : (
+                        <div className={twJoin("relative", postsSize)} >
                             <video loop playsInline controls className="object-contain h-full mx-auto">
                                 <source src={item.media_file} type="video/mp4" />
                                 Your browser does not support the video tag.
                             </video>
+                        </div>
                         )}
                     </SwiperSlide>
                 ))}

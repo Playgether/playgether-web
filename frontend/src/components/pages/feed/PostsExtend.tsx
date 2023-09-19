@@ -31,13 +31,13 @@ const PostsExtend = ({onClose, resource}:PostsExtendProps) => {
 
     return (
         <>
-        <div className="absolute flex flex-row left-0 right-0 z-50 w-full h-[75vh] pl-10 pr-10 divide-x-2">
+        <div className="absolute flex flex-row left-0 right-0 z-50 w-full h-[80vh] pl-10 pr-10 divide-x-2">
             <SlidePostExpand medias={resource.medias}/>
             <div className=" text-black-300 bg-white-300 w-full overflow-y-auto overflow-x-hidden h-full">
                 <ProfileAndUsername profile_photo={resource.created_by_user_photo} username={resource.created_by_user_name} imageClassName="mt-3 ml-3 h-16 w-16"/>
                 <BorderLine/>
                 <PostTextPostExpand text={resource.comment}/>
-                <div className="pt-8 w-full h-4/6 ">
+                <div className="pt-8 w-full h-4/6">
                 {resource.comments.length > 0 ? (
                     resource.comments.map((item) => (
                         <div className="text-gray-500 flex flex-row bg-white-200 items-center justify-start w-full pl-4" key={item.id}> 

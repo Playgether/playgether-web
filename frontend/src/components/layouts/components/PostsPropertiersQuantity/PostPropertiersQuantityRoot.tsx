@@ -8,9 +8,9 @@ interface PostPropertiersQuantityRoot extends HTMLAttributes<HTMLDivElement> {
 const PostPropertiersQuantityRoot = ({children, ...rest} : PostPropertiersQuantityRoot) => {
     return (
         <div className={twJoin("flex flex-row gap-2 text-orange-400", rest.className)}>
-            <div className="flex justify-between space-x-2">
+            {/* <div className="flex flex-row justify-center items-center space-x-2"> */}
                 {children}
-            </div>
+            {/* </div> */}
         </div>
     )
 }

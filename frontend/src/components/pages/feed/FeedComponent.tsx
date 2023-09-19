@@ -9,6 +9,7 @@ import ProfileImagePost from "./ProfileImagePost";
 import UserNamePost from "./UserNamePost";
 import PostText from "../../layouts/PostText";
 import PostsExtend from "./PostsExtend";
+import ProfileAndUsername from "../../layouts/components/ProfileAndUsername";
 
 interface ApiResponse {
   data: FeedProps[];
@@ -39,8 +40,11 @@ const FeedComponent = () => {
         {resources && resources.data.map((resource) => (
           <>
           <div className="bg-white-200 flex items-start justify-start">
-              <ProfileImagePost link_photo={resource.created_by_user_photo} className="mt-3 ml-3 h-16 w-16"/>
-              <UserNamePost username={resource.created_by_user_name}/>
+              <ProfileAndUsername 
+              username={resource.created_by_user_name}
+              profile_photo={resource.created_by_user_photo}
+              imageClassName="mt-3 ml-3 h-16 w-16"
+              />
           </div>
           <div className="pt-4 flex min-h-[5rem] pb-4 bg-white-200">
               <PostText resource={resource} maxCharacteres={500}/>
@@ -48,12 +52,15 @@ const FeedComponent = () => {
     
           {resource?.has_post_media ? (
               <div className="bg-white-200 h-4/6">
-                <Posts media={resource.medias} onExpand={() => handlePostsExtend(resource)}/>
+                <Posts media={resource.medias} onExpand={() => handlePostsExtend(resource)} postsSize="h-full" className="h-5/6"/>
               </div>
       ) : null}
   
           <div className="mb-5 shadow-lg">
-              <PostProperies resource={resource}/>
+              <PostProperies 
+              quantity_comment={resource.quantity_comment} 
+              quantity_likes={resource.quantity_likes}
+              quantity_reposts={resource.quantity_reposts} />
           </div>
           </>
       ))}
