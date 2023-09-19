@@ -1,14 +1,15 @@
-type UserNameProps = {
-    resource: {
-        created_by_user_name: string;
-    }
+import { HTMLAttributes } from "react";
+import { twJoin } from "tailwind-merge";
+
+interface UserNameProps extends HTMLAttributes<HTMLDivElement> {
+    username: string
 }
 
-const UserNamePost = ({resource}:UserNameProps) => {
+const UserNamePost = ({username, ...rest}:UserNameProps) => {
     return (
-        <div className="">
-            <h1 className="text-orange-500">{resource?.created_by_user_name}</h1>
-            {/* <p className="text-black-200 opacity-30 text-sm">2 hours ago</p> */}
+        
+        <div className={twJoin("", rest.className)} {...rest}>
+            <h1 className="text-orange-500">{username}</h1>
         </div> 
     )
 }
