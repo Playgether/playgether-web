@@ -18,13 +18,15 @@ import { commentProps } from "../../../services/postComment";
 import { RiDeleteBin6Line } from "react-icons/ri"
 import { EditCommentItens } from "./EditCommentItens";
 import { deleteComment } from "../../../services/deleteComment";
+import { Method } from "axios";
 
 
 interface EditCommentProps extends commentProps {
     id: number,
 }
 
-const EditComment = ({Comment}:{Comment: EditCommentProps}) => {
+
+const EditComment = ({Comment, handleEditClick}:{Comment: EditCommentProps; handleEditClick:() => void}) => {
     const { user, authTokens } = useAuthContext();
     const [openForm, setOpenForm] = useState(false)
     const CommentFormSchema = useCommentFormSchema();
@@ -43,8 +45,9 @@ const EditComment = ({Comment}:{Comment: EditCommentProps}) => {
             <div className=" w-full -mr-5">
                 <EditCommentItens 
                 onClickEdit={()=> {
-                    setOpenForm(!openForm);
+                    // setOpenForm(!openForm);
                     setShouldShowModal(false)
+                    handleEditClick()
                 }}
                 onClickDelete={()=> {
                     setOpenForm(false);
@@ -72,7 +75,6 @@ const EditComment = ({Comment}:{Comment: EditCommentProps}) => {
                     <div className="flex h-full w-full ">
                         <TextAreaLayout
                             register = {{...register('comment')}}
-                            type="text"
                             placeholder="Edite o comentário"
                             className="h-full bg-white-200 w-full"
                         />

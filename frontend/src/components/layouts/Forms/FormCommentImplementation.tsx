@@ -13,36 +13,43 @@ interface FormCommentProps {
 export const FormCommentImplementation = ({handleSubmit, register, errors, Submiting}: FormCommentProps) => {
     return (
         <>
-        <div className="border border-solid border-blue-500 flex flex-row justify-between h-full items-center bg-white-200">
-          <form
+        {/* <div className="border border-solid border-blue-500 flex flex-row justify-between h-full items-center bg-white-200"> */}
+        <form
             onSubmit={handleSubmit(Submiting)}
-            className="h-full w-full relative"
+            className="h-full w-full relative border border-solid border-blue-500 bg-white-200 "
           >
-            <div className="relative flex h-full">
+          <div className="flex w-full h-full justify-end items-center"> 
               <TextAreaLayout
                 register={...register('comment')}
-                type="text"
+                maxRows={10}
+                minRows={2}
                 placeholder="Digite um comentário"
-                className="h-full bg-white-200 w-full pr-12"
+                className="h-full w-full"
+                textAreaClassName="resize-none py-4 focus:bg-gray-50 border focus:border-none h-full"
               />
+            </div> 
+            <div className=" h-full flex justify-end bg-gray-50">
+                <OrangeButton
+                  className="py-2 w-full"
+                  type="submit"
+                >
+                  Enviar
+                </OrangeButton>
             </div>
-            <div className="bg-red-300 cursor-pointer">
-              <OrangeButton
-                className="absolute right-0 top-0 h-full px-2"
-                type="submit"
-              >
-                Enviar
-              </OrangeButton>
-            <div>
+            {errors ? (     
+                  <ErrosInput 
+                  field={errors.comment} 
+                  className="pl-4 absolute top-8 h-full px-2 pt flex flex-col pt-2"/>     
+              ): null}
+            {/* <div className="w-full">
               {errors ? (
                   <div className="pl-4 absolute top-8 h-full px-2 pt flex flex-col w-full pt-2">
                       <ErrosInput field={errors.comment} />
                   </div>
               ): null}
-            </div>
-            </div>
-          </form>
-        </div>
+            </div> */}
+        </form>
+        {/* </div> */}
         </>
       );
     }      

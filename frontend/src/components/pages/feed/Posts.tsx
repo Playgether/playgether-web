@@ -31,11 +31,11 @@ const Posts = ({ media, onExpand, postsSize="h-full", ...rest }: PostsProps) => 
                 slidesPerView={1}
                 navigation
                 pagination={{ clickable: true, el: '.sample-slider', }}
-                className=" relative h-full"
+                className=" relative h-full z-10"
                 onSlideChange={handleSlideChange}
                 >
                 {media.map(item => (
-                    <SwiperSlide key={item.id} className="-z-1 h-full">
+                    <SwiperSlide key={item.id} className=" h-full">
           
                         {item.media_type === "image" ? (
                         <div className={twJoin("relative ", postsSize)} >
