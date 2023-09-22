@@ -7,7 +7,29 @@ module.exports = {
   ],
   theme: {
     extend: {
-
+      animation: {
+        sideways: "sideways 3s linear infinite",
+        slideLeft: 'slideLeft 17s linear infinite',
+      },
+      keyframes: {
+        sideways: {
+          "0%, 100%": { left: "0", top: "0" },
+          "50%": { left: "100px", top: "0" },
+        },
+        // testando: {
+        //   "0%, 100%": { left: "0" },
+        //   "50%": { left: "100px" },
+        // },
+        slideLeft: {
+          '0%': { transform: 'translateX(100%)'},
+          "90%": {opacity: 0.90},
+          "95%": {opacity: 0.60},
+          "99%": {opacity: 0.10},
+          '100%': { transform: 'translateX(-9%)', opacity: 0},
+          // '100%': { transform: 'translateX(-100%)'},
+        },
+      },
+      
       colors: {
         orange: {
           300:"#FFC299",
@@ -54,3 +76,4 @@ module.exports = {
   },
   plugins: [],
 }
+

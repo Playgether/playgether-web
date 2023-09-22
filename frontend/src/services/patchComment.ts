@@ -1,7 +1,7 @@
 import { api } from "./api";
 import { TokenData } from "./updateTokenRequest";
 
-interface commentPatchProps {
+export interface commentPatchProps {
     comment: string
 }
 

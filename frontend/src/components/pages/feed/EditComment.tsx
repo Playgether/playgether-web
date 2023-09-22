@@ -1,16 +1,8 @@
 'use client'
 
-import { AiTwotoneEdit } from "react-icons/ai"
-import { MdDelete } from "react-icons/md"
 import { useAuthContext } from "../../../context/AuthContext";
-import { patchComment } from "../../../services/patchComment";
 import { useState } from "react";
-import TextAreaLayout from "../../layouts/TextAreaLayout";
-import { useCommentFormSchema } from "../../layouts/Forms/CommentFormSchema";
-import { UseFormState } from "../../layouts/ConstFormStateLayout";
-import { SubmitingForm } from "../../layouts/SubmitingFormLayout";
 import OrangeButton from "../../elements/OrangeButton";
-import { ErrosInput } from "../../layouts/ErrorsInputLayout";
 import ControlledModal from "../../elements/ControlledModal";
 import ButtonClose from "../../elements/ButtonClose";
 import TextLimitComponent from "../../layouts/TextLimitComponent";
@@ -18,7 +10,7 @@ import { commentProps } from "../../../services/postComment";
 import { RiDeleteBin6Line } from "react-icons/ri"
 import { EditCommentItens } from "./EditCommentItens";
 import { deleteComment } from "../../../services/deleteComment";
-import { Method } from "axios";
+
 
 
 interface EditCommentProps extends commentProps {
@@ -26,17 +18,9 @@ interface EditCommentProps extends commentProps {
 }
 
 
-const EditComment = ({Comment, handleEditClick}:{Comment: EditCommentProps; handleEditClick:() => void}) => {
+const EditComment = ({Comment, handleEditClick, isEditing}:{Comment: EditCommentProps; handleEditClick:(value:boolean) => void; isEditing: boolean}) => {
     const { user, authTokens } = useAuthContext();
-    const [openForm, setOpenForm] = useState(false)
-    const CommentFormSchema = useCommentFormSchema();
-    const {register, handleSubmit, errors } = UseFormState(CommentFormSchema);
     const [shouldShowModal, setShouldShowModal] = useState(false);
-    
-    
-    const Submiting = async (data) => {
-        await SubmitingForm(() => patchComment(data, authTokens, Comment.id));
-    }
     
 
     return (
@@ -45,13 +29,12 @@ const EditComment = ({Comment, handleEditClick}:{Comment: EditCommentProps; hand
             <div className=" w-full -mr-5">
                 <EditCommentItens 
                 onClickEdit={()=> {
-                    // setOpenForm(!openForm);
                     setShouldShowModal(false)
-                    handleEditClick()
+                    handleEditClick(!isEditing)
                 }}
                 onClickDelete={()=> {
-                    setOpenForm(false);
                     setShouldShowModal(!shouldShowModal)
+                    handleEditClick(false)
                 }}
                 className="ml-4 pb-2"/>
                 <ControlledModal shouldShow={shouldShowModal} onRequestClose={()=> setShouldShowModal(false)}>
@@ -69,21 +52,6 @@ const EditComment = ({Comment, handleEditClick}:{Comment: EditCommentProps; hand
                 </ControlledModal>
             </div>
             ): null }
-            {openForm === true ? (
-            <div className="cursor-pointer w-full pl-5">
-                <form onSubmit={handleSubmit(Submiting)}>
-                    <div className="flex h-full w-full ">
-                        <TextAreaLayout
-                            register = {{...register('comment')}}
-                            placeholder="Edite o comentário"
-                            className="h-full bg-white-200 w-full"
-                        />
-                        <ErrosInput field={errors.comment} />
-                    </div>
-                    <OrangeButton className="bg-gray-400 h-10 w-16 hover:bg-gray-500">Editar</OrangeButton>
-                </form>
-            </div>
-            ) : null }
         </>
     )
 }

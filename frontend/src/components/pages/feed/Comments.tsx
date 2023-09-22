@@ -13,23 +13,26 @@ import { useAuthContext } from "../../../context/AuthContext"
 import { useCommentFormSchema } from "../../layouts/Forms/CommentFormSchema"
 import { UseFormState } from "../../layouts/ConstFormStateLayout"
 import {BsFillSendFill} from "react-icons/bs"
+import { commentPatchProps } from "../../../services/patchComment"
 
 interface CommentsProps {
     item: PostComments
 }
 
+
+
 export const Comments = ({item}: CommentsProps) => {
 
     const [isEditing, setIsEditing] = useState(false);
-    const { user, authTokens } = useAuthContext();
+    const { authTokens } = useAuthContext();
     const CommentFormSchema = useCommentFormSchema();
     const {register, handleSubmit, errors } = UseFormState(CommentFormSchema)
 
-    const handleEditClick = () => {
-        setIsEditing(!isEditing);
+    const handleEditClick = (value: boolean) => {
+        setIsEditing(value);
     }
 
-    const Submiting = async (data) => {
+    const Submiting = async (data : commentPatchProps) => {
         await SubmitingForm(() => patchComment(data, authTokens, item.id));
     }
     
@@ -41,17 +44,17 @@ export const Comments = ({item}: CommentsProps) => {
                 <div className="w-full">
                     <div className="cursor-pointer w-full pl-5">
                     <form onSubmit={handleSubmit(Submiting)}>
-                    <div className="flex h-full w-full ">
-                        <TextAreaLayout
-                            autoFocus
-                            register = {{...register('comment')}}
-                            placeholder="Edite o comentário"
-                            className="h-full bg-white-200 w-full mb-3"
-                            textAreaClassName="resize-none"
-                            defaultValue={item.comment}
-                        />
-                        <ErrosInput field={errors.comment} />
-                    </div>
+                        <div className="flex h-full w-full ">
+                            <TextAreaLayout
+                                autoFocus
+                                register = {{...register('comment')}}
+                                placeholder="Edite o comentário"
+                                className="h-full bg-white-200 w-full mb-3"
+                                textAreaClassName="resize-none"
+                                defaultValue={item.comment}
+                            />
+                            <ErrosInput field={errors.comment} />
+                        </div>
                     <OrangeButton className="bg-gray-400 h-10 w-16 hover:bg-gray-500">Editar</OrangeButton>
                 </form>
             </div>
@@ -64,13 +67,14 @@ export const Comments = ({item}: CommentsProps) => {
             <PostPropertiersPostsExpand quantity_comment={item.quantity_comment} quantity_likes={item.quantity_likes}/>
         </div>
         <div className="flex flex-col w-full -ml-5 mt-2 items-center justify-center gap-4">
-            <EditComment Comment={item} handleEditClick={handleEditClick}/>
+            <EditComment Comment={item} handleEditClick={handleEditClick} isEditing={isEditing}/>
         </div>
         <div className="w-full flex pt-4 pl-1 -ml-2 items-end ">
             <TextAreaLayout 
             placeholder="Responder" 
             className="w-full"
             textAreaClassName="resize-none"
+            maxRows={15}
             register={null}/>
             <div className="pl-2 rounded mb-2">
                 <BsFillSendFill className="h-6 w-8 text-orange-400 cursor-pointer" />

@@ -1,5 +1,8 @@
+'use client'
+
 import { AiOutlineRetweet } from "react-icons/ai"
 import { twJoin } from "tailwind-merge"
+import { useState } from "react"
 
 interface PropertiersShareProps {
     quantity_reposts: number
