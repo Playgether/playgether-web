@@ -9,25 +9,53 @@ module.exports = {
     extend: {
       animation: {
         sideways: "sideways 3s linear infinite",
-        slideLeft: 'slideLeft 17s linear infinite',
+        slideLeft: 'slideLeft 30s linear infinite',
+        like: 'like 0.2s alternate 2',
+        deleteLike: "deleteLike 0.2s alternate 2",
+        fadeIn: 'fadeIn 2s linear',
+        fadeOut: 'fadeOut 1.5s linear',
       },
       keyframes: {
         sideways: {
           "0%, 100%": { left: "0", top: "0" },
           "50%": { left: "100px", top: "0" },
         },
-        // testando: {
-        //   "0%, 100%": { left: "0" },
-        //   "50%": { left: "100px" },
-        // },
+
+        deleteLike: {
+          "0%": {transform: 'scale(1.5)', opacity: 0.1},
+          "50%": {transform: 'scale(1)', opacity: 0.60},
+          "100%": {transform: 'scale(0.50)', opacity: 0.30},
+        },
+
+        like: {
+          "0%": {transform: 'scale(0.50)', opacity: 0.30},
+          "50%": {transform: 'scale(1)', opacity: 0.60},
+          "100%": {transform: 'scale(1.5)', opacity: 1},
+        },
+
         slideLeft: {
           '0%': { transform: 'translateX(100%)'},
           "90%": {opacity: 0.90},
           "95%": {opacity: 0.60},
           "99%": {opacity: 0.10},
-          '100%': { transform: 'translateX(-9%)', opacity: 0},
-          // '100%': { transform: 'translateX(-100%)'},
+          '100%': { transform: 'translateX(-100%)', opacity: 0},
         },
+
+        fadeIn: {
+          '0%': { opacity: 0},
+          "20%": {opacity: 0.20},
+          "50%": {opacity: 0.50},
+          "70%": {opacity: 0.70},
+          "100%": {opacity: 1},
+        },
+
+        fadeOut: {
+          '0%': { opacity: 1},
+          "20%": {opacity: 0.80},
+          "50%": {opacity: 0.50},
+          "70%": {opacity: 0.20},
+          "100%": {opacity: 0},
+        }
       },
       
       colors: {

@@ -24,9 +24,7 @@ const PropertiersLike = ({quantity_likes, iconClassName, onClick}: PropertiersLi
     return (
         <div className="flex flex-row justify-center items-center space-x-2">
             {onClicked === true ? 
-            <PiHeartFill className={twJoin(`${
-                effect && "animate-wiggle"
-              } cursor-pointer`, iconClassName)} 
+            <PiHeartFill className={twJoin("animate-like cursor-pointer", iconClassName)} 
             onClick={() => {
                 handleClick()
                 setQuantityLikesNumber(quantitylikesNumber - 1)
@@ -35,7 +33,7 @@ const PropertiersLike = ({quantity_likes, iconClassName, onClick}: PropertiersLi
                 setEffect(true);
             }}
             /> : 
-            <PiHeartThin className={twJoin('cursor-pointer transition-transform duration-300 ease-in-out', iconClassName)} 
+            <PiHeartThin className={twJoin('cursor-pointer animate-deleteLike', iconClassName)} 
             onClick={() => {
                 setQuantityLikesNumber(quantitylikesNumber + 1)
                 onClick

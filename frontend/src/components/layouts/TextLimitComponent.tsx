@@ -1,8 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, HTMLAttributes } from 'react';
+import { twJoin } from 'tailwind-merge';
 
-const TextLimitComponent = ({ text, maxCharacters }) => {
+interface TextLimitComponentProps extends HTMLAttributes<HTMLDivElement> {
+  text: string
+  maxCharacters: number
+  paragraphClassName?: string
+}
+
+const TextLimitComponent = ({ text, maxCharacters, paragraphClassName, ...rest }: TextLimitComponentProps) => {
   const [limitedText, setLimitedText] = useState(text);
 
   useEffect(() => {
@@ -14,9 +21,9 @@ const TextLimitComponent = ({ text, maxCharacters }) => {
   }, [text, maxCharacters]);
 
   return (
-    <div className="w-full">
+    <div className={twJoin(rest.className)}>
 
-        {limitedText}
+        <p className={twJoin(paragraphClassName)}>{limitedText}</p>
 
     </div>
   );
