@@ -14,8 +14,26 @@ module.exports = {
         deleteLike: "deleteLike 0.2s alternate 2",
         fadeIn: 'fadeIn 2s linear',
         fadeOut: 'fadeOut 1.5s linear',
+        tilt: 'tilt 10s infinite linear',
       },
+
       keyframes: {
+
+        tilt: {
+          "0%, 50%, 100%": {
+            transform: "rotate(0deg)",
+          },
+          
+          "25%": {
+            transform: "rotate(2deg)",
+          },
+
+          "75%": {
+            transform: "rotate(-2deg)"
+          },
+
+        },
+
         sideways: {
           "0%, 100%": { left: "0", top: "0" },
           "50%": { left: "100px", top: "0" },
@@ -35,10 +53,9 @@ module.exports = {
 
         slideLeft: {
           '0%': { transform: 'translateX(100%)'},
-          "90%": {opacity: 0.90},
-          "95%": {opacity: 0.60},
-          "99%": {opacity: 0.10},
-          '100%': { transform: 'translateX(-100%)', opacity: 0},
+          "30%": {transform: 'translateX(0%)'},
+          "85%": {transform: 'translateX(0%)'},
+          '100%': { transform: 'translateX(-100%)'},
         },
 
         fadeIn: {

@@ -11,9 +11,10 @@ interface PropertiersLikeProps {
 }
 const PropertiersLike = ({quantity_likes, iconClassName, onClick}: PropertiersLikeProps) => {
     const initialOnClicked = localStorage.getItem('onClicked') === 'true';
-    const [onClicked, setOnClicked] = useState(initialOnClicked)
+    const [onClicked, setOnClicked] = useState(false)
     const [quantitylikesNumber, setQuantityLikesNumber] = useState(quantity_likes)
-    const [effect, setEffect] = useState(false);
+    const [effectThin, setEffectThin] = useState(false);
+    const [effectFill, setEffectFill] = useState(false)
 
     const handleClick = () => {
         const newOnClicked = !onClicked;
@@ -24,20 +25,21 @@ const PropertiersLike = ({quantity_likes, iconClassName, onClick}: PropertiersLi
     return (
         <div className="flex flex-row justify-center items-center space-x-2">
             {onClicked === true ? 
-            <PiHeartFill className={twJoin("animate-like cursor-pointer", iconClassName)} 
+            <PiHeartFill className={twJoin("cursor-pointer", iconClassName, effectFill === true ? "animate-like" : '')} 
             onClick={() => {
                 handleClick()
                 setQuantityLikesNumber(quantitylikesNumber - 1)
                 onClick
                 setOnClicked(!onClicked)
-                setEffect(true);
+                setEffectThin(true);
             }}
             /> : 
-            <PiHeartThin className={twJoin('cursor-pointer animate-deleteLike', iconClassName)} 
+            <PiHeartThin className={twJoin('cursor-pointer ', iconClassName, effectThin === true ? "animate-deleteLike" : '')} 
             onClick={() => {
                 setQuantityLikesNumber(quantitylikesNumber + 1)
                 onClick
                 setOnClicked(!onClick)
+                setEffectFill(true)
             }}
             />}
             <p className="text-black-200">{quantitylikesNumber}</p>

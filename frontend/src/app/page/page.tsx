@@ -124,75 +124,82 @@ export default function Page() {
 
   return (
     <>
-      <div className='h-full w-full'>
-        {resources && resources.data.map((resource) => (
-          <div key={resource.id} className="bg-white-200">
-              <Posts media={resource.medias} />
-              <p>TESTE</p>
-          </div>
-        ))}
-          <div>
-            <button onClick={handleTest} className='text-black-400'>TESTE</button>
-            <h2 className='text-black-400'>Context</h2>
-            <Suspense fallback={<p>Carregando...</p>}>
-              {user && <p className='text-black-400'>{user?.username}</p>}
-            </Suspense>
-            <Suspense fallback={<p>Carregando...</p>}>
-              <p className='text-black-400'>{user?.username}</p>
-            </Suspense>
-            <button onClick={logout} className='text-black-400'>Click</button>
-          </div>
-          <input type='search' placeholder='ID' className="text-black-400 bg-white-200 bg-opacity-10 w-full h-full rounded-lg focus:outline-none " onChange={(e) => setUserId(e.target.value)}></input>
-          <div>
-            <OrangeButton onClick={() => TestButton()} className='text-md py-4 px-6'>
-              CLICK TEST
-            </OrangeButton>
-          </div>
+    <div className='bg-black-400 h-full w-full flex items-center '>
+      <div className='relative w-64 m-10 flex items-center group h-32'>
+        <div className='group-hover:opacity-100 opacity-75 absolute transition duration-1000 group-hover:duration-200 -inset-1 bg-pink-600 w-full blur-sm rounded-lg bg-gradient-to-r from-pink-600 to-purple-600 animate-tilt'></div>
+        <button className='h-full leading-none text-white-300 bg-black-400 relative w-full group-hover:text-white-500 transition duration-200'>TEST PARA O TEXTO LEADING
 
-          <div className='flex flex-col space-y-2'>         
-              {posts.map((post) => (
-                <div key={post.id}>
-                  <h1><ReactTimeAgo date={post.timestamp} locale='en-US' /></h1>
-                  <h1>{post.timestamp}</h1>
-                  <h1>{post.quantity_visualization}</h1>
-                  <h1>{post.quantity_comment}</h1>
-                  <h1>{post.quantity_likes}</h1>
-                  <h1>{post.quantity_reposts}</h1>
-                  <h1>{post.comment}</h1>
-                  <h1>{post.has_post_media}</h1>
-                </div>
-              ))}  
-              {/* <div>
-                  {authTokens && notifications.map((notification) => (
-                      <p key={notification.id} className="text-black-200">{notification.message}</p>
-                  ))}
-              </div> */}
-          </div>
-          {/* <Slider settings={settings}>
-            <Slide>
-              <div>
-                  <h1>Test</h1>
-              </div>
-            </Slide>
-            <Slide>
-              <div>
-                  <h1>Test</h1>
-              </div>
-            </Slide>
-            <Slide>
-              <div>
-                  <h1>Test</h1>
-              </div>
-            </Slide>
-            <Slide>
-              <div>
-                  <h1>Test</h1>
-              </div>
-            </Slide>
-          </Slider> */}
+        </button>
       </div>
-      <div className='w-4/6 bg-green-200 absolute top-0'>
-          <p>TESTE</p>
+
+
+        <div className=''>
+            {/* <div className='w-full bg-red-300 text-black-400 whitespace-nowrap animate-slideLeft'>
+              <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum. Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum. Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum. Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum. Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum</p>
+            </div> */}
+            <div>
+              <button onClick={handleTest} className='text-black-400'>TESTE</button>
+              <h2 className='text-black-400'>Context</h2>
+              <Suspense fallback={<p>Carregando...</p>}>
+                {user && <p className='text-black-400'>{user?.username}</p>}
+              </Suspense>
+              <Suspense fallback={<p>Carregando...</p>}>
+                <p className='text-black-400'>{user?.username}</p>
+              </Suspense>
+              <button onClick={logout} className='text-black-400'>Click</button>
+            </div>
+            <input type='search' placeholder='ID' className="text-black-400 bg-white-200 bg-opacity-10 w-full h-full rounded-lg focus:outline-none " onChange={(e) => setUserId(e.target.value)}></input>
+            <div>
+              <OrangeButton onClick={() => TestButton()} className='text-md py-4 px-6'>
+                CLICK TEST
+              </OrangeButton>
+            </div>
+
+            <div className='flex flex-col space-y-2'>         
+                {posts.map((post) => (
+                  <div key={post.id}>
+                    <h1><ReactTimeAgo date={post.timestamp} locale='en-US' /></h1>
+                    <h1>{post.timestamp}</h1>
+                    <h1>{post.quantity_visualization}</h1>
+                    <h1>{post.quantity_comment}</h1>
+                    <h1>{post.quantity_likes}</h1>
+                    <h1>{post.quantity_reposts}</h1>
+                    <h1>{post.comment}</h1>
+                    <h1>{post.has_post_media}</h1>
+                  </div>
+                ))}  
+                {/* <div>
+                    {authTokens && notifications.map((notification) => (
+                        <p key={notification.id} className="text-black-200">{notification.message}</p>
+                    ))}
+                </div> */}
+            </div>
+            {/* <Slider settings={settings}>
+              <Slide>
+                <div>
+                    <h1>Test</h1>
+                </div>
+              </Slide>
+              <Slide>
+                <div>
+                    <h1>Test</h1>
+                </div>
+              </Slide>
+              <Slide>
+                <div>
+                    <h1>Test</h1>
+                </div>
+              </Slide>
+              <Slide>
+                <div>
+                    <h1>Test</h1>
+                </div>
+              </Slide>
+            </Slider> */}
+        </div>
+        <div className='w-4/6 bg-green-200'>
+            <p>TESTE</p>
+        </div>
       </div>
     </>
   )
