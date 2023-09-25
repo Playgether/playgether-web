@@ -95,38 +95,17 @@ export default function Page() {
     console.log(user?.username);
   }
 
-  const handleNotifications = async () => {
-    if (authTokens) {
-      const response = await getNotifications(authTokens, user);
-      setNotifications(response);
-    }
-  };
-
-  useEffect(() => {
-    handleNotifications();
-  }, [authTokens, user]);
 
   const TestButton = () => {
     console.log('sucess')
   }
 
-  const handleButtonClick = async () => {
-    try{
-
-      const response = await getPosts(userId);
-      setPosts(response);
-
-    } catch {
-      "sla"
-    }
-
-  }
 
   return (
     <>
     <div className='bg-black-400 h-full w-full flex items-center '>
       <div className='relative w-64 m-10 flex items-center group h-32'>
-        <div className='group-hover:opacity-100 opacity-75 absolute transition duration-1000 group-hover:duration-200 -inset-1 bg-pink-600 w-full blur-sm rounded-lg bg-gradient-to-r from-pink-600 to-purple-600 animate-tilt'></div>
+        <div className='group-hover:opacity-100 opacity-75 absolute transition duration-1000 group-hover:duration-200 -inset-1 bg-pink-600 w-full blur-sm rounded-lg bg-gradient-to-r from-pink-600 to-purple-600 animate-moveRight'></div>
         <button className='h-full leading-none text-white-300 bg-black-400 relative w-full group-hover:text-white-500 transition duration-200'>TEST PARA O TEXTO LEADING
 
         </button>

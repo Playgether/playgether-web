@@ -15,9 +15,32 @@ module.exports = {
         fadeIn: 'fadeIn 2s linear',
         fadeOut: 'fadeOut 1.5s linear',
         tilt: 'tilt 10s infinite linear',
+        moveRight: 'moveRight 0.5s infinite alternate'
       },
 
       keyframes: {
+        moveRight: {
+          "0%": {
+            opacity: 0.25,
+            transform: 'scale(1)'
+          },
+          "25%": {
+            opacity: 0.25 ,
+            transform: 'scale(1)'
+          },
+          "50%": {
+            opacity: 0.50,
+            transform: 'scale(1)'
+          },
+          "75%": {
+            opacity: 1,
+            transform: 'scale(1.01)'
+          },
+          "100%": {
+            opacity: 1,
+            transform: 'scale(1.01)'
+          },
+        },
 
         tilt: {
           "0%, 50%, 100%": {
