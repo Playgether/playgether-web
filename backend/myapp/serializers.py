@@ -103,6 +103,17 @@ class PostSerializer(serializers.ModelSerializer):
     likes = serializers.SerializerMethodField()
     reposts = serializers.SerializerMethodField()
     medias = serializers.SerializerMethodField()
+    user_already_like = serializers.SerializerMethodField()
+
+
+    def get_user_already_like(self, obj):
+        user = self.context['request'].user
+        likes = Like.objects.filter(object_id=obj.id)
+        like_object = likes.filter(user=user).exists()
+        if like_object:
+            return True
+        else:
+            return False
 
     def get_created_by_user_photo(self, obj):
         request = self.context.get('request')
@@ -158,6 +169,17 @@ class CommentSerializer(serializers.ModelSerializer):
         queryset=ContentType.objects.all(),
         slug_field='model',
     )
+    user_already_like = serializers.SerializerMethodField()
+
+
+    def get_user_already_like(self, obj):
+        user = self.context['request'].user
+        likes = Like.objects.filter(object_id=obj.id)
+        like_object = likes.filter(user=user).exists()
+        if like_object:
+            return True
+        else:
+            return False
 
     def get_created_by_user_photo(self, obj):
         request = self.context.get('request')
@@ -193,6 +215,10 @@ class CommentSerializer(serializers.ModelSerializer):
 class LikeSerializer(serializers.ModelSerializer):
     created_by_user_name = serializers.ReadOnlyField(source='user.username')
     created_by_user_photo = serializers.SerializerMethodField()
+    content_type = serializers.SlugRelatedField(
+        queryset=ContentType.objects.all(),
+        slug_field='model',
+    )
 
     def get_created_by_user_photo(self, obj):
         request = self.context.get('request')
@@ -210,6 +236,17 @@ class LikeSerializer(serializers.ModelSerializer):
 class RepostSerializer(serializers.ModelSerializer):
     created_by_user_name = serializers.ReadOnlyField(source='user.username')
     created_by_user_photo = serializers.SerializerMethodField()
+    user_already_like = serializers.SerializerMethodField()
+
+
+    def get_user_already_like(self, obj):
+        user = self.context['request'].user
+        likes = Like.objects.filter(object_id=obj.id)
+        like_object = likes.filter(user=user).exists()
+        if like_object:
+            return True
+        else:
+            return False
 
     def get_created_by_user_photo(self, obj):
         request = self.context.get('request')

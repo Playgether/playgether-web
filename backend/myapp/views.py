@@ -1,6 +1,6 @@
 from django.views.generic import TemplateView
 from rest_framework import viewsets
-from .models import Notification, User, Profile, Post, Comment
+from .models import Notification, User, Profile, Post, Comment, Like
 from .serializers import NotificationSerializer, UserSerializer, CommentSerializer, ProfileSerializer, PostSerializer, LikeSerializer, MyTokenObtainPairSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import action, permission_classes, authentication_classes
@@ -8,6 +8,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from .permissions import SkipAuth
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.contenttypes.models import ContentType
+from rest_framework import status
 
   
 class MyTokenObtainPairView(TokenObtainPairView):
@@ -30,9 +31,34 @@ class PostsViewSet(viewsets.ModelViewSet):
         serializer = PostSerializer(posts, many=True, context={'request': request})
         return Response(serializer.data)
 
+    @action(detail=True, methods=['get', 'delete'])
+    def likes(self, request, pk=None):
+        if request.method == 'GET':
+            try:
+                post = Post.objects.get(id=pk)
+                likes = Like.objects.filter(object_id = post.id)
+                serializer = LikeSerializer(likes, many=True, context={'request': request})
+                return Response(serializer.data)
+            except Post.DoesNotExist:
+                return Response({"detail": "Post não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+        elif request.method == 'DELETE':
+            user = self.request.user
+            try:
+                like = Like.objects.get(object_id=pk, user=user)
+                like.delete()
+                return Response({"detail": "Like foi excluido com sucesso."}, status=status.HTTP_204_NO_CONTENT)
+            except Like.DoesNotExist:
+                return Response({"detail": "Like não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
+
+class LikeViewSet(viewsets.ModelViewSet):
+    queryset = Like.objects.all()
+    serializer_class = LikeSerializer
+
 
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
