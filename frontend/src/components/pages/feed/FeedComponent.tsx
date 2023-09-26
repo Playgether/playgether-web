@@ -58,6 +58,8 @@ const FeedComponent = () => {
   
           <div className="mb-5 shadow-lg">
               <PostProperies 
+              object_id={resource.id}
+              user_already_like={resource.user_already_like}
               quantity_comment={resource.quantity_comment} 
               quantity_likes={resource.quantity_likes}
               quantity_reposts={resource.quantity_reposts} />

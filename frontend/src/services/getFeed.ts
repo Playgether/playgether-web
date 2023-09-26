@@ -6,6 +6,7 @@ export interface PostComments {
     id:number;
     created_by_user_name: string;
     created_by_user_photo: string;
+    user_already_like: boolean,
     object_id: number;
     comment: string;
     timestamp: string;
@@ -28,6 +29,7 @@ export interface PostCommentsOfComments {
     quantity_comment: number;
     quantity_likes: number;
     content_type: number;
+    user_already_like: boolean
     user: number;
     comments_of_comments: PostCommentsOfComments[];
     
@@ -89,6 +91,7 @@ export interface FeedProps {
     comment: string;
     has_post_media: boolean;
     link: string;
+    user_already_like: boolean;
 }
 
 export const getFeed = async (authTokens : TokenData | undefined | null, userId : number | undefined) => {

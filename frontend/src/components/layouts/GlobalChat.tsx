@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useEffect, useState } from "react";
-import {BiWorld} from "react-icons/bi";
 import {IoIosMegaphone} from 'react-icons/io'
 import TextLimitComponent from "./TextLimitComponent";
 
@@ -54,20 +53,6 @@ const GlobalChat = ({}) => {
     return (
         <>
         <div className="w-full absolute h-16 bg-white-300 bottom-0 flex rounded-lg overflow-x-hidden overflow-y-hidden">
-            {/* <div className="bg-red-200 relative">
-                <div className="flex items-center justify-center w-40 h-full ml-2 bg-white-300 absolute z-10">
-                    <div className="inset-0 bg-gradient-to-r  from-purple-500 via-purple-600 to-purple-700 absolute blur-sm animate-moveRight"></div>
-                    <div className="bg-blue-400 w-40 h-14 relative flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-400 via-blue-500 to-blue-500">
-                        <button className="">MEGAFONE</button>
-                        <IoIosMegaphone className="w-1/6 h-3/6 -rotate-12"/>
-                    </div>
-                </div>
-            </div> */}
-{/* 
-            <div className="bg-red-200">
-                <p>TEST2</p>
-            </div> */}
-
             <div className="bg-white-200 h-full flex items-center relative rounded-lg z-20">
                 <div className="inset-0 bg-purple-600 absolute blur-sm rounded-md bg-gradient-to-r from-pink-400 via-purple-500 to-purple-500 animate-moveRight"></div>
                 <div className="leading-none bg-blue-400 bg-gradient-to-r from-blue-400 via-blue-500 to-blue-500 w-40 h-14 flex items-center justify-center gap-2 relative ml-1 mr-1 rounded-lg z-10">
@@ -101,41 +86,6 @@ const GlobalChat = ({}) => {
         </div>
         </>
 
-        // <div className="bg-white-300 absolute w-full h-14 flex items-center border-b border-black-200 border-opacity-40 justify-center inset-x-0 bottom-0 bg-blur-sm  overflow-x-hidden overflow-y-hidden">
-
-        //     <div className="relative mr-2 flex items-center justify-center h-full">
-        //         <div className="rounded-lg relative h-full w-40 bg-blue-400 flex items-center justify-center z-20 ml-2">
-        //         <div className=" bg-purple-600 absolute blur -inset-0.5 ml-1 animate-tilt">
-        //         </div>
-        //             <div className="relative w-full text-center flex gap-3 items-center justify-center h-full text-white-200 object-cover">
-        //                 <h1 className="uppercase bold font-semibold ml-6 lg:text-sm">Megafone</h1>
-        //                 <IoIosMegaphone className="w-1/6 h-3/6 -rotate-12"/>
-        //             </div>
-        //         </div>
-        //     </div>
-
-
-        //     {GlobalMessages.map ((item, index) =>
-        //         <div className={`h-full flex flex-row items-center w-full relative z-0 ${index === currentIndex ? '' : 'hidden'}`}>
-        //             <TextLimitComponent 
-        //             text={item.username + ":"} 
-        //             maxCharacters={40} 
-        //             className={`lg:text-sm z-10 bg-white-300 h-full flex items-center justify-center ${index === currentIndex ? 'animate-fadeIn' : 'animate-fadeOut'}`} 
-        //             paragraphClassName="whitespace-no-wrap font-semibold text-blue-500 pl-2 px-2"/>
-
-        //             <div 
-        //             className={`flex-1 h-full flex items-center z-0 max-w-none ${index === currentIndex ? 'animate-slideLeft' : 'hidden'}`}
-        //             key={item.id}
-        //             >
-        //                 <TextLimitComponent 
-        //                 text={item.message} 
-        //                 maxCharacters={400} 
-        //                 className=" ml-2 lg:text-sm z-0 inline" 
-        //                 paragraphClassName="whitespace-no-wrap font-normal text-black-300"/>
-        //             </div>
-        //         </div>
-        //     )}
-        // </div>
     );
 };
 

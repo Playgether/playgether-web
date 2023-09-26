@@ -64,7 +64,7 @@ export const Comments = ({item}: CommentsProps) => {
                     <p key={item.id}>{item.comment}</p>
                 </div>
             }
-            <PostPropertiersPostsExpand quantity_comment={item.quantity_comment} quantity_likes={item.quantity_likes}/>
+            <PostPropertiersPostsExpand quantity_comment={item.quantity_comment} quantity_likes={item.quantity_likes} user_already_like={item.user_already_like}/>
         </div>
         <div className="flex flex-col w-full -ml-5 mt-2 items-center justify-center gap-4">
             <EditComment Comment={item} handleEditClick={handleEditClick} isEditing={isEditing}/>
