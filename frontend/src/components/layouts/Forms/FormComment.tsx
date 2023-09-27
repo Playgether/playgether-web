@@ -3,7 +3,7 @@
 import { UseFormState } from "../ConstFormStateLayout"
 import { SubmitingForm } from "../SubmitingFormLayout";
 import { useCommentFormSchema } from "./CommentFormSchema"
-import { commentProps, postComment } from "../../../services/postComment";
+import { postComment } from "../../../services/postComment";
 import { useState } from "react";
 import { FormCommentImplementation } from "./FormCommentImplementation";
 import { useAuthContext } from "../../../context/AuthContext";
