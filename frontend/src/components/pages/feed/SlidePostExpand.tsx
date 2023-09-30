@@ -3,12 +3,13 @@ import { PostMedias } from "../../../services/getFeed"
 
 interface SlidePostExpand {
     medias: PostMedias[]
+    slideIndex: number
 }
 
-export const SlidePostExpand = ({medias}:SlidePostExpand) => {
+export const SlidePostExpand = ({medias, slideIndex}:SlidePostExpand) => {
     return (
         <div className="w-4/6 text-black-300 h-full bg-white-300">
-            <Posts media={medias} onExpand={()=> false} postsSize="h-full" className="h-full mb-2"/>
+            <Posts media={medias} onExpand={()=> false} postsSize="h-full" slideIndex={slideIndex} className="h-full mb-2"/>
         </div>
     )
 }

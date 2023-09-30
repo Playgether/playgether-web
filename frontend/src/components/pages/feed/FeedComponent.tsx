@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from "react";
 import { useResource } from "../../custom_hooks/useResource";
 import { getFeed } from "../../../services/getFeed";
@@ -5,8 +7,6 @@ import { FeedProps } from "../../../services/getFeed";
 import { useAuthContext } from "../../../context/AuthContext";
 import Posts from "./Posts";
 import PostProperies from "./PostsProperies";
-import ProfileImagePost from "./ProfileImagePost";
-import UserNamePost from "./UserNamePost";
 import PostText from "../../layouts/PostText";
 import PostsExtend from "./PostsExtend";
 import ProfileAndUsername from "../../layouts/components/ProfileAndUsername";
@@ -20,6 +20,7 @@ const FeedComponent = () => {
   const { resources } = useResource<ApiResponse>(() => getFeed(authTokens, user?.user_id)); 
   const [openPostsExtend, setOpenPostsExtend] = useState(false)
   const [resourceState, setResourceState] = useState<FeedProps>()
+  const [slideIndex, setSlideIndex] = useState(0)
 
   const handlePostsCloseExtend = () => {
     setOpenPostsExtend(!openPostsExtend)
@@ -29,12 +30,13 @@ const FeedComponent = () => {
     setResourceState(resourceState)
     setOpenPostsExtend(!openPostsExtend)
   }
+  
 
   return (
       <>
       {openPostsExtend && !!resourceState && 
         <div className="h-5/6">
-          <PostsExtend resource={resourceState} onClose={handlePostsCloseExtend}/>
+          <PostsExtend resource={resourceState} onClose={handlePostsCloseExtend} slideIndex={slideIndex}/>
         </div>
       }
         {resources && resources.data.map((resource) => (
@@ -52,7 +54,7 @@ const FeedComponent = () => {
     
           {resource?.has_post_media ? (
               <div className="bg-white-200 h-4/6">
-                <Posts media={resource.medias} onExpand={() => handlePostsExtend(resource)} postsSize="h-full" className="h-5/6"/>
+                <Posts media={resource.medias} onExpand={() => handlePostsExtend(resource)} setSlideIndex={setSlideIndex} postsSize="h-full" className="h-5/6"/>
               </div>
       ) : null}
   

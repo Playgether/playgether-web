@@ -13,10 +13,11 @@ import { SlidePostExpand } from "./SlidePostExpand"
 
 export interface PostsExtendProps {
     onClose: () => void
-    resource: FeedProps;        
+    resource: FeedProps; 
+    slideIndex: number       
 } 
 
-const PostsExtend = ({onClose, resource}:PostsExtendProps) => {
+const PostsExtend = ({onClose, resource, slideIndex}:PostsExtendProps) => {
 
     const [expandedComments, setExpandedComments] = useState({});
 
@@ -32,7 +33,7 @@ const PostsExtend = ({onClose, resource}:PostsExtendProps) => {
     return (
         <>
         <div className="absolute flex flex-row left-0 right-0 z-50 w-full h-[80vh] pl-10 pr-10 divide-x-2">
-            <SlidePostExpand medias={resource.medias}/>
+            <SlidePostExpand medias={resource.medias} slideIndex={slideIndex}/>
             <div className=" text-black-300 bg-white-300 w-full overflow-y-auto overflow-x-hidden h-full">
                 <ProfileAndUsername profile_photo={resource.created_by_user_photo} username={resource.created_by_user_name} imageClassName="mt-3 ml-3 h-16 w-16"/>
                 <BorderLine/>

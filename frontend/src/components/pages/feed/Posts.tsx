@@ -3,15 +3,18 @@ import { Navigation, Pagination, Scrollbar, A11y } from 'swiper/modules';
 import Image from "next/legacy/image";
 import { PostMedias } from '../../../services/getFeed';
 import { twJoin, twMerge } from 'tailwind-merge';
-import { HTMLAttributes } from 'react';
+import { HTMLAttributes, useEffect, useRef} from 'react';
 
 interface PostsProps extends HTMLAttributes<HTMLDivElement>{
     media: PostMedias[], 
-    onExpand? : (...props) => void, 
+    onExpand? : (...props: any[]) => void, 
     postsSize?: string
+    setSlideIndex?: (slideIndex: number) => void
+    slideIndex?:number 
 }
 
-const Posts = ({ media, onExpand, postsSize="h-full", ...rest }: PostsProps) => {
+const Posts = ({ media, slideIndex=0, onExpand, setSlideIndex, postsSize="h-full", ...rest }: PostsProps) => {
+    const volumeRef = useRef<HTMLVideoElement | null> (null)
 
     const handleSlideChange = (swiper) => {
         const videos = document.querySelectorAll('video');
@@ -20,12 +23,27 @@ const Posts = ({ media, onExpand, postsSize="h-full", ...rest }: PostsProps) => 
                 video.pause();
             }
         });
+        if (setSlideIndex) {
+            setSlideIndex(swiper.snapIndex)
+        }
     };
+
+
+    useEffect (() => {
+
+        const currentRef = volumeRef.current;
+
+        if (currentRef) {
+            currentRef.volume = 0.2;
+        }   
+
+    }, [volumeRef])
+
 
     return (
         <>
         {media && media.length > 0 ? (
-            <div className={twMerge("bg-white-200 items-center justify-center relative pt-3 cursor-pointer", rest.className)} onClick={(event) => {onExpand && onExpand(), event.stopPropagation();}}>
+            <div className={twMerge("bg-white-200 items-center justify-center relative pt-3 cursor-pointer", rest.className)}>
             <Swiper 
                 modules={[Navigation, Pagination, Scrollbar, A11y]}
                 slidesPerView={1}
@@ -33,9 +51,12 @@ const Posts = ({ media, onExpand, postsSize="h-full", ...rest }: PostsProps) => 
                 pagination={{ clickable: true, el: '.sample-slider', }}
                 className=" relative h-full z-10"
                 onSlideChange={handleSlideChange}
+                initialSlide={slideIndex}
                 >
                 {media.map(item => (
-                    <SwiperSlide key={item.id} className=" h-full">
+                    <SwiperSlide key={item.id} className=" h-full" onClick={
+                        onExpand
+                    }>
           
                         {item.media_type === "image" ? (
                         <div className={twJoin("relative ", postsSize)} >
@@ -48,7 +69,7 @@ const Posts = ({ media, onExpand, postsSize="h-full", ...rest }: PostsProps) => 
                         </div>
                         ) : (
                         <div className={twJoin("relative", postsSize)} >
-                            <video loop playsInline controls className="object-contain h-full mx-auto">
+                            <video loop playsInline muted autoPlay controls ref={volumeRef} className="object-contain h-full mx-auto">
                                 <source src={item.media_file} type="video/mp4" />
                                 Your browser does not support the video tag.
                             </video>
