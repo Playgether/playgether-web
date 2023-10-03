@@ -45,8 +45,8 @@ const EditComment = ({Comment, handleEditClick, isEditing}:{Comment: EditComment
                             <TextLimitComponent text={`${Comment.comment}`} maxCharacters={60}/>
                         </div>
                         <div className="flex justify-center gap-3 pb-4">
-                            <ButtonClose className="h-8 w-20 cursor-pointer" onClick={()=> deleteComment(authTokens, Comment.id)}>Excluir</ButtonClose>
-                            <OrangeButton className="h-8 w-20 bg-gray-400 hover:bg-gray-500 cursor-pointer" onClick={() => setShouldShowModal(false)}>Cancelar</OrangeButton>
+                            <ButtonClose className="h-8 w-20 cursor-pointer " onClick={()=> deleteComment(authTokens, Comment.id)}>Excluir</ButtonClose>
+                            <OrangeButton className="h-8 w-20 bg-gradient-to-r bg-gray-400 from-gray-400 via-gray-500 to-gray-500 hover:bg-gray-500 cursor-pointer hover:from-gray-500 hover:via-gray-600 hover:to-gray-600" onClick={() => setShouldShowModal(false)}>Cancelar</OrangeButton>
                         </div>
                    </div>
                 </ControlledModal>

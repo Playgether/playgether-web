@@ -1,6 +1,6 @@
-
 import './globals.css'
 import { AppProvider } from '../context'
+
 
 export const metadata = {
   description: 'Create by gamers for gamers',

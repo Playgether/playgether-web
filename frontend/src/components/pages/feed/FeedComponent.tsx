@@ -46,6 +46,7 @@ const FeedComponent = () => {
               username={resource.created_by_user_name}
               profile_photo={resource.created_by_user_photo}
               imageClassName="mt-3 ml-3 h-16 w-16"
+              timestamp={resource.timestamp}
               />
           </div>
           <div className="pt-4 flex min-h-[5rem] pb-4 bg-white-200" key={resource.id}>

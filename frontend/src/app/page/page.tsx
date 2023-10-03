@@ -2,21 +2,11 @@
 
 import OrangeButton from '../../components/elements/OrangeButton';
 import '../globals.css'
-import { useState, Suspense, useEffect } from 'react';
-import Button from '../../components/elements/OrangeButton';
-import { getPosts } from '../../services/getPosts';
-import ReactTimeAgo from 'react-time-ago';
-import TimeAgo from "javascript-time-ago"
-import pt from "javascript-time-ago/locale/pt.json"
-import ru from "javascript-time-ago/locale/ru.json"
+import { useState, Suspense} from 'react';
 import { PostProps } from '../../services/getPosts';
 import { useAuthContext } from '../../context/AuthContext';
-import { getNotifications, getNotificationsProps } from '../../services/getNotifications';
-import { Slide, SlideProps, Slider } from '../../components/layouts/Slider';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Scrollbar, A11y } from 'swiper/modules';
-import Image from "next/legacy/image";
-import Posts from '../../components/pages/feed/Posts';
+import {  getNotificationsProps } from '../../services/getNotifications';
+import { SlideProps } from '../../components/layouts/Slider';
 
 // Import Swiper styles
 import 'swiper/css';
@@ -25,8 +15,6 @@ import 'swiper/css/pagination';
 import { useResource } from '../../components/custom_hooks/useResource';
 import { FeedProps, getFeed } from '../../services/getFeed';
 
-TimeAgo.addDefaultLocale(pt);
-TimeAgo.addLocale(ru);
 
 
 export const medias = [
@@ -137,7 +125,7 @@ export default function Page() {
             <div className='flex flex-col space-y-2'>         
                 {posts.map((post) => (
                   <div key={post.id}>
-                    <h1><ReactTimeAgo date={post.timestamp} locale='en-US' /></h1>
+                    <h1></h1>
                     <h1>{post.timestamp}</h1>
                     <h1>{post.quantity_visualization}</h1>
                     <h1>{post.quantity_comment}</h1>
