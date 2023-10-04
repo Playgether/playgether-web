@@ -49,7 +49,10 @@ const FeedComponent = () => {
               timestamp={resource.timestamp}
               />
           </div>
-          <div className="pt-4 flex min-h-[5rem] pb-4 bg-white-200" key={resource.id}>
+          <div className="pt-4 flex min-h-[5rem] pb-4 bg-white-200 cursor-pointer" 
+          key={resource.id}
+          onClick={() => handlePostsExtend(resource)}
+          >
               <PostText resource={resource} maxCharacteres={500}/>
           </div>
     

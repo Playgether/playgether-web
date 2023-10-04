@@ -1,0 +1,29 @@
+import { FeedProps } from "../../../services/getFeed"
+import ProfileAndUsername from "../../layouts/components/ProfileAndUsername"
+import { BorderLine } from "./BorderLine"
+import CommentSectionLogic from "./CommentsSectionLogic"
+import { PostTextPostExpand } from "./PostTextPostExpand"
+
+interface PostsExtendHasNoPostMediaProps {
+    resource: FeedProps
+}
+
+const PostsExtendHasNoPostMedia = ({resource}: PostsExtendHasNoPostMediaProps) => {
+    return (
+        <>
+        <div className="w-3/6 text-black-300 h-full bg-white-300 overflow-x-auto">
+            <ProfileAndUsername profile_photo={resource.created_by_user_photo} username={resource.created_by_user_name} timestamp={resource.timestamp} imageClassName="mt-3 ml-3 h-16 w-16"/>
+            <BorderLine/>
+            <PostTextPostExpand text={resource.comment}/> 
+        </div> 
+            <div className=" text-black-300 bg-white-300 w-full overflow-y-auto overflow-x-hidden h-full flex-1">
+                <div className="w-full h-4/6">
+                    <BorderLine/>
+                    <CommentSectionLogic resource={resource} />
+                </div>
+            </div>
+        </>
+    )
+}
+
+export default PostsExtendHasNoPostMedia

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import PostComponent from "./PostComponent";
 import { IoArrowDownCircleSharp, IoArrowUpCircle } from "react-icons/io5";
-import { medias } from "../../../app/page/page";
+import {medias}  from "../../../app/page/page";
 import LoadMore from "./LoadMore";
 import { useResource } from "../../custom_hooks/useResource";
 import { getFeed } from "../../../services/getFeed";
@@ -15,7 +15,7 @@ import FeedComponent from "./FeedComponent";
 const Middle = () => {
     const [isComponentVisible, setComponentVisible] = useState(false);
     const { user, authTokens } = useAuthContext();
-    const { resources } = useResource<FeedProps[]>(() => getFeed(authTokens, user?.user_id));
+    // const { resource } = useResource<FeedProps[]>(() => getFeed(authTokens, user?.user_id));
 
     const toggleComponentVisibility = () => {
         setComponentVisible(!isComponentVisible);

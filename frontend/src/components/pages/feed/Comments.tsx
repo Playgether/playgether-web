@@ -12,9 +12,7 @@ import { patchComment } from "../../../services/patchComment"
 import { useAuthContext } from "../../../context/AuthContext"
 import { useCommentFormSchema } from "../../layouts/Forms/CommentFormSchema"
 import { UseFormState } from "../../layouts/ConstFormStateLayout"
-import {BsFillSendFill} from "react-icons/bs"
 import { commentPatchProps } from "../../../services/patchComment"
-import { CommentContentType } from "../../content_types/CommentContentType"
 import { AnswerComment } from "./AnswerComment"
 
 interface CommentsProps {
@@ -54,6 +52,7 @@ export const Comments = ({item}: CommentsProps) => {
                                 className="h-full bg-white-200 w-full mb-3"
                                 textAreaClassName="resize-none"
                                 defaultValue={item.comment}
+                                maxRows={10}
                             />
                             <ErrosInput field={errors.comment} />
                         </div>
@@ -71,18 +70,7 @@ export const Comments = ({item}: CommentsProps) => {
         <div className="flex flex-col w-full -ml-5 mt-2 items-center justify-center gap-4">
             <EditComment Comment={item} handleEditClick={handleEditClick} isEditing={isEditing}/>
         </div>
-        {/* <div className="w-full flex pt-4 pl-1 -ml-2 items-end "> */}
-            {/* <TextAreaLayout 
-            placeholder="Responder" 
-            className="w-full"
-            textAreaClassName="resize-none"
-            maxRows={15}
-            register={null}/>
-            <div className="pl-2 rounded mb-2">
-                <BsFillSendFill className="h-6 w-8 text-orange-400 cursor-pointer" />
-            </div> */}
             <AnswerComment object_id={item.id}/>
-        {/* </div> */}
         <div className="border-b w-full border-b-gray-300 pt-2 pl-1"></div>
         </>
     )
