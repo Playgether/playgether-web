@@ -8,6 +8,8 @@ import { useState } from "react";
 import { FormCommentImplementation } from "./FormCommentImplementation";
 import { useAuthContext } from "../../../context/AuthContext";
 import { useCommentsContext } from "../../../context/CommentsContext";
+import { useResource } from "../../custom_hooks/useResource";
+import { PostsCommentsProps } from "../../../services/getComments";
 
 type FormCommentProps = {
     content_type: string,
@@ -23,7 +25,7 @@ const FormComment = ({content_type, object_id} : FormCommentProps) => {
     const {register, handleSubmit, errors } = UseFormState(CommentFormSchema);
     const [success, setSuccess] = useState('')
     const { user, authTokens } = useAuthContext();
-    const {comments, fetchComments} = useCommentsContext()
+    const {fetchComments} = useCommentsContext()
 
     const Submiting = (data: dataProps) => {
         const newData = {
@@ -32,7 +34,12 @@ const FormComment = ({content_type, object_id} : FormCommentProps) => {
             user: user?.user_id,
             ...data
         };
-        SubmitingForm(() => postComment(newData, authTokens));
+        SubmitingForm(() => postComment(newData, authTokens))
+        .then(()=> {
+            fetchComments(object_id)
+        }).catch((error)=> {
+            console.error('Erro ao buscar comentários:', error)
+        });
         fetchComments(object_id)
         setSuccess('Comentário realizado com sucesso')
     }

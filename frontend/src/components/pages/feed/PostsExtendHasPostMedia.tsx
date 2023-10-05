@@ -7,16 +7,19 @@ import CommentSectionLogic from "./CommentsSectionLogic"
 import { PostTextPostExpand } from "./PostTextPostExpand"
 import { SlidePostExpand } from "./SlidePostExpand"
 import { useCommentsContext } from "../../../context/CommentsContext"
+import { useResource } from "../../custom_hooks/useResource"
+import { Suspense } from "react"
+import { Loading } from "../../layouts/components/Loading"
 
 interface PostsExtendHasPostMediaProps {
     resource: FeedProps
     slideIndex: number
-    // comments: PostsCommentsProps[]
 }
 
 const PostsExtendHasPostMedia = ({resource, slideIndex}: PostsExtendHasPostMediaProps) => {
     const {comments, fetchComments} = useCommentsContext()
-    fetchComments(resource.id)
+    useResource<PostsCommentsProps>(() => fetchComments(resource.id))
+
     return(
         <>
         <SlidePostExpand medias={resource.medias} slideIndex={slideIndex}/>

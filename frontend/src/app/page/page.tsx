@@ -14,6 +14,8 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { useResource } from '../../components/custom_hooks/useResource';
 import { FeedProps, getFeed } from '../../services/getFeed';
+import { Loading } from '../../components/layouts/components/Loading';
+import { useCommentsContext } from '../../context/CommentsContext';
 
 
 
@@ -77,6 +79,7 @@ export default function Page() {
   const { user, login, logout, authTokens } = useAuthContext();
   const [notifications, setNotifications] = useState<getNotificationsProps[]>([]);
   const { resources } = useResource<FeedProps[]>(() => getFeed(authTokens, user?.user_id));
+  const {comments, fetchComments} = useCommentsContext()
 
 
   const handleTest = () => {
@@ -115,26 +118,18 @@ export default function Page() {
               </Suspense>
               <button onClick={logout} className='text-black-400'>Click</button>
             </div>
+            <div>
+            </div>
             <input type='search' placeholder='ID' className="text-black-400 bg-white-200 bg-opacity-10 w-full h-full rounded-lg focus:outline-none " onChange={(e) => setUserId(e.target.value)}></input>
             <div>
               <OrangeButton onClick={() => TestButton()} className='text-md py-4 px-6'>
                 CLICK TEST
               </OrangeButton>
+              <br></br>
+              <Loading />
             </div>
 
-            <div className='flex flex-col space-y-2'>         
-                {posts.map((post) => (
-                  <div key={post.id}>
-                    <h1></h1>
-                    <h1>{post.timestamp}</h1>
-                    <h1>{post.quantity_visualization}</h1>
-                    <h1>{post.quantity_comment}</h1>
-                    <h1>{post.quantity_likes}</h1>
-                    <h1>{post.quantity_reposts}</h1>
-                    <h1>{post.comment}</h1>
-                    <h1>{post.has_post_media}</h1>
-                  </div>
-                ))}  
+            <div className='flex flex-col space-y-2'>          
                 {/* <div>
                     {authTokens && notifications.map((notification) => (
                         <p key={notification.id} className="text-black-200">{notification.message}</p>
