@@ -1,14 +1,17 @@
+import { PostsCommentsProps } from "../../../services/getComments"
 import { FeedProps } from "../../../services/getFeed"
 import ProfileAndUsername from "../../layouts/components/ProfileAndUsername"
 import { BorderLine } from "./BorderLine"
+import CommentInput from "./CommentInput"
 import CommentSectionLogic from "./CommentsSectionLogic"
 import { PostTextPostExpand } from "./PostTextPostExpand"
 
 interface PostsExtendHasNoPostMediaProps {
     resource: FeedProps
+    comments: PostsCommentsProps[]
 }
 
-const PostsExtendHasNoPostMedia = ({resource}: PostsExtendHasNoPostMediaProps) => {
+const PostsExtendHasNoPostMedia = ({resource, comments}: PostsExtendHasNoPostMediaProps) => {
     return (
         <>
         <div className="w-3/6 text-black-300 h-full bg-white-300 overflow-x-auto">
@@ -18,8 +21,9 @@ const PostsExtendHasNoPostMedia = ({resource}: PostsExtendHasNoPostMediaProps) =
         </div> 
             <div className=" text-black-300 bg-white-300 w-full overflow-y-auto overflow-x-hidden h-full flex-1">
                 <div className="w-full h-4/6">
-                    <BorderLine/>
-                    <CommentSectionLogic resource={resource} />
+                    <BorderLine className="pt-0"/>
+                    <CommentSectionLogic resource={comments} />
+                    <CommentInput id={resource.id} />
                 </div>
             </div>
         </>

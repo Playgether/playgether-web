@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from "react"
-import { PostComments } from "../../../services/getFeed"
 import EditComment from "./EditComment"
 import PostPropertiersPostsExpand from "./PostPropertiers"
 import TextAreaLayout from "../../layouts/TextAreaLayout"
@@ -14,9 +13,10 @@ import { useCommentFormSchema } from "../../layouts/Forms/CommentFormSchema"
 import { UseFormState } from "../../layouts/ConstFormStateLayout"
 import { commentPatchProps } from "../../../services/patchComment"
 import { AnswerComment } from "./AnswerComment"
+import { PostsCommentsProps } from "../../../services/getComments"
 
 interface CommentsProps {
-    item: PostComments
+    item: PostsCommentsProps
 }
 
 

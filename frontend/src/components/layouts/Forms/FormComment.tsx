@@ -7,6 +7,7 @@ import { postComment } from "../../../services/postComment";
 import { useState } from "react";
 import { FormCommentImplementation } from "./FormCommentImplementation";
 import { useAuthContext } from "../../../context/AuthContext";
+import { useCommentsContext } from "../../../context/CommentsContext";
 
 type FormCommentProps = {
     content_type: string,
@@ -22,6 +23,7 @@ const FormComment = ({content_type, object_id} : FormCommentProps) => {
     const {register, handleSubmit, errors } = UseFormState(CommentFormSchema);
     const [success, setSuccess] = useState('')
     const { user, authTokens } = useAuthContext();
+    const {comments, fetchComments} = useCommentsContext()
 
     const Submiting = (data: dataProps) => {
         const newData = {
@@ -31,6 +33,7 @@ const FormComment = ({content_type, object_id} : FormCommentProps) => {
             ...data
         };
         SubmitingForm(() => postComment(newData, authTokens));
+        fetchComments(object_id)
         setSuccess('Comentário realizado com sucesso')
     }
 

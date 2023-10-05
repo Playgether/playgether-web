@@ -1,39 +1,6 @@
 import { api } from "./api";
 import { TokenData } from "./updateTokenRequest";
 
-export interface PostComments {
-
-    id:number;
-    created_by_user_name: string;
-    created_by_user_photo: string;
-    user_already_like: boolean,
-    object_id: number;
-    comment: string;
-    timestamp: number;
-    quantity_comment: number;
-    quantity_likes: number;
-    content_type: string;
-    user: number;
-    comments_of_comments: PostCommentsOfComments[]
-    
-}
-
-export interface PostCommentsOfComments {
-
-    id:number;
-    created_by_user_name: string;
-    created_by_user_photo: string;
-    object_id: number;
-    comment: string;
-    timestamp: number;
-    quantity_comment: number;
-    quantity_likes: number;
-    content_type: number;
-    user_already_like: boolean
-    user: number;
-    comments_of_comments: PostCommentsOfComments[];
-    
-}
 
 export interface PostLikes {
 
@@ -78,7 +45,7 @@ export interface FeedProps {
     created_by_user: number;
     created_by_user_name: string;
     created_by_user_photo: string;
-    comments:PostComments[],
+    // comments:PostComments[],
     likes: PostLikes[];
     reposts: PostReposts[];
     medias: PostMedias[];
