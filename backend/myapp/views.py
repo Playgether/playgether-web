@@ -50,6 +50,12 @@ class PostsViewSet(viewsets.ModelViewSet):
                 return Response({"detail": "Like foi excluido com sucesso."}, status=status.HTTP_204_NO_CONTENT)
             except Like.DoesNotExist:
                 return Response({"detail": "Like não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+    
+    @action(detail=True, methods=['get'])
+    def comments(self, request, pk=None):
+        comments = Comment.objects.filter(object_id=pk).order_by('-timestamp')
+        comment_serializer = CommentSerializer(comments, many=True, context={'request': request})
+        return Response(comment_serializer.data)
 
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()

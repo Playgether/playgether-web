@@ -99,7 +99,7 @@ class NotificationSerializer(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
     created_by_user_name = serializers.ReadOnlyField(source='created_by_user.username')
     created_by_user_photo = serializers.SerializerMethodField()
-    comments = serializers.SerializerMethodField()
+    # comments = serializers.SerializerMethodField()
     likes = serializers.SerializerMethodField()
     reposts = serializers.SerializerMethodField()
     medias = serializers.SerializerMethodField()
@@ -146,14 +146,14 @@ class PostSerializer(serializers.ModelSerializer):
         except Like.DoesNotExist:
             []
     
-    def get_comments(self, obj):
-        try:
-            request = self.context.get('request')
-            comments = Comment.objects.filter(object_id=obj.id).order_by('-timestamp')
-            comment_serializer = CommentSerializer(comments, many=True, context={'request': request})
-            return comment_serializer.data
-        except Comment.DoesNotExist:
-            return None
+    # def get_comments(self, obj):
+    #     try:
+    #         request = self.context.get('request')
+    #         comments = Comment.objects.filter(object_id=obj.id).order_by('-timestamp')
+    #         comment_serializer = CommentSerializer(comments, many=True, context={'request': request})
+    #         return comment_serializer.data
+    #     except Comment.DoesNotExist:
+    #         return None
 
         
     class Meta:
