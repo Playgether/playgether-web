@@ -9,7 +9,7 @@ export const deleteComment = async (authTokens : TokenData | null | undefined, o
             headers: {
                 'Authorization':'Bearer ' + String(authTokens?.access)
             }})
-        response.status
+        return response.status
     } catch (error) {
         console.log(error)
     }

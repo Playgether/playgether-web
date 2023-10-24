@@ -12,12 +12,13 @@ export const UseFormState =(
       register,
       handleSubmit,
       getValues,
+      reset,
       formState: { errors }
     } = useForm<FormData>({
       resolver: zodResolver(Schema)
     });
   
-    return { register, handleSubmit, errors, getValues };
+    return { register, handleSubmit, errors, getValues, reset };
   };
   
 

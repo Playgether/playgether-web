@@ -10,6 +10,7 @@ import { commentProps } from "../../../services/postComment";
 import { RiDeleteBin6Line } from "react-icons/ri"
 import { EditCommentItens } from "./EditCommentItens";
 import { deleteComment } from "../../../services/deleteComment";
+import { useCommentsContext } from "../../../context/CommentsContext";
 
 
 
@@ -18,9 +19,10 @@ interface EditCommentProps extends commentProps {
 }
 
 
-const EditComment = ({Comment, handleEditClick, isEditing}:{Comment: EditCommentProps; handleEditClick:(value:boolean) => void; isEditing: boolean}) => {
+const EditComment = ({Comment, handleEditClick, isEditing, setIsEditing}:{Comment: EditCommentProps; handleEditClick:(value:boolean) => void; isEditing: boolean; setIsEditing:(boolean) => void}) => {
     const { user, authTokens } = useAuthContext();
     const [shouldShowModal, setShouldShowModal] = useState(false);
+    const {deleteCommentContext} = useCommentsContext()
     
 
     return (
@@ -45,7 +47,17 @@ const EditComment = ({Comment, handleEditClick, isEditing}:{Comment: EditComment
                             <TextLimitComponent text={`${Comment.comment}`} maxCharacters={60}/>
                         </div>
                         <div className="flex justify-center gap-3 pb-4">
-                            <ButtonClose className="h-8 w-20 cursor-pointer " onClick={()=> deleteComment(authTokens, Comment.id)}>Excluir</ButtonClose>
+                            <ButtonClose className="h-8 w-20 cursor-pointer " onClick={async()=> {
+                                try {
+                                    await deleteComment(authTokens, Comment.id)
+                                    deleteCommentContext(Comment)
+                                    setIsEditing(false)
+                                } catch (error) {
+                                    console.log(error)
+                                }
+                            }}
+                                
+                            >Excluir</ButtonClose>
                             <OrangeButton className="h-8 w-20 bg-gradient-to-r bg-gray-400 from-gray-400 via-gray-500 to-gray-500 hover:bg-gray-500 cursor-pointer hover:from-gray-500 hover:via-gray-600 hover:to-gray-600" onClick={() => setShouldShowModal(false)}>Cancelar</OrangeButton>
                         </div>
                    </div>

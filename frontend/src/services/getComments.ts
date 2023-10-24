@@ -48,3 +48,28 @@ export const getComments = async (authTokens : TokenData | undefined | null, pos
     };
    
 };
+
+// export function getComments (authTokens : TokenData | undefined | null, postId : number | undefined) {
+
+//     let fetching =  api.get<PostsCommentsProps[]>(`/api/v1/posts/${postId}/comments/`, {
+//         headers: {
+//             'Authorization':'Bearer ' + String(authTokens?.access)
+//         }}).then((response)=> {
+//             status = "fulfilled";
+//             result = response
+//         }).catch((error)=> {
+//             status = "rejected"
+//             result = error
+//         })
+
+//     return () => {
+//         if (status === "pending") {
+//             throw fetching;
+//         } else if (status === "rejected") {
+//             throw result;
+//         } else if (status === "fulfilled") {
+//             return result
+//         }
+//     }   
+// };
+

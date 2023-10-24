@@ -69,7 +69,7 @@ const Posts = ({ media, slideIndex=0, onExpand, setSlideIndex, postsSize="h-full
                         </div>
                         ) : (
                         <div className={twJoin("relative", postsSize)} >
-                            <video loop playsInline muted autoPlay controls ref={volumeRef} className="object-contain h-full mx-auto">
+                            <video playsInline muted autoPlay controls ref={volumeRef} className="object-contain h-full mx-auto">
                                 <source src={item.media_file} type="video/mp4" />
                                 Your browser does not support the video tag.
                             </video>

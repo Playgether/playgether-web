@@ -1,9 +1,10 @@
+import { PostCommentsOfCommentsProps } from "../../../services/getComments"
 import ProfileAndUsername from "../../layouts/components/ProfileAndUsername"
 import PostPropertiersPostsExpand from "./PostPropertiers"
-import { PostCommentsOfComments } from "../../../services/getFeed"
+
 
 interface expandedCommentsProps {
-    comment_of_comment: PostCommentsOfComments
+    comment_of_comment: PostCommentsOfCommentsProps
 }
 
 export const ExpandedComments = ({comment_of_comment}: expandedCommentsProps) => {

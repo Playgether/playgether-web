@@ -14,6 +14,7 @@ import { UseFormState } from "../../layouts/ConstFormStateLayout"
 import { commentPatchProps } from "../../../services/patchComment"
 import { AnswerComment } from "./AnswerComment"
 import { PostsCommentsProps } from "../../../services/getComments"
+import { useCommentsContext } from "../../../context/CommentsContext"
 
 interface CommentsProps {
     item: PostsCommentsProps
@@ -27,13 +28,18 @@ export const Comments = ({item}: CommentsProps) => {
     const { authTokens } = useAuthContext();
     const CommentFormSchema = useCommentFormSchema();
     const {register, handleSubmit, errors } = UseFormState(CommentFormSchema)
+    const {editComment} = useCommentsContext()
 
     const handleEditClick = (value: boolean) => {
         setIsEditing(value);
     }
 
     const Submiting = async (data : commentPatchProps) => {
-        await SubmitingForm(() => patchComment(data, authTokens, item.id));
+
+        const response = await SubmitingForm(() => patchComment(data, authTokens, item.id));
+        editComment(response.data)
+        setIsEditing(false)
+
     }
     
 
@@ -68,7 +74,7 @@ export const Comments = ({item}: CommentsProps) => {
             <PostPropertiersPostsExpand quantity_comment={item.quantity_comment} quantity_likes={item.quantity_likes} user_already_like={item.user_already_like} object_id={item.id}/>
         </div>
         <div className="flex flex-col w-full -ml-5 mt-2 items-center justify-center gap-4">
-            <EditComment Comment={item} handleEditClick={handleEditClick} isEditing={isEditing}/>
+            <EditComment Comment={item} handleEditClick={handleEditClick} isEditing={isEditing} setIsEditing={setIsEditing}/>
         </div>
             <AnswerComment object_id={item.id}/>
         <div className="border-b w-full border-b-gray-300 pt-2 pl-1"></div>

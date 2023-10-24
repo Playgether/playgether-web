@@ -1,15 +1,13 @@
-import { PostsCommentsProps } from "../../../services/getComments"
 import { FeedProps } from "../../../services/getFeed"
 import ProfileAndUsername from "../../layouts/components/ProfileAndUsername"
 import { BorderLine } from "./BorderLine"
 import CommentInput from "./CommentInput"
-import CommentSectionLogic from "./CommentsSectionLogic"
 import { PostTextPostExpand } from "./PostTextPostExpand"
 import { SlidePostExpand } from "./SlidePostExpand"
-import { useCommentsContext } from "../../../context/CommentsContext"
-import { useResource } from "../../custom_hooks/useResource"
 import { Suspense } from "react"
-import { Loading } from "../../layouts/components/Loading"
+import { CommentSectionFallback } from "../../layouts/SuspenseFallBack/CommentSectionFallback"
+import CommentSectionLogic from "./CommentsSectionLogic"
+
 
 interface PostsExtendHasPostMediaProps {
     resource: FeedProps
@@ -17,9 +15,6 @@ interface PostsExtendHasPostMediaProps {
 }
 
 const PostsExtendHasPostMedia = ({resource, slideIndex}: PostsExtendHasPostMediaProps) => {
-    const {comments, fetchComments} = useCommentsContext()
-    useResource<PostsCommentsProps>(() => fetchComments(resource.id))
-
     return(
         <>
         <SlidePostExpand medias={resource.medias} slideIndex={slideIndex}/>
@@ -28,7 +23,9 @@ const PostsExtendHasPostMedia = ({resource, slideIndex}: PostsExtendHasPostMedia
             <BorderLine/>
             <PostTextPostExpand text={resource.comment}/>
             <div className="pt-8 w-full h-4/6">
-                <CommentSectionLogic resource={comments.data} />
+                <Suspense fallback={<CommentSectionFallback/>}>
+                    <CommentSectionLogic postId={resource.id} />
+                </Suspense>
                 <CommentInput id={resource.id}/>
             </div>
         </div>

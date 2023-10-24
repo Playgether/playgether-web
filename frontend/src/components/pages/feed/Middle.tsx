@@ -11,8 +11,6 @@ import FeedComponent from "./FeedComponent";
 
 const Middle = () => {
     const [isComponentVisible, setComponentVisible] = useState(false);
-    const { user, authTokens } = useAuthContext();
-    // const { resource } = useResource<FeedProps[]>(() => getFeed(authTokens, user?.user_id));
 
     const toggleComponentVisibility = () => {
         setComponentVisible(!isComponentVisible);

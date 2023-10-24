@@ -13,7 +13,6 @@ interface FormCommentProps {
 export const FormCommentImplementation = ({handleSubmit, register, errors, Submiting}: FormCommentProps) => {
     return (
         <>
-        {/* <div className="border border-solid border-blue-500 flex flex-row justify-between h-full items-center bg-white-200"> */}
         <form
             onSubmit={handleSubmit(Submiting)}
             className="h-full w-full relative border border-solid border-blue-500 bg-white-200 "
@@ -41,15 +40,7 @@ export const FormCommentImplementation = ({handleSubmit, register, errors, Submi
                   field={errors.comment} 
                   className="pl-4 absolute top-8 h-full px-2 pt flex flex-col pt-2"/>     
               ): null}
-            {/* <div className="w-full">
-              {errors ? (
-                  <div className="pl-4 absolute top-8 h-full px-2 pt flex flex-col w-full pt-2">
-                      <ErrosInput field={errors.comment} />
-                  </div>
-              ): null}
-            </div> */}
         </form>
-        {/* </div> */}
         </>
       );
     }      

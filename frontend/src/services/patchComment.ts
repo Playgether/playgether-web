@@ -11,7 +11,7 @@ export const patchComment = async (data: commentPatchProps, authTokens : TokenDa
             headers: {
                 'Authorization':'Bearer ' + String(authTokens?.access)
             }})
-        response.status
+        return response
     } catch (error) {
         console.log(error)
     }

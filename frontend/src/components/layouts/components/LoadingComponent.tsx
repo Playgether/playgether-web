@@ -6,7 +6,7 @@ interface LoadingProps extends HTMLAttributes<HTMLDivElement> {
 
 }
 
-export const Loading = ({...rest}:LoadingProps) => {
+export const LoadingComponent = ({...rest}:LoadingProps) => {
     return (
         <CgSpinner className={twJoin("animate-spin text-blue-500", rest.className)}/>
     )

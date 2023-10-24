@@ -7,6 +7,8 @@ import CommentInput from "./CommentInput"
 import CommentSectionLogic from "./CommentsSectionLogic"
 import { PostTextPostExpand } from "./PostTextPostExpand"
 import { useResource } from "../../custom_hooks/useResource"
+import { Suspense } from "react"
+import { CommentSectionFallback } from "../../layouts/SuspenseFallBack/CommentSectionFallback"
 
 interface PostsExtendHasNoPostMediaProps {
     resource: FeedProps
@@ -14,9 +16,6 @@ interface PostsExtendHasNoPostMediaProps {
 }
 
 const PostsExtendHasNoPostMedia = ({resource}: PostsExtendHasNoPostMediaProps) => {
-    const {comments, fetchComments} = useCommentsContext()
-    useResource<PostsCommentsProps>(() => fetchComments(resource.id))
-
     return (
         <>
         <div className="w-3/6 text-black-300 h-full bg-white-300 overflow-x-auto">
@@ -27,7 +26,9 @@ const PostsExtendHasNoPostMedia = ({resource}: PostsExtendHasNoPostMediaProps) =
             <div className=" text-black-300 bg-white-300 w-full overflow-y-auto overflow-x-hidden h-full flex-1">
                 <div className="w-full h-4/6">
                     <BorderLine className="pt-0"/>
-                    <CommentSectionLogic resource={comments.data} />
+                    <Suspense fallback={<CommentSectionFallback/>}>
+                        <CommentSectionLogic postId={resource.id} />
+                    </Suspense>
                     <CommentInput id={resource.id} />
                 </div>
             </div>

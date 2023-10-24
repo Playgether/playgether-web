@@ -10,10 +10,12 @@ export interface commentProps {
 
 export const postComment = async (data: commentProps, authTokens : TokenData | null | undefined) => {
     try{
-        await api.post('/api/v1/comments/', data, {
+        const response = await api.post('/api/v1/comments/', data, {
             headers: {
                 'Authorization':'Bearer ' + String(authTokens?.access)
             }})
+        console.log(response)
+        return response.data
     } catch (error) {
         console.log(error)
     }

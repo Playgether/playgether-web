@@ -2,7 +2,7 @@
 
 import OrangeButton from '../../components/elements/OrangeButton';
 import '../globals.css'
-import { useState, Suspense} from 'react';
+import { useState, Suspense, useEffect} from 'react';
 import { PostProps } from '../../services/getPosts';
 import { useAuthContext } from '../../context/AuthContext';
 import {  getNotificationsProps } from '../../services/getNotifications';
@@ -14,8 +14,8 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { useResource } from '../../components/custom_hooks/useResource';
 import { FeedProps, getFeed } from '../../services/getFeed';
-import { Loading } from '../../components/layouts/components/Loading';
-import { useCommentsContext } from '../../context/CommentsContext';
+import { LoadingComponent } from '../../components/layouts/components/LoadingComponent';
+
 
 
 
@@ -74,12 +74,56 @@ export default function Page() {
     },
   }
 
-  const [userId, setUserId] = useState ('')
-  const [posts, setPosts] = useState<PostProps[]>([])
   const { user, login, logout, authTokens } = useAuthContext();
   const [notifications, setNotifications] = useState<getNotificationsProps[]>([]);
-  const { resources } = useResource<FeedProps[]>(() => getFeed(authTokens, user?.user_id));
-  const {comments, fetchComments} = useCommentsContext()
+  
+
+
+  const fetchUserData = () => {
+    // Simulando uma chamada de API assíncrona
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve([
+          { id: 1, name: 'Usuário 1' },
+          { id: 2, name: 'Usuário 2' },
+          { id: 3, name: 'Usuário 3' },
+        ]);
+      }, 2000);
+    });
+  };
+
+  const UserListTable = ({ users }) => {
+    return (
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nome do Usuário</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map((user) => (
+            <tr key={user.id}>
+              <td>{user.id}</td>
+              <td>{user.name}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  };
+
+
+const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    fetchUserData().then((data) => {
+      setUsers(data);
+    });
+  }, []);
+
+
+
 
 
   const handleTest = () => {
@@ -101,12 +145,16 @@ export default function Page() {
 
         </button>
       </div>
+      
+      <div>
+        <h1>Lista de Usuários</h1>
+        <Suspense fallback={<LoadingComponent className='h-8 w-8'/>}>
+          <UserListTable users={users} />
+        </Suspense>
+      </div>
 
 
         <div className=''>
-            {/* <div className='w-full bg-red-300 text-black-400 whitespace-nowrap animate-slideLeft'>
-              <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum. Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum. Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum. Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum. Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum</p>
-            </div> */}
             <div>
               <button onClick={handleTest} className='text-black-400'>TESTE</button>
               <h2 className='text-black-400'>Context</h2>
@@ -128,36 +176,6 @@ export default function Page() {
               <br></br>
               <Loading />
             </div>
-
-            <div className='flex flex-col space-y-2'>          
-                {/* <div>
-                    {authTokens && notifications.map((notification) => (
-                        <p key={notification.id} className="text-black-200">{notification.message}</p>
-                    ))}
-                </div> */}
-            </div>
-            {/* <Slider settings={settings}>
-              <Slide>
-                <div>
-                    <h1>Test</h1>
-                </div>
-              </Slide>
-              <Slide>
-                <div>
-                    <h1>Test</h1>
-                </div>
-              </Slide>
-              <Slide>
-                <div>
-                    <h1>Test</h1>
-                </div>
-              </Slide>
-              <Slide>
-                <div>
-                    <h1>Test</h1>
-                </div>
-              </Slide>
-            </Slider> */}
         </div>
         <div className='w-4/6 bg-green-200'>
             <p>TESTE</p>
