@@ -1,7 +1,6 @@
-'use client'
 
 import { ReactNode, createContext, useContext, useEffect, useState } from "react"
-import { PostsCommentsProps, getComments } from "../services/getComments";
+import { PostCommentsOfCommentsProps, PostsCommentsProps, getComments } from "../services/getComments";
 import { useAuthContext } from "./AuthContext";
 import { commentProps } from "../services/postComment";
 
@@ -15,6 +14,7 @@ type CommentsContextProps = {
     addNewComment: (newComment:PostsCommentsProps) => void
     editComment: (updatedComment:PostsCommentsProps) => void
     deleteCommentContext: (Comment:commentProps) => void
+    addAnswerComment: (objectId:number, answerComment:PostCommentsOfCommentsProps) => void
 }
 
 
@@ -46,6 +46,20 @@ export function CommentsContextProvider({children}:{children: ReactNode}) {
         })
     }
 
+    const addAnswerComment = (objectId:number, answerComment:PostCommentsOfCommentsProps) => {
+        setComments(prevComments => {
+            const commentsList = [...prevComments.data]
+            const commentIndex = commentsList.findIndex(comment => comment.id === objectId)
+            if (commentIndex !== -1){
+                commentsList[commentIndex].comments_of_comments.unshift(answerComment)
+
+            }
+            return {
+                data: commentsList
+            };
+        })
+    }
+
     const editComment = (updatedComment:PostsCommentsProps) => {
         setComments(prevComments => {
           const updatedComments = [...prevComments.data];
@@ -71,9 +85,29 @@ export function CommentsContextProvider({children}:{children: ReactNode}) {
         })
     }
 
+    const editAnswerComment = (objectId:number, answerComment:PostsCommentsProps) => {
+        setComments(prevComments => {
+            const commentsList = [...prevComments.data]
+            const commentIndex = commentsList.findIndex(comment => comment.id === objectId)
+
+            if (commentIndex !== -1) {
+               const answersComment = answerComment[commentIndex].comments_of_comments
+               const answerIndex = answersComment.findIndex(answer => answer.id === answerComment.id)
+
+               if (answerIndex !== -1){
+                answersComment[answerIndex] = answerComment;
+               }
+            }
+            return {data: commentsList}
+        })
+    }
+
+
+
     return(
         <CommentsContext.Provider value={{
             comments:comments,
+            addAnswerComment,
             deleteCommentContext,
             editComment,
             addNewComment,

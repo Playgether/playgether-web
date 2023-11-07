@@ -7,6 +7,7 @@ import { SubmitingForm } from "../../layouts/SubmitingFormLayout"
 import { postComment } from "../../../services/postComment"
 import { ErrosInput } from "../../layouts/ErrorsInputLayout"
 import { CommentContentType } from "../../content_types/CommentContentType"
+import { useCommentsContext } from "../../../context/CommentsContext"
 
 
 type FormCommentProps = {
@@ -20,17 +21,25 @@ type dataProps = {
 export const AnswerComment = ({object_id}: FormCommentProps) => {
 
     const CommentFormSchema = useCommentFormSchema()
-    const {register, handleSubmit, errors } = UseFormState(CommentFormSchema);
+    const {register, handleSubmit, errors, reset } = UseFormState(CommentFormSchema);
     const {user, authTokens} = useAuthContext()
+    const {addAnswerComment} = useCommentsContext()
 
-    const Submiting = (data: dataProps) => {
+    const Submiting = async (data: dataProps) => {
         const newData = {
             content_type: CommentContentType.comment,
             object_id: object_id,
             user: user?.user_id,
             ...data
         };
-        SubmitingForm(() => postComment(newData, authTokens));
+        try {
+            const response = await SubmitingForm(() => postComment(newData, authTokens));
+            addAnswerComment(object_id, response)
+            reset({comment: ''})
+        } catch (error) {
+            console.error('Algo deu errado', error)
+        }
+
     }
 
     return (

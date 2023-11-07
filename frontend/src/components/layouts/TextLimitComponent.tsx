@@ -7,14 +7,15 @@ interface TextLimitComponentProps extends HTMLAttributes<HTMLDivElement> {
   text: string
   maxCharacters: number
   paragraphClassName?: string
+  textFinal?:string
 }
 
-const TextLimitComponent = ({ text, maxCharacters, paragraphClassName, ...rest }: TextLimitComponentProps) => {
+const TextLimitComponent = ({ text, maxCharacters, paragraphClassName, textFinal='...', ...rest }: TextLimitComponentProps) => {
   const [limitedText, setLimitedText] = useState(text);
 
   useEffect(() => {
     if (text.length > maxCharacters) {
-      setLimitedText(text.substring(0, maxCharacters) + '...');
+      setLimitedText(text.substring(0, maxCharacters) + textFinal);
     } else {
       setLimitedText(text);
     }

@@ -34,7 +34,6 @@ const FormComment = ({content_type, object_id} : FormCommentProps) => {
         };
         try {
             const response = await SubmitingForm(() => postComment(newData, authTokens));
-            console.log(response);
             addNewComment(response);
             setSuccess('Comentário realizado com sucesso');
             reset({comment: ''});

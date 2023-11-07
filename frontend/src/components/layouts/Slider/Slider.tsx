@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { Swiper, SwiperSlide, SwiperProps } from 'swiper/react';
+import { Swiper, SwiperProps } from 'swiper/react';
 import { Navigation, Pagination, A11y } from 'swiper/modules'
 
 interface SliderProps {

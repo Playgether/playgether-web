@@ -1,9 +1,11 @@
+import { LeftProfile } from "./LeftProfile";
+import { RightProfile } from "./RightProfile";
+
 const Page = ({}) => {
     return (
-        <div className="bg-white-300 w-full mt-2 mr-2 h-full">
-             <div>
-                <p className="text-black-200">SOME PART OF CODE</p>    
-            </div>          
+        <div className="w-full mr-2 h-full flex gap-2 max-h-full max-w-full">
+            <LeftProfile />
+            <RightProfile />
         </div>
     );
 };
