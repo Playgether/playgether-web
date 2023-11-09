@@ -1,62 +1,29 @@
-import TextLimitComponent from "../../layouts/TextLimitComponent"
-import { MenuProfile } from "./Menu"
+'use client'
 
-let text = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
+import { useState } from "react"
+import { MenuProfile } from "./Menu"
+import { Texts } from "./Texts"
+import { Medias } from "./Medias"
+import { Bio } from "./Bio"
+import { Conquists } from "./Conquists"
+import { Statistics } from "./Statistics"
+import { Moments } from "./Moments"
+
+
 
 export const RightProfile = () => {
+
+    const [content, setContent] = useState("bio")
+
     return (
         <div className="bg-white-300 w-full rounded-lg overflow-y-auto">
-            <MenuProfile />
-            <div className="grid grid-cols-2 w-full items-center justify-center gap-4 p-4 text-black-400">
-                <div className="bg-white-400 rounded-lg hover:bg-white-500 cursor-pointer shadow-md shadow-gray-400">
-                    <TextLimitComponent text={text} maxCharacters={200} className="p-3" textFinal={" ...expandir"}/>
-                </div>
-                <div className="bg-white-400 rounded-lg hover:bg-white-500 cursor-pointer shadow-md shadow-gray-400">
-                    <TextLimitComponent text={text} maxCharacters={200} className="p-3" textFinal={" ...expandir"}/>
-                </div>
-                <div className="bg-white-400 rounded-lg hover:bg-white-500 cursor-pointer shadow-md shadow-gray-400">
-                    <TextLimitComponent text={text} maxCharacters={200} className="p-3" textFinal={" ...expandir"}/>
-                </div>
-                <div className="bg-white-400 rounded-lg hover:bg-white-500 cursor-pointer shadow-md shadow-gray-400">
-                    <TextLimitComponent text={text} maxCharacters={200} className="p-3" textFinal={" ...expandir"}/>
-                </div>
-                <div className="bg-white-400 rounded-lg hover:bg-white-500 cursor-pointer shadow-md shadow-gray-400">
-                    <TextLimitComponent text={text} maxCharacters={200} className="p-3" textFinal={" ...expandir"}/>
-                </div>
-                <div className="bg-white-400 rounded-lg hover:bg-white-500 cursor-pointer shadow-md shadow-gray-400">
-                    <TextLimitComponent text={text} maxCharacters={200} className="p-3" textFinal={" ...expandir"}/>
-                </div>
-                <div className="bg-white-400 rounded-lg hover:bg-white-500 cursor-pointer shadow-md shadow-gray-400">
-                    <TextLimitComponent text={text} maxCharacters={200} className="p-3" textFinal={" ...expandir"}/>
-                </div>
-                <div className="bg-white-400 rounded-lg hover:bg-white-500 cursor-pointer shadow-md shadow-gray-400">
-                    <TextLimitComponent text={text} maxCharacters={200} className="p-3" textFinal={" ...expandir"}/>
-                </div>
-                <div className="bg-white-400 rounded-lg hover:bg-white-500 cursor-pointer shadow-md shadow-gray-400">
-                    <TextLimitComponent text={text} maxCharacters={200} className="p-3" textFinal={" ...expandir"}/>
-                </div>
-                <div className="bg-white-400 rounded-lg hover:bg-white-500 cursor-pointer shadow-md shadow-gray-400">
-                    <TextLimitComponent text={text} maxCharacters={200} className="p-3" textFinal={" ...expandir"}/>
-                </div>
-                <div className="bg-white-400 rounded-lg hover:bg-white-500 cursor-pointer shadow-md shadow-gray-400">
-                    <TextLimitComponent text={text} maxCharacters={200} className="p-3" textFinal={" ...expandir"}/>
-                </div>
-                <div className="bg-white-400 rounded-lg hover:bg-white-500 cursor-pointer shadow-md shadow-gray-400">
-                    <TextLimitComponent text={text} maxCharacters={200} className="p-3" textFinal={" ...expandir"}/>
-                </div>
-                <div className="bg-white-400 rounded-lg hover:bg-white-500 cursor-pointer shadow-md shadow-gray-400">
-                    <TextLimitComponent text={text} maxCharacters={200} className="p-3" textFinal={" ...expandir"}/>
-                </div>
-                <div className="bg-white-400 rounded-lg hover:bg-white-500 cursor-pointer shadow-md shadow-gray-400">
-                    <TextLimitComponent text={text} maxCharacters={200} className="p-3" textFinal={" ...expandir"}/>
-                </div>
-                <div className="bg-white-400 rounded-lg hover:bg-white-500 cursor-pointer shadow-md shadow-gray-400">
-                    <TextLimitComponent text={text} maxCharacters={200} className="p-3" textFinal={" ...expandir"}/>
-                </div>
-                <div className="bg-white-400 rounded-lg hover:bg-white-500 cursor-pointer shadow-md shadow-gray-400">
-                    <TextLimitComponent text={text} maxCharacters={200} className="p-3" textFinal={" ...expandir"}/>
-                </div>
-            </div>
+            <MenuProfile setContent={setContent} content={content}/>
+            {content === "bio" && <Bio />}
+            {content === "medias" && <Medias />}
+            {content === "textos" && <Texts />}
+            {content === "estatisticas" && <Statistics />}
+            {content === "conquistas" && <Conquists />}
+            {content === "marcos" && <Moments />}
         </div>
     )
 }

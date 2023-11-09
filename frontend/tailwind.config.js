@@ -13,9 +13,12 @@ module.exports = {
         like: 'like 0.2s alternate 2',
         deleteLike: "deleteLike 0.2s alternate 2",
         fadeIn: 'fadeIn 2s linear',
+        menuProfileFadeIn: 'fadeIn 0.3s linear',
         fadeOut: 'fadeOut 1.5s linear',
         tilt: 'tilt 10s infinite linear',
-        moveRight: 'moveRight 0.5s infinite alternate'
+        moveRight: 'moveRight 0.5s infinite alternate',
+        menuRight: 'menuRight 0.5s linear',
+        menuLeft: 'menuLeft 0.5s linear'
       },
 
       keyframes: {
@@ -60,6 +63,14 @@ module.exports = {
         sideways: {
           "0%, 100%": { left: "0", top: "0" },
           "50%": { left: "100px", top: "0" },
+        },
+        
+        menuLeft: {
+          "0%, 100%": {transform:'translateX(0%)'}
+        },
+
+        menuRight: {
+          "0%, 100%": {transform:'translateX(100%)'}
         },
 
         deleteLike: {
