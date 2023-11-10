@@ -1,10 +1,18 @@
+import { HTMLAttributes } from "react"
 import { AiOutlineRetweet } from "react-icons/ai"
 import { FaComment } from "react-icons/fa"
 import { PiHeartFill } from "react-icons/pi"
+import { twJoin } from "tailwind-merge"
 
-export const PostsStats = () => {
+
+interface PostsStatsProps extends HTMLAttributes<HTMLDivElement>{
+
+}
+
+
+export const PostsStats = ({...rest}:PostsStatsProps) => {
     return (
-        <div className="bg-blue-300 rounded-b-lg flex justify-between items-center px-8 h-10">
+        <div className={twJoin("bg-blue-300 rounded-b-lg flex justify-between items-center px-8 h-10", rest.className)}>
             <div className="flex text-black-300 gap-2 text-md justify-center items-center font-semibold">
                 <PiHeartFill className="text-orange-500 h-6 w-6"/>
                 <p>250</p>

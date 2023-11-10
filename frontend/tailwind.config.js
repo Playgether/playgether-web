@@ -18,7 +18,9 @@ module.exports = {
         tilt: 'tilt 10s infinite linear',
         moveRight: 'moveRight 0.5s infinite alternate',
         menuRight: 'menuRight 0.5s linear',
-        menuLeft: 'menuLeft 0.5s linear'
+        menuLeft: 'menuLeft 0.5s linear',
+        hoverUp:'hoverUp 0.05s linear',
+        hoverDown: 'hoverDown 0.07s linear',
       },
 
       keyframes: {
@@ -58,6 +60,16 @@ module.exports = {
             transform: "rotate(-2deg)"
           },
 
+        },
+
+        hoverDown: {
+          "0%": {transform: 'translateY(0px)', opacity: "1"},
+          "100%": {transform: 'translateY(20px)', opacity: "0"}
+        },
+
+        hoverUp: {
+          "0%": {transform: 'translateY(20px)', opacity: "0"},
+          "100%": {transform: 'translateY(0px)', opacity: "1"}
         },
 
         sideways: {
