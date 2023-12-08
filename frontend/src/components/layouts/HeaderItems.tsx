@@ -4,7 +4,7 @@ import { MdOutlineNotifications, MdOutlineLogout, MdOutlineSettings, MdPersonAdd
 import { useAuthContext } from "../../context/AuthContext";
 import { useRouter } from "next/navigation";
 
-export const ItemsHeader = ({ isMenuResponsiveShowing }: { isMenuResponsiveShowing: boolean }) => {
+export const ItemsHeader = () => {
 
     const {logout, isLoggedOut} = useAuthContext()
     const router = useRouter()
@@ -13,7 +13,7 @@ export const ItemsHeader = ({ isMenuResponsiveShowing }: { isMenuResponsiveShowi
         router.push('/')
     }
 
-    return isMenuResponsiveShowing ? (
+    return (
 
         <div className="bg-white-300 lg:bg-opacity-0 flex flex-col justify-center items-center lg:flex-row w-screen lg:w-full lg:items-center lg:justify-between mr-5 text-black-300 text-opacity-90 lg:pr-2 gap-4 p-4">
             <div className="flex md:h-5 md:w-5 lg:h-8 lg:w-8 gap-4 items-center justify-center">
@@ -41,7 +41,6 @@ export const ItemsHeader = ({ isMenuResponsiveShowing }: { isMenuResponsiveShowi
                 <button onClick={() => handleLogout()} className="h-full w-full"><MdOutlineLogout className="lg:h-full lg:w-full h-7 w-7" /></button>
             </div>
         </div> 
-
-    ):null
-    
+    )
+   
 } 

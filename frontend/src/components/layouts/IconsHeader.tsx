@@ -25,10 +25,12 @@ const IconsHeader = ({}) => {
     return (
         <>
             <div className={`items-center justify-center bg-blue-300 ${isMenuResponsiveShowing? "absolute" : null}`}>
-                <div className="h-full flex justify-center items-center">
+                <div className="h-full flex flex-col justify-center items-center">
                     <FiAlignJustify className="h-7 w-7 lg:hidden text-black-300" onClick={() => handleMenuResponsive()}/>
+                    <div className={`w-full ${isMenuResponsiveShowing ? null : "hidden"} lg:flex`}>
+                        <ItemsHeader/>
+                    </div>
                 </div>
-                <ItemsHeader isMenuResponsiveShowing={isMenuResponsiveShowing}/>
             </div>
         </>
     );
