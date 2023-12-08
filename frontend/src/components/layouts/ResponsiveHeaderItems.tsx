@@ -1,5 +1,4 @@
 import { ItemsHeader } from "./HeaderItems"
-import IconsHeader from "./IconsHeader"
 
 export const ResponsiveHearderItems = () => {
     return (

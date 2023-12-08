@@ -4,6 +4,7 @@ import AsideBase from "./AsideBase"
 import GlobalChat from "./GlobalChat"
 import HeaderBase from "./HeaderBase"
 import { twMerge } from "tailwind-merge";
+import { ResponsiveGlobalChat } from "./ResponsiveGlobalChat";
 
 
 const BaseLayout = ({children, ...rest}) => {
@@ -15,8 +16,13 @@ const BaseLayout = ({children, ...rest}) => {
                 <AsideBase />
                 {children}
             </div>   
+            <div className="hidden lg:flex">
+                <GlobalChat />
+            </div>
 
-            <GlobalChat />
+            <div className="lg:hidden">
+                <ResponsiveGlobalChat />
+            </div>
         </div>
       )
   }

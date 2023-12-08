@@ -1,8 +1,5 @@
 import React from "react";
 import {MdSearch, MdOutlineHome} from "react-icons/md";
-import { FiAlignJustify } from "react-icons/fi";
-import { ResponsiveHearderItems } from "../../layouts/ResponsiveHeaderItems";
-import { ItemsHeader } from "../../layouts/HeaderItems";
 
 const SearchElement = ({}) => {
     return (

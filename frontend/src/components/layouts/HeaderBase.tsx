@@ -2,7 +2,6 @@ import React from "react";
 import SearchElement from "../pages/feed/SearchElementHeader";
 import IconsHeader from "./IconsHeader";
 import Image from "next/legacy/image";
-import { ItemsHeader } from "./HeaderItems";
 
 const HeaderBase = ({}) => {
     return (

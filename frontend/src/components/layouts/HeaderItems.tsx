@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 export const ItemsHeader = () => {
 
-    const {logout, isLoggedOut} = useAuthContext()
+    const {logout} = useAuthContext()
     const router = useRouter()
     const handleLogout = async () =>{
         await logout()
