@@ -10,6 +10,7 @@ module.exports = {
       animation: {
         sideways: "sideways 3s linear infinite",
         slideLeft: 'slideLeft 30s linear infinite',
+        slideLeftResponsive: 'slideLeftResponsive 30s linear infinite',
         like: 'like 0.2s alternate 2',
         deleteLike: "deleteLike 0.2s alternate 2",
         fadeIn: 'fadeIn 2s linear',
@@ -103,6 +104,19 @@ module.exports = {
           "85%": {transform: 'translateX(0%)'},
           '100%': { transform: 'translateX(-100%)'},
         },
+
+        slideLeftResponsive: {
+          '0%': {
+            transform: 'translateX(100%)',
+            'white-space': 'nowrap',
+          },
+
+          '100%': {
+            transform: 'translateX(-1350%)',
+            'white-space': 'no-wrap',
+          },
+        },
+        
 
         fadeIn: {
           '0%': { opacity: 0},

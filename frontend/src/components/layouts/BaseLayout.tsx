@@ -1,10 +1,10 @@
 import React from "react";
 
 import AsideBase from "./AsideBase"
-import GlobalChat from "./GlobalChat"
+import GlobalChat from "./Megafone/GlobalChat"
 import HeaderBase from "./HeaderBase"
 import { twMerge } from "tailwind-merge";
-import { ResponsiveGlobalChat } from "./ResponsiveGlobalChat";
+import { ResponsiveGlobalChat } from "./Megafone/ResponsiveGlobalChat";
 
 
 const BaseLayout = ({children, ...rest}) => {
