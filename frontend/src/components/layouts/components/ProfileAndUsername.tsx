@@ -1,10 +1,10 @@
 import { HTMLAttributes } from "react"
-import ProfileImagePost from "../../pages/feed/ProfileImagePost"
-import UserNamePost from "../../pages/feed/UserNamePost"
+import UserNamePost from "../../pages/feed/DesktopFeed/MultUseComponents/UserNamePost"
 import { twJoin } from "tailwind-merge"
 import TimeAgo from "react-timeago";
 import brazilianStrings from 'react-timeago/lib/language-strings/pt-br'
 import buildFormatter from 'react-timeago/lib/formatters/buildFormatter'
+import ProfileImagePost from "../../pages/feed/DesktopFeed/Middle/PostsComponents/ProfileImagePost";
 
 
 interface ProfileAndUsernameProps extends HTMLAttributes<HTMLDivElement>{

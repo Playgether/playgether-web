@@ -59,8 +59,6 @@ export const IntervalFunctionComponent = () => {
         const currentVolume = volumes[currentMessage.volume]
         const intervalId = setInterval(() => {
           setCurrentIndex((prevIndex) => {
-            const currentMessage = GlobalMessages[prevIndex];
-            const currentVolume = volumes[currentMessage.volume];
             return prevIndex + 1 < GlobalMessages.length ? prevIndex + 1 : 0;
           });
         }, currentVolume);
@@ -76,7 +74,7 @@ export const IntervalFunctionComponent = () => {
                     <TextLimitComponent 
                         text={message.username + ':'}
                         maxCharacters={40}
-                        className={`relative z-10 lg:bg-white-300 lg:h-full text-xs lg:text-sm flex items-center justify-center -mt-6 -ml-14 lg:ml-0 lg:mt-0 ${index === currentIndex ? 'animate-fadeIn':'animate-fadeOut'}`}
+                        className={`relative z-10 lg:bg-white-300 lg:h-full text-xs lg:text-sm flex items-center justify-center -mt-4 -ml-14 lg:ml-0 lg:mt-0 ${index === currentIndex ? 'animate-fadeIn':'animate-fadeOut'}`}
                         paragraphClassName="pl-2 font-semibold text-blue-500"
                     />
 

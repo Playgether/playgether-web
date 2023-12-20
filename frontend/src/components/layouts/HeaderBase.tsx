@@ -1,5 +1,5 @@
 import React from "react";
-import SearchElement from "../pages/feed/SearchElementHeader";
+import SearchElement from "../pages/feed/DesktopFeed/MultUseComponents/SearchElementHeader";
 import IconsHeader from "./IconsHeader";
 import Image from "next/legacy/image";
 

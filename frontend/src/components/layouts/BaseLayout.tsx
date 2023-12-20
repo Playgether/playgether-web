@@ -12,7 +12,7 @@ const BaseLayout = ({children, ...rest}) => {
         <div className={twMerge('h-screen w-screen bg-white-200 bg-opacity-85 flex flex-col overflow-x-hidden gap-3 overflow-y-hidden max-h-screen relative', rest.className)}>
             <HeaderBase />
 
-            <div className="flex flex-row w-full items-center justify-center h-4/6 flex-grow shrink-0">
+            <div className="flex flex-row w-full items-center justify-center h-4/6 flex-grow shrink-0 mb-4">
                 <AsideBase />
                 {children}
             </div>   
