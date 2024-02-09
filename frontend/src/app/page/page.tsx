@@ -12,8 +12,6 @@ import { SlideProps } from '../../components/layouts/Slider';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-import { useResource } from '../../components/custom_hooks/useResource';
-import { FeedProps, getFeed } from '../../services/getFeed';
 import { LoadingComponent } from '../../components/layouts/components/LoadingComponent';
 
 

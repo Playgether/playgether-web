@@ -4,12 +4,11 @@ import React, { useState } from "react";
 
 import Posts from "./PostsComponents/Posts";
 import PostProperies from "./PostsComponents/PostsProperies";
-import { FeedProps, getFeed } from "../../../../../services/getFeed";
-import { useAuthContext } from "../../../../../context/AuthContext";
-import { useResource } from "../../../../custom_hooks/useResource";
+import { FeedProps,} from "../../../../../services/getFeed";
 import PostsExtend from "../../PostsExtend/PostsExtend";
 import ProfileAndUsername from "../../../../layouts/components/ProfileAndUsername";
 import PostText from "../../../../layouts/PostText";
+import { useFeedContext } from "../../../../../context/FeedContext";
 
 
 interface ApiResponse {
@@ -17,8 +16,7 @@ interface ApiResponse {
 }
 
 const FeedComponent = () => {
-  const { user, authTokens } = useAuthContext();
-  const { resources } = useResource<ApiResponse>(() => getFeed(authTokens, user?.user_id)); 
+  const {feed} = useFeedContext()
   const [openPostsExtend, setOpenPostsExtend] = useState(false)
   const [resourceState, setResourceState] = useState<FeedProps>()
   const [slideIndex, setSlideIndex] = useState(0)
@@ -40,7 +38,7 @@ const FeedComponent = () => {
           <PostsExtend resource={resourceState} onClose={handlePostsCloseExtend} slideIndex={slideIndex}/>
         </div>
       }
-        {resources && resources.data.map((resource) => (
+        {feed && feed.map((resource) => (
           <React.Fragment key={resource.id}>
             <div className="bg-white-200 flex items-start justify-start">
                 <ProfileAndUsername 

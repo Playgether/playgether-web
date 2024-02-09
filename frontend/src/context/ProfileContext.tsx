@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useState, useContext, useEffect } from "react"
+import { createContext, useState, useContext} from "react"
 import { getProfile } from "../services/getProfile"
 import { useAuthContext } from "./AuthContext"
 import { ProfileProps } from "../services/getProfile"

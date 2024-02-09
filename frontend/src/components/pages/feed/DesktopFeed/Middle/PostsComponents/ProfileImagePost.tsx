@@ -24,8 +24,6 @@ const ProfileImagePost = ({ link_photo, ...rest }: Resource & DivProps) => {
             ) : (
                 <Image
                     src={`${link_photo}`}
-                    width={400}
-                    height={400}
                     alt={"Imagem de perfil de quem postou um post no feed"}
                     className="rounded-full h-10"
                     layout="fill"

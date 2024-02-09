@@ -23,7 +23,7 @@ export const FormRegisterImplementation = ({handleSubmit, handleAvailableUsernam
                     <InputLayout
                         type="text"
                         placeholder="Nome de usuário"
-                        register = {...register('username')}
+                        register = {{...register('username')}}
                         className="mb-0"
                         
                     />
@@ -43,7 +43,7 @@ export const FormRegisterImplementation = ({handleSubmit, handleAvailableUsernam
             <InputLayout
                 type="email"
                 placeholder="Email"
-                register = {...register('email')}
+                register = {{...register('email')}}
             />
             <ErrosInput field={errors.email}/>
             
@@ -51,7 +51,7 @@ export const FormRegisterImplementation = ({handleSubmit, handleAvailableUsernam
             <InputLayout
                 type="password"
                 placeholder="Senha"
-                register = {...register('password')}
+                register = {{...register('password')}}
             />
             <ErrosInput field={errors.password}/>
             
@@ -59,7 +59,7 @@ export const FormRegisterImplementation = ({handleSubmit, handleAvailableUsernam
             <InputLayout
                 type="password"
                 placeholder="Repita a senha"
-                register = {...register('repeatPassword')}
+                register = {{...register('repeatPassword')}}
             />
             <ErrosInput field={errors.repeatPassword}/>
             
@@ -67,7 +67,7 @@ export const FormRegisterImplementation = ({handleSubmit, handleAvailableUsernam
             <InputLayout
                 type="text"
                 placeholder="Primeiro nome"
-                register = {...register('first_name')}
+                register = {{...register('first_name')}}
             />
             <ErrosInput field={errors.first_name}/>
             
@@ -75,7 +75,7 @@ export const FormRegisterImplementation = ({handleSubmit, handleAvailableUsernam
             <InputLayout
                 type="text"
                 placeholder="Sobrenome (OPCIONAL)"
-                register = {...register('last_name')}
+                register = {{...register('last_name')}}
             />
             <ErrosInput field={errors.last_name}/>
             

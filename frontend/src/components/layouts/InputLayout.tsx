@@ -2,7 +2,7 @@ import React, { InputHTMLAttributes } from "react";
 import { twMerge } from "tailwind-merge";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement>{
-    register: () => void
+    register: any
 }
 
 

@@ -22,7 +22,7 @@ export const FormLoginImplementation = ({handleSubmit, wrongPassword, register, 
             <InputLayout
                 type='text'
                 placeholder='Username' 
-                register={...register('username')} 
+                register={{...register('username')}} 
             />
             <ErrosInput field={errors.username}/>
         
@@ -30,12 +30,12 @@ export const FormLoginImplementation = ({handleSubmit, wrongPassword, register, 
             <InputLayout
                 type='password'
                 placeholder='Password' 
-                register={...register('password')} 
+                register={{...register('password')}} 
             />
             <ErrosInput field={errors.password}/>
             
             <div className='mb-4'>
-                <OrangeButton className='inline-block w-full leading-none shadow px-8, py-4'>
+                <OrangeButton className='inline-block w-full leading-none shadow px-8, py-4' onSubmit={handleSubmit(Submiting)}>
                     LOGAR
                 </OrangeButton>
             </div>
