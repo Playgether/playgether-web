@@ -9,14 +9,14 @@ export const useResource = <T>(getResourceFunc: (...props) => void | Promise<T |
     const {user, authTokens} = useAuthContext()
 
     const handleGetApiResource = useCallback(async () => {
-        if (user && authTokens) {
+        if (user && authTokens && !resources) {
             const result = await getResourceFunc();
             setResource(result);
         } else {
             false
         }
 
-    }, [user, authTokens, getResourceFunc])
+    }, [user, authTokens, getResourceFunc, resources])
 
     useEffect(() => {
         handleGetApiResource();         
