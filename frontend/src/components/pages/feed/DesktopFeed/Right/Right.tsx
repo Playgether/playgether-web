@@ -1,6 +1,8 @@
 import Notifications from "./Notification/Notifications"
 import TopicsOfMoment from "./TopicsOfTheMomment/TopicsOfMoment"
 
+
+/** Este é o componente principal da parte "Right" da página de feed. Seu intuito é servir como wrapper de toda a parte direita da página. */
 const Right = () => {
     return (
         <div className="bg-white-200">
