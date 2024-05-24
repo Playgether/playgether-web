@@ -2,6 +2,7 @@ import React from "react";
 import {MdSearch} from "react-icons/md";
 import OnlineFriendsList from "./OnlineFriendsList";
 
+/** Este é o wrapper pai da lista de amigos onlines na feed page, seu intuito é ser o wrapper principal de todo o card e seus componentes filhos */
 const OnlineFriendsCard = ({}) => {
     return (
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from "react";
-import TextLimitComponent from "../TextLimitComponent";
+import TextLimitComponent from "../SuspenseFallBack/TextLimitComponent/TextLimitComponent";
 
 
 enum volumes {

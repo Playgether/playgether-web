@@ -1,5 +1,6 @@
 import React from "react";
 
+/** Este componente é o wrapper da lista de usuários online, seu intuito é mostrar e estilizar a lista de pessoas onlines dentro do componente de OnlineFriends na feed page */
 const OnlineFriendsList = ({}) => {
     return (
 

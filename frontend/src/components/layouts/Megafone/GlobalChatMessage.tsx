@@ -1,5 +1,5 @@
 import { HTMLAttributes } from "react"
-import TextLimitComponent from "../TextLimitComponent"
+import TextLimitComponent from "../SuspenseFallBack/TextLimitComponent/TextLimitComponent"
 
 interface GlobalMessagesProps extends HTMLAttributes<HTMLDivElement> {
     message: {

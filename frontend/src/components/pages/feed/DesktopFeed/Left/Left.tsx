@@ -2,6 +2,8 @@ import { ProfileContextProvider } from "../../../../../context/ProfileContext"
 import OnlineFriendsCard from "./OnlineFriends/OnlineFriendsCard"
 import ProfileCard from "./Profile/ProfileCard"
 
+
+/** Este componente é o wrapper principal da parte "Left" no componente de feed */
 const Left = () => {
     return (
         <div>

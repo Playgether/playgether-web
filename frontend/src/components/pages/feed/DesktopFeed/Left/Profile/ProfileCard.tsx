@@ -12,6 +12,7 @@ import { ProfileProps } from "../../../../../../services/getProfile";
 import OrangeButton from "../../../../../elements/OrangeButton";
 
 
+/** Este componente é o wrapper principal do card de profile na página feed. Seu intuito é ser o wrapper de todo o card e seus componentes filhos. */
 const ProfileCard = ({}) => {
     const {user} = useAuthContext()
     const {profile, fetchProfile} = useProfileContext()

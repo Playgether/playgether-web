@@ -128,4 +128,4 @@ const AuthProvider = ({children}: {children: React.ReactNode}) => {
 }
 
 export const useAuthContext =  () => useContext(AuthContext);
-export {AuthProvider};
+export {AuthProvider, AuthContext};

@@ -5,7 +5,7 @@ import { useState } from "react";
 import OrangeButton from "../../../../elements/OrangeButton";
 import ControlledModal from "../../../../elements/ControlledModal";
 import ButtonClose from "../../../../elements/ButtonClose";
-import TextLimitComponent from "../../../../layouts/TextLimitComponent";
+import TextLimitComponent from "../../../../layouts/SuspenseFallBack/TextLimitComponent/TextLimitComponent";
 import { commentProps } from "../../../../../services/postComment";
 import { RiDeleteBin6Line } from "react-icons/ri"
 import { EditCommentItens } from "./EditCommentItens";

@@ -33,4 +33,4 @@ const useProfileContext = () => {
     return context
 }
 
-export {ProfileContextProvider, useProfileContext}
+export {ProfileContextProvider, useProfileContext, ProfileContext}

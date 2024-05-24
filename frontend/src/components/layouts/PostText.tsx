@@ -1,4 +1,4 @@
-import TextLimitComponent from "./TextLimitComponent"
+import TextLimitComponent from "./SuspenseFallBack/TextLimitComponent/TextLimitComponent"
 
 type PostTextProps = {
     resource: {

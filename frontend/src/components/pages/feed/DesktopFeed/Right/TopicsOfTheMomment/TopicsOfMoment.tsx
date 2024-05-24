@@ -1,4 +1,4 @@
-import TextLimitComponent from "../../../../../layouts/TextLimitComponent"
+import TextLimitComponent from "../../../../../layouts/SuspenseFallBack/TextLimitComponent/TextLimitComponent"
 
 
 const TopicsOfMoment = () => {
