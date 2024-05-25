@@ -9,11 +9,16 @@ interface DivProps extends HTMLAttributes<HTMLDivElement> {
 
 }
 
-type Resource = {
+export type Resource = {
+    /** Esta propriedade recebe uma string, que deve ser a url da foto de perfil. */
     link_photo: string
 }
 
-
+/**
+ * Este componente serve para mostrar a foto de perfil do autor de algum post
+ * OBS: Você precisa passar um className definindo a altura (height) e a largura (width) do container, visto que a imagem possui a propriedade "fill". Caso não passe, a imagem não aparecerá na tela.
+ * Outra OBS: Tenha certeza de que o link da imagem que está sendo enviada possui o base URL configurado nas URLs de imagens do Next.js.
+ */
 const ProfileImagePost = ({ link_photo, ...rest }: Resource & DivProps) => {
     return (   
         <div 
@@ -28,6 +33,7 @@ const ProfileImagePost = ({ link_photo, ...rest }: Resource & DivProps) => {
                     className="rounded-full h-10"
                     layout="fill"
                     objectFit="cover"
+                    unoptimized
                 />
             )}
         </div>

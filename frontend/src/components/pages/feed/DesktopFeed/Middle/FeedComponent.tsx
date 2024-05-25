@@ -7,7 +7,7 @@ import PostProperies from "./PostsComponents/PostsProperies";
 import { FeedProps,} from "../../../../../services/getFeed";
 import PostsExtend from "../../PostsExtend/PostsExtend";
 import ProfileAndUsername from "../../../../layouts/components/ProfileAndUsername";
-import PostText from "../../../../layouts/PostText";
+import PostText from "../../../../layouts/PostText/PostText";
 import { useFeedContext } from "../../../../../context/FeedContext";
 
 

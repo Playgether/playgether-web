@@ -1,4 +1,4 @@
-import PostText from "../../../layouts/PostText"
+import PostText from "../../../layouts/PostText/PostText"
 import { TogglePostComponent } from "../CommonComponents/togglePostComponent"
 import { NameAndUsernameResponsive } from "./PostsComponents/NameAndUsername"
 import { CiShare1 } from "react-icons/ci";

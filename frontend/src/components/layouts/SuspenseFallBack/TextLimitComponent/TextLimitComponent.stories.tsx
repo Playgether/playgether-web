@@ -22,6 +22,8 @@ export const Default: Story = {
     },
 }
 
+
+/** Perceba que o texto fica vermelho, ao adicionar "text-red-500" a prop paragraphClassName, você pode adicionar qualquer estilo desejável com esta prop. */
 export const WithParagraphClassName: Story = {
     args: {
         text:"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
@@ -30,6 +32,7 @@ export const WithParagraphClassName: Story = {
     },
 }
 
+/** Perceba que o texto muda, o final não é mais "reticências" e sim " ...ver mais", isto é o que acontece ao adicionar uma string a prop "textFinal" */
 export const WithTextFinal: Story = {
     args: {
         text:"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
@@ -38,6 +41,7 @@ export const WithTextFinal: Story = {
     },
 }
 
+/** Perceba que o texto da prop "textFinal" muda de cor, ao adicionar "text-blue-500" a prop "textFinalClassName", você pode adicionar qualquer estilo desejável com esta prop. */
 export const WithTextFinalClassName: Story = {
     args: {
         text:"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
