@@ -59,16 +59,16 @@ export const CommentsSection = () => {
     )
 }
 
-async function fetchData (postId) {
-    const {fetchComments} = useCommentsContext()
-   await fetchComments(postId)
-}
+// async function fetchData (postId) {
+//     const {fetchComments} = useCommentsContext()
+//    await fetchComments(postId)
+// }
 
-const CommentSectionLogic = async ({postId}:{postId: number}) => {
-    await fetchData(postId)
+// const CommentSectionLogic = async ({postId}:{postId: number}) => {
+//     await fetchData(postId)
 
-    return <> <CommentsSection /> </>
+//     return <> <CommentsSection /> </>
     
-}
+// }
 
-export default CommentSectionLogic
+// export default CommentSectionLogic

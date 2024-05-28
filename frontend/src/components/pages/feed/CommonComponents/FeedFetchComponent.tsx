@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import ContentFeed from "../DesktopFeed/MultUseComponents/ContentFeed"
 import { ResponsiveContainer } from "../ResponsiveFeed/Container"
 
-export const FeedFetchComponent = async () => {
+export const FeedFetchComponent = () => {
     const [isDesktop, setIsDesktop] = useState(false);
 
     useEffect(() => {

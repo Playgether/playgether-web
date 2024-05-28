@@ -2,11 +2,14 @@ import { HTMLAttributes } from "react";
 import { FieldError, FieldErrorsImpl, Merge } from "react-hook-form"
 import { twJoin } from "tailwind-merge";
 
-interface ErrosInputProps extends HTMLAttributes<HTMLDivElement> {
-    field: FieldError | Merge<FieldError, FieldErrorsImpl<any>> | undefined;
-  
+
+
+export interface ErrosInputProps extends HTMLAttributes<HTMLDivElement> {
+    /** Esta prop recebe a field de um formulário e o seu erro, e então cria o erro naquela field */
+    field: FieldError | Merge<FieldError, FieldErrorsImpl<any>> | undefined;  
 }
 
+/** Este componente recebe erros de formulários e adiciona na tela, exemplo: campo obrigatório, senha incorreta, etc ... */
 export const ErrosInput = ({field, ...rest} : ErrosInputProps) => {
 
     return (

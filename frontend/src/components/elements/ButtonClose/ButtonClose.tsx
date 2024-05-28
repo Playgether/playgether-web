@@ -5,6 +5,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>{
 
 }
 
+/** Este é o button padrão utilizado para fechar componentes, assim como OrangeButton, ele pode receber qualquer elemento de um button normal além do className */
 const ButtonClose = ({children, ...rest}: ButtonProps) => {
     return(
 

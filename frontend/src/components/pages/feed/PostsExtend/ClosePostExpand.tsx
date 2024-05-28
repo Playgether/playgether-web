@@ -1,4 +1,4 @@
-import ButtonClose from "../../../elements/ButtonClose"
+import ButtonClose from "../../../elements/ButtonClose/ButtonClose"
 
 interface ClosePostExpandProps {
     onClose: () => void

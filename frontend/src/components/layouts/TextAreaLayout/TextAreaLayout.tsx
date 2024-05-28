@@ -4,11 +4,13 @@ import TextareaAutosize from 'react-textarea-autosize'
 import { TextareaAutosizeProps } from "react-textarea-autosize/dist/declarations/src";
 
 interface InputProps extends TextareaAutosizeProps{
-    register: any
+    /** Esta prop recebe o register que será gerado do "UseFormState" da lib zod */
+    register: any,
+    /** Esta prop opcional recebe um className caso haja necessidade de alterar estilos deste componente. */
     textAreaClassName?: HTMLProps<HTMLElement>['className'];
 }
 
-
+/** Este componente é responsável por criar um TextArea, utilize-o quando precisar de um */
 const TextAreaLayout = ({ register, textAreaClassName, ...rest} : InputProps) => {
 
     return (

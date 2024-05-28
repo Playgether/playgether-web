@@ -1,6 +1,6 @@
 import React from "react";
 import LogoName from "./LogoName";
-import OrangeButton from "../../elements/OrangeButton";
+import OrangeButton from "../../elements/OrangeButton/OrangeButton";
 
 interface NormalProps {
     onClickCadastrar: () => void

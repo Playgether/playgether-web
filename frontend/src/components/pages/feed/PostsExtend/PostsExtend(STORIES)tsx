@@ -1,0 +1,139 @@
+import {Meta, StoryObj} from "@storybook/react"
+import PostsExtend, { PostsExtendProps } from "./PostsExtend"
+import { PostLikes, PostMedias, PostReposts } from "../../../../services/getFeed"
+import { LikeContentType } from "../../../content_types/LikeContentType"
+import { RepostContentType } from "../../../content_types/RepostContentType"
+
+const onClose = () => {
+    return "Success executing onClose function"
+}
+
+const likes:PostLikes[] = [
+    {
+        id:1,
+        created_by_user_name: "David Matthew",
+        created_by_user_photo: "https://images.unsplash.com/photo-1628563694622-5a76957fd09c?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aW5zdGFncmFtJTIwcHJvZmlsZXxlbnwwfHwwfHx8MA%3D%3D",
+        object_id: 1,
+        timestamp: new Date('2024-05-28T12:34:56Z'),
+        content_type: LikeContentType.post,
+        user:1
+    },
+
+    {
+        id:2,
+        created_by_user_name: "Raymond Junior",
+        created_by_user_photo: "https://images.unsplash.com/photo-1628563694622-5a76957fd09c?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aW5zdGFncmFtJTIwcHJvZmlsZXxlbnwwfHwwfHx8MA%3D%3D",
+        object_id: 1,
+        timestamp: new Date('2024-05-27T12:34:56Z'),
+        content_type: LikeContentType.post,
+        user:2
+    }
+]
+
+const medias:PostMedias[] = [
+    {
+        id:1,
+        media_file:"https://images.unsplash.com/photo-1529665253569-6d01c0eaf7b6?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8cHJvZmlsZXxlbnwwfHwwfHx8MA%3D%3D",
+        media_type: "image",
+        post:1,
+        position: 0,
+    },
+    {
+        id:2,
+        media_file:"https://images.unsplash.com/photo-1628563694622-5a76957fd09c?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aW5zdGFncmFtJTIwcHJvZmlsZXxlbnwwfHwwfHx8MA%3D%3D",
+        media_type: "image",
+        post:1,
+        position: 0,
+    }
+]
+
+const reposts:PostReposts[] = [
+    {
+        id:1,
+        object_id: 1, 
+        created_by_user_name: "David Matthew",
+        created_by_user_photo: "https://images.unsplash.com/photo-1628563694622-5a76957fd09c?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aW5zdGFncmFtJTIwcHJvZmlsZXxlbnwwfHwwfHx8MA%3D%3D",
+        timestamp: new Date('2024-05-27T12:34:56Z'),
+        content_type: RepostContentType.post,
+        user:1,
+        comment: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Perferendis eum quasi placeat iure est ea fugit adipisci ab ducimus, nobis, ratione, minima repellendus magni repellat beatae unde error totam.",
+        quantity_visualization: 1000,
+        quantity_comment: 50,
+        quantity_likes: 100,
+        quantity_shares: 29,
+    },
+
+    {
+        id:2,
+        object_id: 1, 
+        created_by_user_name: "Raymond Junior",
+        created_by_user_photo: "https://images.unsplash.com/photo-1628563694622-5a76957fd09c?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aW5zdGFncmFtJTIwcHJvZmlsZXxlbnwwfHwwfHx8MA%3D%3D",
+        timestamp: new Date('2024-05-28T12:34:56Z'),
+        content_type: RepostContentType.post,
+        user:1,
+        comment: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Perferendis eum quasi placeat iure est ea fugit adipisci ab ducimus, nobis, ratione, minima repellendus magni repellat beatae unde error totam.",
+        quantity_visualization: 500,
+        quantity_comment: 25,
+        quantity_likes: 90,
+        quantity_shares: 15,
+    }
+]
+
+const mockFeedProps = {
+    created_by_user: 1,
+    created_by_user_name: "David Mathew",
+    created_by_user_photo: "https://images.unsplash.com/photo-1529665253569-6d01c0eaf7b6?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8cHJvZmlsZXxlbnwwfHwwfHx8MA%3D%3D",
+    likes: likes,
+    reposts: reposts,
+    medias: medias,
+    id: 1,
+    timestamp: new Date('2024-05-25T12:34:56Z'),
+    quantity_visualization: 1000,
+    quantity_comment: 125,
+    quantity_likes: 500,
+    quantity_reposts: 50,
+    comment: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Eaque optio id fugit nesciunt assumenda illum enim, dolorem incidunt consequatur odio aliquam eius error fuga quas, repellendus nulla quam iure.",
+    has_post_media: true,
+    link: "testlink.com",
+    user_already_like: true,
+}
+
+
+// export interface FeedProps {
+//     created_by_user: number;
+//     created_by_user_name: string;
+//     created_by_user_photo: string;
+//     // comments:PostComments[],
+//     likes: PostLikes[];
+//     reposts: PostReposts[];
+//     medias: PostMedias[];
+//     id: number; 
+//     timestamp: number;
+//     quantity_visualization: number;
+//     quantity_comment: number;
+//     quantity_likes: number;
+//     quantity_reposts: number;
+//     comment: string;
+//     has_post_media: boolean;
+//     link: string;
+//     user_already_like: boolean;
+// }
+
+
+const meta:Meta<PostsExtendProps> = {
+    component:PostsExtend,
+    tags:['autodocs'],
+    parameters:{
+        layout:'centered',
+    },
+}
+
+export default meta;
+
+type Story = StoryObj<PostsExtendProps>;
+
+export const Default:Story = {
+    args:{
+        resource:mockFeedProps
+    }
+}

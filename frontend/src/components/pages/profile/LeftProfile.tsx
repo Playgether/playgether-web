@@ -1,5 +1,5 @@
 import Image from "next/legacy/image";
-import OrangeButton from "../../elements/OrangeButton";
+import OrangeButton from "../../elements/OrangeButton/OrangeButton";
 import {MdVerified} from "react-icons/md"
 
 export const LeftProfile = () => {

@@ -1,4 +1,4 @@
-import OrangeButton from "../../elements/OrangeButton";
+import OrangeButton from "../../elements/OrangeButton/OrangeButton";
 
 interface SuccessfullyRegisteredProps {
     onClickAqui: () => void

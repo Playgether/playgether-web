@@ -5,7 +5,7 @@ import { CiShare1 } from "react-icons/ci";
 import PostProperies from "../DesktopFeed/Middle/PostsComponents/PostsProperies";
 import { useFeedContext } from "../../../../context/FeedContext";
 import React, { useState } from "react";
-import Posts from "../DesktopFeed/Middle/PostsComponents/Posts";
+import Posts from "../DesktopFeed/Middle/PostsComponents/Posts/Posts";
 import { FeedProps } from "../../../../services/getFeed";
 
 

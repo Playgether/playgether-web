@@ -1,5 +1,5 @@
 import React from "react";
-import ButtonClose from "../../elements/ButtonClose";
+import ButtonClose from "../../elements/ButtonClose/ButtonClose";
 import FormLogin from "./FormLogin";
 import Image from "next/legacy/image";
 

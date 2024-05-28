@@ -1,6 +1,6 @@
 import { PostCommentsOfCommentsProps } from "../../../../../services/getComments"
 import ProfileAndUsername from "../../../../layouts/components/ProfileAndUsername"
-import PostPropertiersPostsExpand from "../../DesktopFeed/Middle/PostsComponents/PostPropertiers"
+import PostPropertiersPostsExpand from "../../DesktopFeed/Middle/PostsComponents/PostPropertiers/PostPropertiers"
 
 
 

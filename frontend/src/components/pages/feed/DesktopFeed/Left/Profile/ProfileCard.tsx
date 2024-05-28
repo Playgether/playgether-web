@@ -9,7 +9,7 @@ import { useAuthContext } from "../../../../../../context/AuthContext";
 import { useProfileContext } from "../../../../../../context/ProfileContext";
 import { useResource } from "../../../../../custom_hooks/useResource";
 import { ProfileProps } from "../../../../../../services/getProfile";
-import OrangeButton from "../../../../../elements/OrangeButton";
+import OrangeButton from "../../../../../elements/OrangeButton/OrangeButton";
 
 
 /** Este componente é o wrapper principal do card de profile na página feed. Seu intuito é ser o wrapper de todo o card e seus componentes filhos. */

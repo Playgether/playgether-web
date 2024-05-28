@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from "react"
-import EditComment from "./EditComment"
-import TextAreaLayout from "../../../../layouts/TextAreaLayout"
-import { ErrosInput } from "../../../../layouts/ErrorsInputLayout"
-import OrangeButton from "../../../../elements/OrangeButton"
+import EditComment from "./EditComment/EditComment"
+import TextAreaLayout from "../../../../layouts/TextAreaLayout/TextAreaLayout"
+import { ErrosInput } from "../../../../layouts/ErrosInputLayout/ErrorsInputLayout"
+import OrangeButton from "../../../../elements/OrangeButton/OrangeButton"
 import { SubmitingForm } from "../../../../layouts/SubmitingFormLayout"
 import { patchComment } from "../../../../../services/patchComment"
 import { useAuthContext } from "../../../../../context/AuthContext"
@@ -14,7 +14,7 @@ import { commentPatchProps } from "../../../../../services/patchComment"
 import { AnswerComment } from "./AnswerComment"
 import { PostsCommentsProps } from "../../../../../services/getComments"
 import { useCommentsContext } from "../../../../../context/CommentsContext"
-import PostPropertiersPostsExpand from "../../DesktopFeed/Middle/PostsComponents/PostPropertiers"
+import PostPropertiersPostsExpand from "../../DesktopFeed/Middle/PostsComponents/PostPropertiers/PostPropertiers"
 
 interface CommentsProps {
     item: PostsCommentsProps

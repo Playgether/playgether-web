@@ -3,17 +3,32 @@
 import { PiHeartFill, PiHeartThin } from "react-icons/pi"
 import { twJoin } from "tailwind-merge"
 import { useState } from "react"
-import { useAuthContext } from "../../../../context/AuthContext"
-import { postLike } from "../../../../services/postLike"
-import { deleteLike } from "../../../../services/deleteLike"
+import { useAuthContext } from "../../../../../context/AuthContext"
+import { postLike } from "../../../../../services/postLike"
+import { deleteLike } from "../../../../../services/deleteLike"
 
-interface PropertiersLikeProps {
+export interface PropertiersLikeProps {
+    /** Esta propriedade recebe a quantidade de likes de um determinado post (ou qualquer outra coisa que esteja referenciado como um comentário por exemplo)*/
     quantity_likes: number
+    /** Como o nome já sugere, esta propriedade recebe a estilização do ícone do Like */
     iconClassName?: string
+    /** Também como o nome já pré sugere, esta prop é um boolean que recebe True, caso o usuário logado já tenha curtido esse post, ou False caso não tenha(virá do backend), seu
+     * intuito é controlar qual ícone irá aparecer e suas animações
+     */
     user_already_like: boolean
+    /** Esta propriedade recebe qual tipo de conteúdo está sendo inserido este like(Um post, comentário, repost, profile, etc..), você pode pegar a chave de cada conteúdo
+     * dentro do enum "LikeContentType" dentro do módulo "content-type". É importante que venha desse enum para que todas as chaves sejam corretas e que o Like funcione no
+     * backend, além disso, ele define exatamente quais coisas podem ser curtidas na aplicação. Este enum também garante que todas inserções tenham uma mesma origem, para caso
+     * alguma das chaves mudem, a manutenção no front seja simples e fácil de fazer.
+     */
     content_type: string
+    /** Esta propriedade recebe o id do objeto que esta recebendo o like (id do post, comentário, repost ou profile) */
     object_id: number
 }
+/** Este componente é responsável por gerar o ícone de Like e suas propriedades, ele faz parte de um padrão aplicado a esta aplicação chamado "Composite",
+ * o intuito deste padrão é dar a liberdade de ser inserido qualquer tipo de propriedade de forma independente, juntas, ou combinadas, por exemplo: Apenas likes, ou apenas
+ * comentários, ou comentários e likes, ou comentários, likes, e reposts etc...
+ */
 const PropertiersLike = ({quantity_likes, iconClassName, user_already_like, content_type, object_id}: PropertiersLikeProps) => {
     const [onClicked, setOnClicked] = useState(user_already_like)
     const [quantitylikesNumber, setQuantityLikesNumber] = useState(quantity_likes)

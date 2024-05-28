@@ -2,21 +2,24 @@ import { FeedProps } from "../../../../services/getFeed"
 import { ClosePostExpand } from "./ClosePostExpand"
 import PostsExtendHasPostMedia from "./PostsHasPostMedia/PostsExtendHasPostMedia"
 import PostsExtendHasNoPostMedia from "./PostsHasNoPostMedia/PostsExtendHasNoPostMedia"
-import { PostsCommentsProps, getComments } from "../../../../services/getComments"
 import { CommentsContextProvider } from "../../../../context/CommentsContext"
-import { Suspense } from "react"
-import { LoadingComments } from "../../../../app/testPage/LoadingComments"
 
 export interface PostsExtendProps {
+    /** Esta prop recebe uma função que retorna void, esta função diz respeito ao que você quer que aconteça quando o componente for fechado, quando o usuário clicar no "X"
+     * esta função será executada. No caso do componente "FeedComponent" da página feed, ele passa função "handlePostsCloseExtend" para este componente, esta função seta
+     * um "(!openPostsExtend)" para a constante "openPostsExtend", que neste caso vai estar verdadeira (este componente vai estar aberto) e quando a função for executada
+     * ela sera falsa, fechando este componente
+     */
     onClose: () => void
+    /** Esta variavel recebe um resource do tipo FeedProps, em outras palavras, é um objeto de post, neste caso, o o objeto post que foi clicado para ser expandido. */
     resource: FeedProps; 
+    /** Esta prop recebe o número do index que você quer que o slide abra, ou seja, a position no carrousel de medias que você quer que abra, neste caso, na mesma position do
+     * slide que o user clicou.
+      */
     slideIndex: number       
 } 
 
-interface ApiResponse {
-    data: PostsCommentsProps[]
-}
-
+/** Este é o componente responsável por gerar a página extendida de um post que foi clicado no feed(Expande o post mostrando os comentários etc).  */
 const PostsExtend = ({onClose, resource, slideIndex}:PostsExtendProps) => {
     
     return (

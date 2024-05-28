@@ -1,6 +1,6 @@
 import React from "react";
 import Image from "next/legacy/image";
-import OrangeButton from "../../elements/OrangeButton";
+import OrangeButton from "../../elements/OrangeButton/OrangeButton";
 
 interface SobreProps {
     onClickVoltar: () => void

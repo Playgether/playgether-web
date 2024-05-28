@@ -1,12 +1,12 @@
 import { FeedProps } from "../../../../../services/getFeed"
 import ProfileAndUsername from "../../../../layouts/components/ProfileAndUsername"
-import { BorderLine } from "../../DesktopFeed/MultUseComponents/BorderLine"
+import { BorderLine } from "../../DesktopFeed/MultUseComponents/BorderLine/BorderLine"
 import CommentInput from "../../DesktopFeed/MultUseComponents/CommentInput"
-import { PostTextPostExpand } from "../CommentsSection/PostTextPostExpand"
-import { SlidePostExpand } from "../SlidePostExpand"
+import { PostTextPostExpand } from "../PostTextPostExpand/PostTextPostExpand"
+import { SlidePostExpand } from "../SlidePostExpand/SlidePostExpand"
 import { Suspense } from "react"
 import { CommentSectionFallback } from "../../../../layouts/SuspenseFallBack/CommentSectionFallback"
-import CommentSectionLogic from "../CommentsSection/CommentsSectionLogic"
+import CommentSectionLogic from "../CommentsSection/CommentSectionFetchData"
 
 
 interface PostsExtendHasPostMediaProps {

@@ -6,7 +6,9 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>{
 
 }
 
-
+/** Este componente cria um "Button" laranja com a cor padrão da paleta de cores da marca, qualquer button executável deve seguir o padrão de utilizar este componente. Ele 
+ * pode receber qualquer propriedade que um Button html recebe, além do className para adicionar certos estilos para ele (tamanho, largura etc).
+ */
 const OrangeButton = ({children, ...rest}: ButtonProps) => {
 
     return (

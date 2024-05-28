@@ -1,6 +1,6 @@
 'use client';
 
-import OrangeButton from '../../components/elements/OrangeButton';
+import OrangeButton from '../../components/elements/OrangeButton/OrangeButton';
 import '../globals.css'
 import { useState, Suspense, useEffect} from 'react';
 import { PostProps } from '../../services/getPosts';

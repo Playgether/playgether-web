@@ -3,7 +3,7 @@
 import { useState } from "react";
 import PostComponent from "./PostsComponents/PostComponent";
 import { IoArrowDownCircleSharp, IoArrowUpCircle } from "react-icons/io5";
-import Posts from "./PostsComponents/Posts";
+import Posts from "./PostsComponents/Posts/Posts";
 import FeedComponent from "./FeedComponent";
 import LoadMore from "../MultUseComponents/LoadMore";
 import { medias } from "../../../../../app/page/page";

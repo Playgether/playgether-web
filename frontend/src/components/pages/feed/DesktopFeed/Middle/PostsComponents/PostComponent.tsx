@@ -1,6 +1,6 @@
 import React from 'react'
 import { GoFileMedia } from "react-icons/go";
-import OrangeButton from '../../../../../elements/OrangeButton';
+import OrangeButton from '../../../../../elements/OrangeButton/OrangeButton';
 
 
 const PostComponent = ({}) => {

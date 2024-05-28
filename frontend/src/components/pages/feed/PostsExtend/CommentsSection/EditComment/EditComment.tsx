@@ -1,16 +1,16 @@
 'use client'
 
-import { useAuthContext } from "../../../../../context/AuthContext";
+import { useAuthContext } from "../../../../../../context/AuthContext";
 import { useState } from "react";
-import OrangeButton from "../../../../elements/OrangeButton";
-import ControlledModal from "../../../../elements/ControlledModal";
-import ButtonClose from "../../../../elements/ButtonClose";
-import TextLimitComponent from "../../../../layouts/SuspenseFallBack/TextLimitComponent/TextLimitComponent";
-import { commentProps } from "../../../../../services/postComment";
+import OrangeButton from "../../../../../elements/OrangeButton/OrangeButton";
+import ControlledModal from "../../../../../elements/ControlledModal/ControlledModal";
+import ButtonClose from "../../../../../elements/ButtonClose/ButtonClose";
+import TextLimitComponent from "../../../../../layouts/SuspenseFallBack/TextLimitComponent/TextLimitComponent";
+import { commentProps } from "../../../../../../services/postComment";
 import { RiDeleteBin6Line } from "react-icons/ri"
-import { EditCommentItens } from "./EditCommentItens";
-import { deleteComment } from "../../../../../services/deleteComment";
-import { useCommentsContext } from "../../../../../context/CommentsContext";
+import { EditCommentItens } from "../EditCommentItens/EditCommentItens";
+import { deleteComment } from "../../../../../../services/deleteComment";
+import { useCommentsContext } from "../../../../../../context/CommentsContext";
 
 
 
@@ -18,7 +18,7 @@ interface EditCommentProps extends commentProps {
     id: number,
 }
 
-
+/** Este é o componente responsável por criar a parte de edição de um comentário existente */
 const EditComment = ({Comment, handleEditClick, isEditing, setIsEditing}:{Comment: EditCommentProps; handleEditClick:(value:boolean) => void; isEditing: boolean; setIsEditing:(boolean) => void}) => {
     const { user, authTokens } = useAuthContext();
     const [shouldShowModal, setShouldShowModal] = useState(false);

@@ -1,11 +1,11 @@
 import { BsFillSendFill } from "react-icons/bs"
-import TextAreaLayout from "../../../../layouts/TextAreaLayout"
+import TextAreaLayout from "../../../../layouts/TextAreaLayout/TextAreaLayout"
 import { useCommentFormSchema } from "../../../../layouts/Forms/CommentFormSchema"
 import { UseFormState } from "../../../../layouts/ConstFormStateLayout"
 import { useAuthContext } from "../../../../../context/AuthContext"
 import { SubmitingForm } from "../../../../layouts/SubmitingFormLayout"
 import { postComment } from "../../../../../services/postComment"
-import { ErrosInput } from "../../../../layouts/ErrorsInputLayout"
+import { ErrosInput } from "../../../../layouts/ErrosInputLayout/ErrorsInputLayout"
 import { CommentContentType } from "../../../../content_types/CommentContentType"
 import { useCommentsContext } from "../../../../../context/CommentsContext"
 

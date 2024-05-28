@@ -1,7 +1,7 @@
 import { FieldErrors, UseFormHandleSubmit } from "react-hook-form"
-import { ErrosInput } from "../ErrorsInputLayout"
-import OrangeButton from "../../elements/OrangeButton";
-import TextAreaLayout from "../TextAreaLayout";
+import { ErrosInput } from "../ErrosInputLayout/ErrorsInputLayout"
+import OrangeButton from "../../elements/OrangeButton/OrangeButton";
+import TextAreaLayout from "../TextAreaLayout/TextAreaLayout";
 
 interface FormCommentProps {
     handleSubmit: UseFormHandleSubmit<any | undefined>
@@ -19,7 +19,7 @@ export const FormCommentImplementation = ({handleSubmit, register, errors, Submi
           >
           <div className="flex w-full h-full justify-end items-center"> 
               <TextAreaLayout
-                register={...register('comment')}
+                register={register('comment')}
                 maxRows={10}
                 minRows={2}
                 placeholder="Digite um comentário"

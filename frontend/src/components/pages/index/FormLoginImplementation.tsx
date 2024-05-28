@@ -1,5 +1,5 @@
-import OrangeButton from "../../elements/OrangeButton";
-import { ErrosInput } from "../../layouts/ErrorsInputLayout";
+import OrangeButton from "../../elements/OrangeButton/OrangeButton";
+import { ErrosInput } from "../../layouts/ErrosInputLayout/ErrorsInputLayout";
 import InputLayout from "../../layouts/InputLayout";
 import { WrongPasswordComponent } from "./WrongPassword";
 import NoHaveAccount from "./NoHaveAccount";

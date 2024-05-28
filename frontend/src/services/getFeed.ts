@@ -8,8 +8,8 @@ export interface PostLikes {
     created_by_user_name: string;
     created_by_user_photo: string;
     object_id: number;
-    timestamp: number;
-    content_type: number;
+    timestamp: Date;
+    content_type: string;
     user:number;
     
 }
@@ -19,9 +19,9 @@ export interface PostReposts {
     id: number; 
     created_by_user_name: string;
     created_by_user_photo: string;
-    timestamp: number;
+    timestamp: Date;
     object_id: number;
-    content_type: number;
+    content_type: string;
     user:number;
     comment: string;
     quantity_visualization: number;
@@ -50,7 +50,7 @@ export interface FeedProps {
     reposts: PostReposts[];
     medias: PostMedias[];
     id: number; 
-    timestamp: number;
+    timestamp: Date;
     quantity_visualization: number;
     quantity_comment: number;
     quantity_likes: number;

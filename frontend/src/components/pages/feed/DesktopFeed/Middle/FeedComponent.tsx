@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 
-import Posts from "./PostsComponents/Posts";
+import Posts from "./PostsComponents/Posts/Posts";
 import PostProperies from "./PostsComponents/PostsProperies";
 import { FeedProps,} from "../../../../../services/getFeed";
 import PostsExtend from "../../PostsExtend/PostsExtend";
@@ -18,24 +18,26 @@ interface ApiResponse {
 const FeedComponent = () => {
   const {feed} = useFeedContext()
   const [openPostsExtend, setOpenPostsExtend] = useState(false)
-  const [resourceState, setResourceState] = useState<FeedProps>()
+  const [resourceObject, setResourceObject] = useState<FeedProps>()
   const [slideIndex, setSlideIndex] = useState(0)
 
   const handlePostsCloseExtend = () => {
     setOpenPostsExtend(!openPostsExtend)
   }
 
-  const handlePostsExtend = (resourceState) => {
-    setResourceState(resourceState)
+  const handlePostsExtend = (resourceObject) => {
+    setResourceObject(resourceObject)
     setOpenPostsExtend(!openPostsExtend)
+    console.log(resourceObject.medias)
+    console.log(slideIndex)
   }
   
 
   return (
       <>
-      {openPostsExtend && !!resourceState && 
+      {openPostsExtend && !!resourceObject && 
         <div className="h-5/6">
-          <PostsExtend resource={resourceState} onClose={handlePostsCloseExtend} slideIndex={slideIndex}/>
+          <PostsExtend resource={resourceObject} onClose={handlePostsCloseExtend} slideIndex={slideIndex}/>
         </div>
       }
         {feed && feed.map((resource) => (
@@ -56,7 +58,7 @@ const FeedComponent = () => {
       
             {resource?.has_post_media ? (
                 <div className="bg-white-200 h-4/6">
-                  <Posts media={resource.medias} onExpand={() => handlePostsExtend(resource)} setSlideIndex={setSlideIndex} postsSize="h-full" className="h-5/6"/>
+                  <Posts media={resource.medias} onClick={() => handlePostsExtend(resource)} setSlideIndex={setSlideIndex} postsSize="h-full" className="h-5/6"/>
                 </div>
             ) : null}
     
