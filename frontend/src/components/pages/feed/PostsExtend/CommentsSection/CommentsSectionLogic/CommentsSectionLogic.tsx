@@ -2,14 +2,17 @@
 
 import { useState } from "react"
 import React from "react"
-import ProfileAndUsername from "../../../../layouts/components/ProfileAndUsername"
-import { Comments } from "./Comments"
-import { ExpandedComments } from "./ExpandComments"
-import { NoHaveAnswersYet } from "./NoHaveAnswersYet"
-import NoHaveCommentsYet from "./NoHaveCommentsYet"
-import { useCommentsContext } from "../../../../../context/CommentsContext"
+import ProfileAndUsername from "../../../../../layouts/components/ProfileAndUsername"
+import { Comments } from "../Comments/Comments"
+import { ExpandedComments } from "../ExpandComments/ExpandComments"
+import { NoHaveAnswersYet } from "../NoHaveAnswersYet/NoHaveAnswersYet"
+import NoHaveCommentsYet from "../NoHaveCommentsYet/NoHaveCommentsYet"
+import { useCommentsContext } from "../../../../../../context/CommentsContext"
 
 
+/** Este componente é responsável por gerar toda a lógica de exibição da seção de comentários em PostsExpand, ou seja, fazer map nos comentários, exibir os componente corretos quando não houver
+ * comentários ainda, etc...
+ */
 export const CommentsSection = () => {
     const [expandedComments, setExpandedComments] = useState({});
     const {comments} = useCommentsContext()
@@ -58,17 +61,3 @@ export const CommentsSection = () => {
         </>
     )
 }
-
-// async function fetchData (postId) {
-//     const {fetchComments} = useCommentsContext()
-//    await fetchComments(postId)
-// }
-
-// const CommentSectionLogic = async ({postId}:{postId: number}) => {
-//     await fetchData(postId)
-
-//     return <> <CommentsSection /> </>
-    
-// }
-
-// export default CommentSectionLogic

@@ -4,13 +4,13 @@ import { PostCommentsOfCommentsProps, PostsCommentsProps, getComments } from "..
 import { useAuthContext } from "./AuthContext";
 import { commentProps } from "../services/postComment";
 
-interface ApiResponse {
+export interface ApiResponseComments {
     data: PostsCommentsProps[]
 }
 
 type CommentsContextProps = {
     fetchComments: (postId: number) => void
-    comments: ApiResponse
+    comments: ApiResponseComments
     addNewComment: (newComment:PostsCommentsProps) => void
     editComment: (updatedComment:PostsCommentsProps) => void
     deleteCommentContext: (Comment:commentProps) => void
@@ -22,7 +22,7 @@ type CommentsContextProps = {
 export const CommentsContext = createContext<CommentsContextProps>({} as CommentsContextProps)
 
 export function CommentsContextProvider({children}:{children: ReactNode}) {
-    const [comments, setComments] = useState<ApiResponse>({data :[]})
+    const [comments, setComments] = useState<ApiResponseComments>({data :[]})
     const { authTokens } = useAuthContext();
     
 

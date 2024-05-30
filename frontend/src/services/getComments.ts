@@ -9,7 +9,7 @@ export interface PostsCommentsProps {
     user_already_like: boolean,
     object_id: number;
     comment: string;
-    timestamp: number;
+    timestamp: Date;
     quantity_comment: number;
     quantity_likes: number;
     content_type: string;
@@ -25,10 +25,10 @@ export interface PostCommentsOfCommentsProps {
     created_by_user_photo: string;
     object_id: number;
     comment: string;
-    timestamp: number;
+    timestamp: Date;
     quantity_comment: number;
     quantity_likes: number;
-    content_type: number;
+    content_type: string;
     user_already_like: boolean
     user: number;
     comments_of_comments: PostCommentsOfCommentsProps[];

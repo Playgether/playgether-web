@@ -2,7 +2,10 @@ import type { Preview } from "@storybook/react";
 import "../src/app/globals.css"
 import * as DocBlock from "@storybook/blocks"
 import React from "react";
+import { initialize, mswLoader } from 'msw-storybook-addon'
 
+// Initialize MSW
+initialize()
 const preview: Preview = {
   parameters: {
     docs: {
@@ -22,6 +25,7 @@ const preview: Preview = {
         date: /Date$/i,
       },
     },
+    loaders: [mswLoader]
   },
 };
 

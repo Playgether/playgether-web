@@ -1,3 +1,4 @@
+/** Este componente é exibido quando algum post ainda não obteve nenhum comentário */
 const NoHaveCommentsYet = () => {
     return (
         <div className="bg-white-200 flex flex-col gap-3 text-center items-center justify-center mb-5 h-full ">

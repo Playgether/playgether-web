@@ -47,5 +47,10 @@
     "@storybook/react": "^8.1.2",
     "@storybook/test": "^8.1.2",
     "storybook": "^8.1.2"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }

@@ -5,8 +5,8 @@ import CommentInput from "../../DesktopFeed/MultUseComponents/CommentInput"
 import { PostTextPostExpand } from "../PostTextPostExpand/PostTextPostExpand"
 import { SlidePostExpand } from "../SlidePostExpand/SlidePostExpand"
 import { Suspense } from "react"
-import { CommentSectionFallback } from "../../../../layouts/SuspenseFallBack/CommentSectionFallback"
-import CommentSectionLogic from "../CommentsSection/CommentSectionFetchData"
+import { CommentSectionFallback } from "../../../../layouts/SuspenseFallBack/CommentSectionFallback/CommentSectionFallback"
+import CommentSectionLogic from "../CommentsSection/CommentSectionFetchData/CommentSectionFetchData"
 
 
 interface PostsExtendHasPostMediaProps {

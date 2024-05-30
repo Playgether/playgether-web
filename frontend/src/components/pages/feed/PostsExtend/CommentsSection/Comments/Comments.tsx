@@ -1,27 +1,29 @@
 'use client'
 
 import { useState } from "react"
-import EditComment from "./EditComment/EditComment"
-import TextAreaLayout from "../../../../layouts/TextAreaLayout/TextAreaLayout"
-import { ErrosInput } from "../../../../layouts/ErrosInputLayout/ErrorsInputLayout"
-import OrangeButton from "../../../../elements/OrangeButton/OrangeButton"
-import { SubmitingForm } from "../../../../layouts/SubmitingFormLayout"
-import { patchComment } from "../../../../../services/patchComment"
-import { useAuthContext } from "../../../../../context/AuthContext"
-import { useCommentFormSchema } from "../../../../layouts/Forms/CommentFormSchema"
-import { UseFormState } from "../../../../layouts/ConstFormStateLayout"
-import { commentPatchProps } from "../../../../../services/patchComment"
-import { AnswerComment } from "./AnswerComment"
-import { PostsCommentsProps } from "../../../../../services/getComments"
-import { useCommentsContext } from "../../../../../context/CommentsContext"
-import PostPropertiersPostsExpand from "../../DesktopFeed/Middle/PostsComponents/PostPropertiers/PostPropertiers"
+import EditComment from "../EditComment/EditComment"
+import TextAreaLayout from "../../../../../layouts/TextAreaLayout/TextAreaLayout"
+import { ErrosInput } from "../../../../../layouts/ErrosInputLayout/ErrorsInputLayout"
+import OrangeButton from "../../../../../elements/OrangeButton/OrangeButton"
+import { SubmitingForm } from "../../../../../layouts/SubmitingFormLayout"
+import { patchComment } from "../../../../../../services/patchComment"
+import { useAuthContext } from "../../../../../../context/AuthContext"
+import { useCommentFormSchema } from "../../../../../layouts/Forms/CommentFormSchema"
+import { UseFormState } from "../../../../../layouts/ConstFormStateLayout"
+import { commentPatchProps } from "../../../../../../services/patchComment"
+import { AnswerComment } from "../AnswerComment/AnswerComment"
+import { PostsCommentsProps } from "../../../../../../services/getComments"
+import { useCommentsContext } from "../../../../../../context/CommentsContext"
+import PostPropertiersPostsExpand from "../../../DesktopFeed/Middle/PostsComponents/PostPropertiers/PostPropertiers"
 
-interface CommentsProps {
+export interface CommentsProps {
+    /** Esta prop recebe um comentário específico que é do tipo PostsCommentsProps */
     item: PostsCommentsProps
 }
 
-
-
+/** Este componente é responsável por gerar toda a aba de cada comentário em PostExtend, tanto a parte do comentário em sí quanto a parte de responder cada comentário. 
+ * PostExtend por sua vez, pega um componente e faz um loop em cada comentário deste componente, e então, passa para este componente.
+ */
 export const Comments = ({item}: CommentsProps) => {
 
     const [isEditing, setIsEditing] = useState(false);

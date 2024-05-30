@@ -4,11 +4,11 @@ import { FeedProps } from "../../../../../services/getFeed"
 import ProfileAndUsername from "../../../../layouts/components/ProfileAndUsername"
 import { BorderLine } from "../../DesktopFeed/MultUseComponents/BorderLine/BorderLine"
 import CommentInput from "../../DesktopFeed/MultUseComponents/CommentInput"
-import CommentSectionLogic from "../CommentsSection/CommentsSectionLogic"
+import CommentSectionLogic from "../CommentsSection/CommentsSectionLogic/CommentsSectionLogic"
 import { PostTextPostExpand } from "../PostTextPostExpand/PostTextPostExpand"
 import { useResource } from "../../../../custom_hooks/useResource"
 import { Suspense } from "react"
-import { CommentSectionFallback } from "../../../../layouts/SuspenseFallBack/CommentSectionFallback"
+import { CommentSectionFallback } from "../../../../layouts/SuspenseFallBack/CommentSectionFallback/CommentSectionFallback"
 
 interface PostsExtendHasNoPostMediaProps {
     resource: FeedProps

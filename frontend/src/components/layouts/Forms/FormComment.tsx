@@ -5,7 +5,7 @@ import { SubmitingForm } from "../SubmitingFormLayout";
 import { useCommentFormSchema } from "./CommentFormSchema"
 import { postComment } from "../../../services/postComment";
 import { useState } from "react";
-import { FormCommentImplementation } from "./FormCommentImplementation";
+import { FormCommentImplementation } from "./FormCommentImplementation/FormCommentImplementation";
 import { useAuthContext } from "../../../context/AuthContext";
 import { useCommentsContext } from "../../../context/CommentsContext";
 

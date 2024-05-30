@@ -1,16 +1,17 @@
 import { BsFillSendFill } from "react-icons/bs"
-import TextAreaLayout from "../../../../layouts/TextAreaLayout/TextAreaLayout"
-import { useCommentFormSchema } from "../../../../layouts/Forms/CommentFormSchema"
-import { UseFormState } from "../../../../layouts/ConstFormStateLayout"
-import { useAuthContext } from "../../../../../context/AuthContext"
-import { SubmitingForm } from "../../../../layouts/SubmitingFormLayout"
-import { postComment } from "../../../../../services/postComment"
-import { ErrosInput } from "../../../../layouts/ErrosInputLayout/ErrorsInputLayout"
-import { CommentContentType } from "../../../../content_types/CommentContentType"
-import { useCommentsContext } from "../../../../../context/CommentsContext"
+import TextAreaLayout from "../../../../../layouts/TextAreaLayout/TextAreaLayout"
+import { useCommentFormSchema } from "../../../../../layouts/Forms/CommentFormSchema"
+import { UseFormState } from "../../../../../layouts/ConstFormStateLayout"
+import { useAuthContext } from "../../../../../../context/AuthContext"
+import { SubmitingForm } from "../../../../../layouts/SubmitingFormLayout"
+import { postComment } from "../../../../../../services/postComment"
+import { ErrosInput } from "../../../../../layouts/ErrosInputLayout/ErrorsInputLayout"
+import { CommentContentType } from "../../../../../content_types/CommentContentType"
+import { useCommentsContext } from "../../../../../../context/CommentsContext"
 
 
-type FormCommentProps = {
+export type FormCommentProps = {
+    /** Esta prop recebe o id do comentário que esta sendo respondido */
     object_id: number,
 }
 
@@ -18,6 +19,7 @@ type dataProps = {
     comment: string
 }
 
+/** Este é o componente responsável por gerar o formulário de respostas a comentários */
 export const AnswerComment = ({object_id}: FormCommentProps) => {
 
     const CommentFormSchema = useCommentFormSchema()

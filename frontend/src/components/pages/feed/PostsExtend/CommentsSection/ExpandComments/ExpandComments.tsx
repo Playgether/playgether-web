@@ -1,14 +1,16 @@
-import { PostCommentsOfCommentsProps } from "../../../../../services/getComments"
-import ProfileAndUsername from "../../../../layouts/components/ProfileAndUsername"
-import PostPropertiersPostsExpand from "../../DesktopFeed/Middle/PostsComponents/PostPropertiers/PostPropertiers"
+import { PostCommentsOfCommentsProps } from "../../../../../../services/getComments"
+import ProfileAndUsername from "../../../../../layouts/components/ProfileAndUsername"
+import PostPropertiersPostsExpand from "../../../DesktopFeed/Middle/PostsComponents/PostPropertiers/PostPropertiers"
 
 
 
-interface expandedCommentsProps {
+export interface ExpandedCommentsProps {
+    /** Esta prop recebe alguma resposta de algum comentário, e então, este componente gera esta resposta */
     comment_of_comment: PostCommentsOfCommentsProps
 }
 
-export const ExpandedComments = ({comment_of_comment}: expandedCommentsProps) => {
+/** Este componente é responsável por gerar cada resposta de cada comentário */
+export const ExpandedComments = ({comment_of_comment}: ExpandedCommentsProps) => {
     return (
         <div key={comment_of_comment.id} className="mb-4 w-full">
             <div className="flex flex-row justify-between">
