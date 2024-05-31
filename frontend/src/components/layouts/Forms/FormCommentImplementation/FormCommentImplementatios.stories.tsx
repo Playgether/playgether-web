@@ -2,25 +2,15 @@ import {Meta, StoryObj} from "@storybook/react"
 import {FormCommentImplementation, FormCommentProps} from "./FormCommentImplementation"
 import { UseFormState } from "../../ConstFormStateLayout";
 import { useCommentFormSchema } from "../CommentFormSchema";
-import { action } from '@storybook/addon-actions';
+import { action } from "@storybook/addon-actions"
 
 
-// const getFunctions = () => {
-//     const CommentFormSchema = useCommentFormSchema();
-//     const {register, handleSubmit, errors, reset} = UseFormState(CommentFormSchema);
-//     const Submiting = () =>{}
-
-//     return {register, handleSubmit,errors}
-// }
-// const CommentFormSchema = useCommentFormSchema();
-// const {register, handleSubmit, errors, reset} = UseFormState(CommentFormSchema);
-
-const CommentFormContainer: React.FC = () => {
+const CommentFormContainer = (args) => {
     const CommentFormSchema = useCommentFormSchema();
     const { register, handleSubmit, errors, reset } = UseFormState(CommentFormSchema);
 
     const Submiting = () => {
-        // Your submitting logic here
+        action("Você enviou o formulário")
     };
 
     return (
@@ -32,7 +22,6 @@ const CommentFormContainer: React.FC = () => {
         />
     );
 }
-const Submiting = () =>{}
 
 const meta: Meta<typeof FormCommentImplementation> = {
     component: FormCommentImplementation,
@@ -47,8 +36,9 @@ export default meta;
 type Story = StoryObj<FormCommentProps>;
 export const Primary: Story = {
     args:{
-        Submiting:Submiting,
+        Submiting:CommentFormContainer,
         errors: {},
         register:{}
-    }
+    },
+    render:CommentFormContainer
 };
