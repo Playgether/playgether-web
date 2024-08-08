@@ -3,10 +3,7 @@ from rest_framework import serializers
 from myapp.models import Profile, Notification, Post, Like, Comment, Repost, PostMedia
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
-from django import forms
 from django.contrib.auth.models import User
-from django.core.validators import validate_email
-from django.core.exceptions import ValidationError
 from .functions import clean_email_implementation, clean_first_name_implementation, clean_last_name_implementation, clean_password_implementation, clean_username_implementation
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.contenttypes.models import ContentType

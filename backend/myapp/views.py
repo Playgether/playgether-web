@@ -3,11 +3,9 @@ from rest_framework import viewsets
 from .models import Notification, User, Profile, Post, Comment, Like
 from .serializers import NotificationSerializer, UserSerializer, CommentSerializer, ProfileSerializer, PostSerializer, LikeSerializer, MyTokenObtainPairSerializer
 from rest_framework.response import Response
-from rest_framework.decorators import action, permission_classes, authentication_classes
+from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from .permissions import SkipAuth
 from rest_framework_simplejwt.views import TokenObtainPairView
-from django.contrib.contenttypes.models import ContentType
 from rest_framework import status
 
   
