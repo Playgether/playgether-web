@@ -2,14 +2,19 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from myapp.urls import router
-from games.urls import router
+from myapp.urls import router as myapp_router
+from games.urls import router as games_router
 from myapp.views import MyTokenObtainPairView
 from games.views import MyTokenObtainPairView
+from patches import routers
 
 from rest_framework_simplejwt.views import (
     TokenRefreshView
 )
+
+router = routers.DefaultRouter()
+router.extend(myapp_router)
+router.extend(games_router)
 
 urlpatterns = [
     path('admin/clearcache/', include('clearcache.urls')),

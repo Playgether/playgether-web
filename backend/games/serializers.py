@@ -1,6 +1,6 @@
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
-from .models import Game, Company
+from .models import Game, Company, ProfileGame
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -26,6 +26,14 @@ class CompaniesSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Company
+        fields = (
+            '__all__'
+        )
+
+class ProfileGameSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ProfileGame
         fields = (
             '__all__'
         )

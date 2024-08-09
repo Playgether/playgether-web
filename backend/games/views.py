@@ -1,9 +1,9 @@
-from .serializers import GameSerializer, CompaniesSerializer
+from .serializers import GameSerializer, CompaniesSerializer, ProfileGameSerializer
 from rest_framework import viewsets
 from .serializers import MyTokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.response import Response
-from .models import Game, Company
+from .models import Game, Company, ProfileGame
 from rest_framework.decorators import action
 from django.views.generic import TemplateView
 
@@ -15,7 +15,7 @@ class IndexView(TemplateView):
     template_name = 'index.html'
 
 class GamesViewSet(viewsets.ModelViewSet):
-    queryset = Game.objects.all()
+    queryset = Game.objects.all().order_by('id')
     serializer_class = GameSerializer
 
 class CompaniesViewSet(viewsets.ModelViewSet):
@@ -27,3 +27,7 @@ class CompaniesViewSet(viewsets.ModelViewSet):
         games = Game.objects.filter(company=pk)
         serializer = GameSerializer(games, many=True)
         return Response(serializer.data)
+    
+class ProfileGameViewSet(viewsets.ModelViewSet):
+    queryset = ProfileGame
+    serializer_class = ProfileGameSerializer

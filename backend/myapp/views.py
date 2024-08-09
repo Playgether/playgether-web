@@ -7,6 +7,8 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import status
+from games.serializers import ProfileGameSerializer
+from games.models import ProfileGame
 
   
 class MyTokenObtainPairView(TokenObtainPairView):
@@ -73,6 +75,13 @@ class ProfileViewSet(viewsets.ModelViewSet):
         profile = Profile.objects.filter(user_id=pk)
         serializer = ProfileSerializer(profile)
         return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'])
+    def games(self, request, pk=None):
+        games = ProfileGame.objects.filter(id_profile=pk)
+        serializer = ProfileGameSerializer(games, many=True)
+        return Response(serializer.data)
+        
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
