@@ -51,6 +51,13 @@ export const MenuProfile = ({setContent, content}: {setContent:(content:string)=
                 onClick={()=> handleContent("marcos")}>
                     <li><a>Marcos</a></li>
                 </div>
+
+                <div className={`hover:bg-blue-400 hover:bg-opacity-30 h-full flex flex-col items-center justify-center rounded-lg w-20 cursor-pointer 
+                ${animation} 
+                ${content === "games" ? "bg-blue-400 bg-opacity-30" : ""}`} 
+                onClick={()=> handleContent("games")}>
+                    <li><a>Jogos</a></li>
+                </div>
             </ul>
         </div>
     )

@@ -8,6 +8,7 @@ import { Bio } from "./Bio"
 import { Conquists } from "./Conquists"
 import { Statistics } from "./Statistics"
 import { Moments } from "./Moments"
+import { Game } from "./Game"
 
 
 
@@ -24,6 +25,7 @@ export const RightProfile = () => {
             {content === "estatisticas" && <Statistics />}
             {content === "conquistas" && <Conquists />}
             {content === "marcos" && <Moments />}
+            {content === "games" && <Game />}
         </div>
     )
 }
