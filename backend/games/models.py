@@ -52,7 +52,6 @@ class ProfileGame(models.Model):
     id_game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="profiles")
     identification = models.CharField("Identification", max_length=30) #nick+tag
     rank = models.CharField("Rank", max_length=15)
-    extra_identification = models.CharField("Extra Identification", max_length=30, null=True, blank=True) #summoner_id
 
     class Meta:
         verbose_name = "ProfileGame"
@@ -62,8 +61,11 @@ class ProfileGame(models.Model):
         return f"Profile: {self.id_profile.user.first_name} | Game: {self.id_game.name}"
 
 # class ExtraProfileGameLol(models.Model):
-#     #  id_profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="extra_lol")
-#     summoner_id = models.IntegerField("Summoner ID", null=True, blank=True)
+#     id_profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="extra_lol")
+#     account_id = models.CharField("Account_id", max_length=50)
+#     puuid = models.CharField("Puuid", max_length=80)
+#     summoner_id = models.CharField("Puuid", max_length=50)    
+
 
 
 #Associar game e company a um perfil

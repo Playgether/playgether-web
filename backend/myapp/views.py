@@ -21,7 +21,7 @@ class IndexView(TemplateView):
 
 class PostsViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
-    serializer_class = ProfileSerializer
+    serializer_class = PostSerializer
 
     @action(detail=True, methods=['get', 'post'])
     def feed(self, request, pk=None):
@@ -70,16 +70,16 @@ class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
 
-    @action(detail=True, methods=['get'])
-    def profiles(self, request, pk=None):
-        profile = Profile.objects.filter(user_id=pk)
-        serializer = ProfileSerializer(profile)
+    @action(detail=False, methods=['get'], url_path='user/(?P<user_id>\d+)')
+    def profiles(self, request, user_id=None):
+        profile = Profile.objects.filter(user_id=user_id).first()
+        serializer = self.get_serializer(profile)
         return Response(serializer.data)
     
     @action(detail=True, methods=['get'])
     def games(self, request, pk=None):
-        games = ProfileGame.objects.filter(id_profile=pk)
-        serializer = ProfileGameSerializer(games, many=True)
+        profile = Profile.objects.get(user_id=pk)
+        serializer = ProfileGameSerializer(profile.games, many=True)
         return Response(serializer.data)
         
 

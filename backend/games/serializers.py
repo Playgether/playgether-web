@@ -1,6 +1,6 @@
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
-from .models import Game, Company, ProfileGame
+from .models import Game, Company, ProfileGame, Category
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -22,6 +22,20 @@ class GameSerializer(serializers.ModelSerializer):
             '__all__'
         )
 
+    def get_game_icon(self, obj):
+        request = self.context.get('request')
+        if obj.icon:
+            return request.build_absolute_uri(obj.icon)
+        else:
+            return None
+    
+    def get_game_image(self, obj):
+        request = self.context.get('request')
+        if obj.image:
+            return request.build_absolute_uri(obj.image)
+        else:
+            return None
+
 class CompaniesSerializer(serializers.ModelSerializer):
     
     class Meta:
@@ -34,6 +48,14 @@ class ProfileGameSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProfileGame
+        fields = (
+            '__all__'
+        )
+
+class CategorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Category
         fields = (
             '__all__'
         )
