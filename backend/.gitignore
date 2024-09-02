@@ -153,6 +153,7 @@ cython_debug/
 
 myapp/__pycache__
 myapp/migrations
+games/migrations
 migrations/
 SocialGame/__pycache__
 
