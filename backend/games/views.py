@@ -1,9 +1,9 @@
-from .serializers import GameSerializer, CompaniesSerializer, ProfileGameSerializer, CategorySerializer
+from .serializers import GameSerializer, CompaniesSerializer, ProfileGameLolSerializer, CategorySerializer
 from rest_framework import viewsets
 from .serializers import MyTokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.response import Response
-from .models import Game, Company, ProfileGame, Category
+from .models import Game, Company, ProfileGameLol, Category
 from rest_framework.decorators import action
 from django.views.generic import TemplateView
 from myapp.serializers import ProfileSerializer
@@ -45,6 +45,6 @@ class CompaniesViewSet(viewsets.ModelViewSet):
         serializer = GameSerializer(company.games, many=True, context={'request': request})
         return Response(serializer.data)
     
-class ProfileGameViewSet(viewsets.ModelViewSet):
-    queryset = ProfileGame
-    serializer_class = ProfileGameSerializer
+class ProfileGameLolViewSet(viewsets.ModelViewSet):
+    queryset = ProfileGameLol.objects.all()
+    serializer_class = ProfileGameLolSerializer

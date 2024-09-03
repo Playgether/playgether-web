@@ -47,24 +47,34 @@ class Game(models.Model):
     def __str__(self):
         return f"Game name: {self.name}, Category: {self.category.name}"
 
-class ProfileGame(models.Model):
-    id_profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="games")
-    id_game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="profiles")
-    identification = models.CharField("Identification", max_length=30) #nick+tag
+# class ProfileGame(models.Model):
+#     id_profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="games")
+#     id_game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="profiles")
+#     identification = models.CharField("Identification", max_length=30) #nick+tag
+#     rank = models.CharField("Rank", max_length=15)
+
+#     class Meta:
+#         verbose_name = "ProfileGame"
+#         verbose_name_plural= "ProfilesGames"
+
+#     def __str__(self):
+#         return f"Profile: {self.id_profile.user.first_name} | Game: {self.id_game.name}"
+
+class ProfileGameLol(models.Model):
+    username = models.CharField("Username", max_length=30)
     rank = models.CharField("Rank", max_length=15)
+    tag = models.CharField("Tag", max_length=5)
+    id_profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="info_lol")
+    account_id = models.CharField("Account_id", max_length=50)
+    puuid = models.CharField("Puuid", max_length=80)
+    summoner_id = models.CharField("Summoner_id", max_length=50)   
 
     class Meta:
         verbose_name = "ProfileGame"
-        verbose_name_plural= "ProfilesGames"
+        verbose_name_plural= "ProfilesGamesLol"
 
     def __str__(self):
-        return f"Profile: {self.id_profile.user.first_name} | Game: {self.id_game.name}"
-
-# class ExtraProfileGameLol(models.Model):
-#     id_profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="extra_lol")
-#     account_id = models.CharField("Account_id", max_length=50)
-#     puuid = models.CharField("Puuid", max_length=80)
-#     summoner_id = models.CharField("Puuid", max_length=50)    
+        return f"Profile: {self.id_profile.user.first_name}, ID: {self.id_profile.id}"
 
 
 

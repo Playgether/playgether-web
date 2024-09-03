@@ -1,6 +1,6 @@
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
-from .models import Game, Company, ProfileGame, Category
+from .models import Game, Company, ProfileGameLol, Category
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -13,6 +13,18 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['last_name'] = user.last_name
 
         return token
+
+
+class ProfileGameLolSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProfileGameLol
+        fields = (
+            '__all__'
+        )
+
+    def save(self, *args, **kwargs):
+        self.tag = self.tag.upper()
+        return super().save(*args, **kwargs)
 
 class GameSerializer(serializers.ModelSerializer):
     
@@ -40,14 +52,6 @@ class CompaniesSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Company
-        fields = (
-            '__all__'
-        )
-
-class ProfileGameSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = ProfileGame
         fields = (
             '__all__'
         )

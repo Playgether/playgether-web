@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Game, Category, Company, ProfileGame
+from .models import Game, Category, Company, ProfileGameLol
 
 # Register your models here.
 
@@ -17,7 +17,7 @@ class CompanyAdmim(admin.ModelAdmin):
     model = Company
     display = ('name', 'description')
 
-@admin.register(ProfileGame)
+@admin.register(ProfileGameLol)
 class ProfileGameAdmin(admin.ModelAdmin):
-    model = ProfileGame
-    display = ('id_profile', 'id_game', 'identification', 'rank', 'extra_identification')
+    model = ProfileGameLol
+    display = ('username', 'tag', 'id_profile', 'puuid', 'summoner_id', 'rank')

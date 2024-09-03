@@ -1,12 +1,13 @@
 from django.urls import path
 from . import views
 from rest_framework.routers import SimpleRouter
-from .views import GamesViewSet, CompaniesViewSet, CategoryViewSet
+from .views import GamesViewSet, CompaniesViewSet, CategoryViewSet, ProfileGameLolViewSet
 
 router = SimpleRouter()
 router.register('games', GamesViewSet)
 router.register('companies', CompaniesViewSet)
 router.register('categories', CategoryViewSet)
+# router.register('games/infos/lol', ProfileGameLolViewSet)
 
 
 
