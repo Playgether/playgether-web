@@ -69,7 +69,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
 
-    @action(detail=False, methods=['get'], url_path='user/(?P<user_id>\d+)')
+    @action(detail=False, methods=['get'])
     def profiles(self, request, user_id=None):
         profile = Profile.objects.filter(user_id=user_id).first()
         serializer = self.get_serializer(profile)
