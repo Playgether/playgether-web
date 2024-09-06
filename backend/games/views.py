@@ -60,7 +60,7 @@ def fetch_lol_entries(request):
     if response.status_code == 200:
         data = response.json()
         winRate0 = (data[0]["wins"] / (data[0]["wins"] + data[0]["losses"])) * 100
-        winRate1 = (data[0]["wins"] / (data[1]["wins"] + data[1]["losses"])) * 100
+        winRate1 = (data[1]["wins"] / (data[1]["wins"] + data[1]["losses"])) * 100
         newDict = [
             {
                 "queueType": data[0]["queueType"],
