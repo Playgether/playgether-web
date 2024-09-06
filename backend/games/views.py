@@ -7,6 +7,8 @@ from .models import Game, Company, ProfileGameLol, Category
 from rest_framework.decorators import action
 from django.views.generic import TemplateView
 from myapp.serializers import ProfileSerializer
+from dotenv import load_dotenv
+import os
 
 import requests
 from django.http import JsonResponse, HttpRequest
@@ -53,11 +55,14 @@ class ProfileGameLolViewSet(viewsets.ModelViewSet):
 
 
 def fetch_lol_entries(request):
+    load_dotenv()
+    apiKey = os.getenv('API_KEY')
     params = {
-        "api_key": "RGAPI-1000e917-7c4f-4b60-a6dc-a0756345bbca"
+        "api_key": apiKey
     }
     response = requests.get("https://br1.api.riotgames.com/lol/league/v4/entries/by-summoner/OYwuhkmvYXv3LYqwHYjMUToYBczTTxwCXNKHTaXpej_Mxw", params=params)
     if response.status_code == 200:
+        print("api value",os.getenv("API_KEY"))
         data = response.json()
         winRate0 = (data[0]["wins"] / (data[0]["wins"] + data[0]["losses"])) * 100
         winRate1 = (data[1]["wins"] / (data[1]["wins"] + data[1]["losses"])) * 100
@@ -83,4 +88,5 @@ def fetch_lol_entries(request):
         ]
         return JsonResponse(newDict, safe=False)
     else:
+        print("api key",apiKey)
         return JsonResponse({"error": "Failed to fetch data"}, status=500)
