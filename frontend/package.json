@@ -18,6 +18,7 @@
     "autoprefixer": "10.4.14",
     "axios": "^1.6.5",
     "debug": "^4.3.4",
+    "frontend": "file:",
     "javascript-time-ago": "^2.5.9",
     "jwt-decode": "^3.1.2",
     "msw-storybook-addon": "^2.0.2",
