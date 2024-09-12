@@ -17,7 +17,7 @@ export interface PostsExtendHasPostMediaProps {
 }
 
 /** Este componente é responsável por expandir um post que possui media, ele deve gerar toda a interface ao expandir o post, ou seja, o texto, as medias, os comentários, etc... 
- * Ele é o componente de mais alto nível em Ao expandir um post com media. OBS: Os comentários vão mostrar o Fallback do Suspense "Os comentários estão sendo carregados" porque
+ * Ele é o componente de mais alto nível ao expandir um post com media. OBS: Os comentários vão mostrar o Fallback do Suspense "Os comentários estão sendo carregados" porque
  * para mostrar os comentários é necessário fazer um fetch no backend, coisa que não estamos fazendo aqui, por isso ele exibe este fallback eterno, ademais
  * no uso do componente, ele não é em coluna e sim em linha, ou seja, a parte de comentários deveria ficar para o lado direito >> e não embaixo. Além disso, as medias também 
  * não estão aparecendo porque o Storybook não está exibindo o componente de medias por alguma razão...
