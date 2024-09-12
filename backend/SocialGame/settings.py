@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'clearcache',
     'rest_framework_simplejwt.token_blacklist',
+     'drf_spectacular',
 ]
 
 MIDDLEWARE = [
@@ -163,6 +164,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Django Rest Framework
 
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS':"drf_spectacular.openapi.AutoSchema",
     'DEFAULT_AUTHENTICATION_CLASSES': (
        #'rest_framework.authentication.SessionAuthentication',
        #'rest_framework.authentication.TokenAuthentication',
@@ -181,6 +183,12 @@ REST_FRAMEWORK = {
     #     'anon': '5/minute', # Can be second, day, month or year.
     #     'user': '10/minute'
     # }
+}
+SPECTACULAR_SETTINGS = {
+    'TITLE': "Django Playgether API",
+    "DESCRIPTION": "Esta é a documentação oficial dos endpoints do back end da plataforma Playgether",
+    "VERSION": "1.0.0",
+    "SERVER_INCLUDE_SCHEMA": False
 }
 
 SIMPLE_JWT = {

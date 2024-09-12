@@ -7,6 +7,7 @@ from games.urls import router as games_router
 from myapp.views import MyTokenObtainPairView
 from games.views import MyTokenObtainPairView
 from patches import routers
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 from rest_framework_simplejwt.views import (
     TokenRefreshView
@@ -24,7 +25,8 @@ urlpatterns = [
     path('', include('games.urls')),
     path('api/token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-]
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/schema/docs/', SpectacularSwaggerView.as_view(url_name="schema")),]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
