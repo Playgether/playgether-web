@@ -7,7 +7,11 @@ from .models import Game, Company, ProfileGameLol, Category
 from rest_framework.decorators import action
 from django.views.generic import TemplateView
 from myapp.serializers import ProfileSerializer
+from dotenv import load_dotenv
+import os
 
+import requests
+from django.http import JsonResponse, HttpRequest
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
@@ -48,3 +52,41 @@ class CompaniesViewSet(viewsets.ModelViewSet):
 class ProfileGameLolViewSet(viewsets.ModelViewSet):
     queryset = ProfileGameLol.objects.all()
     serializer_class = ProfileGameLolSerializer
+
+
+def fetch_lol_entries(request):
+    load_dotenv()
+    apiKey = os.getenv('API_KEY')
+    params = {
+        "api_key": apiKey
+    }
+    response = requests.get("https://br1.api.riotgames.com/lol/league/v4/entries/by-summoner/OYwuhkmvYXv3LYqwHYjMUToYBczTTxwCXNKHTaXpej_Mxw", params=params)
+    if response.status_code == 200:
+        print("api value",os.getenv("API_KEY"))
+        data = response.json()
+        winRate0 = (data[0]["wins"] / (data[0]["wins"] + data[0]["losses"])) * 100
+        winRate1 = (data[1]["wins"] / (data[1]["wins"] + data[1]["losses"])) * 100
+        newDict = [
+            {
+                "queueType": data[0]["queueType"],
+                "tier": data[0]["tier"],
+                "rank": data[0]["rank"],
+                "leaguePoints": data[0]["leaguePoints"],
+                "wins": data[0]["wins"],
+                "losses": data[0]["losses"],
+                "winRate": str(int(round(winRate0, 0))) + "%",
+            },
+            {
+                "queueType": data[1]["queueType"],
+                "tier": data[1]["tier"],
+                "rank": data[1]["rank"],
+                "leaguePoints": data[1]["leaguePoints"],
+                "wins": data[1]["wins"],
+                "losses": data[1]["losses"],
+                "winRate": str(int(round(winRate1, 0))) + "%",
+            }
+        ]
+        return JsonResponse(newDict, safe=False)
+    else:
+        print("api key",apiKey)
+        return JsonResponse({"error": "Failed to fetch data"}, status=500)
