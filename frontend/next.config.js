@@ -14,6 +14,9 @@ const nextConfig = {
       },
     ];
   },
+  env: {
+    baseUrl: process.env.LOCAL_API_URL
+  },
 }
 
 module.exports = nextConfig
