@@ -100,13 +100,13 @@ class ProfileViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'], url_path='games/fetch/lol')
     def fetch_lol(self, request, pk=None):
         profile_game_lol = ProfileGameLol.objects.filter(id_profile=pk).first()
-        puuid = profile_game_lol.summoner_id
+        summonerId = profile_game_lol.summoner_id
         load_dotenv()
         apiKey = os.getenv('API_KEY')
         params = {
             "api_key": apiKey
         }
-        response = requests.get(f"https://br1.api.riotgames.com/lol/league/v4/entries/by-summoner/{puuid}", params=params)
+        response = requests.get(f"https://br1.api.riotgames.com/lol/league/v4/entries/by-summoner/{summonerId}", params=params)
         if response.status_code == 200:
             print("api value",os.getenv("API_KEY"))
             data = response.json()
