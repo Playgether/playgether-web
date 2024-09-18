@@ -191,3 +191,28 @@ def clean_username_implementation(username):
         raise forms.ValidationError("O nome de usuário só pode conter letras e números.")
     return username
 
+def generate_data_lol(data):
+    winRate0 = (data[0]["wins"] / (data[0]["wins"] + data[0]["losses"])) * 100
+    winRate1 = (data[1]["wins"] / (data[1]["wins"] + data[1]["losses"])) * 100
+    newDict = [
+        {
+            "queueType": data[0]["queueType"],
+            "tier": data[0]["tier"],
+            "rank": data[0]["rank"],
+            "leaguePoints": data[0]["leaguePoints"],
+            "wins": data[0]["wins"],
+            "losses": data[0]["losses"],
+            "winRate": str(int(round(winRate0, 0))) + "%",
+        },
+        {
+            "queueType": data[1]["queueType"],
+            "tier": data[1]["tier"],
+            "rank": data[1]["rank"],
+            "leaguePoints": data[1]["leaguePoints"],
+            "wins": data[1]["wins"],
+            "losses": data[1]["losses"],
+            "winRate": str(int(round(winRate1, 0))) + "%",
+        }
+    ]
+    return newDict
+

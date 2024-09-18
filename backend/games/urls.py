@@ -1,7 +1,7 @@
 from django.urls import path
 from . import views
 from rest_framework.routers import SimpleRouter
-from .views import GamesViewSet, CompaniesViewSet, CategoryViewSet, ProfileGameLolViewSet, fetch_lol_entries
+from .views import GamesViewSet, CompaniesViewSet, CategoryViewSet, ProfileGameLolViewSet
 
 router = SimpleRouter()
 router.register('games', GamesViewSet)
@@ -15,5 +15,4 @@ router.register('categories', CategoryViewSet)
 
 urlpatterns = [
     path('', views.IndexView.as_view(), name='index'),
-    path('games/infos/lol/', fetch_lol_entries, name='lol_entries'),
 ]
