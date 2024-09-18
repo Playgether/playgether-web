@@ -139,10 +139,11 @@ def delete_generic_notification(Notification, instance):
 
 #Function "post_save_created_user" in "signals.py" definition
 def post_save_created_user_definition(classProfile, instance):
-    user_profile = classProfile(user=instance)
-    user_profile.save()
-    user_profile.follows.set([instance.profile.id])
-    user_profile.save()
+    # if not classProfile.objects.filter(user=instance).exists():
+        user_profile = classProfile(user=instance)
+        user_profile.save()
+        user_profile.follows.set([instance.profile.id])
+        user_profile.save()
 
 #clean password of User table before save
 def clean_password_implementation(password):
@@ -189,4 +190,29 @@ def clean_username_implementation(username):
     if not username.isalnum():
         raise forms.ValidationError("O nome de usuário só pode conter letras e números.")
     return username
+
+def generate_data_lol(data):
+    winRate0 = (data[0]["wins"] / (data[0]["wins"] + data[0]["losses"])) * 100
+    winRate1 = (data[1]["wins"] / (data[1]["wins"] + data[1]["losses"])) * 100
+    newDict = [
+        {
+            "queueType": data[0]["queueType"],
+            "tier": data[0]["tier"],
+            "rank": data[0]["rank"],
+            "leaguePoints": data[0]["leaguePoints"],
+            "wins": data[0]["wins"],
+            "losses": data[0]["losses"],
+            "winRate": str(int(round(winRate0, 0))) + "%",
+        },
+        {
+            "queueType": data[1]["queueType"],
+            "tier": data[1]["tier"],
+            "rank": data[1]["rank"],
+            "leaguePoints": data[1]["leaguePoints"],
+            "wins": data[1]["wins"],
+            "losses": data[1]["losses"],
+            "winRate": str(int(round(winRate1, 0))) + "%",
+        }
+    ]
+    return newDict
 

@@ -1,4 +1,8 @@
+import os
+from django.http import JsonResponse
 from django.views.generic import TemplateView
+from dotenv import load_dotenv
+import requests
 from rest_framework import viewsets
 from .models import Notification, User, Profile, Post, Comment, Like
 from .serializers import NotificationSerializer, UserSerializer, CommentSerializer, ProfileSerializer, PostSerializer, LikeSerializer, MyTokenObtainPairSerializer
@@ -8,7 +12,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import status
 from games.serializers import ProfileGameLolSerializer, GameSerializer
-
+from games.models import ProfileGameLol
+from .functions import generate_data_lol
   
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
@@ -78,19 +83,39 @@ class ProfileViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def games(self, request, pk=None):
         profile = Profile.objects.get(user_id=pk)
-        serializer = GameSerializer(profile.info_lol.all(), many=True)
+        games = [pg.id_game for pg in profile.games.all()]
+        serializer = GameSerializer(games, many=True, context={'request': request})
         return Response(serializer.data)
 
-    @action(detail=True, methods=['get'], url_path='infos/lol')
-    def info_test(self, request, pk=None):
-        profile = Profile.objects.filter(pk=pk).first()
-        info = profile.info_lol.first() if profile else None
+    @action(detail=True, methods=['get'], url_path='games/infos/lol')
+    def info_lol(self, request, pk=None):
+        info = ProfileGameLol.objects.filter(id_profile=pk).first()
         
         if info is None:
             return Response([], status=status.HTTP_200_OK)
         
         serializer = ProfileGameLolSerializer(info)
         return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'], url_path='games/fetch/lol')
+    def fetch_lol(self, request, pk=None):
+        profile_game_lol = ProfileGameLol.objects.filter(id_profile=pk).first()
+        summonerId = profile_game_lol.summoner_id
+        load_dotenv()
+        apiKey = os.getenv('API_KEY')
+        params = {
+            "api_key": apiKey
+        }
+        response = requests.get(f"https://br1.api.riotgames.com/lol/league/v4/entries/by-summoner/{summonerId}", params=params)
+        if response.status_code == 200:
+            print("api value",os.getenv("API_KEY"))
+            data = response.json()
+            newDict = generate_data_lol(data)
+            return JsonResponse(newDict, safe=False)
+        else:
+            print("api key",apiKey)
+            return JsonResponse({"error": "Failed to fetch data"}, status=response.status_code)
+
         
 
 class UserViewSet(viewsets.ModelViewSet):
