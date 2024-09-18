@@ -1,7 +1,6 @@
 from django.db import models
 from stdimage import StdImageField
 from .functions import get_file_game_path, get_file_company_path
-from myapp.models import Profile
 
 class Category(models.Model):
     name = models.CharField("Name", max_length=30)
@@ -47,24 +46,19 @@ class Game(models.Model):
     def __str__(self):
         return f"Game name: {self.name}, Category: {self.category.name}"
 
-# class ProfileGame(models.Model):
-#     id_profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="games")
-#     id_game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="profiles")
+class ProfileGame(models.Model):
+    id_profile = models.ForeignKey("myapp.Profile", on_delete=models.CASCADE, related_name="games")
+    id_game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="profiles")
 #     identification = models.CharField("Identification", max_length=30) #nick+tag
 #     rank = models.CharField("Rank", max_length=15)
 
-#     class Meta:
-#         verbose_name = "ProfileGame"
-#         verbose_name_plural= "ProfilesGames"
+    class Meta:
+        abstract = True
 
-#     def __str__(self):
-#         return f"Profile: {self.id_profile.user.first_name} | Game: {self.id_game.name}"
-
-class ProfileGameLol(models.Model):
+class ProfileGameLol(ProfileGame):
     username = models.CharField("Username", max_length=30)
     rank = models.CharField("Rank", max_length=15)
     tag = models.CharField("Tag", max_length=5)
-    id_profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="info_lol")
     account_id = models.CharField("Account_id", max_length=50)
     puuid = models.CharField("Puuid", max_length=80)
     summoner_id = models.CharField("Summoner_id", max_length=50)   

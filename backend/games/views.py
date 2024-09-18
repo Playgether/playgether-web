@@ -9,16 +9,26 @@ from django.views.generic import TemplateView
 from myapp.serializers import ProfileSerializer
 from dotenv import load_dotenv
 import os
-
 import requests
 from django.http import JsonResponse, HttpRequest
-from .schema import categories_schema, categories_games_schema, categories_schema_GET, companies_schema, companies_games_schema
+from .schema import (
+    categories_schema, 
+    categories_games_schema, 
+    categories_schema_GET, 
+    companies_schema, 
+    companies_games_schema, 
+    categories_schema_POST,
+    companies_schema_GET,
+    companies_schema_POST,
+)
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
 class IndexView(TemplateView):
     template_name = 'index.html'
+
+@categories_schema_POST
 @categories_schema_GET
 @categories_schema
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -29,7 +39,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def games(self, request, pk=None):
         category = Category.objects.get(id=pk)
-        serializer = GameSerializer(category.games, many=True, context={'request': request})
+        serializer = ProfileGameLolSerializer(category.games, many=True, context={'request': request})
         return Response(serializer.data)
 
 class GamesViewSet(viewsets.ModelViewSet):
@@ -43,6 +53,8 @@ class GamesViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 @companies_schema
+@companies_schema_POST
+@companies_schema_GET
 class CompaniesViewSet(viewsets.ModelViewSet):
     queryset = Company.objects.all()
     serializer_class = CompaniesSerializer

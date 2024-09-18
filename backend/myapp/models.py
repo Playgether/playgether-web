@@ -21,6 +21,7 @@ class Profile(models.Model):
     verified = models.BooleanField("Verified", default=False)
     quantity_comment = models.IntegerField("Quantidade de comentários", default=0)
     quantity_likes = models.IntegerField("Quantidade de curtidas", default=0)  
+    # games = models.ManyToManyField(Game, related_name="profiles", symmetrical=False, blank=True)
 
     class Meta:
         verbose_name = "Profile"

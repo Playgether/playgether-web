@@ -1,13 +1,13 @@
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
-from .serializers import CategorySerializer, GameSerializer
+from .serializers import CategorySerializer, GameSerializer, CompaniesSerializer
+
 
 companies_schema = extend_schema(
     methods=['PUT', 'DELETE', 'PATCH'],
-    summary="Pertence as operações de inserção / atualização de dados do model Company (COMPANYY VIEW) do app de Games",
-    description="Pertence as operações de inserção / atualização de dados do model Company (COMPANYY VIEW) do app de Games"     
+    summary="Pertence as operações de exclusão / atualização de dados do model Company (COMPANYY VIEW) do app de Games",
+    description="Gerencia os objetos do model Company realizando PUT, DELETE E PATCH."     
    """
-        Gerencia os objetos do model Company realizando PUT, DELETE E PATCH.
 
         Recebe um "id" que identifica este objeto e realiza a operação cujo o verbo HTTP foi requisitado.
 
@@ -54,16 +54,15 @@ companies_games_schema = extend_schema(
 categories_schema = extend_schema(
     methods=['PUT', 'DELETE', 'PATCH'],
     responses={200: CategorySerializer},
-    summary="Pertence as operações de inserção / atualização de dados do model Category (CATEGORY VIEW) do app de Games",
-    description=(
+    summary="Pertence as operações de exclusão / atualização de dados do model Category (CATEGORY VIEW) do app de Games",
+    description="Gerencia os objetos do model Category realizando PUT, DELETE E PATCH."
         """
-        Gerencia os objetos do model Category realizando PUT, DELETE E PATCH.
 
         Recebe um "id" que identifica este objeto e realiza a operação cujo o verbo HTTP foi requisitado.
 
-        Nesta view são criados/retornados os estilos possíveis para algum game (MOBA, FPS, RPG...)
+        Nesta view são gerenciados os estilos possíveis para algum game (MOBA, FPS, RPG...)
         """
-    ),
+    ,
     parameters=[
         OpenApiParameter(
             name="id",
@@ -75,19 +74,65 @@ categories_schema = extend_schema(
     ]
 )
 
+companies_schema_GET = extend_schema(
+    methods=["GET"],
+    responses={200: CompaniesSerializer},
+    summary="Pertence as operações de leitura de dados do model Company (Company View) do app de Games",
+    description=
+        "Retorna todos os objeto(s) do model Company do app de Games."
+        """
+
+        Pode receber um id opcional em '/companies/{id}', caso receba, retorna uma compania específica, caso não receba, retorna todas as companias disponíveis.
+
+        Nesta view são gerenciadas as empresas donas de algum game (RIOT, VALVE, EPICGAMES...)
+        """
+    ,
+    parameters=[]
+)
+
 categories_schema_GET = extend_schema(
-    methods=['GET'],
+    methods=["GET"],
     responses={200: CategorySerializer},
     summary="Pertence as operações de leitura de dados do model Category (CATEGORY VIEW) do app de Games",
-    description=(
+    description=
+        "Retorna todos os objeto(s) do model Category do app de Games."
         """
-        Retorna todos ou um objeto(s) do model Category do app de Games.
 
         Pode receber um id opcional em '/categories/{id}', caso receba, retorna uma categoria específica, caso não receba, retorna todas as categorias disponíveis.
 
-        Nesta view são criados/retornados os estilos possíveis para algum game (MOBA, FPS, RPG...)
+        Nesta view são gerenciados os estilos possíveis para algum game (MOBA, FPS, RPG...)
         """
-    ),
+    ,
+    parameters=[]
+)
+
+companies_schema_POST = extend_schema(
+    methods=["POST"],
+    summary="Pertence as operações de inserção de dados do model Company (Company View) do app de Games",
+    description=
+        "Cria um objeto do model Company do app de Games."
+        """
+
+        Recebe um JSON com as informações necessárias para cadastrar o objeto, cadastra o objeto e então retorna o objeto e um código HTTP 201
+
+        Nesta view são gerenciadas as empresas donas de algum game (RIOT, VALVE, EPICGAMES...)
+        """
+    ,
+    parameters=[]
+)
+
+categories_schema_POST = extend_schema(
+    methods=["POST"],
+    summary="Pertence as operações de inserção de dados do model Category (CATEGORY VIEW) do app de Games",
+    description=
+        "Cria um objeto do model Category do app de Games."
+        """
+
+        Recebe um JSON com as informações necessárias para cadastrar o objeto, cadastra o objeto e então retorna o objeto e um código HTTP 201
+
+        Nesta view são gerenciados os estilos possíveis para algum game (MOBA, FPS, RPG...)
+        """
+    ,
     parameters=[]
 )
 
@@ -95,9 +140,8 @@ categories_games_schema = extend_schema(
     methods=['GET'],
     responses={200: GameSerializer(many=True)},
     summary="Retorna todos os games associados a uma categoria (MOBA, FPS, RPG...)",
-    description=       
+    description= "Endpoint pertecente a view de categoria de jogos (CATEGORY VIEW no app de games)"    
         """
-        Endpoint pertecente a view de categoria de jogos (CATEGORY VIEW no app de games)
 
         A responsabilidade deste endpoint é retornar todos os jogos pertencentes a alguma categoria de jogos como por exemplo: todos os jogos de moba, fps, rpg, etc.
 

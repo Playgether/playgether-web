@@ -139,10 +139,11 @@ def delete_generic_notification(Notification, instance):
 
 #Function "post_save_created_user" in "signals.py" definition
 def post_save_created_user_definition(classProfile, instance):
-    user_profile = classProfile(user=instance)
-    user_profile.save()
-    user_profile.follows.set([instance.profile.id])
-    user_profile.save()
+    # if not classProfile.objects.filter(user=instance).exists():
+        user_profile = classProfile(user=instance)
+        user_profile.save()
+        user_profile.follows.set([instance.profile.id])
+        user_profile.save()
 
 #clean password of User table before save
 def clean_password_implementation(password):

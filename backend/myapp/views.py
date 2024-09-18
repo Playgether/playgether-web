@@ -8,6 +8,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import status
 from games.serializers import ProfileGameLolSerializer, GameSerializer
+from games.models import ProfileGameLol
 
   
 class MyTokenObtainPairView(TokenObtainPairView):
@@ -78,13 +79,13 @@ class ProfileViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def games(self, request, pk=None):
         profile = Profile.objects.get(user_id=pk)
-        serializer = GameSerializer(profile.info_lol.all(), many=True)
+        games = [pg.id_game for pg in profile.games.all()]  # Obtém os jogos em vez do relacionamento
+        serializer = GameSerializer(games, many=True)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['get'], url_path='infos/lol')
+    @action(detail=True, methods=['get'], url_path='games/infos/lol')
     def info_test(self, request, pk=None):
-        profile = Profile.objects.filter(pk=pk).first()
-        info = profile.info_lol.first() if profile else None
+        info = ProfileGameLol.objects.filter(id_profile=pk).first()
         
         if info is None:
             return Response([], status=status.HTTP_200_OK)
