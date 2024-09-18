@@ -15,5 +15,5 @@ router.register('categories', CategoryViewSet)
 
 urlpatterns = [
     path('', views.IndexView.as_view(), name='index'),
-    path('games/infos/lol/', fetch_lol_entries, name='lol_entries'),
+    path('api/v1/games/infos/lol/', fetch_lol_entries, name='lol_entries'),
 ]

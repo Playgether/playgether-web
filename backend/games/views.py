@@ -93,5 +93,4 @@ def fetch_lol_entries(request):
         ]
         return JsonResponse(newDict, safe=False)
     else:
-        print("api key",apiKey)
         return JsonResponse({"error": "Failed to fetch data"}, status=500)
