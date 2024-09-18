@@ -11,15 +11,18 @@ const ProfileLol = ({}) => {
     const { profile, fetchProfile } = useProfileLolContext();
     useResource<ProfileLolProps>(() => fetchProfile());
 
-    console.log(profile)
-    console.log("user ",user?.user_id)
+    const soloq = () => {
+      if (profile && profile[0].queueType === 'RANKED_SOLO_5x5') {
+        return `${profile[0].tier} ${profile[0].rank}`;
+      }
+    }
 
   return (
     <div>
       {profile ? (
         <>
-          <h2 className='text-black-300'>Nick: {profile.username}</h2>
-          <p className='text-black-300'>Rank: {profile.rank}</p>
+          <h2 className='text-black-300'>Nick: {soloq()}</h2>
+          <p className='text-black-300'>Rank: {profile[0].queueType}</p>
         </>
       ) : (
         <p>sem perfil</p>

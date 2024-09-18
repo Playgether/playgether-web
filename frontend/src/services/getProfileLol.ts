@@ -13,7 +13,7 @@ export interface ProfileLolProps {
 
 export const getProfileLol = async (authTokens: TokenData | null | undefined, id_profile: number | undefined) => {
     try {
-        const response = await api.get<ProfileLolProps[]>(`/api/v1/profiles/${id_profile}/infos/lol`, {
+        const response = await api.get<ProfileLolProps[]>(`/api/v1/games/infos/lol`, {
             headers: {
                 'Authorization':'Bearer ' + String(authTokens?.access)
             }
