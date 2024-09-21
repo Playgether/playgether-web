@@ -7,7 +7,7 @@ router = SimpleRouter()
 router.register('games', GamesViewSet)
 router.register('companies', CompaniesViewSet)
 router.register('categories', CategoryViewSet)
-# router.register('games/infos/lol', ProfileGameLolViewSet)
+router.register('games/profiles/infos/lol', ProfileGameLolViewSet)
 
 
 

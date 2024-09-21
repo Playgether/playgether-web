@@ -101,6 +101,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
     def fetch_lol(self, request, pk=None):
         profile_game_lol = ProfileGameLol.objects.filter(id_profile=pk).first()
         summonerId = profile_game_lol.summoner_id
+        print(summonerId)
         load_dotenv()
         apiKey = os.getenv('API_KEY')
         params = {
