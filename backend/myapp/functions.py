@@ -191,6 +191,7 @@ def clean_username_implementation(username):
         raise forms.ValidationError("O nome de usuário só pode conter letras e números.")
     return username
 
+#generate data for lol creating a dict
 def generate_data_lol(data):
     winRate0 = (data[0]["wins"] / (data[0]["wins"] + data[0]["losses"])) * 100
     winRate1 = (data[1]["wins"] / (data[1]["wins"] + data[1]["losses"])) * 100

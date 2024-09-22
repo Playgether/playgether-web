@@ -49,8 +49,6 @@ class Game(models.Model):
 class ProfileGame(models.Model):
     id_profile = models.ForeignKey("myapp.Profile", on_delete=models.CASCADE, related_name="games")
     id_game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="profiles")
-#     identification = models.CharField("Identification", max_length=30) #nick+tag
-#     rank = models.CharField("Rank", max_length=15)
 
     class Meta:
         abstract = True
@@ -71,11 +69,5 @@ class ProfileGameLol(ProfileGame):
         return f"Profile: {self.id_profile.user.first_name}, ID: {self.id_profile.id}"
 
 
-
-#Associar game e company a um perfil
-
-# Puuid / Summoner_id (ID) / Account_ID  
-
-# game riot = rank
 
 

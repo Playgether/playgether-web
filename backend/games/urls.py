@@ -9,10 +9,6 @@ router.register('companies', CompaniesViewSet)
 router.register('categories', CategoryViewSet)
 router.register('games/profiles/infos/lol', ProfileGameLolViewSet)
 
-
-
-
-
 urlpatterns = [
     path('', views.IndexView.as_view(), name='index'),
 ]

@@ -14,6 +14,30 @@ from rest_framework import status
 from games.serializers import ProfileGameLolSerializer, GameSerializer
 from games.models import ProfileGameLol
 from .functions import generate_data_lol
+from .schema import (
+    posts_schema,
+    posts_schema_GET,
+    posts_schema_POST,
+    feed_schema,
+    post_likes_schema_DELETE,
+    post_likes_schema_GET,
+    post_comments_schema,
+    comments_schema,
+    comments_schema_GET,
+    comments_schema_POST,
+    user_schema,
+    profile_schema,
+    likes_schema,
+    users_schema_POST,
+    profiles_schema_POST,
+    likes_schema_POST,
+    likes_schema_GET,
+    users_schema_GET,
+    profiles_schema_GET,
+    profile_games_schema,
+    profile_fetch_lol_schema,
+    profile_info_lol_schema
+)
   
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
@@ -22,12 +46,16 @@ class MyTokenObtainPairView(TokenObtainPairView):
 class IndexView(TemplateView):
     template_name = 'index.html'
 
-
+@posts_schema
+@posts_schema_GET
+@posts_schema_POST
 class PostsViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
 
-    @action(detail=True, methods=['get', 'post'])
+
+    @feed_schema
+    @action(detail=True, methods=['GET'])
     def feed(self, request, pk=None):
         following = Profile.objects.get(user_id=pk).follows.exclude(user_id=pk)
         ids_seguindo = [user.id for user in following]
@@ -35,7 +63,9 @@ class PostsViewSet(viewsets.ModelViewSet):
         serializer = PostSerializer(posts, many=True, context={'request': request})
         return Response(serializer.data)
 
-    @action(detail=True, methods=['get', 'delete'])
+    @post_likes_schema_GET
+    @post_likes_schema_DELETE
+    @action(detail=True, methods=['GET', 'DELETE'])
     def likes(self, request, pk=None):
         if request.method == 'GET':
             try:
@@ -54,22 +84,30 @@ class PostsViewSet(viewsets.ModelViewSet):
                 return Response({"detail": "Like foi excluido com sucesso."}, status=status.HTTP_204_NO_CONTENT)
             except Like.DoesNotExist:
                 return Response({"detail": "Like não encontrado."}, status=status.HTTP_404_NOT_FOUND)
-    
+    @post_comments_schema
     @action(detail=True, methods=['get'])
     def comments(self, request, pk=None):
         comments = Comment.objects.filter(object_id=pk).order_by('-timestamp')
         comment_serializer = CommentSerializer(comments, many=True, context={'request': request})
         return Response(comment_serializer.data)
 
+@comments_schema
+@comments_schema_GET
+@comments_schema_POST
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
 
+@likes_schema
+@likes_schema_POST
+@likes_schema_GET
 class LikeViewSet(viewsets.ModelViewSet):
     queryset = Like.objects.all()
     serializer_class = LikeSerializer
 
-
+@profile_schema
+@profiles_schema_POST
+@profiles_schema_GET
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
@@ -79,14 +117,14 @@ class ProfileViewSet(viewsets.ModelViewSet):
         profile = Profile.objects.filter(user_id=user_id).first()
         serializer = self.get_serializer(profile)
         return Response(serializer.data)
-    
+    @profile_games_schema
     @action(detail=True, methods=['get'])
     def games(self, request, pk=None):
         profile = Profile.objects.get(user_id=pk)
         games = [pg.id_game for pg in profile.games.all()]
         serializer = GameSerializer(games, many=True, context={'request': request})
         return Response(serializer.data)
-
+    @profile_info_lol_schema
     @action(detail=True, methods=['get'], url_path='games/infos/lol')
     def info_lol(self, request, pk=None):
         info = ProfileGameLol.objects.filter(id_profile=pk).first()
@@ -96,7 +134,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         
         serializer = ProfileGameLolSerializer(info)
         return Response(serializer.data)
-    
+    @profile_fetch_lol_schema
     @action(detail=True, methods=['get'], url_path='games/fetch/lol')
     def fetch_lol(self, request, pk=None):
         profile_game_lol = ProfileGameLol.objects.filter(id_profile=pk).first()
@@ -118,7 +156,9 @@ class ProfileViewSet(viewsets.ModelViewSet):
             return JsonResponse({"error": "Failed to fetch data"}, status=response.status_code)
 
         
-
+@user_schema
+@users_schema_POST
+@users_schema_GET
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
