@@ -47,7 +47,7 @@ class Game(models.Model):
         return f"Game name: {self.name}, Category: {self.category.name}"
 
 class ProfileGame(models.Model):
-    id_profile = models.ForeignKey("myapp.Profile", on_delete=models.CASCADE, related_name="games")
+    id_profile = models.OneToOneField("myapp.Profile", on_delete=models.CASCADE, related_name="games")
     id_game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="profiles")
 
     class Meta:

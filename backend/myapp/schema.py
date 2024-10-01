@@ -3,9 +3,9 @@ from drf_spectacular.types import OpenApiTypes
 from .serializers import (
     PostSerializer, 
     LikeSerializer, 
-    ProfileSerializer, 
-    UserSerializer,
-    CommentSerializer
+    CommentSerializer,
+    ProfileSerializer,
+    NotificationSerializer,
 )
 from games.serializers import (
     GameSerializer,
@@ -365,7 +365,7 @@ profile_fetch_lol_schema = extend_schema(
                         "winRate": "33%"
                     }
                 ],
-                description="Retorno da API da Riot",
+                description="Retorno da API da Riot + adição de alguns dados baseados em cáculos adicionados pela aplicação",
             )
         },
         summary="Retorna informações de jogo do lol relacionadas a algum perfil",
@@ -458,6 +458,150 @@ post_comments_schema = extend_schema(
             name="id",
             required=True,
             description="O Id único que identifica o post (Id do Post)",
+            type=OpenApiTypes.INT,
+            location=OpenApiParameter.PATH
+        ),
+        OpenApiParameter(
+            name="page",
+            description="Um número de página no conjunto de resultados paginados",
+            type=OpenApiTypes.INT,
+        )
+    ]
+)
+
+profile_following_schema = extend_schema(
+    summary="Retorna todos os perfis que algum perfil esta seguindo",
+    description="Endpoint pertecente a view de profile (PROFILE VIEW no app myapp)"        
+    """
+
+        A responsabilidade deste endpoint é retornar todos os perfis que algum perfil esta seguindo.
+
+        Ele recebe um id de um objeto Profile (id de um profile) e então retorna os perfis que este perfil esta seguindo.
+    """,
+    parameters=[
+        OpenApiParameter(
+            name="id",
+            required=True,
+            description="O Id único que identifica o profile (Id do Profile)",
+            type=OpenApiTypes.INT,
+            location=OpenApiParameter.PATH
+        ),
+        OpenApiParameter(
+            name="page",
+            description="Um número de página no conjunto de resultados paginados",
+            type=OpenApiTypes.INT,
+        )
+    ]
+)
+
+profile_followers_schema = extend_schema(
+    summary="Retorna todos os seguidores que algum perfil",
+    description="Endpoint pertecente a view de profile (PROFILE VIEW no app myapp)"        
+    """
+
+        A responsabilidade deste endpoint é retornar todos os seguidores de algum perfil.
+
+        Ele recebe um id de um objeto Profile (id de um profile) e então retorna os seguidores deste perfil.
+    """,
+    parameters=[
+        OpenApiParameter(
+            name="id",
+            required=True,
+            description="O Id único que identifica o profile (Id do Profile)",
+            type=OpenApiTypes.INT,
+            location=OpenApiParameter.PATH
+        ),
+        OpenApiParameter(
+            name="page",
+            description="Um número de página no conjunto de resultados paginados",
+            type=OpenApiTypes.INT,
+        )
+    ]
+)
+
+user_usernames = extend_schema(
+    responses={200: OpenApiTypes.BOOL},
+    summary="Verifica se algum username esta disponível na aplicação",
+    description="Endpoint pertecente a view de user (USER VIEW no app myapp)"        
+    """
+
+        A responsabilidade deste endpoint é verificar se algum usuário já esta utilizando algum username.
+
+        Ele recebe um username e verifica se existe algum usuário com aquele username, retorna true para caso exista ou false para caso não exista.
+    """,
+    parameters=[
+        OpenApiParameter(
+            name="username",
+            required=True,
+            description="O username que vai ser testado",
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.PATH
+        ),
+    ]
+)
+
+user_profile = extend_schema(
+    responses={200: ProfileSerializer()},
+    summary="Retorna o profile de algum usuário",
+    description="Endpoint pertecente a view de user (USER VIEW no app myapp)"        
+    """
+
+        A responsabilidade deste endpoint é retornar o perfil de um usuário.
+
+        Ele recebe um id de algum usuário e então retorna o perfil deste usuário.
+    """,
+    parameters=[
+        OpenApiParameter(
+            name="id",
+            required=True,
+            description="O Id único que identifica o usuário (Id do User)",
+            type=OpenApiTypes.INT,
+            location=OpenApiParameter.PATH
+        ),
+    ]
+)
+
+user_notifications = extend_schema(
+    responses={200: NotificationSerializer(many=True)},
+    summary="Retorna as notificações de algum usuário",
+    description="Endpoint pertecente a view de user (USER VIEW no app myapp)"        
+    """
+
+        A responsabilidade deste endpoint é retornar as notificações de algum usuário.
+
+        Ele recebe um id de algum usuário e então retorna as sua notificações.
+    """,
+    parameters=[
+        OpenApiParameter(
+            name="id",
+            required=True,
+            description="O Id único que identifica o usuário (Id do User)",
+            type=OpenApiTypes.INT,
+            location=OpenApiParameter.PATH
+        ),
+        OpenApiParameter(
+            name="page",
+            description="Um número de página no conjunto de resultados paginados",
+            type=OpenApiTypes.INT,
+        )
+    ]
+)
+
+user_likes = extend_schema(
+    responses={200: LikeSerializer(many=True)},
+    summary="Retorna todos os likes de algum usuário",
+    description="Endpoint pertecente a view de user (USER VIEW no app myapp)"        
+    """
+
+        A responsabilidade deste endpoint é retornar os likes de algum usuário.
+
+        Ele recebe um id de algum usuário e então retorna seus likes.
+    """,
+    parameters=[
+        OpenApiParameter(
+            name="id",
+            required=True,
+            description="O Id único que identifica o usuário (Id do User)",
             type=OpenApiTypes.INT,
             location=OpenApiParameter.PATH
         ),

@@ -216,4 +216,3 @@ def generate_data_lol(data):
         }
     ]
     return newDict
-

@@ -36,7 +36,13 @@ from .schema import (
     profiles_schema_GET,
     profile_games_schema,
     profile_fetch_lol_schema,
-    profile_info_lol_schema
+    profile_info_lol_schema,
+    profile_following_schema,
+    profile_followers_schema,
+    user_usernames,
+    user_profile,
+    user_notifications,
+    user_likes,
 )
   
 class MyTokenObtainPairView(TokenObtainPairView):
@@ -111,21 +117,30 @@ class LikeViewSet(viewsets.ModelViewSet):
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
-
-    @action(detail=False, methods=['get'])
-    def profiles(self, request, user_id=None):
-        profile = Profile.objects.filter(user_id=user_id).first()
-        serializer = self.get_serializer(profile)
+    
+    @profile_following_schema
+    @action(detail=True, methods=['GET'])
+    def following(self, request, pk=None):
+        follows = Profile.objects.get(pk=pk).follows.exclude(pk=pk)
+        serializer = ProfileSerializer(follows, many=True)
         return Response(serializer.data)
+    
+    @profile_followers_schema
+    @action(detail=True, methods=['GET'])
+    def followers(self, request, pk=None):
+        followers = Profile.objects.get(pk=pk).followed_by.exclude(pk=pk)
+        serializer = ProfileSerializer(followers, many=True)
+        return Response(serializer.data)
+
     @profile_games_schema
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=['GET'])
     def games(self, request, pk=None):
         profile = Profile.objects.get(user_id=pk)
         games = [pg.id_game for pg in profile.games.all()]
         serializer = GameSerializer(games, many=True, context={'request': request})
         return Response(serializer.data)
     @profile_info_lol_schema
-    @action(detail=True, methods=['get'], url_path='games/infos/lol')
+    @action(detail=True, methods=['GET'], url_path='games/lol')
     def info_lol(self, request, pk=None):
         info = ProfileGameLol.objects.filter(id_profile=pk).first()
         
@@ -135,7 +150,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         serializer = ProfileGameLolSerializer(info)
         return Response(serializer.data)
     @profile_fetch_lol_schema
-    @action(detail=True, methods=['get'], url_path='games/fetch/lol')
+    @action(detail=True, methods=['GET'], url_path='games/fetch/lol')
     def fetch_lol(self, request, pk=None):
         profile_game_lol = ProfileGameLol.objects.filter(id_profile=pk).first()
         summonerId = profile_game_lol.summoner_id
@@ -170,38 +185,32 @@ class UserViewSet(viewsets.ModelViewSet):
         if self.action == "create":
             return[AllowAny()]
         return [IsAuthenticated()]
+     
+    @user_usernames
+    @action(detail=True, methods=['GET'])
+    def usernames(self, request, username=None):
+        is_username_exists = User.objects.filter(username=username).exists()
+        return Response(is_username_exists)
     
-    @action(detail=True, methods=['get'])
+    @user_profile
+    @action(detail=True, methods=['GET'])
+    def profiles(self, request, pk=None):
+        profile = Profile.objects.filter(pk=pk).first()
+        serializer = ProfileSerializer(profile)
+        return Response(serializer.data)
+    
+    @user_notifications
+    @action(detail=True, methods=['GET'])
     def notifications(self, request, pk=None):
-        notification = Notification.objects.filter(profile_id=pk)
-        serializer = NotificationSerializer(notification, many=True).order_by('-timestamp')
+        notification = Notification.objects.filter(user_id=pk).order_by('-timestamp')
+        serializer = NotificationSerializer(notification, many=True)
         return Response(serializer.data)
     
-    @action(detail=True, methods=['get'])
-    def following(self, request, pk=None):
-        follows = Profile.objects.get(user_id=pk).follows.exclude(user_id=pk)
-        serializer = ProfileSerializer(follows, many=True)
-        return Response(serializer.data)
-    
-    @action(detail=True, methods=['get'])
-    def followers(self, request, pk=None):
-        followers = Profile.objects.get(user_id=pk).followed_by.exclude(user_id=pk)
-        serializer = ProfileSerializer(followers, many=True)
-        return Response(serializer.data)
-
-    
-    @action(detail=True, methods=['get'])
-    def usernames(self, request, pk=None):
-        is_username_exists = User.objects.filter(username=pk).exists()
-        if is_username_exists :
-            return Response(True)
-        else:
-            return Response(False)
-        
-
-    @action(detail=True, methods=['get'])
+    @user_likes
+    @action(detail=True, methods=['GET'])
     def likes(self, request, pk=None):
         likes = User.objects.get(id=pk).likes.all()
         serializer = LikeSerializer(likes, many=True)
         return Response(serializer.data)
+    
 
