@@ -5,9 +5,10 @@ from .models import Like, Comment, Notification, Profile, Repost, Post
 from django.contrib.contenttypes.models import ContentType
 
 def post_save_repost(sender, instance, created, **kwargs):
-    strategy = instance.content_object.get_repost_notification_interface()
-    add_repost_quantity(instance)
-    create_generic_notification(instance, Notification, strategy)
+    if created:
+        strategy = instance.content_object.get_repost_notification_interface()
+        add_repost_quantity(instance)
+        create_generic_notification(instance, Notification, strategy)
 
 def post_save_created_user(sender, instance, created, **kwargs):
     if created:

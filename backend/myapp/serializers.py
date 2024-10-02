@@ -96,7 +96,6 @@ class NotificationSerializer(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
     created_by_user_name = serializers.ReadOnlyField(source='created_by_user.username')
     created_by_user_photo = serializers.SerializerMethodField()
-    # comments = serializers.SerializerMethodField()
     likes = serializers.SerializerMethodField()
     reposts = serializers.SerializerMethodField()
     medias = serializers.SerializerMethodField()
