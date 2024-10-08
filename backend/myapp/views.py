@@ -63,10 +63,10 @@ class PostsViewSet(viewsets.ModelViewSet):
     @feed_schema
     @action(detail=True, methods=['GET'])
     def feed(self, request, pk=None):
-        following = Profile.objects.get(user_id=pk).follows.exclude(user_id=pk)
-        ids_seguindo = [user.id for user in following]
-        posts = Post.objects.filter(created_by_user__in=ids_seguindo).order_by("-timestamp")
-        serializer = PostSerializer(posts, many=True, context={'request': request})
+        profile = Profile.objects.get(pk=pk)
+        following = profile.follows.exclude(pk=pk)
+        posts = Post.objects.filter(created_by_user__profile__in=following).order_by("-timestamp")
+        serializer = PostSerializer(posts, many=True, context={'request': request})   
         return Response(serializer.data)
 
     @post_likes_schema_GET
@@ -195,7 +195,8 @@ class UserViewSet(viewsets.ModelViewSet):
     @user_profile
     @action(detail=True, methods=['GET'])
     def profiles(self, request, pk=None):
-        profile = Profile.objects.filter(pk=pk).first()
+        user = User.objects.filter(pk=pk).first()
+        profile = user.profile
         serializer = ProfileSerializer(profile)
         return Response(serializer.data)
     
