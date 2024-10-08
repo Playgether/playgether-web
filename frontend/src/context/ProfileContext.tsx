@@ -4,6 +4,7 @@ import { createContext, useState, useContext} from "react"
 import { getProfile } from "../services/getProfile"
 import { useAuthContext } from "./AuthContext"
 import { ProfileProps } from "../services/getProfile"
+import { useResource } from "../components/custom_hooks/useResource"
 
 type ProfileContextProps = {
     profile: ProfileProps | null | void;
@@ -20,6 +21,8 @@ const ProfileContextProvider = ({children}: {children: React.ReactNode}) => {
         const response = await getProfile(authTokens, user?.user_id)
         setProfile(response.data)
     }
+
+    useResource<ProfileProps>(() => fetchProfile())
 
     return(
         <ProfileContext.Provider value={{profile, fetchProfile}}>

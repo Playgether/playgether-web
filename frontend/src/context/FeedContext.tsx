@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useAuthContext } from "./AuthContext";
 import { FeedProps, getFeed } from "../services/getFeed";
+import { useProfileContext } from "./ProfileContext";
 
 type FeedContextProps = {
     feed: FeedProps[] | null | void | undefined;
@@ -11,14 +12,15 @@ type FeedContextProps = {
 const FeedContext = createContext<FeedContextProps>({} as FeedContextProps)
 
 const FeedContextProvider = ({children}: {children: React.ReactNode}) => {
-    const {user, authTokens} = useAuthContext()
+    const {authTokens} = useAuthContext()
+    const {profile} = useProfileContext()
     const [feed, setFeed] = useState<FeedProps[] | void | null | undefined>();
 
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await getFeed(authTokens, user?.user_id);
+                const response = await getFeed(authTokens, profile?.id);
                 setFeed(response.data);
             } catch (error) {
                 console.error("Erro ao buscar conteúdo:", error);
@@ -26,7 +28,7 @@ const FeedContextProvider = ({children}: {children: React.ReactNode}) => {
         };
 
         fetchData();
-    }, [authTokens, user]);
+    }, [authTokens, profile]);
 
 
 

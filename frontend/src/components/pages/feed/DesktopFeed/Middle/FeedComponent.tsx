@@ -21,6 +21,7 @@ const FeedComponent = () => {
   const [resourceObject, setResourceObject] = useState<FeedProps>()
   const [slideIndex, setSlideIndex] = useState(0)
 
+
   const handlePostsCloseExtend = () => {
     setOpenPostsExtend(!openPostsExtend)
   }
@@ -28,8 +29,6 @@ const FeedComponent = () => {
   const handlePostsExtend = (resourceObject) => {
     setResourceObject(resourceObject)
     setOpenPostsExtend(!openPostsExtend)
-    console.log(resourceObject.medias)
-    console.log(slideIndex)
   }
   
 
