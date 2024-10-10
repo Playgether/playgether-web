@@ -22,6 +22,7 @@ const FeedContextProvider = ({children}: {children: React.ReactNode}) => {
             try {
                 const response = await getFeed(authTokens, profile?.id);
                 setFeed(response.data);
+                console.log(response.data)
             } catch (error) {
                 console.error("Erro ao buscar conteúdo:", error);
             }

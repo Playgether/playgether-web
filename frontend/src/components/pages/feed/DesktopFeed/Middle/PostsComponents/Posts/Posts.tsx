@@ -1,9 +1,13 @@
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Scrollbar, A11y } from 'swiper/modules';
+import { Navigation, Pagination } from 'swiper/modules';
 import Image from "next/legacy/image";
-import { twJoin, twMerge } from 'tailwind-merge';
+import { twJoin} from 'tailwind-merge';
 import { HTMLAttributes, useEffect, useRef} from 'react';
 import { PostMedias } from '../../../../../../../services/getFeed';
+import 'swiper/css'
+import 'swiper/css/navigation'
+import 'swiper/css/pagination'
+import { CustomPagination } from '../../../../../../elements/CustomPagination/CustomPagination';
 
 
 export interface PostsProps extends HTMLAttributes<HTMLDivElement>{
@@ -14,8 +18,6 @@ export interface PostsProps extends HTMLAttributes<HTMLDivElement>{
      * localizada no compoenente "FeedComponent". Esta função muda o estado de duas constantes, fazendo com que PostsExtend apareça.)
       */
     onClick? : (...props: any[]) => void, 
-    /** Esta prop define o tamanho das medias deste componente, ela pode receber um "h-full" ou um "h-1/2" caso você queira que as medias ocupem metade do espaço do container */
-    postsSize?: string
     /** Esta é uma prop opcional que recebe uma função "set" de alguma constante executando-a setando o número index da media clicada (número da posição da media no slide), 
      * através disso, você pode controlar a constante de um componente fora deste para pegar o index do slide.
      * A ideia é utilizá-la no onClick, e então, quando o usuário clica em alguma media, ele pega o index que foi clicado e passa para a constante referente ao set passado.
@@ -33,9 +35,10 @@ export interface PostsProps extends HTMLAttributes<HTMLDivElement>{
 }
 
 /** Este componente é responsável por criar o carrousel (slide) dos posts que possuem media, sejam eles imagens, vídeos, ou os dois juntos. Você pode passar um className para
- * este componente para definir o tamanho do container do carrousel.
+ * este componente para definir o tamanho do container do carrousel
+ * OBS: Ele pode receber um "className" para serem definidas algumas personalizações como por exemplo: altura, largura, etc.
 */
-const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, postsSize="h-full", ...rest }: PostsProps) => {
+const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, ...rest }: PostsProps) => {
     const volumeRef = useRef<HTMLVideoElement | null> (null)
 
     const handleSlideChange = (swiper) => {
@@ -64,45 +67,48 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, postsSize="h-full"
 
     return (
         <>
+        <div className={twJoin("relative", rest.className)}>
         {media && media.length > 0 ? (
-            <div className={twMerge("bg-white-200 items-center justify-center relative pt-3 cursor-pointer", rest.className)}>
-            <Swiper 
-                modules={[Navigation, Pagination, Scrollbar, A11y]}
-                slidesPerView={1}
-                navigation
-                pagination={{ clickable: true, el: '.sample-slider', }}
-                className=" relative h-full z-10"
-                onSlideChange={handleSlideChange}
-                initialSlide={slideIndex}
-                >
-                {media.map(item => (
-                    <SwiperSlide key={item.id} className=" h-full" onClick={
-                        onClick
-                    }>
-          
+            <>
+            <Swiper
+            slidesPerView={1}
+            pagination={{type:'fraction', el:'.swiper-custom-pagination',}}
+            navigation
+            modules={[Navigation, Pagination]}
+            className='relative h-full z-10'
+            onSlideChange={handleSlideChange}
+            initialSlide={slideIndex}
+            >
+                {media.map((item)=> (
+                    <SwiperSlide key={item.id} onClick={onClick}>
                         {item.media_type === "image" ? (
-                        <div className={twJoin("relative ", postsSize)} >
-                            <Image
-                                src={item.media_file}
-                                alt={"TESTE"}
-                                layout="fill"
-                                objectFit="contain"
-                            />
-                        </div>
+                            <div className='h-full relative overflow-hidden  p-4 pb-5 flex justify-center'>
+                                <Image
+                                    src={item.media_file}
+                                    alt={"TESTE"}
+                                    layout="fill"
+                                    objectFit="contain"
+                                    className='rounded-lg'
+                                />
+                            </div>
                         ) : (
-                        <div className={twJoin("relative", postsSize)} >
-                            <video playsInline muted autoPlay controls ref={volumeRef} className="object-contain h-full mx-auto">
-                                <source src={item.media_file} type="video/mp4" />
+                        <div className='relative h-full '>
+                            <video playsInline muted autoPlay controls ref={volumeRef} className="object-contain h-full mx-auto rounded-lg">
+                                <source src={item.media_file} type="video/mp4"/>
                                 Your browser does not support the video tag.
-                            </video>
-                        </div>
-                        )}
+                            </video> 
+                        </div>    
+                        )
+                    
+                    }
+
                     </SwiperSlide>
                 ))}
             </Swiper>
-            <div className="sample-slider swiper-pagination-bullets sample-slider-pagination"></div>
-            </div>
+            </>
         ) : null}
+        <CustomPagination/>
+        </div>
         </>
     );
 };

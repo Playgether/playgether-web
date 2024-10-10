@@ -51,50 +51,37 @@
     
 } */
 
-
-.swiper-slide {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    margin-bottom: 20px;
+.swiper-button-next,
+.swiper-button-prev {
+  background-color: white;
+  background-color: rgba(255, 255, 255, 0.5);
+  right: 0px;
+  padding: 30px;
+  color: rgb(0, 162, 255) !important;
+  fill: rgb(0, 163, 255) !important;
+  border-radius: 50% !important;
+  border: solid rgb(0, 163, 255);
 }
 
-.sample-slider-pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 10px;
+:root {
+  --swiper-navigation-size: 26px;
 }
 
-/* Estilizar o bullet ativo */
-.swiper-pagination-bullet-active {
-    background-color: #FF9147;
+.swiper-contrainer {
+  overflow: visible;
 }
 
-/* Outros estilos do Swiper */
-.swiper-button-next {
-    color: #718096;
+.swiper-custom-pagination {
+  top: 30px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.3rem;
+  z-index: 10;
+  background-color: #62B7F8;
+  margin-top: 4px;
+  max-width: 5rem;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 10px;
 }
-
-.swiper-container {
-    width: 100%;
-    height: 95%;
-}
-
-/* Ajustar a posição da páginação */
-.sample-slider .swiper-pagination-bullets .swiper-pagination {
-    color: #FF9147;
-    top: 10px;
-}
-
-.sample-slider-pagination .swiper-pagination-bullet {
-    margin: 0 5px; /* Ajuste o valor para adicionar o espaço desejado */
-    background-color: #008BF5;
-}
-
-.swiper-button-next {
-    color: #718096
-}
-
-
 

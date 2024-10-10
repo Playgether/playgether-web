@@ -13,7 +13,7 @@ export interface SlidePostExpandProps {
 export const SlidePostExpand = ({medias, slideIndex}:SlidePostExpandProps) => {
     return (
         <div className="w-4/6 text-black-300 h-full bg-white-300">
-            <Posts media={medias} onClick={()=> false} postsSize="h-full" slideIndex={slideIndex} className="h-full mb-2"/>
+            <Posts media={medias} onClick={()=> false} slideIndex={slideIndex} className="h-full"/>
         </div>
     )
 }

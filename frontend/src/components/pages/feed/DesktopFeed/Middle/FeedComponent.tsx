@@ -56,8 +56,8 @@ const FeedComponent = () => {
             </div>
       
             {resource?.has_post_media ? (
-                <div className="bg-white-200 h-4/6">
-                  <Posts media={resource.medias} onClick={() => handlePostsExtend(resource)} setSlideIndex={setSlideIndex} postsSize="h-full" className="h-5/6"/>
+                <div className="bg-white-200 h-4/6 cursor-pointer">
+                  <Posts media={resource.medias} onClick={() => handlePostsExtend(resource)} setSlideIndex={setSlideIndex} className="h-5/6"/>
                 </div>
             ) : null}
     
