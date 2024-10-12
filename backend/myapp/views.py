@@ -67,7 +67,14 @@ class PostsViewSet(viewsets.ModelViewSet):
         following = profile.follows.exclude(pk=pk)
         posts = Post.objects.filter(created_by_user__profile__in=following).order_by("-timestamp")
         serializer = PostSerializer(posts, many=True, context={'request': request})   
-        return Response(serializer.data)
+        
+        # Cria a resposta
+        response = Response(serializer.data)
+        
+        # Adiciona o cabeçalho "Accept-Ranges: bytes"
+        response["Accept-Ranges"] = "bytes"
+        
+        return response
 
     @post_likes_schema_GET
     @post_likes_schema_DELETE

@@ -1,6 +1,8 @@
 from pathlib import Path
 import os
 from datetime import timedelta
+from django.conf import settings
+from django.conf.urls.static import static
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -17,17 +19,12 @@ SECRET_KEY = 'django-insecure-o_n+0ags14p@l&m*gt4nvcjps0+dfpkjbqephki(^x%!ht1+6a
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
-
-
-
 # Application definition
 
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     '192.168.18.5',
-    '192.168.18.5:8000'
 ]
 
 
@@ -78,6 +75,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'myapp.middleware.AcceptRangesMiddleware'
 ]
 
 
