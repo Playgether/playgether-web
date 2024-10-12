@@ -2,10 +2,10 @@ import { FeedProps } from "../../../../../services/getFeed"
 import ProfileAndUsername from "../../../../layouts/components/ProfileAndUsername"
 import { BorderLine } from "../../DesktopFeed/MultUseComponents/BorderLine/BorderLine"
 import CommentInput from "../../DesktopFeed/MultUseComponents/CommentInput/CommentInput"
-import CommentSectionLogic from "../CommentsSection/CommentsSectionLogic/CommentsSectionLogic"
 import { PostTextPostExpand } from "../PostTextPostExpand/PostTextPostExpand"
 import { Suspense } from "react"
 import { CommentSectionFallback } from "../../../../layouts/SuspenseFallBack/CommentSectionFallback/CommentSectionFallback"
+import CommentSectionFetchData from "../CommentsSection/CommentSectionFetchData/CommentSectionFetchData"
 
 interface PostsExtendHasNoPostMediaProps {
     resource: FeedProps
@@ -24,7 +24,7 @@ const PostsExtendHasNoPostMedia = ({resource}: PostsExtendHasNoPostMediaProps) =
                 <div className="w-full h-4/6">
                     <BorderLine className="pt-0"/>
                     <Suspense fallback={<CommentSectionFallback/>}>
-                        <CommentSectionLogic />
+                        <CommentSectionFetchData postId={resource.id} />
                     </Suspense>
                     <CommentInput id={resource.id} />
                 </div>

@@ -30,8 +30,11 @@ export function CommentsContextProvider({children}:{children: ReactNode}) {
         useEffect(()=> {
             async function getResource (postId:number) {
                 const response = await getComments(authTokens, postId)
-                setComments(response)
-                return response
+                if (response !== undefined) {
+                    setComments(response);
+                } else {
+                    console.error("Erro ao buscar comentários");
+                }
             }
             getResource(postId)
         }, [])
@@ -48,18 +51,22 @@ export function CommentsContextProvider({children}:{children: ReactNode}) {
 
     const addAnswerComment = (objectId:number, answerComment:PostCommentsOfCommentsProps) => {
         setComments(prevComments => {
-            const commentsList = [...prevComments.data]
-            const commentIndex = commentsList.findIndex(comment => comment.id === objectId)
-            if (commentIndex !== -1){
-                commentsList[commentIndex].comments_of_comments.unshift(answerComment)
-
-            }
+            const commentsList = prevComments.data.map(comment => {
+                if (comment.id === objectId) {
+                    return {
+                        ...comment,
+                        comments_of_comments: [answerComment, ...comment.comments_of_comments]
+                    };
+                }
+                return comment;
+            });
+    
             return {
                 data: commentsList
             };
-        })
+        });
     }
-
+    
     const editComment = (updatedComment:PostsCommentsProps) => {
         setComments(prevComments => {
           const updatedComments = [...prevComments.data];

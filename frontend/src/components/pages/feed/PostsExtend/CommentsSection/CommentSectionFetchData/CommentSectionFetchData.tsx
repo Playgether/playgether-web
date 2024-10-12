@@ -17,11 +17,11 @@ export interface CommentSectionLogicInterface {
  * requisição afim de ser possível ver o fallback do Suspense. Neste caso CommentsSection esta retornando o componente "NoCommentsYet" porque nós não estamos fazendo uma 
  * para o backend."
  */
-const CommentSectionLogic = async ({postId}:CommentSectionLogicInterface) => {
+const CommentSectionFetchData = async ({postId}:CommentSectionLogicInterface) => {
     await fetchData(postId)
 
     return <> <CommentsSection /> </>
     
 }
 
-export default CommentSectionLogic
+export default CommentSectionFetchData

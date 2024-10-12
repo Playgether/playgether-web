@@ -6,7 +6,7 @@ import { PostTextPostExpand } from "../PostTextPostExpand/PostTextPostExpand"
 import { SlidePostExpand } from "../SlidePostExpand/SlidePostExpand"
 import { Suspense } from "react"
 import { CommentSectionFallback } from "../../../../layouts/SuspenseFallBack/CommentSectionFallback/CommentSectionFallback"
-import CommentSectionLogic from "../CommentsSection/CommentSectionFetchData/CommentSectionFetchData"
+import CommentSectionFetchData from "../CommentsSection/CommentSectionFetchData/CommentSectionFetchData"
 
 
 export interface PostsExtendHasPostMediaProps {
@@ -32,7 +32,7 @@ const PostsExtendHasPostMedia = ({resource, slideIndex}: PostsExtendHasPostMedia
             <PostTextPostExpand text={resource.comment}/>
             <div className="pt-8 w-full h-4/6">
                 <Suspense fallback={<CommentSectionFallback/>}>
-                    <CommentSectionLogic postId={resource.id} />
+                    <CommentSectionFetchData postId={resource.id} />
                 </Suspense>
                 <CommentInput id={resource.id}/>
             </div>
