@@ -1,5 +1,6 @@
 import { useCommentsContext } from "../../../../../../context/CommentsContext"
-import { CommentsSection } from "../CommentsSectionLogic/CommentsSectionLogic"
+import  CommentsSection  from "../CommentsSectionLogic/CommentsSectionLogic"
+
 
 async function fetchData (postId) {
    const {fetchComments} = useCommentsContext()

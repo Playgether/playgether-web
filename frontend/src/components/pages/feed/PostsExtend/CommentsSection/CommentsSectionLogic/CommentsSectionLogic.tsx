@@ -13,7 +13,7 @@ import { useCommentsContext } from "../../../../../../context/CommentsContext"
 /** Este componente é responsável por gerar toda a lógica de exibição da seção de comentários em PostsExpand, ou seja, fazer map nos comentários, exibir os componente corretos quando não houver
  * comentários ainda, etc...
  */
-export const CommentsSection = () => {
+const CommentsSection = () => {
     const [expandedComments, setExpandedComments] = useState({});
     const {comments} = useCommentsContext()
 
@@ -61,3 +61,5 @@ export const CommentsSection = () => {
         </>
     )
 }
+
+export default CommentsSection;
