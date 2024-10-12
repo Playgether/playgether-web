@@ -66,51 +66,48 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, ...rest }: PostsPr
 
 
     return (
-        <>
-        <div className={twJoin("relative", rest.className)}>
-        {media && media.length > 0 ? (
-            <>
+        <div className={twJoin("relative bg-white-200", rest.className)}>
+            {media && media.length > 0 ? (
             <Swiper
             slidesPerView={1}
             pagination={{type:'fraction', el:'.swiper-custom-pagination',}}
             navigation
             modules={[Navigation, Pagination]}
-            className='relative h-full z-10'
+            className='h-full z-10 relative'
             onSlideChange={handleSlideChange}
             initialSlide={slideIndex}
+            autoHeight={true}
             >
+                <CustomPagination/>
                 {media.map((item)=> (
-                    <SwiperSlide key={item.id} onClick={onClick}>
+                    <SwiperSlide key={item.id} onClick={onClick} className='relative'>
                         {item.media_type === "image" ? (
-                            <div className='h-full relative overflow-hidden  p-4 pb-5 flex justify-center'>
+                            <div className='relative  flex justify-center  min-h-[400px]'>
                                 <Image
                                     src={item.media_file}
                                     alt={"TESTE"}
-                                    layout="fill"
+                                    layout='fill'
                                     objectFit="contain"
                                     className='rounded-lg'
                                 />
                             </div>
                         ) : (
-                        <div className='relative h-full '>
-                            <video playsInline muted autoPlay controls ref={volumeRef} className="object-contain h-full mx-auto rounded-lg">
-                                <source src={item.media_file} type="video/mp4"/>
-                                Your browser does not support the video tag.
-                            </video> 
-                        </div>    
+                            <div className='relative h-full'>
+                                <video playsInline muted autoPlay controls ref={volumeRef} className="object-contain h-full mx-auto rounded-lg">
+                                    <source src={item.media_file} type="video/mp4"/>
+                                    Your browser does not support the video tag.
+                                </video> 
+                            </div>    
                         )
                     
                     }
-
                     </SwiperSlide>
                 ))}
             </Swiper>
-            </>
         ) : null}
-        <CustomPagination/>
+                
         </div>
-        </>
     );
 };
 
-export default Posts
+export default Posts;

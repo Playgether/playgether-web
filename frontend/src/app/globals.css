@@ -53,15 +53,21 @@
 
 .swiper-button-next,
 .swiper-button-prev {
-  background-color: white;
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: #ADDCFF;
+  /* background-color: rgba(255, 255, 255, 0.5); */
   right: 0px;
-  padding: 30px;
-  color: rgb(0, 162, 255) !important;
-  fill: rgb(0, 163, 255) !important;
+  padding: 25px;
+  color: #008BF5 !important;
+  fill: #008BF5  !important;
   border-radius: 50% !important;
-  border: solid rgb(0, 163, 255);
+  border: solid #008BF5;
 }
+
+.swiper-button-next::after,
+.swiper-button-prev::after {
+  font-size: 25px !important; 
+}
+
 
 :root {
   --swiper-navigation-size: 26px;
