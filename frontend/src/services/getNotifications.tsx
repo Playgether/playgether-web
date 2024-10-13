@@ -1,6 +1,5 @@
 import { api } from "./api";
 import { TokenData } from "./updateTokenRequest";
-import { UserProps } from "../context/AuthContext";
 
 export interface getNotificationsProps {
     id: number,
@@ -8,10 +7,12 @@ export interface getNotificationsProps {
     message: string;
     timestamp: number;
     user: number;
+    actor_profile_photo:string;
+    actor_name:string;
 }
 
-export const getNotifications = async (authTokens : TokenData | null, user : UserProps | null | undefined) => {
-    const response = await api.get(`/api/v1/users/${user?.user_id}/notifications/`, {
+export const getNotifications = async (authTokens : TokenData | null | undefined, userId : number | undefined) => {
+    const response = await api.get<getNotificationsProps>(`/api/v1/users/${userId}/notifications/`, {
     headers: {
         'Authorization':'Bearer ' + String(authTokens?.access)
     }})

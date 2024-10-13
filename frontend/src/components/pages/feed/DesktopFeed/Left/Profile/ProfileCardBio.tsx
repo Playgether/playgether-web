@@ -9,10 +9,14 @@ export const ProfileCardBio = () => {
         <>
         <Suspense fallback={<div>Loading page, hopefully not too much..</div>}>
             <div className="w-5/6  text-xs text-center text-black-200 opacity-90">
+                {profile && profile.bio ? (
+                    <TextLimitComponent text={`${profile?.bio}`} maxCharacters={100}/>
+                ):(
+                    "Você não possui uma bio, insira uma."
+                )}
                 <TextLimitComponent text={`${profile?.bio}`} maxCharacters={100}/>
             </div>
          </Suspense>
         </>
-    )
-    
+    )  
 }
