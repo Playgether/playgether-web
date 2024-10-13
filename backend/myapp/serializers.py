@@ -82,6 +82,8 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 
 class NotificationSerializer(serializers.ModelSerializer):
+    actor_name = serializers.SerializerMethodField()
+    actor_profile_photo = serializers.SerializerMethodField()
 
     class Meta:
         model = Notification
@@ -89,8 +91,23 @@ class NotificationSerializer(serializers.ModelSerializer):
             'user',
             'is_read',
             'message',
-            'timestamp'
+            'timestamp',
+            'actor_name',
+            'actor_profile_photo'
         )
+
+    def get_actor_profile_photo(self, obj):
+        request = self.context.get('request')
+        if obj.actor.profile.profile_photo:
+            return request.build_absolute_uri(obj.actor.profile.profile_photo.url)
+        else:
+            return None
+        
+    def get_actor_name(self, obj):
+        name = obj.actor.first_name + " " + obj.actor.last_name
+        return name
+
+
 
 
 class PostSerializer(serializers.ModelSerializer):

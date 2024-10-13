@@ -8,5 +8,11 @@ class LikePostNotification(NotificationInterface):
             return
         else:
             content_type = ContentType.objects.get_for_model(instance.content_type)
-            classNotification.objects.create(user=instance.content_object.created_by_user, message = f'{instance.user.first_name} curtiu sua postagem: {instance.content_object.comment}', content_type = content_type, object_id = instance.id)
+            classNotification.objects.create(
+                actor=instance.user, 
+                user=instance.content_object.created_by_user, 
+                message = f'{instance.user.first_name} curtiu sua postagem: {instance.content_object.comment}', 
+                content_type = content_type, 
+                object_id = instance.id
+            )
             return

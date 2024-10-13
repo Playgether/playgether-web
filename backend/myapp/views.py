@@ -1,3 +1,5 @@
+from datetime import timedelta
+from django.utils import timezone
 import os
 from django.http import JsonResponse
 from django.views.generic import TemplateView
@@ -68,10 +70,8 @@ class PostsViewSet(viewsets.ModelViewSet):
         posts = Post.objects.filter(created_by_user__profile__in=following).order_by("-timestamp")
         serializer = PostSerializer(posts, many=True, context={'request': request})   
         
-        # Cria a resposta
         response = Response(serializer.data)
         
-        # Adiciona o cabeçalho "Accept-Ranges: bytes"
         response["Accept-Ranges"] = "bytes"
         
         return response
@@ -210,8 +210,9 @@ class UserViewSet(viewsets.ModelViewSet):
     @user_notifications
     @action(detail=True, methods=['GET'])
     def notifications(self, request, pk=None):
-        notification = Notification.objects.filter(user_id=pk).order_by('-timestamp')
-        serializer = NotificationSerializer(notification, many=True)
+        one_month_ago = timezone.now() - timedelta(days=30)
+        notification = Notification.objects.filter(user_id=pk).filter(timestamp__gte = one_month_ago).order_by('-timestamp')
+        serializer = NotificationSerializer(notification, many=True, context={'request': request})
         return Response(serializer.data)
     
     @user_likes

@@ -189,6 +189,7 @@ class Repost(models.Model):
 
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
+    actor = models.ForeignKey(User, on_delete=models.SET_NULL, related_name="actor_notifications", null=True, blank=True)
     is_read = models.BooleanField(default=False)
     message = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
