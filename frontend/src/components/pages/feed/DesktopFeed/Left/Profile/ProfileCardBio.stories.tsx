@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { ProfileCardBio } from './ProfileCardBio';
 import { ProfileContext } from '../../../../../../context/ProfileContext';
+import { ProfileProps } from '../../../../../../services/getProfile';
 
 
 const ProfileContextMock = ({ children }) => {
@@ -17,7 +18,9 @@ const ProfileContextMock = ({ children }) => {
 
 
 const fetchProfile = () => {
-  return 
+  return new Promise<ProfileProps>((resolve)=>{
+    resolve
+  })
 }
 
   return (

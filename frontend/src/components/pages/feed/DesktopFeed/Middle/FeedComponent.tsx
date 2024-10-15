@@ -33,48 +33,6 @@ const FeedComponent = () => {
   
 
   return (
-    // <div className="bg-white-200">
-    //   {openPostsExtend && !!resourceObject && 
-    //     <div className="h-5/6">
-    //       <PostsExtend resource={resourceObject} onClose={handlePostsCloseExtend} slideIndex={slideIndex}/>
-    //     </div>
-    //   }
-    //   {feed && feed.length > 0 ? (
-    //     feed.map((resource) => (
-    //       <div key={resource.id} className="p-4 mb-4 ">
-    //         <div className="bg-white-200">
-    //           <ProfileAndUsername 
-    //             username={resource.created_by_user_name}
-    //             profile_photo={resource.created_by_user_photo}
-    //             imageClassName="mt-3 ml-3 h-16 w-16"
-    //             timestamp={resource.timestamp}
-    //           />
-    //         </div>
-    //         <div className="pt-4 flex min-h-[5rem] pb-4 bg-white-200 cursor-pointer" 
-    //          onClick={() => handlePostsExtend(resource)}
-    //         >
-    //             <PostText resource={resource} maxCharacteres={500}/>
-    //         </div>
-    //         {resource?.has_post_media ? (
-    //           <div className="h-96 cursor-pointer bg-white-200">
-    //             <h1>TEST</h1>
-    //             <Posts media={resource.medias} onClick={() => handlePostsExtend(resource)} setSlideIndex={setSlideIndex} className="h-4/6"/>
-    //           </div>
-    //         ) : null}
-    //         <div className="mb-5 shadow-lg bg-blue-500">
-    //           <PostProperies 
-    //           object_id={resource.id}
-    //           user_already_like={resource.user_already_like}
-    //           quantity_comment={resource.quantity_comment} 
-    //           quantity_likes={resource.quantity_likes}
-    //           quantity_reposts={resource.quantity_reposts} />
-    //         </div>
-    //       </div>
-    //     ))
-    //   ) : (
-    //     <p>Nenhum post encontrado, siga mais pessoas para poder ver novos posts.</p>
-    //   )}
-    // </div>
       <>
       {openPostsExtend && !!resourceObject && 
         <div className="h-5/6">

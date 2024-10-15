@@ -13,23 +13,24 @@ const FeedContext = createContext<FeedContextProps>({} as FeedContextProps)
 
 const FeedContextProvider = ({children}: {children: React.ReactNode}) => {
     const {authTokens} = useAuthContext()
-    const {profile} = useProfileContext()
+    const {profile, fetchProfile} = useProfileContext()
     const [feed, setFeed] = useState<FeedProps[] | void | null | undefined>();
 
+    const fetchData = async () => {
+        try {
+            await fetchProfile()
+            const response = await getFeed(authTokens, profile?.id);
+            setFeed(response.data);
+        } catch (error) {
+            console.error("Erro ao buscar conteúdo:", error);
+        }
+    };
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const response = await getFeed(authTokens, profile?.id);
-                setFeed(response.data);
-            } catch (error) {
-                console.error("Erro ao buscar conteúdo:", error);
-            }
-        };
-
-        fetchData();
-    }, [authTokens, profile]);
-
+    useEffect(()=> {
+        if (!feed && authTokens && profile?.id){
+            fetchData();
+        }
+    }, [authTokens, profile?.id]);
 
 
     return(
