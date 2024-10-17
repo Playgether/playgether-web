@@ -13,12 +13,11 @@ const FeedContext = createContext<FeedContextProps>({} as FeedContextProps)
 
 const FeedContextProvider = ({children}: {children: React.ReactNode}) => {
     const {authTokens} = useAuthContext()
-    const {profile, fetchProfile} = useProfileContext()
+    const {profile} = useProfileContext()
     const [feed, setFeed] = useState<FeedProps[] | void | null | undefined>();
 
     const fetchData = async () => {
         try {
-            await fetchProfile()
             const response = await getFeed(authTokens, profile?.id);
             setFeed(response.data);
         } catch (error) {
@@ -30,7 +29,7 @@ const FeedContextProvider = ({children}: {children: React.ReactNode}) => {
         if (!feed && authTokens && profile?.id){
             fetchData();
         }
-    }, [authTokens, profile?.id]);
+    }, [profile]);
 
 
     return(

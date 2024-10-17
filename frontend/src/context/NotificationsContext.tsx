@@ -14,11 +14,10 @@ const NotificationContext = createContext<NotificationsContextProps>({} as Notif
 const NotificationsContextProvider = ({children}: {children: React.ReactNode}) => {
     const {user, authTokens} = useAuthContext()
     const [notifications, setNotifications] = useState<getNotificationsProps[]>();
-    const {profile, fetchProfile} = useProfileContext()
+    const {profile} = useProfileContext()
 
     async function fetchNotifications(){   
         try {
-            await fetchProfile()
             const response = await getNotifications(authTokens, user?.user_id)
             setNotifications(response)
         } catch (err){
@@ -30,7 +29,7 @@ const NotificationsContextProvider = ({children}: {children: React.ReactNode}) =
         if (!notifications && authTokens && profile?.id){
             fetchNotifications()
         }
-    }, [authTokens, profile?.id])
+    }, [profile])
 
     return(
         <NotificationContext.Provider value={{notifications}}>

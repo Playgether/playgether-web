@@ -4,6 +4,7 @@ import { ProfileContext } from "../../../../../../context/ProfileContext";
 import { AuthContext } from "../../../../../../context/AuthContext";
 import { UserProps } from "../../../../../../context/AuthContext";
 import { loginUserProps } from "../../../../../../services/loginUser";
+import { ProfileProps } from "../../../../../../services/getProfile";
 
 const ProfileContextMock = ({children}) => {
     const mockProfile = { 
@@ -18,7 +19,9 @@ const ProfileContextMock = ({children}) => {
       };
 
     const fetchProfile = () => {
-        return
+        return new Promise<ProfileProps>((resolve)=> {
+            return resolve
+        })
     }
 
     return (
