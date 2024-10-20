@@ -64,7 +64,10 @@ export const Comments = ({item}: CommentsProps) => {
                             />
                             <ErrosInput field={errors.comment} />
                         </div>
-                    <OrangeButton className="bg-gray-400 h-10 w-16 hover:bg-gray-500">Editar</OrangeButton>
+                        <div className="flex gap-2">
+                            <OrangeButton className="bg-gray-400 h-10 w-16 hover:bg-gray-500">Editar</OrangeButton>
+                            <OrangeButton className="h-10 w-20 bg-gradient-to-r bg-gray-400 from-gray-400 via-gray-500 to-gray-500 hover:bg-gray-500 cursor-pointer hover:from-gray-500 hover:via-gray-600 hover:to-gray-600" onClick={() => setIsEditing(false)}>Cancelar</OrangeButton>
+                        </div>
                 </form>
             </div>
                 </div>
@@ -76,7 +79,7 @@ export const Comments = ({item}: CommentsProps) => {
             <PostPropertiersPostsExpand quantity_comment={item.quantity_comment} quantity_likes={item.quantity_likes} user_already_like={item.user_already_like} object_id={item.id}/>
         </div>
         <div className="flex flex-col w-full -ml-5 mt-2 items-center justify-center gap-4">
-            <EditComment Comment={item} handleEditClick={handleEditClick} isEditing={isEditing} setIsEditing={setIsEditing}/>
+            <EditComment Comment={item} handleEditClick={handleEditClick} isEditing={isEditing} setIsEditing={setIsEditing} className="ml-4 pb-4"/>
         </div>
             <AnswerComment object_id={item.id}/>
         <div className="border-b w-full border-b-gray-300 pt-2 pl-1"></div>

@@ -16,6 +16,7 @@ from rest_framework import status
 from games.serializers import ProfileGameLolSerializer, GameSerializer
 from games.models import ProfileGameLol
 from .functions import generate_data_lol
+from django.contrib.contenttypes.models import ContentType
 from .schema import (
     posts_schema,
     posts_schema_GET,
@@ -100,7 +101,8 @@ class PostsViewSet(viewsets.ModelViewSet):
     @post_comments_schema
     @action(detail=True, methods=['get'])
     def comments(self, request, pk=None):
-        comments = Comment.objects.filter(object_id=pk).order_by('-timestamp')
+        post_content_type = ContentType.objects.get_for_model(Post)
+        comments = Comment.objects.filter(object_id=pk, content_type=post_content_type).order_by('-timestamp')
         comment_serializer = CommentSerializer(comments, many=True, context={'request': request})
         return Response(comment_serializer.data)
 

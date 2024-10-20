@@ -41,7 +41,7 @@ const CommentsSection = () => {
                                             item.comments_of_comments.map((comment_of_comment) => (
                                                 <React.Fragment key={comment_of_comment.id}>
                                                     {expandedComments && (
-                                                    <ExpandedComments comment_of_comment={comment_of_comment} key={comment_of_comment.id}/>
+                                                    <ExpandedComments comment_id={item.id} comment_of_comment={comment_of_comment} key={comment_of_comment.id}/>
                                                     )}                  
                                                 </React.Fragment>
                                             ))  

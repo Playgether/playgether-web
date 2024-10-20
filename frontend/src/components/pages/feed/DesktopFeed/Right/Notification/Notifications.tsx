@@ -12,6 +12,7 @@ const Notifications = () => {
         <div className="flex flex-col w-full pl-2 flex-wrap divide-y-2 flex-grow justify-center 2xl:space-y-4 bg-white-200 mb-4 p-6 pt-0">
             {notifications && notifications.map((notification) => (
                 <NotificationWrapper 
+                key={notification.id}
                 profile_photo={notification.actor_profile_photo}
                 title={notification.actor_name} 
                 text={notification.message}

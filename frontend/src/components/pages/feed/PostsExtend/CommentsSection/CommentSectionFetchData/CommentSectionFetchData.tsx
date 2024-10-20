@@ -1,3 +1,5 @@
+'use client'
+
 import { useCommentsContext } from "../../../../../../context/CommentsContext"
 import  CommentsSection  from "../CommentsSectionLogic/CommentsSectionLogic"
 

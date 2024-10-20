@@ -22,15 +22,15 @@ interface EditCommentProps extends commentProps {
 interface RestProps extends HtmlHTMLAttributes<HTMLDivElement>{}
 
 /** Este é o componente responsável por criar a parte de edição de um comentário existente */
-const EditComment = ({Comment, handleEditClick, isEditing, setIsEditing, ...rest}:{Comment: EditCommentProps; handleEditClick:(value:boolean) => void; isEditing: boolean; setIsEditing:(boolean) => void} & RestProps) => {
+const EditAnswer = ({Answer, handleEditClick, isEditing, setIsEditing, comment_id, ...rest}:{comment_id:number, Answer: EditCommentProps; handleEditClick:(value:boolean) => void; isEditing: boolean; setIsEditing:(boolean) => void} & RestProps) => {
     const { user, authTokens } = useAuthContext();
     const [shouldShowModal, setShouldShowModal] = useState(false);
-    const {deleteCommentContext} = useCommentsContext()
+    const {deleteAnswerContext} = useCommentsContext()
     
 
     return (
         <>
-            {Comment.user === user?.user_id ? ( 
+            {Answer.user === user?.user_id ? ( 
             <div className=" w-full -mr-5 h-auto">
                 <EditCommentItens 
                 onClickEdit={()=> {
@@ -47,13 +47,13 @@ const EditComment = ({Comment, handleEditClick, isEditing, setIsEditing, ...rest
                         <RiDeleteBin6Line className="h-12 w-12 text-red-400 mt-2" />
                         <div className="flex flex-col text-center gap-3">
                             <p className="text-lg font-medium">Você tem certeza que deseja excluir este comentário ?</p>
-                            <TextLimitComponent text={`${Comment.comment}`} maxCharacters={60}/>
+                            <TextLimitComponent text={`${Answer.comment}`} maxCharacters={60}/>
                         </div>
                         <div className="flex justify-center gap-3 pb-4">
                             <ButtonClose className="h-8 w-20 cursor-pointer " onClick={async()=> {
                                 try {
-                                    await deleteComment(authTokens, Comment.id)
-                                    deleteCommentContext(Comment)
+                                    await deleteComment(authTokens, Answer.id)
+                                    deleteAnswerContext(comment_id, Answer.id)
                                     setIsEditing(false)
                                 } catch (error) {
                                     console.log(error)
@@ -71,4 +71,4 @@ const EditComment = ({Comment, handleEditClick, isEditing, setIsEditing, ...rest
     )
 }
 
-export default EditComment
+export default EditAnswer
