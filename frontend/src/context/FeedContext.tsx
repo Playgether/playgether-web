@@ -7,6 +7,8 @@ import { useProfileContext } from "./ProfileContext";
 
 type FeedContextProps = {
     feed: FeedProps[] | null | void | undefined;
+    alterCommentQuantity: (post_id: number) => void;
+    subtractCommentQuantity: (post_id: number) => void;
 }
 
 const FeedContext = createContext<FeedContextProps>({} as FeedContextProps)
@@ -15,6 +17,36 @@ const FeedContextProvider = ({children}: {children: React.ReactNode}) => {
     const {authTokens} = useAuthContext()
     const {profile} = useProfileContext()
     const [feed, setFeed] = useState<FeedProps[] | void | null | undefined>();
+
+    const alterCommentQuantity = (post_id: number) => {
+        if (!feed) return; 
+    
+        const postIndex = feed.findIndex(post => post.id === post_id);
+    
+        if (postIndex !== -1) {
+            const updatedFeed = [...feed];
+            const post = { ...updatedFeed[postIndex] };
+            post.quantity_comment += 1;
+            updatedFeed[postIndex] = post;
+    
+            setFeed(updatedFeed); 
+        }
+    };
+
+    const subtractCommentQuantity = (post_id: number) => {
+        if (!feed) return; 
+    
+        const postIndex = feed.findIndex(post => post.id === post_id);
+    
+        if (postIndex !== -1) {
+            const updatedFeed = [...feed];
+            const post = { ...updatedFeed[postIndex] };
+            post.quantity_comment -= 1;
+            updatedFeed[postIndex] = post;
+    
+            setFeed(updatedFeed); 
+        }
+    };
 
     const fetchData = async () => {
         try {
@@ -33,7 +65,7 @@ const FeedContextProvider = ({children}: {children: React.ReactNode}) => {
 
 
     return(
-        <FeedContext.Provider value={{feed}}>
+        <FeedContext.Provider value={{feed, alterCommentQuantity, subtractCommentQuantity}}>
             {children}
         </FeedContext.Provider>
         

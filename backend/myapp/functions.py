@@ -62,54 +62,26 @@ def add_like_quantity(instance):
     instance.content_object.quantity_likes = instance.content_object.quantity_likes + 1
     instance.content_object.save()
     return
-
-#Update comment quantity for posts
-def add_comment_quantity(instance, classPost):
-    if hasattr(ContentType.objects.get_for_model(instance.content_object), 'content_type'):
-        content_type = ContentType.objects.get_for_model(classPost)
-        instance_content_type = ContentType.objects.get_for_model(instance.content_object.content_type)
-        if isinstance(content_type, type(instance_content_type)):
-            instance.content_object.quantity_comment = instance.content_object.quantity_comment + 1
-            instance.content_object.save()
-            instance.content_object.content_object.quantity_comment = instance.content_object.content_object.quantity_comment + 1
-            instance.content_object.content_object.save()
-        else:
-            instance.content_object.quantity_comment = instance.content_object.quantity_comment + 1
-            instance.content_object.save()
-    else:
-        instance.content_object.quantity_comment = instance.content_object.quantity_comment + 1
-        instance.content_object.save()
-    return 
-
-#Subtract comment quantity when some comment is exclude
-def subtract_comment_quantity(instance, classPost):
-    if instance.content_object.quantity_comment == 0:
-        pass
-    else:
-        try:
-            content_type = ContentType.objects.get_for_model(classPost)
-            instance_content_type = ContentType.objects.get_for_model(instance.content_object.content_type)
-            if isinstance(content_type, type(instance_content_type)):
-                instance.content_object.quantity_comment = instance.content_object.quantity_comment - 1
-                instance.content_object.save()
-                instance.content_object.content_object.quantity_comment = instance.content_object.content_object.quantity_comment - 1
-                instance.content_object.content_object.save()
-            else:
-                instance.content_object.quantity_comment = instance.content_object.quantity_comment - 1
-                instance.content_object.save()
-        except AttributeError:
-            instance.content_object.quantity_comment = instance.content_object.quantity_comment - 1
-            instance.content_object.save()
-    return 
+#Add comment quantity when a new comment id added
+def add_comment_quantity(instance):
+    related_object = instance.content_object
+    related_object.quantity_comment += 1
+    related_object.save()
+    return
+#Subtract comments quantity when a comment is deleted
+def subtract_comment_quantity(instance):
+    related_object = instance.content_object
+    if related_object.quantity_comment > 0:
+        related_object.quantity_comment -= 1
+        related_object.save()
+        return
 
 #Subtract like quantity when some like is removed
 def subtract_like_quantity(instance):
-    if instance.content_object.quantity_likes == 0:
-        pass
-    else:
+    if instance.content_object.quantity_likes > 0:
         instance.content_object.quantity_likes = instance.content_object.quantity_likes - 1
         instance.content_object.save()
-    return 
+        return 
 
 def add_repost_quantity(instance):
     instance.content_object.quantity_reposts = instance.content_object.quantity_reposts + 1
@@ -117,9 +89,7 @@ def add_repost_quantity(instance):
     return 
 
 def subtract_repost_quantity(instance):
-    if instance.content_object.quantity_reposts == 0:
-        pass
-    else:
+    if instance.content_object.quantity_reposts > 0:
         instance.content_object.quantity_reposts = instance.content_object.quantity_reposts - 1
         instance.content_object.save()
         return

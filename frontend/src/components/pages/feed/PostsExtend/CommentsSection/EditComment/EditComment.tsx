@@ -13,6 +13,7 @@ import { deleteComment } from "../../../../../../services/deleteComment";
 import { useCommentsContext } from "../../../../../../context/CommentsContext";
 import { twJoin } from "tailwind-merge";
 import { HtmlHTMLAttributes } from "react";
+import { useFeedContext } from "../../../../../../context/FeedContext";
 
 
 interface EditCommentProps extends commentProps {
@@ -22,10 +23,11 @@ interface EditCommentProps extends commentProps {
 interface RestProps extends HtmlHTMLAttributes<HTMLDivElement>{}
 
 /** Este é o componente responsável por criar a parte de edição de um comentário existente */
-const EditComment = ({Comment, handleEditClick, isEditing, setIsEditing, ...rest}:{Comment: EditCommentProps; handleEditClick:(value:boolean) => void; isEditing: boolean; setIsEditing:(boolean) => void} & RestProps) => {
+const EditComment = ({Comment, handleEditClick, isEditing, setIsEditing, post_id, ...rest}:{post_id:number, Comment: EditCommentProps; handleEditClick:(value:boolean) => void; isEditing: boolean; setIsEditing:(boolean) => void} & RestProps) => {
     const { user, authTokens } = useAuthContext();
     const [shouldShowModal, setShouldShowModal] = useState(false);
     const {deleteCommentContext} = useCommentsContext()
+    const {subtractCommentQuantity} = useFeedContext()
     
 
     return (
@@ -54,6 +56,7 @@ const EditComment = ({Comment, handleEditClick, isEditing, setIsEditing, ...rest
                                 try {
                                     await deleteComment(authTokens, Comment.id)
                                     deleteCommentContext(Comment)
+                                    subtractCommentQuantity(post_id)
                                     setIsEditing(false)
                                 } catch (error) {
                                     console.log(error)

@@ -19,12 +19,14 @@ import PostPropertiersPostsExpand from "../../../DesktopFeed/Middle/PostsCompone
 export interface CommentsProps {
     /** Esta prop recebe um comentário específico que é do tipo PostsCommentsProps */
     item: PostsCommentsProps
+
+    post_id: number // id do post ao qual o comentário pertence (é necessário para fazer a subtrair a quantidade de comentários de um post após a exclusão de um comentário)
 }
 
 /** Este componente é responsável por gerar toda a aba de cada comentário em PostExtend, tanto a parte do comentário em sí quanto a parte de responder cada comentário. 
  * PostExtend por sua vez, pega um componente e faz um loop em cada comentário deste componente, e então, passa para este componente.
  */
-export const Comments = ({item}: CommentsProps) => {
+export const Comments = ({item, post_id}: CommentsProps) => {
 
     const [isEditing, setIsEditing] = useState(false);
     const { authTokens } = useAuthContext();
@@ -79,7 +81,7 @@ export const Comments = ({item}: CommentsProps) => {
             <PostPropertiersPostsExpand quantity_comment={item.quantity_comment} quantity_likes={item.quantity_likes} user_already_like={item.user_already_like} object_id={item.id}/>
         </div>
         <div className="flex flex-col w-full -ml-5 mt-2 items-center justify-center gap-4">
-            <EditComment Comment={item} handleEditClick={handleEditClick} isEditing={isEditing} setIsEditing={setIsEditing} className="ml-4 pb-4"/>
+            <EditComment post_id={post_id} Comment={item} handleEditClick={handleEditClick} isEditing={isEditing} setIsEditing={setIsEditing} className="ml-4 pb-4"/>
         </div>
             <AnswerComment object_id={item.id}/>
         <div className="border-b w-full border-b-gray-300 pt-2 pl-1"></div>

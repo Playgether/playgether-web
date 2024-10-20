@@ -13,7 +13,7 @@ import { useCommentsContext } from "../../../../../../context/CommentsContext"
 /** Este componente é responsável por gerar toda a lógica de exibição da seção de comentários em PostsExpand, ou seja, fazer map nos comentários, exibir os componente corretos quando não houver
  * comentários ainda, etc...
  */
-const CommentsSection = () => {
+const CommentsSection = ({post_id}:{post_id:number}) => {
     const [expandedComments, setExpandedComments] = useState({});
     const {comments} = useCommentsContext()
 
@@ -33,7 +33,7 @@ const CommentsSection = () => {
                         <div className="w-full ">
                             <ProfileAndUsername className="mt-4 mb-1 w-full" profile_photo={item.created_by_user_photo} username={item.created_by_user_name} timestamp={item.timestamp} usernameAndTimestampDiv="flex flex-row w-full justify-between pr-4" imageClassName="h-6 w-6"/>
                             <div className="w-full flex flex-col items-start justify-start text-sm">
-                                <Comments item={item}/>
+                                <Comments post_id={post_id} item={item}/>
                                 <p className='text-blue-500 cursor-pointer text-xs pl-1 pt-2 h-10' onClick={() => handleExpandComment(item.id)}>{expandedComments[item.id] === true ? 'Ocultar Respostas' : 'Ver Respostas'}</p>
                                 {expandedComments[item.id] && (
                                     <div className="w-11/12 ml-auto flex flex-col items-start mb-3 bg-white-300 rounded-3xl p-4 mt-2 mr-2">

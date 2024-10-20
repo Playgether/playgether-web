@@ -22,7 +22,7 @@ export interface CommentSectionLogicInterface {
 const CommentSectionFetchData = async ({postId}:CommentSectionLogicInterface) => {
     await fetchData(postId)
 
-    return <> <CommentsSection /> </>
+    return  <CommentsSection post_id={postId} /> 
     
 }
 

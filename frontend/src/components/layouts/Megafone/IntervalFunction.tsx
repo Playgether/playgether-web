@@ -57,6 +57,7 @@ export const IntervalFunctionComponent = () => {
     useEffect(() => {
         const currentMessage = GlobalMessages[currentIndex]
         const currentVolume = volumes[currentMessage.volume]
+        console.log(currentVolume)
         const intervalId = setInterval(() => {
           setCurrentIndex((prevIndex) => {
             return prevIndex + 1 < GlobalMessages.length ? prevIndex + 1 : 0;
