@@ -66,29 +66,29 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, ...rest }: PostsPr
 
 
     return (
-        <div className={twJoin("relative bg-white-200", rest.className)}>
+        <div className={twJoin("relative bg-red-200", rest.className)}>
             {media && media.length > 0 ? (
             <Swiper
             slidesPerView={1}
             pagination={{type:'fraction', el:'.swiper-custom-pagination',}}
             navigation
             modules={[Navigation, Pagination]}
-            className='h-full z-10 relative'
+            className='h-full z-10 relative bg-green-300'
             onSlideChange={handleSlideChange}
             initialSlide={slideIndex}
             autoHeight={true}
             >
                 <CustomPagination/>
                 {media.map((item)=> (
-                    <SwiperSlide key={item.id} onClick={onClick} className='relative'>
+                    <SwiperSlide key={item.id} onClick={onClick} className='relative '>
                         {item.media_type === "image" ? (
-                            <div className='relative  flex justify-center  min-h-[400px]'>
+                            <div className='relative flex justify-center bg-blue-200 h-full  min-h-[400px]'>
                                 <Image
                                     src={item.media_file}
                                     alt={"TESTE"}
                                     layout='fill'
                                     objectFit="contain"
-                                    className='rounded-lg'
+                                    className='rounded-lg h-full'
                                 />
                             </div>
                         ) : (

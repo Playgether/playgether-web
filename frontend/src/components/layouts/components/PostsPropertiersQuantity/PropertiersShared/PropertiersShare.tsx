@@ -15,10 +15,24 @@ interface PropertiersShareProps {
  * likes, ou comentários e likes, ou comentários, likes, e reposts etc...
  */
 const PropertiersShare = ({quantity_reposts, iconClassName}: PropertiersShareProps) => {
+
+    function formatNumber(number:number) {
+        if (number >= 1000000) {
+          const formatted = (Math.floor(number / 100000) / 10).toFixed(1).replace('.', ',');
+          return formatted.endsWith(',0') ? formatted.slice(0, -2) + 'mi' : formatted + 'mi';
+        } else if (number >= 1000) {
+          const formatted = (Math.floor(number / 100) / 10).toFixed(1).replace('.', ',');
+          return formatted.endsWith(',0') ? formatted.slice(0, -2) + 'mil' : formatted + 'mil';
+        } else {
+          return number;
+        }
+    }
+      
+    
     return (
         <div className="flex flex-row justify-center items-center space-x-2">
             <AiOutlineRetweet className={twJoin(iconClassName)} />
-            <p className="text-black-200">{quantity_reposts}</p>
+            <p className="text-black-200">{formatNumber(quantity_reposts)}</p>
         </div>
     )
 }

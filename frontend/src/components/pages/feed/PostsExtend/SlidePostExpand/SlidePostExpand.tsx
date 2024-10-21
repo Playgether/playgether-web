@@ -12,7 +12,7 @@ export interface SlidePostExpandProps {
 /** Este componente é responsável por criar o slide das medias em PostsExtendHasPostMedia*/
 export const SlidePostExpand = ({medias, slideIndex}:SlidePostExpandProps) => {
     return (
-        <div className="w-4/6 text-black-300 h-full bg-white-300">
+        <div className="w-4/6 text-black-300 h-full bg-red-300">
             <Posts media={medias} onClick={()=> false} slideIndex={slideIndex} className="h-full"/>
         </div>
     )
