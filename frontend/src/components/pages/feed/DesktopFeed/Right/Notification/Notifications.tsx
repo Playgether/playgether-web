@@ -16,6 +16,7 @@ const Notifications = () => {
                 profile_photo={notification.actor_profile_photo}
                 title={notification.actor_name} 
                 text={notification.message}
+                timestamp={notification.timestamp}
                 />
             ))}
         </div>

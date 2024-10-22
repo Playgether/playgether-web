@@ -66,7 +66,7 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, ...rest }: PostsPr
 
 
     return (
-        <div className={twJoin("relative bg-red-200", rest.className)}>
+        <div className={twJoin("relative bg-purple-200", rest.className)}>
             {media && media.length > 0 ? (
             <Swiper
             slidesPerView={1}
@@ -80,15 +80,17 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, ...rest }: PostsPr
             >
                 <CustomPagination/>
                 {media.map((item)=> (
-                    <SwiperSlide key={item.id} onClick={onClick} className='relative '>
+                    <SwiperSlide key={item.id} onClick={onClick}>
                         {item.media_type === "image" ? (
-                            <div className='relative flex justify-center bg-blue-200 h-full  min-h-[400px]'>
+                            <div className='relative flex justify-center bg-pink-600 h-full'>
                                 <Image
                                     src={item.media_file}
                                     alt={"TESTE"}
                                     layout='fill'
-                                    objectFit="contain"
+                                    // objectFit="contain"
                                     className='rounded-lg h-full'
+                                    quality={20}
+                                    sizes="100%"	
                                 />
                             </div>
                         ) : (
