@@ -1,6 +1,6 @@
 const Container = ({children}: {children: React.ReactNode}) => {
     return (
-        <div className="lg:grid lg:grid-cols-4 gap-2 h-full w-full bg-white-200 scrollable hidden">
+        <div className="grid grid-cols-[1fr_600px_1fr] 2xl:grid-cols-[1fr_700px_1fr] gap-4 w-full scrollable overflow-x-hidden items-stretch">
             {children}
         </div>
     )

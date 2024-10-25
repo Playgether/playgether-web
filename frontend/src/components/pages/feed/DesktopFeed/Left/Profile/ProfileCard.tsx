@@ -8,6 +8,7 @@ import { CgProfile } from "react-icons/cg"
 import { useAuthContext } from "../../../../../../context/AuthContext";
 import { useProfileContext } from "../../../../../../context/ProfileContext";
 import OrangeButton from "../../../../../elements/OrangeButton/OrangeButton";
+import { TopCard } from "../../MultUseComponents/TopCard";
 
 
 /** Este componente é o wrapper principal do card de profile na página feed. Seu intuito é ser o wrapper de todo o card e seus componentes filhos. */
@@ -17,11 +18,9 @@ const ProfileCard = ({}) => {
 
     return (
         
-        <div className="bg-white-200 h-3/6 flex pt-2 flex-col items-center space-y-2 rounded-lg shadow-lg pb-4">
-            <div className="flex flex-row items-center justify-center w-full pb-2 bg-white-400">
-                <h1 className="font-medium text-black-200 text-center pt-2 border-b border-black-200 border-opacity-30 text-md w-4/6 text-md">Profile</h1>
-            </div>
-            <div className="rounded-full h-20 w-20 flex items-center justify-center relative bg-white-200">
+        <div className="bg-white-200 h-[400px] flex pt-2 flex-col items-center space-y-2 shadow-lg pb-4 w-[250px] 2xl:w-[250px] max-h-[350px] 2xl:max-h-[400px] rounded-lg">
+            <TopCard title={"Profile"}/>
+            <div className="rounded-full h-20 w-20 flex items-center justify-center bg-white-200">
                 {profile?.profile_photo === null || profile?.profile_photo === undefined ? (
                     <CgProfile className="h-full w-full text-gray-300"/>
                 ) : (

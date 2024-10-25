@@ -25,7 +25,7 @@ export const FeedFetchComponent = () => {
     return (
         <>
             {isDesktop ? (
-                <div className='hidden lg:flex flex-col h-full w-full'>
+                <div className='hidden lg:flex flex-col h-full w-full overflow-y-auto'>
                     <ContentFeed />
                 </div> 
             ): (

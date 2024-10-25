@@ -39,12 +39,13 @@ export const NotificationWrapper = ({profile_photo, title, text, timestamp}:Noti
                         <a href=""><h1 className="font-medium text-orange-500 text-sm">{title}</h1></a>
                     </div>
                 </div>
-                <div className="text-gray-400 text-sm">
+                <div className="text-gray-400 text-sm pt-1">
                     <TimeAgo date={timestamp} formatter={formatter} />
                 </div>
             </div>
-            <div className="text-black-300 text-xs pt-2 pb-2 font-medium">
+            <div className="text-black-300 text-xs pt-2 pb-5 font-medium">
                 <p>{text}</p>
+                {/* <TextLimitComponent text={title} maxCharacters={60} className="w-full"/> */}
             </div>
         </div>
     )

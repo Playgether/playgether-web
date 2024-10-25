@@ -59,9 +59,16 @@ export default async function TestPage() {
     // )
     return (
         <>
-        <h1 className="text-blue-500">TESTE</h1>
-        <div className="bg-red-300 h-80">
-            <Posts media={medias} setSlideIndex={setSlideIndex} className="h-5/6"/>
+        <div className="bg-white-200 h-screen overflow-y-auto grid grid-cols-[1fr_700px_1fr]">
+            <div className="bg-blue-500 grow">
+                <p>Child 1</p>
+            </div>
+            <div className="bg-red-500 h-[1000px] w-[400px]">
+                <p>Child 2</p>
+            </div>
+            <div className="bg-green-500 grow">
+                <p>Child 3</p>
+            </div>
         </div>
         </>
     )

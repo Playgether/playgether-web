@@ -52,13 +52,12 @@ const FeedComponent = () => {
             <div className="pt-4 flex min-h-[5rem] pb-4 bg-white-200 cursor-pointer" 
             onClick={() => handlePostsExtend(resource)}
             >
-                <PostText resource={resource} maxCharacteres={500}/>
+                <PostText resource={resource} maxCharacteres={300}/>
             </div>
       
             {resource?.has_post_media ? (
                 <div className="cursor-pointer bg-white-200">
-                  <h1>TEST</h1>
-                  <Posts media={resource.medias} onClick={() => handlePostsExtend(resource)} setSlideIndex={setSlideIndex} className="h-4/6"/>
+                  <Posts media={resource.medias} onClick={() => handlePostsExtend(resource)} setSlideIndex={setSlideIndex} className="h-4/6" imageHeight="h-[300px] 2xl:h-[400px]"/>
                 </div>
             ) : null}
     

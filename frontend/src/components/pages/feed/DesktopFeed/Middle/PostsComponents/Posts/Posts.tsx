@@ -32,13 +32,18 @@ export interface PostsProps extends HTMLAttributes<HTMLDivElement>{
      * em algum post através da prop setSlideIndex.
      */
     slideIndex?:number 
+    
+    /** Essa prop recebe a altura da imagem em forma de string (padrão tailwind css,). Ela é necessária para criar uma altura exata para o container da image, caso nenhuma seja,
+     * passada, o padrão será 400
+     */
+    imageHeight?:string
 }
 
 /** Este componente é responsável por criar o carrousel (slide) dos posts que possuem media, sejam eles imagens, vídeos, ou os dois juntos. Você pode passar um className para
  * este componente para definir o tamanho do container do carrousel
  * OBS: Ele pode receber um "className" para serem definidas algumas personalizações como por exemplo: altura, largura, etc.
 */
-const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, ...rest }: PostsProps) => {
+const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, imageHeight='h-[400px]', ...rest }: PostsProps) => {
     const volumeRef = useRef<HTMLVideoElement | null> (null)
 
     const handleSlideChange = (swiper) => {
@@ -66,14 +71,14 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, ...rest }: PostsPr
 
 
     return (
-        <div className={twJoin("relative bg-purple-200", rest.className)}>
+        <div className={twJoin("relative", rest.className)}>
             {media && media.length > 0 ? (
             <Swiper
             slidesPerView={1}
             pagination={{type:'fraction', el:'.swiper-custom-pagination',}}
             navigation
             modules={[Navigation, Pagination]}
-            className='h-full z-10 relative bg-green-300'
+            className='h-full z-10 relative'
             onSlideChange={handleSlideChange}
             initialSlide={slideIndex}
             autoHeight={true}
@@ -82,19 +87,17 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, ...rest }: PostsPr
                 {media.map((item)=> (
                     <SwiperSlide key={item.id} onClick={onClick}>
                         {item.media_type === "image" ? (
-                            <div className='relative flex justify-center bg-pink-600 h-full'>
+                            <div className={`relative flex justify-center  ${imageHeight}`}>
                                 <Image
                                     src={item.media_file}
                                     alt={"TESTE"}
                                     layout='fill'
-                                    // objectFit="contain"
+                                    objectFit="contain"
                                     className='rounded-lg h-full'
-                                    quality={20}
-                                    sizes="100%"	
                                 />
                             </div>
                         ) : (
-                            <div className='relative h-full'>
+                            <div className={`relative ${imageHeight}`}>
                                 <video playsInline muted autoPlay controls ref={volumeRef} className="object-contain h-full mx-auto rounded-lg">
                                     <source src={item.media_file} type="video/mp4"/>
                                     Your browser does not support the video tag.

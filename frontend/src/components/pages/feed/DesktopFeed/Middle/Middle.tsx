@@ -14,7 +14,7 @@ const Middle = () => {
     };
      
     return (
-        <div className="bg-white-300 col-span-2 h-full w-full mt-4 overflow-y-auto pb-14 scrollable shadow-lg">
+        <div className="h-full mt-4 pb-14 scrollable shadow-lg">
             <div className="flex flex-row w-full space-x-3 items-center justify-center text-orange-500">
                 <div className="text-sm bg-white-300 w-full flex flex-row justify-center items-center space-x-2 pt-1">
                     <h1>{isComponentVisible ? "Fechar" : "Compartilhe algo conosco"}</h1>
