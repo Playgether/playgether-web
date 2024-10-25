@@ -14,9 +14,9 @@ const Right = () => {
                        <Notifications />
                     </div>
                 </div>
-                <div className="bg-white-200 grow flex mt-2 flex-col items-center shadow-lg rounded-lg w-10/12 2xl:w-[374px] min-h-[300px] h-[350px] 2xl:grow max-h-[350px] 2xl:max-h-[400px] overflow-x-hidden 2xl:static">
+                <div className="bg-white-200 grow flex mt-2 flex-col items-center shadow-lg rounded-lg w-10/12 2xl:w-[374px] min-h-[300px] h-[350px] 2xl:grow max-h-[350px] 2xl:max-h-[400px] 2xl:static">
                     <TopCard title={"Assuntos do momento"}/>
-                    <div className="overflow-y-auto h-full flex flex-col grow">
+                    <div className="overflow-y-auto overflow-x-visible h-full flex flex-col grow">
                         <TopicsOfMoment />
                     </div>
                 </div>

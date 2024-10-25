@@ -16,7 +16,7 @@ export const Topic = ({topic_category, topic}:TopicProps) => {
     return (
         <div className="flex flex-row space-x-2 flex-wrap w-full items-center justify-center break-words whitespace-normal">
             <h1 className="text-blue-500 font-semibold text-sm">{topic_category}</h1>
-            <h2 className="text-orange-500 font-normal text-xs">{topic}</h2>
+            <h2 className="text-orange-500 font-normal text-xs">{<TextLimitComponent text={topic} maxCharacters={150} className="break-all whitespace-normal"/>}</h2>
         </div>
     )
 }
