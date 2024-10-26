@@ -14,7 +14,6 @@ export const ProfileCardBio = () => {
                 ):(
                     "Você não possui uma bio, insira uma."
                 )}
-                <TextLimitComponent text={`${profile?.bio}`} maxCharacters={100}/>
             </div>
          </Suspense>
         </>

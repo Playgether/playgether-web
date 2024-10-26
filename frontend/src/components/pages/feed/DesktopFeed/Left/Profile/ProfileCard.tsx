@@ -18,7 +18,7 @@ const ProfileCard = ({}) => {
 
     return (
         
-        <div className="bg-white-200 h-[400px] flex pt-2 flex-col items-center space-y-2 shadow-lg pb-4 w-[250px] 2xl:w-[250px] max-h-[350px] 2xl:max-h-[400px] rounded-lg">
+        <div className="bg-white-200 h-[400px] flex pt-2 flex-col items-center space-y-2 shadow-lg w-[250px] 2xl:w-[250px] max-h-[350px] 2xl:max-h-[400px] rounded-lg">
             <TopCard title={"Profile"}/>
             <div className="rounded-full h-20 w-20 flex items-center justify-center bg-white-200">
                 {profile?.profile_photo === null || profile?.profile_photo === undefined ? (
@@ -42,7 +42,7 @@ const ProfileCard = ({}) => {
                 <SiCounterstrike />
             </div>
             <div>
-                <OrangeButton className="text-sm font-semibold xl:px-6 xl:py-3 lg:px-6 lg:py-2">Ver Perfil</OrangeButton>
+                <OrangeButton className="text-sm font-semibold xl:px-6 2xl:py-3 lg:px-6 lg:py-2">Ver Perfil</OrangeButton>
             </div>
         </div>
       

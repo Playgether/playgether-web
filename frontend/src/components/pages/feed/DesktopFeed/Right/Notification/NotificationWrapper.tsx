@@ -3,6 +3,7 @@ import { CgProfile } from "react-icons/cg";
 import TimeAgo from "react-timeago";
 import brazilianStrings from 'react-timeago/lib/language-strings/pt-br'
 import buildFormatter from 'react-timeago/lib/formatters/buildFormatter'
+import TextLimitComponent from "../../../../../layouts/SuspenseFallBack/TextLimitComponent/TextLimitComponent";
 
 export type NotificationWrapperProps = {
     /** Esta prop recebe a url para a foto de perfil */
@@ -44,8 +45,8 @@ export const NotificationWrapper = ({profile_photo, title, text, timestamp}:Noti
                 </div>
             </div>
             <div className="text-black-300 text-xs pt-2 pb-5 font-medium">
-                <p>{text}</p>
-                {/* <TextLimitComponent text={title} maxCharacters={60} className="w-full"/> */}
+                {/* <p>{text}</p> */}
+                <TextLimitComponent text={text} maxCharacters={100}/>
             </div>
         </div>
     )
