@@ -4,8 +4,8 @@ import { Topic } from "./Topic"
 /** Este componente é o wrapper principal dos topicos do momento na parte "Right" em feed. Seu intuito é ser o componente principal e wrapper de todos os filhos. */
 const TopicsOfMoment = () => {
     return (
-        <div className="h-full shadow-lg rounded-sm w-full grow p-2 pr-2 overflow-y-auto">
-            <div className="flex flex-col items-center h-full space-y-4 w-full pt-2 overflow-x-hidden">
+        <div className="h-full shadow-lg rounded-sm w-full grow p-2 pr-2">
+            <div className="flex flex-col items-center h-full space-y-4 w-full pt-2 overflow-x-hidden overflow-y-auto">
                 <Topic topic_category="Assunto: " topic="Counter Strinke 2"/>
                 <Topic topic_category="Thread: " topic="O LoL está acabando"/>
                 <Topic topic_category="Rank: " topic="Top 1 Jett Valorant"/>

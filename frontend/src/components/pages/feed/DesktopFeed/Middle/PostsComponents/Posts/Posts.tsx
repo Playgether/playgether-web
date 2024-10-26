@@ -98,7 +98,7 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, imageHeight='h-[40
                             </div>
                         ) : (
                             <div className={`relative ${imageHeight}`}>
-                                <video playsInline muted autoPlay controls ref={volumeRef} className="object-contain h-full mx-auto rounded-lg">
+                                <video playsInline muted autoPlay controls ref={volumeRef} className="object-contain h-full mx-auto">
                                     <source src={item.media_file} type="video/mp4"/>
                                     Your browser does not support the video tag.
                                 </video> 
