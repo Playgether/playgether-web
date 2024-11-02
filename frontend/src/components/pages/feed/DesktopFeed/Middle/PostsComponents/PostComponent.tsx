@@ -1,13 +1,28 @@
-import React from 'react'
+'use client'
+
 import { GoFileMedia } from "react-icons/go";
 import OrangeButton from '../../../../../elements/OrangeButton/OrangeButton';
-
+import { CldUploadWidget } from "next-cloudinary";
+import { useAuthContext } from "../../../../../../context/AuthContext";
+import { v4 as uuidv4} from 'uuid';
 
 const PostComponent = ({}) => {
+    const {user} = useAuthContext()
+
+    const generatePublicId = () => {
+        const randomValue = uuidv4()
+        return `${user?.username}_${randomValue}`;
+    }
+
+    const getCurrentDate = () => {
+        const date = new Date();
+        return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+    };
+
 
     return (
 
-        <div className='w-full bg-white-200 h-2/6 mt-2 rounded-lg flex flex-col shadow-lg mb-4'>
+        <div className='w-full bg-white-200 h-[300px] mt-2 rounded-lg flex flex-col shadow-lg mb-4'>
             <div className='w-full text-center text-black-200 pt-1'>
                 <h1>Postar</h1>
                 <div className="border-b border-black-200 border-opacity-30 pt-1"></div>
@@ -23,7 +38,23 @@ const PostComponent = ({}) => {
                 </div>
                 <div className='flex-grow'>
                     <div className='flex justify-end pr-3'>
-                        <GoFileMedia className='h-12 w-12 text-black-200'/>
+                    <CldUploadWidget 
+                    signatureEndpoint="/api/signed-posts"
+                    options={{
+                        uploadPreset:"posts",
+                        // publicId:generatePublicId(),
+                        maxFiles:5,
+                        tags:[`${user?.username}`, getCurrentDate(), "post", "user"],
+                        clientAllowedFormats:["webp", "image", "video", "gif"],
+                        detection:"unidet"
+                    }}
+                    >
+                        {({ open }) => {
+                            return (
+                            <GoFileMedia className='h-12 w-12 text-black-200 cursor-pointer' onClick={() => open()}/>
+                            );
+                        }}
+                    </CldUploadWidget>
                     </div>   
                 </div>
             </div>
@@ -31,9 +62,7 @@ const PostComponent = ({}) => {
                 <OrangeButton className="w-5/6">Compartilhar</OrangeButton>
             </div>
         </div>
-
     );
-
 };
 
 export default PostComponent;

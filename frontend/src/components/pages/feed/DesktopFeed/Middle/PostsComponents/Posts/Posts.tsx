@@ -2,12 +2,13 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
 import Image from "next/legacy/image";
 import { twJoin} from 'tailwind-merge';
-import { HTMLAttributes, useEffect, useRef} from 'react';
+import { HTMLAttributes, Suspense, useEffect, useRef} from 'react';
 import { PostMedias } from '../../../../../../../services/getFeed';
 import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
 import { CustomPagination } from '../../../../../../elements/CustomPagination/CustomPagination';
+import { VideoLoadingFallback } from './VideoLoadingFallBack';
 
 
 export interface PostsProps extends HTMLAttributes<HTMLDivElement>{
@@ -98,10 +99,12 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, imageHeight='h-[40
                             </div>
                         ) : (
                             <div className={`relative ${imageHeight}`}>
-                                <video playsInline muted autoPlay controls ref={volumeRef} className="object-contain h-full mx-auto">
-                                    <source src={item.media_file} type="video/mp4"/>
-                                    Your browser does not support the video tag.
-                                </video> 
+                                <Suspense fallback={<VideoLoadingFallback/>}>
+                                    <video playsInline muted autoPlay controls ref={volumeRef} className="object-contain h-full mx-auto">
+                                        <source src={item.media_file} type="video/mp4"/>
+                                        Your browser does not support the video tag.
+                                    </video> 
+                                </Suspense>
                             </div>    
                         )
                     

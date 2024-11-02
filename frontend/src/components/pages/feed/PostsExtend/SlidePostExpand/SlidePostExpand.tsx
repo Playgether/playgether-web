@@ -1,6 +1,8 @@
 
+import { Suspense } from "react"
 import { PostMedias } from "../../../../../services/getFeed"
 import Posts from "../../DesktopFeed/Middle/PostsComponents/Posts/Posts"
+import { VideoLoadingFallback } from "../../DesktopFeed/Middle/PostsComponents/Posts/VideoLoadingFallBack"
 
 export interface SlidePostExpandProps {
     /** Esta prop recebe uma lista de medias do tipo "PostMedias" localizada no service "getFeed" para serem adicionadas ao slide */
@@ -13,7 +15,9 @@ export interface SlidePostExpandProps {
 export const SlidePostExpand = ({medias, slideIndex}:SlidePostExpandProps) => {
     return (
         <div className="w-4/6 text-black-300 h-full bg-red-300">
-            <Posts media={medias} onClick={()=> false} slideIndex={slideIndex} className="h-full"/>
+            <Suspense fallback={<VideoLoadingFallback/>}>
+                <Posts media={medias} onClick={()=> false} slideIndex={slideIndex} className="h-full"/>
+            </Suspense>
         </div>
     )
 }
