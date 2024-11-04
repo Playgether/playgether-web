@@ -41,12 +41,17 @@ const PostComponent = ({}) => {
                     <CldUploadWidget 
                     signatureEndpoint="/api/signed-posts"
                     options={{
-                        uploadPreset:"posts",
-                        // publicId:generatePublicId(),
+                        sources:['local'],
+                        minImageHeight:320,
+                        minImageWidth:320,
                         maxFiles:5,
                         tags:[`${user?.username}`, getCurrentDate(), "post", "user"],
-                        clientAllowedFormats:["webp", "image", "video", "gif"],
-                        detection:"unidet"
+                        detection:"unidet",
+                        maxFileSize:5000000,
+                        maxVideoFileSize:50000000,
+                        validateMaxWidthHeight:true,
+                        language:"pt",
+                        showCompletedButton:true,
                     }}
                     >
                         {({ open }) => {
