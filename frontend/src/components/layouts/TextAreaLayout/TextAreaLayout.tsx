@@ -14,11 +14,11 @@ interface InputProps extends TextareaAutosizeProps{
 const TextAreaLayout = ({ register, textAreaClassName, ...rest} : InputProps) => {
 
     return (
-        <div className={twJoin(rest.className)}>
+        <div className={twJoin("rounded", rest.className)}>
             <TextareaAutosize 
             {...rest}
             {...register}
-            className={twMerge('apperance-none block w-full px-4 py-3 leading-tight text-gray-700 bg-gray-50 focus:bg-white-200 border border-gray-50 focus:border-gray-500 rounded focus:outline-none', textAreaClassName)}
+            className={twMerge('apperance-none block w-full min-h-full px-4 py-3 leading-tight text-gray-700 bg-gray-50 focus:bg-white-200 border border-gray-50 focus:border-gray-500 rounded focus:outline-none', textAreaClassName)}
             />
         </div>
     );
