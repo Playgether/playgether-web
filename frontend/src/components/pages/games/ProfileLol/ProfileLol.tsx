@@ -4,7 +4,6 @@ import { useAuthContext } from '../../../../context/AuthContext';
 import { useProfileLolContext } from '../../../../context/ProfileLolContext';
 import { ProfileLolProps } from '../../../../services/getProfileLol';
 import { useResource } from '../../../custom_hooks/useResource';
-import { CardPerfil } from './CardPerfil';
 
 const ProfileLol = ({}) => {
 
@@ -27,8 +26,7 @@ const ProfileLol = ({}) => {
         </>
       ) : (
         <>
-        <p>sem perfil</p>
-        <CardPerfil/>
+        <p></p>
         </>
       )}
     </div>

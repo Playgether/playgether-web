@@ -11,7 +11,7 @@ export const Game = () => {
                 <h1>Conecte seus jogos</h1>
             </section>
 
-            <section className="flex gap-4 mt-20">
+            <section className="flex gap-4 mt-20 items-center justify-center">
                 <CardGames>
                     <CardImage src="/games/League of Legends.png" alt="LoL Banner" />
                 </CardGames>
