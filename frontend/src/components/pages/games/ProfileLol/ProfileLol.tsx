@@ -4,6 +4,7 @@ import { useAuthContext } from '../../../../context/AuthContext';
 import { useProfileLolContext } from '../../../../context/ProfileLolContext';
 import { ProfileLolProps } from '../../../../services/getProfileLol';
 import { useResource } from '../../../custom_hooks/useResource';
+import { CardPerfil } from './CardPerfil';
 
 const ProfileLol = ({}) => {
 
@@ -25,7 +26,10 @@ const ProfileLol = ({}) => {
           <p className='text-black-300'>Rank: {profile[0].queueType}</p>
         </>
       ) : (
+        <>
         <p>sem perfil</p>
+        <CardPerfil/>
+        </>
       )}
     </div>
   )

@@ -15,7 +15,7 @@ export interface ProfileAndUsernameProps extends HTMLAttributes<HTMLDivElement>{
     /** Esta prop recebe a altura e a largura da imagem de perfil (Ela utiliza ProfileImagePost, o componente de imagem e portanto essas propriedades são necessárias) e passa 
      * para o componente ProfileImagePost que esta sendo utilizado dentro deste componente.
      */
-    imageClassName: string
+    imageClassName?: string
     /** Esta também é uma variável opcional onde você pode passar datas no tipo Date caso precise adicionar datas. Este componente utiliza o react-time-ago, que é uma biblioteca
      * que faz um cálculo com a data atual, gerando a quanto tempo foi o post (Exemplo: á 5 horas / mês ...)
      */

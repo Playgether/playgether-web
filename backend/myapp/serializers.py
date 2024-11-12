@@ -82,6 +82,8 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 
 class NotificationSerializer(serializers.ModelSerializer):
+    actor_name = serializers.SerializerMethodField()
+    actor_profile_photo = serializers.SerializerMethodField()
 
     class Meta:
         model = Notification
@@ -89,14 +91,28 @@ class NotificationSerializer(serializers.ModelSerializer):
             'user',
             'is_read',
             'message',
-            'timestamp'
+            'timestamp',
+            'actor_name',
+            'actor_profile_photo'
         )
+
+    def get_actor_profile_photo(self, obj):
+        request = self.context.get('request')
+        if obj.actor.profile.profile_photo:
+            return request.build_absolute_uri(obj.actor.profile.profile_photo.url)
+        else:
+            return None
+        
+    def get_actor_name(self, obj):
+        name = obj.actor.first_name + " " + obj.actor.last_name
+        return name
+
+
 
 
 class PostSerializer(serializers.ModelSerializer):
     created_by_user_name = serializers.ReadOnlyField(source='created_by_user.username')
     created_by_user_photo = serializers.SerializerMethodField()
-    # comments = serializers.SerializerMethodField()
     likes = serializers.SerializerMethodField()
     reposts = serializers.SerializerMethodField()
     medias = serializers.SerializerMethodField()
@@ -143,14 +159,14 @@ class PostSerializer(serializers.ModelSerializer):
         except Like.DoesNotExist:
             []
     
-    # def get_comments(self, obj):
-    #     try:
-    #         request = self.context.get('request')
-    #         comments = Comment.objects.filter(object_id=obj.id).order_by('-timestamp')
-    #         comment_serializer = CommentSerializer(comments, many=True, context={'request': request})
-    #         return comment_serializer.data
-    #     except Comment.DoesNotExist:
-    #         return None
+    def get_comments(self, obj):
+        try:
+            request = self.context.get('request')
+            comments = Comment.objects.filter(object_id=obj.id).order_by('-timestamp')
+            comment_serializer = CommentSerializer(comments, many=True, context={'request': request})
+            return comment_serializer.data
+        except Comment.DoesNotExist:
+            return None
 
         
     class Meta:
@@ -159,54 +175,51 @@ class PostSerializer(serializers.ModelSerializer):
             '__all__'
         )
 
+
 class CommentSerializer(serializers.ModelSerializer):
     created_by_user_name = serializers.ReadOnlyField(source='user.username')
     created_by_user_photo = serializers.SerializerMethodField()
+    comments_of_comments = serializers.SerializerMethodField()
     content_type = serializers.SlugRelatedField(
         queryset=ContentType.objects.all(),
         slug_field='model',
     )
     user_already_like = serializers.SerializerMethodField()
 
-
     def get_user_already_like(self, obj):
         user = self.context['request'].user
         likes = Like.objects.filter(object_id=obj.id)
-        like_object = likes.filter(user=user).exists()
-        if like_object:
-            return True
-        else:
-            return False
+        return likes.filter(user=user).exists()
 
     def get_created_by_user_photo(self, obj):
         request = self.context.get('request')
         if obj.user.profile.profile_photo:
             return request.build_absolute_uri(obj.user.profile.profile_photo.url)
-        else:
-            return None
+        return None
 
-        
     def get_comments_of_comments(self, obj):
         try:
+            depth = self.context.get('depth', 1) 
+            if depth <= 0:
+                return [] 
+            
             request = self.context.get('request')
             comments = Comment.objects.filter(object_id=obj.id)
-            comment_serializer = CommentSerializer(comments, many=True, context={'request': request})
+            comment_serializer = CommentSerializer(
+                comments, 
+                many=True, 
+                context={'request': request, 'depth': depth - 1}
+            )
             return comment_serializer.data
         except Comment.DoesNotExist:
             return []
-
+        
     class Meta:
         model = Comment
-        fields = (
-            '__all__'
-        )
-        
-    comments_of_comments = serializers.SerializerMethodField()
+        fields = '__all__'
 
     def to_representation(self, instance):
-        data = super().to_representation(instance)
-        comments_of_comments = data.pop('comments_of_comments')
-        data['comments_of_comments'] = comments_of_comments
+        data = super(CommentSerializer, self).to_representation(instance)
         return data
 
 class LikeSerializer(serializers.ModelSerializer):

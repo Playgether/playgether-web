@@ -1,13 +1,13 @@
 'use client'
 
-import { createContext, useState, useContext} from "react"
+import { createContext, useState, useContext, useEffect} from "react"
 import { getProfile } from "../services/getProfile"
 import { useAuthContext } from "./AuthContext"
 import { ProfileProps } from "../services/getProfile"
 
 type ProfileContextProps = {
     profile: ProfileProps | null | void;
-    fetchProfile: () => void
+    fetchProfile: () => Promise<ProfileProps>
 }
 
 const ProfileContext = createContext<ProfileContextProps>({} as ProfileContextProps)
@@ -19,7 +19,14 @@ const ProfileContextProvider = ({children}: {children: React.ReactNode}) => {
     async function fetchProfile(){    
         const response = await getProfile(authTokens, user?.user_id)
         setProfile(response.data)
+        return response
     }
+
+    useEffect(()=> {
+        if (!profile?.id && authTokens){
+            fetchProfile();
+        }
+    }, [user, authTokens]);
 
     return(
         <ProfileContext.Provider value={{profile, fetchProfile}}>

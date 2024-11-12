@@ -11,24 +11,29 @@ import { RiDeleteBin6Line } from "react-icons/ri"
 import { EditCommentItens } from "../EditCommentItens/EditCommentItens";
 import { deleteComment } from "../../../../../../services/deleteComment";
 import { useCommentsContext } from "../../../../../../context/CommentsContext";
-
+import { twJoin } from "tailwind-merge";
+import { HtmlHTMLAttributes } from "react";
+import { useFeedContext } from "../../../../../../context/FeedContext";
 
 
 interface EditCommentProps extends commentProps {
     id: number,
 }
 
+interface RestProps extends HtmlHTMLAttributes<HTMLDivElement>{}
+
 /** Este é o componente responsável por criar a parte de edição de um comentário existente */
-const EditComment = ({Comment, handleEditClick, isEditing, setIsEditing}:{Comment: EditCommentProps; handleEditClick:(value:boolean) => void; isEditing: boolean; setIsEditing:(boolean) => void}) => {
+const EditComment = ({Comment, handleEditClick, isEditing, setIsEditing, post_id, ...rest}:{post_id:number, Comment: EditCommentProps; handleEditClick:(value:boolean) => void; isEditing: boolean; setIsEditing:(boolean) => void} & RestProps) => {
     const { user, authTokens } = useAuthContext();
     const [shouldShowModal, setShouldShowModal] = useState(false);
     const {deleteCommentContext} = useCommentsContext()
+    const {subtractCommentQuantity} = useFeedContext()
     
 
     return (
         <>
             {Comment.user === user?.user_id ? ( 
-            <div className=" w-full -mr-5">
+            <div className=" w-full -mr-5 h-auto">
                 <EditCommentItens 
                 onClickEdit={()=> {
                     setShouldShowModal(false)
@@ -38,7 +43,7 @@ const EditComment = ({Comment, handleEditClick, isEditing, setIsEditing}:{Commen
                     setShouldShowModal(!shouldShowModal)
                     handleEditClick(false)
                 }}
-                className="ml-4 pb-2"/>
+                className={twJoin(rest.className)}/>
                 <ControlledModal shouldShow={shouldShowModal} onRequestClose={()=> setShouldShowModal(false)}>
                    <div className=" flex flex-col justify-center items-center gap-6 pt-2">
                         <RiDeleteBin6Line className="h-12 w-12 text-red-400 mt-2" />
@@ -51,6 +56,7 @@ const EditComment = ({Comment, handleEditClick, isEditing, setIsEditing}:{Commen
                                 try {
                                     await deleteComment(authTokens, Comment.id)
                                     deleteCommentContext(Comment)
+                                    subtractCommentQuantity(post_id)
                                     setIsEditing(false)
                                 } catch (error) {
                                     console.log(error)

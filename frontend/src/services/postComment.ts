@@ -14,7 +14,6 @@ export const postComment = async (data: commentProps, authTokens : TokenData | n
             headers: {
                 'Authorization':'Bearer ' + String(authTokens?.access)
             }})
-        console.log(response)
         return response.data
     } catch (error) {
         console.log(error)

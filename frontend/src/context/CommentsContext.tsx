@@ -1,4 +1,4 @@
-
+'use client'
 import { ReactNode, createContext, useContext, useEffect, useState } from "react"
 import { PostCommentsOfCommentsProps, PostsCommentsProps, getComments } from "../services/getComments";
 import { useAuthContext } from "./AuthContext";
@@ -14,7 +14,9 @@ type CommentsContextProps = {
     addNewComment: (newComment:PostsCommentsProps) => void
     editComment: (updatedComment:PostsCommentsProps) => void
     deleteCommentContext: (Comment:commentProps) => void
+    deleteAnswerContext: (comment_id:number, answer_id:number) => void
     addAnswerComment: (objectId:number, answerComment:PostCommentsOfCommentsProps) => void
+    editAnswerComment: (comment_id:number, answer_id:number, answerComment:PostCommentsOfCommentsProps) => void
 }
 
 
@@ -30,8 +32,11 @@ export function CommentsContextProvider({children}:{children: ReactNode}) {
         useEffect(()=> {
             async function getResource (postId:number) {
                 const response = await getComments(authTokens, postId)
-                setComments(response)
-                return response
+                if (response !== undefined) {
+                    setComments(response);
+                } else {
+                    console.error("Erro ao buscar comentários");
+                }
             }
             getResource(postId)
         }, [])
@@ -48,18 +53,24 @@ export function CommentsContextProvider({children}:{children: ReactNode}) {
 
     const addAnswerComment = (objectId:number, answerComment:PostCommentsOfCommentsProps) => {
         setComments(prevComments => {
-            const commentsList = [...prevComments.data]
-            const commentIndex = commentsList.findIndex(comment => comment.id === objectId)
-            if (commentIndex !== -1){
-                commentsList[commentIndex].comments_of_comments.unshift(answerComment)
+            const commentsList = prevComments.data.map(comment => {
+                if (comment.id === objectId) {
+                    const newComment = {
+                        ...comment,
+                        quantity_comment:comment.quantity_comment + 1,
+                        comments_of_comments: [answerComment, ...comment.comments_of_comments],
+                    };
+                    return newComment
 
-            }
+                }
+                return comment;
+            });
             return {
                 data: commentsList
             };
-        })
+        });
     }
-
+    
     const editComment = (updatedComment:PostsCommentsProps) => {
         setComments(prevComments => {
           const updatedComments = [...prevComments.data];
@@ -85,14 +96,14 @@ export function CommentsContextProvider({children}:{children: ReactNode}) {
         })
     }
 
-    const editAnswerComment = (objectId:number, answerComment:PostsCommentsProps) => {
+    const editAnswerComment = (comment_id:number, answer_id:number, answerComment:PostsCommentsProps) => {
         setComments(prevComments => {
             const commentsList = [...prevComments.data]
-            const commentIndex = commentsList.findIndex(comment => comment.id === objectId)
+            const commentIndex = commentsList.findIndex(comment => comment.id === comment_id)
 
             if (commentIndex !== -1) {
-               const answersComment = answerComment[commentIndex].comments_of_comments
-               const answerIndex = answersComment.findIndex(answer => answer.id === answerComment.id)
+               const answersComment = commentsList[commentIndex].comments_of_comments
+               const answerIndex = answersComment.findIndex(answer => answer.id === answer_id)
 
                if (answerIndex !== -1){
                 answersComment[answerIndex] = answerComment;
@@ -101,6 +112,24 @@ export function CommentsContextProvider({children}:{children: ReactNode}) {
             return {data: commentsList}
         })
     }
+
+    const deleteAnswerContext = (comment_id:number, answer_id:number) => {
+        setComments(prevComments => {
+            const listComments = [...prevComments.data];
+            const commentIndex = listComments.findIndex(comment => comment.id === comment_id);
+
+            if (commentIndex !== -1){
+                const listAnswers = listComments[commentIndex].comments_of_comments
+                const answerIndex = listAnswers.findIndex(answer => answer.id === answer_id)
+                if (answerIndex !== -1){
+                    listAnswers.splice(answerIndex, 1)
+                    listComments[commentIndex].quantity_comment = listComments[commentIndex].quantity_comment - 1
+                }
+            }
+        return { data: listComments };
+        })
+    }
+
 
 
 
@@ -112,6 +141,8 @@ export function CommentsContextProvider({children}:{children: ReactNode}) {
             editComment,
             addNewComment,
             fetchComments,
+            editAnswerComment,
+            deleteAnswerContext,
         }}>
             {children}
         </CommentsContext.Provider>

@@ -5,9 +5,10 @@ from .models import Like, Comment, Notification, Profile, Repost, Post
 from django.contrib.contenttypes.models import ContentType
 
 def post_save_repost(sender, instance, created, **kwargs):
-    strategy = instance.content_object.get_repost_notification_interface()
-    add_repost_quantity(instance)
-    create_generic_notification(instance, Notification, strategy)
+    if created:
+        strategy = instance.content_object.get_repost_notification_interface()
+        add_repost_quantity(instance)
+        create_generic_notification(instance, Notification, strategy)
 
 def post_save_created_user(sender, instance, created, **kwargs):
     if created:
@@ -23,7 +24,7 @@ def post_save_comment(sender, instance, created, **kwargs):
     if created:
         strategy = instance.content_object.get_comment_notification_interface()
         create_generic_notification(instance, Notification, strategy)
-        add_comment_quantity(instance, Post)
+        add_comment_quantity(instance)
 
 @receiver(post_delete, sender = Like)
 def post_delete_like(sender, instance, **kwargs):
@@ -32,7 +33,7 @@ def post_delete_like(sender, instance, **kwargs):
 
 @receiver(post_delete, sender = Comment)
 def post_delete_comment(sender, instance, **kwargs):
-    subtract_comment_quantity(instance, Post)
+    subtract_comment_quantity(instance)
     delete_generic_notification(Notification, instance)
 
 @receiver(post_delete, sender = Repost)

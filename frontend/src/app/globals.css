@@ -51,50 +51,47 @@
     
 } */
 
-
-.swiper-slide {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    margin-bottom: 20px;
-}
-
-.sample-slider-pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 10px;
-}
-
-/* Estilizar o bullet ativo */
-.swiper-pagination-bullet-active {
-    background-color: #FF9147;
-}
-
-/* Outros estilos do Swiper */
-.swiper-button-next {
-    color: #718096;
-}
-
-.swiper-container {
-    width: 100%;
-    height: 95%;
-}
-
-/* Ajustar a posição da páginação */
-.sample-slider .swiper-pagination-bullets .swiper-pagination {
-    color: #FF9147;
-    top: 10px;
-}
-
-.sample-slider-pagination .swiper-pagination-bullet {
-    margin: 0 5px; /* Ajuste o valor para adicionar o espaço desejado */
-    background-color: #008BF5;
-}
-
-.swiper-button-next {
-    color: #718096
+.sticky-last > :last-child {
+  position: sticky;
+  top: 0;
 }
 
 
+.swiper-button-next,
+.swiper-button-prev {
+  background-color: #ADDCFF;
+  right: 0px;
+  padding: 22px;
+  color: #008BF5 !important;
+  fill: #008BF5  !important;
+  border-radius: 50% !important;
+  border: solid #008BF5;
+}
+.swiper-button-next::after,
+.swiper-button-prev::after {
+font-size: 22px !important; 
+}
+
+
+:root {
+  --swiper-navigation-size: 26px;
+}
+
+.swiper-contrainer {
+  overflow: visible;
+}
+
+.swiper-custom-pagination {
+  top: 30px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.3rem;
+  z-index: 10;
+  background-color: #62B7F8;
+  margin-top: 4px;
+  max-width: 5rem;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 10px;
+}
 

@@ -44,7 +44,8 @@ export const getComments = async (authTokens : TokenData | undefined | null, pos
             }})
         return response
     } catch (error) {   
-        return console.log(error);
+        console.log(error);
+        return undefined;
     };
    
 };

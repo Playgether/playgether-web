@@ -179,6 +179,6 @@ module.exports = {
       transitionProperty: ['responsive', 'motion-safe', 'motion-reduce']
     }
   },
-  plugins: [],
+  plugins:[],
 }
 

@@ -8,15 +8,29 @@ interface PropertiersCommentProps {
     iconClassName?: string
 }
 
+
 /** Este componente é responsável por gerar o ícone de repost e suas propriedades, ele faz parte de um padrão aplicado a esta aplicação chamado "Composite",
  * o intuito deste padrão é dar a liberdade de ser inserido qualquer tipo de propriedade de forma independente, juntas, ou combinadas, por exemplo: Apenas comentários, ou apenas
  * likes, ou comentários e likes, ou comentários, likes, e reposts etc...
  */
 const PropertiersComment = ({quantity_comment, iconClassName}: PropertiersCommentProps) => {
+
+    function formatNumber(number:number) {
+        if (number >= 1000000) {
+          const formatted = (Math.floor(number / 100000) / 10).toFixed(1).replace('.', ',');
+          return formatted.endsWith(',0') ? formatted.slice(0, -2) + 'mi' : formatted + 'mi';
+        } else if (number >= 1000) {
+          const formatted = (Math.floor(number / 100) / 10).toFixed(1).replace('.', ',');
+          return formatted.endsWith(',0') ? formatted.slice(0, -2) + 'mil' : formatted + 'mil';
+        } else {
+          return number;
+        }
+    }
+
     return (
         <div className="flex flex-row justify-center items-center space-x-2">
             <FaComment className={twJoin(iconClassName)} />
-            <p className="text-black-200">{quantity_comment}</p>
+            <p className="text-black-200">{formatNumber(quantity_comment)}</p>
         </div>
     )
 }

@@ -50,6 +50,18 @@ const PropertiersLike = ({quantity_likes, iconClassName, user_already_like, cont
         setOnClicked(false)
         deleteLike(authTokens, object_id)
     }
+    
+    function formatNumber(number:number) {
+        if (number >= 1000000) {        
+          const formatted = (Math.floor(number / 100000) / 10).toFixed(1).replace('.', ',');
+          return formatted.endsWith(',0') ? formatted.slice(0, -2) + 'mi' : formatted + 'mi';
+        } else if (number >= 1000) {
+          const formatted = (Math.floor(number / 100) / 10).toFixed(1).replace('.', ',');
+          return formatted.endsWith(',0') ? formatted.slice(0, -2) + 'mil' : formatted + 'mil';
+        } else {
+          return number;
+        }
+    }
 
     return (
         <div className="flex flex-row justify-center items-center space-x-2">
@@ -69,7 +81,7 @@ const PropertiersLike = ({quantity_likes, iconClassName, user_already_like, cont
                 onClickLike()
             }}
             />}
-            <p className="text-black-200">{quantitylikesNumber}</p>
+            <p className="text-black-200">{formatNumber(quantity_likes)}</p>
         </div>
     )
 }

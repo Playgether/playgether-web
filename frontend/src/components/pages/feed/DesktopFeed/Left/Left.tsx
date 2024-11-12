@@ -6,16 +6,14 @@ import ProfileCard from "./Profile/ProfileCard"
 /** Este componente é o wrapper principal da parte "Left" no componente de feed */
 const Left = () => {
     return (
-        <div>
-            <div className="flex flex-row h-full space-x-2">
-                <div className="bg-white-200 bg-opacity-80 flex-1 h-5/6 flex flex-col space-y-4">
-                    <ProfileContextProvider>
-                        <ProfileCard />
-                    </ProfileContextProvider>
-                    <OnlineFriendsCard />
-                </div>
+
+        <div className="flex flex-row space-x-2 w-full 2xl:sticky top-0 h-full">
+            <div className="bg-opacity-80 flex-1 flex flex-col space-y-4 items-end gap-2 2xl:sticky top-0 2xl:h-fit sticky-last">
+                <ProfileCard />
+                <OnlineFriendsCard />
             </div>
         </div>
+
     )
 }
 

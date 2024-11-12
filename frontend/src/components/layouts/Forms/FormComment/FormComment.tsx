@@ -8,6 +8,7 @@ import { useState } from "react";
 import { FormCommentImplementation } from "../FormCommentImplementation/FormCommentImplementation";
 import { useAuthContext } from "../../../../context/AuthContext";
 import { useCommentsContext } from "../../../../context/CommentsContext";
+import { useFeedContext } from "../../../../context/FeedContext";
 
 export type FormCommentProps = {
     /** Este componente recebe o content_type do componente pai, esta prop vai utilizar CommentTypes para pegar a chave para definir em que esta sendo comentado, neste caso
@@ -31,9 +32,9 @@ type dataProps = {
 const FormComment = ({content_type, object_id} : FormCommentProps) => {
     const CommentFormSchema = useCommentFormSchema();
     const {register, handleSubmit, errors, reset} = UseFormState(CommentFormSchema);
-    const [success, setSuccess] = useState('')
     const { user, authTokens } = useAuthContext();
     const {addNewComment} = useCommentsContext()
+    const {alterCommentQuantity} = useFeedContext()
 
     const Submiting = async (data: dataProps) => {
         const newData = {
@@ -45,7 +46,7 @@ const FormComment = ({content_type, object_id} : FormCommentProps) => {
         try {
             const response = await SubmitingForm(() => postComment(newData, authTokens));
             addNewComment(response);
-            setSuccess('Comentário realizado com sucesso');
+            alterCommentQuantity(object_id)
             reset({comment: ''});
         } catch (error) {
             console.error('Erro ao buscar comentários:', error);

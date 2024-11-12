@@ -21,6 +21,7 @@ const FeedComponent = () => {
   const [resourceObject, setResourceObject] = useState<FeedProps>()
   const [slideIndex, setSlideIndex] = useState(0)
 
+
   const handlePostsCloseExtend = () => {
     setOpenPostsExtend(!openPostsExtend)
   }
@@ -28,8 +29,6 @@ const FeedComponent = () => {
   const handlePostsExtend = (resourceObject) => {
     setResourceObject(resourceObject)
     setOpenPostsExtend(!openPostsExtend)
-    console.log(resourceObject.medias)
-    console.log(slideIndex)
   }
   
 
@@ -41,7 +40,7 @@ const FeedComponent = () => {
         </div>
       }
         {feed && feed.map((resource) => (
-          <React.Fragment key={resource.id}>
+          <div key={resource.id}>
             <div className="bg-white-200 flex items-start justify-start">
                 <ProfileAndUsername 
                 username={resource.created_by_user_name}
@@ -53,12 +52,12 @@ const FeedComponent = () => {
             <div className="pt-4 flex min-h-[5rem] pb-4 bg-white-200 cursor-pointer" 
             onClick={() => handlePostsExtend(resource)}
             >
-                <PostText resource={resource} maxCharacteres={500}/>
+                <PostText resource={resource} maxCharacteres={300}/>
             </div>
       
             {resource?.has_post_media ? (
-                <div className="bg-white-200 h-4/6">
-                  <Posts media={resource.medias} onClick={() => handlePostsExtend(resource)} setSlideIndex={setSlideIndex} postsSize="h-full" className="h-5/6"/>
+                <div className="cursor-pointer bg-white-200">
+                  <Posts media={resource.medias} onClick={() => handlePostsExtend(resource)} setSlideIndex={setSlideIndex} className="p-4" imageHeight="h-[350px] 2xl:h-[400px]"/>
                 </div>
             ) : null}
     
@@ -70,7 +69,7 @@ const FeedComponent = () => {
                 quantity_likes={resource.quantity_likes}
                 quantity_reposts={resource.quantity_reposts} />
             </div>
-          </React.Fragment>
+          </div>
       ))}
     </>
   );

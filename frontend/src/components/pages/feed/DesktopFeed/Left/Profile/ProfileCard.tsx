@@ -7,24 +7,22 @@ import Image from "next/legacy/image";
 import { CgProfile } from "react-icons/cg"
 import { useAuthContext } from "../../../../../../context/AuthContext";
 import { useProfileContext } from "../../../../../../context/ProfileContext";
-import { useResource } from "../../../../../custom_hooks/useResource";
-import { ProfileProps } from "../../../../../../services/getProfile";
 import OrangeButton from "../../../../../elements/OrangeButton/OrangeButton";
+import { TopCard } from "../../MultUseComponents/TopCard";
+import { CldUploadWidget } from "next-cloudinary";
+import { IoCreateOutline } from "react-icons/io5";
 
 
 /** Este componente é o wrapper principal do card de profile na página feed. Seu intuito é ser o wrapper de todo o card e seus componentes filhos. */
 const ProfileCard = ({}) => {
     const {user} = useAuthContext()
-    const {profile, fetchProfile} = useProfileContext()
-    useResource<ProfileProps>(() => fetchProfile())
+    const {profile} = useProfileContext()
 
     return (
         
-        <div className="bg-white-200 h-3/6 flex pt-2 flex-col items-center space-y-2 rounded-lg shadow-lg">
-            <div className="flex flex-row items-center justify-center w-full pb-2 bg-white-400">
-                <h1 className="font-medium text-black-200 text-center pt-2 border-b border-black-200 border-opacity-30 text-md w-4/6 text-md">Profile</h1>
-            </div>
-            <div className="rounded-full h-20 w-20 flex items-center justify-center relative bg-white-200">
+        <div className="bg-white-200 h-[400px] flex pt-2 flex-col items-center space-y-2 shadow-lg w-[250px] 2xl:w-[250px] max-h-[350px] 2xl:max-h-[400px] rounded-lg">
+            <TopCard title={"Profile"}/>
+            <div className="rounded-full h-20 w-20 flex items-center justify-center bg-white-200 relative">
                 {profile?.profile_photo === null || profile?.profile_photo === undefined ? (
                     <CgProfile className="h-full w-full text-gray-300"/>
                 ) : (
@@ -34,8 +32,22 @@ const ProfileCard = ({}) => {
                     alt={"Imagem de perfil do card profile do feed"}
                     className="rounded-full"/>
                 )}
-                
             </div>
+            <CldUploadWidget 
+                signatureEndpoint="/api/signed-profile"
+                options={{
+                    uploadPreset:"profile-images",
+                    multiple:false,
+                    tags:[`${user?.username}`, "profile", "image", "user"],
+                    singleUploadAutoClose:false
+                }}
+                >
+                    {({ open }) => {
+                        return (
+                        <IoCreateOutline className='h-8 w-8 text-black-400 cursor-pointer absolute top-12 right-2' onClick={() => open()}/>
+                        );
+                    }}
+            </CldUploadWidget>
             <div className="text-center w-full">
                 <h1 className="text-xl text-black-300">{user?.first_name} {user?.last_name}</h1>
                 <p className="text-sm text-black-200 opacity-90">{user?.username}</p>
@@ -46,7 +58,7 @@ const ProfileCard = ({}) => {
                 <SiCounterstrike />
             </div>
             <div>
-                <OrangeButton className="text-sm font-semibold xl:px-6 xl:py-3 lg:px-6 lg:py-2">Ver Perfil</OrangeButton>
+                <OrangeButton className="text-sm font-semibold xl:px-6 2xl:py-3 lg:px-6 lg:py-2">Ver Perfil</OrangeButton>
             </div>
         </div>
       

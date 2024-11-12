@@ -14,9 +14,9 @@ export type TopicProps = {
 /** Este é o componente wrapper de cada topico no componente "TopicsOfMoment", seu intuito é gerar cada tópico neste componente. */
 export const Topic = ({topic_category, topic}:TopicProps) => {
     return (
-        <div className="flex flex-row space-x-2 flex-wrap w-full items-center justify-center">
+        <div className="flex flex-row space-x-2 flex-wrap w-full items-center justify-center pr-2 pb-1">
             <h1 className="text-blue-500 font-semibold text-sm">{topic_category}</h1>
-            <h2 className="text-orange-500 font-normal text-xs"><TextLimitComponent text={topic} maxCharacters={150}/></h2>
+            <h2 className="text-orange-500 font-normal text-xs">{<TextLimitComponent text={topic} maxCharacters={100} className="break-all whitespace-normal"/>}</h2>
         </div>
     )
 }

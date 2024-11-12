@@ -136,12 +136,12 @@ class Like(models.Model):
         verbose_name_plural = "Likes"
 
     def __str__(self):
-        return f'Post: {self.content_object.__str__()} / Curtido por: {self.user.username} / ID: {self.id}'
+        return f'{self.content_type.__str__()}: {self.content_object.__str__()} / Curtido por: {self.user.username} / ID: {self.id}'
 
     def clean(self):
-        is_like_exists = Like.objects.filter(object_id=self.object_id, user=self.user.id).exists()
+        is_like_exists = Like.objects.filter(object_id=self.object_id, user=self.user.id, content_type=self.content_type).exists()
         if is_like_exists:
-            raise ValidationError('Este usuário já curtiu esta publicação')
+            raise ValidationError(f'Este usuário já curtiu este(a) {self.content_type.__str__()}')
 
     def save(self, *args, **kwargs):
         try:
@@ -188,7 +188,8 @@ class Repost(models.Model):
         return CommentRepost.CommentRepostNotification()
 
 class Notification(models.Model):
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="notifications")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
+    actor = models.ForeignKey(User, on_delete=models.SET_NULL, related_name="actor_notifications", null=True, blank=True)
     is_read = models.BooleanField(default=False)
     message = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
