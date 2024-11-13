@@ -18,18 +18,19 @@ const ProfileLol = ({}) => {
     }
 
   return (
-    <div>
-      {profile ? (
+    <>
+      {/* {profile ? (
         <>
           <h2 className='text-black-300'>Nick: {soloq()}</h2>
           <p className='text-black-300'>Rank: {profile[0].queueType}</p>
         </>
       ) : (
         <>
-        <p></p>
+         <p className='text-black-300'>deu certo</p>
         </>
-      )}
-    </div>
+      )} */}
+      <p className='text-black-500 m-40'>Lol page</p>
+    </>
   )
 }
 
