@@ -1,5 +1,6 @@
-import './globals.css'
+import '@/app/globals.css'
 import { AppProvider } from '../context'
+import { cn } from '@/lib/utils'
 
 
 
@@ -14,7 +15,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="text-zinc-50">
+      <body className={cn("text-zinc-50")}>
         <AppProvider>
           <main>{children}</main>
         </AppProvider>

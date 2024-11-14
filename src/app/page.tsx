@@ -1,4 +1,4 @@
-import '../app/globals.css'
+import '@/app/globals.css'
 import Video from '../components/pages/index/Video';
 import Footer from '../components/pages/index/Footer';
 import ContentSection from '../components/pages/index/ContentSection';
