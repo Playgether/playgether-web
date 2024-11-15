@@ -54,18 +54,18 @@ export const IntervalFunctionComponent = () => {
 
     const [currentIndex, setCurrentIndex] = useState(0);
 
-    useEffect(() => {
-        const currentMessage = GlobalMessages[currentIndex]
-        const currentVolume = volumes[currentMessage.volume]
-        console.log(currentVolume)
-        const intervalId = setInterval(() => {
-          setCurrentIndex((prevIndex) => {
-            return prevIndex + 1 < GlobalMessages.length ? prevIndex + 1 : 0;
-          });
-        }, currentVolume);
+    // useEffect(() => {
+    //     const currentMessage = GlobalMessages[currentIndex]
+    //     const currentVolume = volumes[currentMessage.volume]
+    //     console.log(currentVolume)
+    //     const intervalId = setInterval(() => {
+    //       setCurrentIndex((prevIndex) => {
+    //         return prevIndex + 1 < GlobalMessages.length ? prevIndex + 1 : 0;
+    //       });
+    //     }, currentVolume);
       
-        return () => clearInterval(intervalId);
-      }, [currentIndex, GlobalMessages, volumes]);
+    //     return () => clearInterval(intervalId);
+    //   }, [currentIndex, GlobalMessages, volumes]);
 
     return (
         <div className="bg-white-300 flex-1 text-black-400 relative right-0">
