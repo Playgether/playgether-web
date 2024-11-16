@@ -1,4 +1,4 @@
-import { CldUploadWidget, CldUploadWidgetProps } from "next-cloudinary";
+import { CldUploadWidget } from "next-cloudinary";
 import { GoFileMedia } from "react-icons/go";
 import { useAuthContext } from "../../../../../../../context/AuthContext";
 import { useEffect, useState } from "react";
@@ -25,6 +25,7 @@ const Step3 = ({setUploadedFiles, handleSubmit, makeUploadRequest, uploadedFiles
                 bytes_file: result.info.bytes,
                 file_format: result.info.format,
                 created_at: result.info.created_at,
+                media_folder: result.info.asset_folder
             }
         ]);
         setActiveUploads((prevCount) => prevCount - 1);

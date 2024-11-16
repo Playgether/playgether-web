@@ -10,8 +10,9 @@ import { PostFormSchema } from "./SharePost/PostFormSchema";
 import { UseFormState } from "../../../../../layouts/ConstFormStateLayout";
 import { useAuthContext } from "../../../../../../context/AuthContext";
 import { SubmitingForm } from "../../../../../layouts/SubmitingFormLayout";
-import { postPost } from "../../../../../../services/postPost";
+import { PostMediaProps, postPost } from "../../../../../../services/postPost";
 import Step4 from "./SharePost/Step4";
+import { deletePostFile } from "@/services/cloudinary_requests/deletePostFile";
 
 
 type dataForm = {
@@ -21,7 +22,7 @@ const PostComponent = ({}) => {
     const [step, setStep] = useState(1)
     const Step1Schema = PostFormSchema()
     const { register, handleSubmit, errors, reset } = UseFormState(Step1Schema);
-    const [uploadedFiles, setUploadedFiles] = useState([]);
+    const [uploadedFiles, setUploadedFiles] = useState<PostMediaProps[]>([]);
     const {user, authTokens} = useAuthContext();
 
     const nextStep = () => {
@@ -52,7 +53,9 @@ const PostComponent = ({}) => {
 
     const makeUploadRequest = async(data:dataForm) => {
         var hasPostMedia = false
-        if (uploadedFiles.length > 0) { hasPostMedia = true}
+        if (uploadedFiles.length > 0) { 
+            hasPostMedia = true
+        }
         const newPost = {
             comment:data.text,
             created_by_user:user?.user_id,
@@ -66,6 +69,11 @@ const PostComponent = ({}) => {
             }
         } catch (error) {
             console.log(error)
+            if (uploadedFiles.length > 0) {
+                for (const media of uploadedFiles) {   
+                    await deletePostFile(media.media_file, media.media_folder, media.media_type);
+                }
+            }
             throw new Error(error.message)
         }
     }

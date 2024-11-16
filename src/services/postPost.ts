@@ -18,6 +18,7 @@ export interface PostMediaProps {
     bytes_file:number,
     file_format:string,
     created_at:Date
+    media_folder:string
 }
 
 export const postPost = async (data: postPostProps, authTokens : TokenData | null | undefined) => {
