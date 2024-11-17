@@ -1,14 +1,16 @@
+import { ProfileLolContextProvider } from "@/context/ProfileLolContext";
 import { gamesTypes } from "../../../../types/games";
 import ProfileLol from "../ProfileLol/ProfileLol";
+import ProfileValorant from "../ProfileValorant/ProfileValorant";
 
 const GamesList: gamesTypes = {
     lol: {
-        component: <ProfileLol />,
+        component: <ProfileLolContextProvider><ProfileLol /></ProfileLolContextProvider>,
         src: '/games/League of Legends.png',
         alt: 'LoL Banner'
     },
     valorant: {
-        component: <p className="text-black-500 m-40">vava</p>,
+        component: <ProfileValorant />,
         src: '/games/Valorant.png',
         alt: 'Valorant Banner'
     },
