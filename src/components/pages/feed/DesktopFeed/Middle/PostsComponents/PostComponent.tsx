@@ -53,9 +53,7 @@ const PostComponent = ({}) => {
 
     const makeUploadRequest = async(data:dataForm) => {
         var hasPostMedia = false
-        if (uploadedFiles.length > 0) { 
-            hasPostMedia = true
-        }
+        if (uploadedFiles.length > 0) {hasPostMedia = true}
         const newPost = {
             comment:data.text,
             created_by_user:user?.user_id,
