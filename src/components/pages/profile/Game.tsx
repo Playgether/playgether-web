@@ -16,7 +16,7 @@ export const Game = () => {
             {page  ? (
                 <>
                     <OrangeButton onClick={handleBackPage} className="w-[5rem] h-[2rem] mx-5 my-6">
-                        <h1 className="text-zinc-900 text-lg font-semibold">Voltar</h1>
+                        <h1 className="text-lg font-semibold">Voltar</h1>
                     </OrangeButton>
                     {page && GamesList[page]?.component}
                 </>
