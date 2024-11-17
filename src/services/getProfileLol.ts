@@ -3,17 +3,23 @@ import { TokenData } from "./updateTokenRequest";
 
 export interface ProfileLolProps {
     username: string;
-    rank: string;
     tag: string;
-    id: number; 
-    account_id: string;
-    puuid: string;
-    summonerId: string;
+    data: ProfileLolData;
 }
 
-export const getProfileLol = async (authTokens: TokenData | null | undefined, id_profile: number | undefined) => {
+interface ProfileLolData {
+    leaguePoints: number;
+    losses: number;
+    queueType: string;
+    rank: string;
+    tier: string;
+    winRate: string;
+    wins: number;
+}
+
+export const getProfileLol = async (authTokens: TokenData | null | undefined, id: number | undefined) => {
     try {
-        const response = await api.get<ProfileLolProps[]>(`/api/v1/games/infos/lol`, {
+        const response = await api.get<ProfileLolProps[]>(`/api/v1/profiles/${id}/games/fetch/lol`, {
             headers: {
                 'Authorization':'Bearer ' + String(authTokens?.access)
             }
