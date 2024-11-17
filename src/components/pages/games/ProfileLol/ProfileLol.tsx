@@ -20,26 +20,37 @@ const ProfileLol = ({}) => {
     const { profile, fetchProfile } = useProfileLolContext();
     useResource<ProfileLolProps>(() => fetchProfile());
 
-    const soloq = () => {
-      if (profile && profile[0].queueType === 'RANKED_SOLO_5x5') {
-        return `${profile[0].tier} ${profile[0].rank}`;
-      }
+    interface ProfileLolResponse {
+      leaguePoints: number;
+      losses: number;
+      queueType: string;
+      rank: string;
+      tier: string;
+      winRate: number;
+      wins: number;
     }
 
-    const userLol = {
-      nick: 'Vayne Panicat',
-      riotId: 'VEIGA',
-      queueType0: 'SoloQ',
-      queueType1: 'Flex',
-      rankSoloQ: 'Desafiante I',
-      rankFlex: 'Desafiante I',
-      win: 100,
-      lose: 0,
-      matches: 100,
-      lp: '1000',
-    }
+    console.log('profile', { profile })
 
-    const winRate = userLol.win / userLol.matches * 100;
+    const profile0: ProfileLolResponse | null = profile ? {
+      leaguePoints: profile.data[0].leaguePoints,
+      losses: profile.data[0].losses,
+      queueType: profile.data[0].queueType,
+      rank: profile.data[0].rank,
+      tier: profile.data[0].tier,
+      winRate: profile.data[0].winRate,
+      wins: profile.data[0].wins,
+    } : null;
+
+    const profile1: ProfileLolResponse | null = profile ? {
+      leaguePoints: profile.data[1].leaguePoints,
+      losses: profile.data[1].losses,
+      queueType: profile.data[1].queueType,
+      rank: profile.data[1].rank,
+      tier: profile.data[1].tier,
+      winRate: profile.data[1].winRate,
+      wins: profile.data[1].wins,
+    } : null;
 
   return (
     <>
@@ -55,8 +66,8 @@ const ProfileLol = ({}) => {
             <CardTitle className='text-center text-white-300 font-extrabold text-xl'>Riot ID</CardTitle>
           </CardHeader>
           <CardContent className='flex flex-row items-center justify-center text-white-300 text-xl font-extrabold gap-2'>
-            <h1>{userLol.nick}</h1>
-            <h1>#{userLol.riotId}</h1>
+            <h1>{profile?.username}</h1>
+            <h1>#{profile?.tag}</h1>
           </CardContent>
         </Card>
       </div>
@@ -64,50 +75,50 @@ const ProfileLol = ({}) => {
       <div className='w-full flex justify-evenly mt-[2rem]'>
         <Card className='bg-[#62B7F8] w-[22rem]'>
           <CardHeader>
-            <CardTitle className='text-center text-white-300 font-extrabold text-xl'>{userLol.queueType0}</CardTitle>
+            <CardTitle className='text-center text-white-300 font-extrabold text-xl'>SoloQ</CardTitle>
           </CardHeader>
           <div className='border-t border-zinc-700 w-full'></div>
 
           <CardContent className='flex flex-col items-center justify-center text-white-300 text-xl font-extrabold gap-2 mt-10'>
-            <h1>{userLol.rankSoloQ}</h1>
+            <h1>{ profile ? (profile.data[0].queueType === 'RANKED_SOLO_5x5' ? `${profile0?.tier} ${profile0?.rank}` : `${profile1?.tier} ${profile1?.rank}`) : '' }</h1>
 
             <Avatar className='w-[60px] h-[60px] mt-5'>
               <AvatarImage src="https://github.com/shadcn.png" alt='avatar' />
               <AvatarFallback>Rank Logo</AvatarFallback>
             </Avatar>
 
-            <h1 className={winRate >= 50 ? 'text-[#24FF00]' : 'text-red-500'}>{winRate}%</h1>
+            <h1 className={profile ? (profile.data[0].queueType === 'RANKED_SOLO_5x5' ? (profile0?.winRate! >= 50 ? 'text-[#24FF00]' : 'text-red-500') : (profile1?.winRate! >= 50 ? 'text-[#24FF00]' : 'text-red-500')) : ''}>{ profile ? (profile.data[0].queueType === 'RANKED_SOLO_5x5' ? `${profile0?.winRate}%` : `${profile1?.winRate}%`) : '' }</h1>
 
-            <h1>{userLol.lp + ' PDL'}</h1>
+            <h1>{ profile ? (profile.data[0].queueType === 'RANKED_SOLO_5x5' ? `${profile0?.leaguePoints} PDL` :`${profile1?.leaguePoints} PDL`) : '' }</h1>
 
             <div className='flex justify-between w-[40%] my-8'>
-              <h1 className='text-[#24FF00]'>{userLol.win + 'V'}</h1>
-              <h1 className='text-red-500'>{userLol.lose + 'D'}</h1>
+              <h1 className='text-[#24FF00]'>{ profile ? (profile.data[0].queueType === 'RANKED_SOLO_5x5' ? `${profile0?.wins} V` :`${profile1?.wins} V`) : '' }</h1>
+              <h1 className='text-red-500'>{ profile ? (profile.data[0].queueType === 'RANKED_SOLO_5x5' ? `${profile0?.losses} D` :`${profile1?.losses} D`) : '' }</h1>
             </div>
           </CardContent>
         </Card>
 
         <Card className='bg-[#ADDCFF] w-[22rem]'>
-          <CardHeader>
-            <CardTitle className='text-center text-[#FFFFFF] font-extrabold text-xl'>{userLol.queueType1}</CardTitle>
+        <CardHeader>
+            <CardTitle className='text-center text-white-300 font-extrabold text-xl'>Flex</CardTitle>
           </CardHeader>
           <div className='border-t border-zinc-700 w-full'></div>
 
           <CardContent className='flex flex-col items-center justify-center text-white-300 text-xl font-extrabold gap-2 mt-10'>
-            <h1>{userLol.rankFlex}</h1>
+            <h1>{ profile ? (profile.data[0].queueType === 'RANKED_SOLO_5x5' ? `${profile0?.tier} ${profile0?.rank}` : `${profile1?.tier} ${profile1?.rank}`) : '' }</h1>
 
             <Avatar className='w-[60px] h-[60px] mt-5'>
               <AvatarImage src="https://github.com/shadcn.png" alt='avatar' />
               <AvatarFallback>Rank Logo</AvatarFallback>
             </Avatar>
 
-            <h1 className={winRate >= 50 ? 'text-[#24FF00]' : 'text-red-500'}>{winRate}%</h1>
+            <h1 className={profile ? (profile.data[0].queueType === 'RANKED_SOLO_5x5' ? (profile0?.winRate! >= 50 ? 'text-[#24FF00]' : 'text-red-500') : (profile1?.winRate! >= 50 ? 'text-[#24FF00]' : 'text-red-500')) : ''}>{ profile ? (profile.data[0].queueType === 'RANKED_SOLO_5x5' ? `${profile0?.winRate}%` : `${profile1?.winRate}%`) : '' }</h1>
 
-            <h1>{userLol.lp + ' PDL'}</h1>
+            <h1>{ profile ? (profile.data[0].queueType === 'RANKED_SOLO_5x5' ? `${profile0?.leaguePoints} PDL` :`${profile1?.leaguePoints} PDL`) : '' }</h1>
 
             <div className='flex justify-between w-[40%] my-8'>
-              <h1 className='text-[#24FF00]'>{userLol.win + 'V'}</h1>
-              <h1 className='text-red-500'>{userLol.lose + 'D'}</h1>
+              <h1 className='text-[#24FF00]'>{ profile ? (profile.data[0].queueType === 'RANKED_SOLO_5x5' ? `${profile0?.wins} V` :`${profile1?.wins} V`) : '' }</h1>
+              <h1 className='text-red-500'>{ profile ? (profile.data[0].queueType === 'RANKED_SOLO_5x5' ? `${profile0?.losses} D` :`${profile1?.losses} D`) : '' }</h1>
             </div>
           </CardContent>
         </Card>
