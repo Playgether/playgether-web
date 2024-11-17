@@ -9,11 +9,8 @@ const Step3 = ({setUploadedFiles, handleSubmit, makeUploadRequest, uploadedFiles
     const {user} = useAuthContext()
     const [widgetKey, setWidgetKey] = useState(0);
     const [activeUploads, setActiveUploads] = useState(0);
-    var haveUploads = false;
-
 
     const handleUploadSuccess = async(result) => {
-        haveUploads = true;
         await setUploadedFiles((prevFiles:PostMediaProps[]) => [
             ...prevFiles,
             {
@@ -31,21 +28,19 @@ const Step3 = ({setUploadedFiles, handleSubmit, makeUploadRequest, uploadedFiles
         setActiveUploads((prevCount) => prevCount - 1);
     };
 
-    const handleUploadError = () => {
-        setActiveUploads((prevCount) => prevCount - 1);
+    const handleUploadError = (file) => {
+        console.log(`Um dos seus uploads não cumprem as diretrizes: ${JSON.stringify(file)}`)
+        setWidgetKey((prevCount) => prevCount + 1);
+    }
+
+    const handleOnAbort = () => {
+        setActiveUploads(0)
+        setWidgetKey((prevCount) => prevCount + 1)
     }
 
     const handleUploadStart = () => {
         setActiveUploads((prevCount) => prevCount + 1);
     };
-
-    const handleOnClose = () => {
-        console.log("Chegou aqui")
-        if (haveUploads){
-            console.log("Eviando req de exclusão para o cloudinary")
-        } 
-        setWidgetKey((prevKey) => prevKey + 1);
-    }
 
     useEffect(() => {
         if (activeUploads === 0 && uploadedFiles.length > 0) {
@@ -84,10 +79,9 @@ const Step3 = ({setUploadedFiles, handleSubmit, makeUploadRequest, uploadedFiles
                     }}
                     onUploadAdded={handleUploadStart}
                     onSuccess={handleUploadSuccess}
-                    onAbort={() => setActiveUploads(0)}
+                    onAbort={() => handleOnAbort}
                     onOpen={()=> setActiveUploads(0)}
-                    onClose={handleOnClose}
-                    // onError={handleUploadError}
+                    onError={handleUploadError}
 
                     >
                         {({ open }) => {
