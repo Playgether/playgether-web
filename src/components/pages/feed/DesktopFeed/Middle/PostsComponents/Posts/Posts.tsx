@@ -1,6 +1,5 @@
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
-import Image from "next/legacy/image";
 import { twJoin} from 'tailwind-merge';
 import { HTMLAttributes, Suspense, useEffect, useRef} from 'react';
 import { PostMedias } from '../../../../../../../services/getFeed';
@@ -9,6 +8,9 @@ import 'swiper/css/navigation'
 import 'swiper/css/pagination'
 import { CustomPagination } from '../../../../../../elements/CustomPagination/CustomPagination';
 import { VideoLoadingFallback } from './VideoLoadingFallBack';
+import { CldImage, CldVideoPlayer } from 'next-cloudinary';
+import 'next-cloudinary/dist/cld-video-player.css';
+
 
 
 export interface PostsProps extends HTMLAttributes<HTMLDivElement>{
@@ -34,17 +36,22 @@ export interface PostsProps extends HTMLAttributes<HTMLDivElement>{
      */
     slideIndex?:number 
     
-    /** Essa prop recebe a altura da imagem em forma de string (padrão tailwind css,). Ela é necessária para criar uma altura exata para o container da image, caso nenhuma seja,
-     * passada, o padrão será 400
+    /** Essa prop recebe a altura do post em valor numérico. Ela é necessária para criar uma altura exata para o container do post, caso nenhuma seja,
+     * passada, o padrão será 720
      */
-    imageHeight?:string
+    postHeight?:number
+
+    /** Essa prop recebe a largura do post em valor númerico. Ela é necessária para criar uma largura exata para o container do post, caso nenhuma seja,
+     * passada, o padrão será 1080
+     */
+    postWidth?:number
 }
 
 /** Este componente é responsável por criar o carrousel (slide) dos posts que possuem media, sejam eles imagens, vídeos, ou os dois juntos. Você pode passar um className para
  * este componente para definir o tamanho do container do carrousel
  * OBS: Ele pode receber um "className" para serem definidas algumas personalizações como por exemplo: altura, largura, etc.
 */
-const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, imageHeight='h-[400px]', ...rest }: PostsProps) => {
+const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, postHeight=720, postWidth=1080, ...rest }: PostsProps) => {
     const volumeRef = useRef<HTMLVideoElement | null> (null)
 
     const handleSlideChange = (swiper) => {
@@ -86,24 +93,41 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, imageHeight='h-[40
             >
                 <CustomPagination/>
                 {media.map((item)=> (
-                    <SwiperSlide key={item.id} onClick={onClick}>
+                    // <SwiperSlide key={item.id} onClick={onClick}>
+                    <SwiperSlide key={item.id} >
                         {item.media_type === "image" ? (
-                            <div className={`relative flex justify-center  ${imageHeight}`}>
-                                <Image
+                            <div className={`rounded h-[${postHeight}] w-[${postWidth}] items-center justify-center bg-blue-400`}>
+                                <CldImage
                                     src={item.media_file}
-                                    alt={"TESTE"}
-                                    layout='fill'
-                                    objectFit="contain"
-                                    className='rounded-lg h-full'
+                                    width={item.width}
+                                    height={item.height}
+                                    className='rounded object-contain'
+                                    sizes="(max-width: 768px) 100vw,
+                                    (max-width: 1200px) 50vw,
+                                    33vw"
+                                    alt="No information available"
+                                    loading='lazy'
+                                    onClick={onClick} 
                                 />
                             </div>
                         ) : (
-                            <div className={`relative ${imageHeight}`}>
+                            <div className={`h-[${postHeight}] w-[${postWidth}] rounded flex items-center justify-center`}>
                                 <Suspense fallback={<VideoLoadingFallback/>}>
-                                    <video playsInline muted autoPlay controls ref={volumeRef} className="object-contain h-full mx-auto">
-                                        <source src={item.media_file} type="video/mp4"/>
-                                        Your browser does not support the video tag.
-                                    </video> 
+                                <CldVideoPlayer
+                                    width={postWidth}
+                                    height={postHeight}
+                                    src={item.media_file}
+                                    autoPlay="on-scroll" 
+                                    colors={{accent:"orange", text:"orange"}} 
+                                    playbackRates={["0.25", "0.5", "0.75", "1", "1.25", "1.50", "1.75", "2"]} 
+                                    showJumpControls={true}
+                                    seekThumbnails={false}
+                                    logo={false}
+                                    autoplay="on-screen"
+                                    playsinline={true}
+                                    fluid={true}
+                                    className='rounded absolute z-10'
+                                />
                                 </Suspense>
                             </div>    
                         )

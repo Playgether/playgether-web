@@ -17,6 +17,10 @@ const nextConfig = {
   env: {
     baseUrl: process.env.LOCAL_API_URL
   },
+  i18n: {
+    locales: ['en-US', 'fr', 'nl-NL', 'pt-BR'],
+    defaultLocale: 'pt-BR',
+  },
 }
 
 module.exports = nextConfig

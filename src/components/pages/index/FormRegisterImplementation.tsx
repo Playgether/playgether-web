@@ -74,7 +74,7 @@ export const FormRegisterImplementation = ({handleSubmit, handleAvailableUsernam
         
             <InputLayout
                 type="text"
-                placeholder="Sobrenome (OPCIONAL)"
+                placeholder="Sobrenome"
                 register = {{...register('last_name')}}
             />
             <ErrosInput field={errors.last_name}/>
