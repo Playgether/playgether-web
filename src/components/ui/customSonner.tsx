@@ -4,8 +4,8 @@ import { Toaster } from '@/components/ui/sonner'
 import { FaCheckCircle, FaExclamationTriangle, FaExclamationCircle, FaInfoCircle  } from "react-icons/fa";
 import { twMerge } from 'tailwind-merge';
 
-export const CustomSonner = ({ message, type, description, action }) => {
-    let className = 'p-4 rounded shadow-lg text-sm max-w-[23rem]'
+const CustomSonner = ({ message, type, description, action }) => {
+    let className: string | undefined = 'p-4 rounded shadow-lg text-sm max-w-[23rem]'
     let icon: ReactNode = null
 
     switch (type) {
