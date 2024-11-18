@@ -2,10 +2,10 @@ import React, { ReactNode } from 'react'
 import { toast } from 'sonner'
 import { Toaster } from '@/components/ui/sonner'
 import { FaCheckCircle, FaExclamationTriangle, FaExclamationCircle, FaInfoCircle  } from "react-icons/fa";
-import { twJoin } from 'tailwind-merge';
+import { twMerge } from 'tailwind-merge';
 
 export const CustomSonner = ({ message, type, description, action }) => {
-    let className = 'p-4 rounded shadow-lg'
+    let className = 'p-4 rounded shadow-lg text-sm max-w-[23rem]'
     let icon: ReactNode = null
 
     switch (type) {
@@ -30,7 +30,7 @@ export const CustomSonner = ({ message, type, description, action }) => {
     }
 
     return (
-        <div className={twJoin(className, 'text-sm max-w-[23rem]')}>
+        <div className={twMerge(className)}>
                 <div className='flex items-center justify-between w-full'>
                     <div className='flex items-center font-[500]'>
                         {icon && <span className="me-1 w-6">{icon}</span>}
