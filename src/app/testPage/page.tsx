@@ -13,6 +13,9 @@ import { useFeedContext } from "../../context/FeedContext";
 import Posts from "../../components/pages/feed/DesktopFeed/Middle/PostsComponents/Posts/Posts";
 import { CldVideoPlayer, getCldVideoUrl } from "next-cloudinary";
 import 'next-cloudinary/dist/cld-video-player.css';
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Pagination } from "swiper/modules";
+import { CustomPagination } from "@/components/elements/CustomPagination/CustomPagination";
  
 // const url = getCldVideoUrl({
 //   width: 1080,
@@ -77,21 +80,38 @@ export default async function TestPage() {
                 <p>Child 3</p>
             </div> */}
             {/* <CldVideoPlayer src="gn7diews37kbo2ooko7u" width={1920} height={1080}/>  */}
-            <div className="w-[1080px] h-[500px] bg-red-500">
-                <CldVideoPlayer src="gn7diews37kbo2ooko7u"
-                className="object-cover"
-                 width={1080} height={500} 
-                 autoPlay="on-scroll" 
-                 colors={{accent:"orange", text:"orange"}} 
-                 playbackRates={["0.25", "0.5", "0.75", "1", "1.25", "1.50", "1.75", "2"]} 
-                 showJumpControls={true}
-                 seekThumbnails={false}
-                 logo={false}
-                 autoplay={"on-screen"}
-                 playsinline={true}
-                 fluid={true}
-                 /> 
-            </div>
+            <Swiper
+                // slidesPerView={1}
+                // pagination={{type:'fraction', el:'.swiper-custom-pagination',}}
+                // navigation
+                // modules={[Navigation, Pagination]}
+                // className='h-full z-10 relative'
+                // // onSlideChange={handleSlideChange}
+                // initialSlide={slideIndex}
+                // autoHeight={true}
+                noSwiping={true}
+                noSwipingClass="swiper-no-swiping"
+            >
+                <CustomPagination/>
+                <SwiperSlide>
+                    <div className="w-[1080px] h-[500px] bg-red-500 swiper-no-swiping">
+                        <CldVideoPlayer src="gn7diews37kbo2ooko7u"
+                        className="object-cover"
+                        width={1080} height={500} 
+                        autoPlay="on-scroll" 
+                        colors={{accent:"orange", text:"orange"}} 
+                        playbackRates={["0.25", "0.5", "0.75", "1", "1.25", "1.50", "1.75", "2"]} 
+                        showJumpControls={true}
+                        seekThumbnails={false}
+                        logo={false}
+                        autoplay={"on-screen"}
+                        playsinline={true}
+                        fluid={true}
+                        /> 
+                </div>
+                </SwiperSlide>
+
+            </Swiper>
             {/* <CldVideoPlayer src="gn7diews37kbo2ooko7u" width="1280" height="674" className="object-contain"/> */}
             {/* <p>TESTEEEEEEEEEEE</p> */}
         </div>
