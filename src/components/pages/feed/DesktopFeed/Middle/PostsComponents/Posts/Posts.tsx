@@ -90,11 +90,13 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, postHeight=720, po
             onSlideChange={handleSlideChange}
             initialSlide={slideIndex}
             autoHeight={true}
+            noSwiping={true}
+            noSwipingClass="swiper-no-swiping"
             >
                 <CustomPagination/>
                 {media.map((item)=> (
                     // <SwiperSlide key={item.id} onClick={onClick}>
-                    <SwiperSlide key={item.id} >
+                    <SwiperSlide key={item.id}>
                         {item.media_type === "image" ? (
                             <div className={`rounded h-[${postHeight}] w-[${postWidth}] items-center justify-center bg-blue-400`}>
                                 <CldImage
@@ -111,7 +113,7 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, postHeight=720, po
                                 />
                             </div>
                         ) : (
-                            <div className={`h-[${postHeight}] w-[${postWidth}] rounded flex items-center justify-center`}>
+                            <div className={`h-[${postHeight}] w-[${postWidth}] rounded flex items-center justify-center swiper-no-swiping`} onClick={(e) => e.stopPropagation()}>
                                 <Suspense fallback={<VideoLoadingFallback/>}>
                                 <CldVideoPlayer
                                     width={postWidth}
