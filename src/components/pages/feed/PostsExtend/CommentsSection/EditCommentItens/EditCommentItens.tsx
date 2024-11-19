@@ -1,6 +1,6 @@
 import { HTMLAttributes} from "react"
-import { AiTwotoneEdit } from "react-icons/ai"
-import { MdDelete } from "react-icons/md"
+import { FaEdit } from "react-icons/fa";
+import { FaTrash } from "react-icons/fa";
 import { twJoin } from "tailwind-merge"
 
 
@@ -18,8 +18,8 @@ export const EditCommentItens = ({onClickEdit, onClickDelete, ...rest}:EditComme
         <div 
         {...rest}
         className={twJoin("flex gap-2 w-full cursor-pointer", rest.className)}>
-            <AiTwotoneEdit onClick={onClickEdit}/>
-            <MdDelete onClick={onClickDelete}/>
+            <FaEdit onClick={onClickEdit} className="w-4"/>
+            <FaTrash onClick={onClickDelete} className="w-3"/>
         </div>
     )
 }
