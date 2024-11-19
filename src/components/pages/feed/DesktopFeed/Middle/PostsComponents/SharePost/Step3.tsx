@@ -3,8 +3,7 @@ import { GoFileMedia } from "react-icons/go";
 import { useAuthContext } from "../../../../../../../context/AuthContext";
 import { useEffect, useState } from "react";
 import { PostMediaProps } from "../../../../../../../services/postPost";
-import { Toaster } from "@/components/ui/sonner";
-import { toast } from "sonner"
+import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 
 
 const Step3 = ({setUploadedFiles, handleSubmit, makeUploadRequest, uploadedFiles, returnFirstStep}) =>{
@@ -31,8 +30,9 @@ const Step3 = ({setUploadedFiles, handleSubmit, makeUploadRequest, uploadedFiles
     };
 
     const handleUploadError = (file) => {
-        toast("Um dos seus uploads não cumprem as diretrizes", {
+        CustomToast.error("Um dos seus uploads não cumpre as diretrizes", {
             description: file.statusText,
+            duration: 5000,
         })
         setWidgetKey((prevCount) => prevCount + 1);
     }
@@ -64,7 +64,7 @@ const Step3 = ({setUploadedFiles, handleSubmit, makeUploadRequest, uploadedFiles
 
     return (
         <div className="h-full flex flex-col gap-1 p-2">
-            <Toaster/>
+            <CustomToaster/>
             <div className="flex flex-col gap-1 w-full text-center">
                 <p className="text-gray-500 text-xs">Envie até 5 fotos ou vídeos, com dimensões mínimas de 320x320 pixels.</p>
                 <p className="text-gray-500 text-xs">Fotos podem ter no máximo 5mb e vídeos 50mb.</p>
