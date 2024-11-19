@@ -95,10 +95,9 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, postHeight=720, po
             >
                 <CustomPagination/>
                 {media.map((item)=> (
-                    // <SwiperSlide key={item.id} onClick={onClick}>
                     <SwiperSlide key={item.id}>
                         {item.media_type === "image" ? (
-                            <div className={`rounded h-[${postHeight}] w-[${postWidth}] items-center justify-center bg-blue-400`}>
+                            <div className={`rounded h-[${postHeight}] w-[${postWidth}] items-center justify-center`}>
                                 <CldImage
                                     src={item.media_file}
                                     width={item.width}

@@ -13,6 +13,8 @@ import { SubmitingForm } from "../../../../../layouts/SubmitingFormLayout";
 import { PostMediaProps, postPost } from "../../../../../../services/postPost";
 import Step4 from "./SharePost/Step4";
 import { deletePostFile } from "@/services/cloudinary_requests/deletePostFile";
+import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
+import { ErrosInput } from "@/components/layouts/ErrosInputLayout/ErrorsInputLayout";
 
 
 type dataForm = {
@@ -66,18 +68,22 @@ const PostComponent = ({}) => {
                 setStep(4)
             }
         } catch (error) {
-            console.log(error)
+            CustomToast.error("Ops...", {
+                description: "Parece que algum erro aconteceu durante o processo de upload, pedimos desculpa pelo ocorrido. Por favor, tente novamente.",
+                duration:5000
+            })
             if (uploadedFiles.length > 0) {
                 for (const media of uploadedFiles) {   
                     await deletePostFile(media.media_file, media.media_folder, media.media_type);
                 }
+                setUploadedFiles([])
             }
-            throw new Error(error.message)
         }
     }
 
     return (
         <div className='w-full bg-white-200 h-[300px] mt-2 rounded-lg flex flex-col shadow-lg mb-4 gap-1'>
+            {/* <CustomToaster/> */}
             <div className='w-full text-center text-black-200 pt-1'>
                 {step === 1 && (
                     <h1>Texto</h1>

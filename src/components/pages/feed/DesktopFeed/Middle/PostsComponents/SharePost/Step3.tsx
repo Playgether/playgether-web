@@ -35,6 +35,7 @@ const Step3 = ({setUploadedFiles, handleSubmit, makeUploadRequest, uploadedFiles
             duration: 5000,
         })
         setWidgetKey((prevCount) => prevCount + 1);
+        setUploadedFiles([])
     }
 
     const handleOnAbort = () => {
