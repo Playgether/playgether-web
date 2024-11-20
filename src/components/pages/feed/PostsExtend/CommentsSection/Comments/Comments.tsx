@@ -75,7 +75,7 @@ export const Comments = ({item, post_id}: CommentsProps) => {
                 </div>
             ):
                 <div className="w-full">
-                    <p key={item.id}>{item.comment}</p>
+                    <p className="whitespace-pre-wrap" key={item.id}>{item.comment}</p>
                 </div>
             }
             <PostPropertiersPostsExpand quantity_comment={item.quantity_comment} quantity_likes={item.quantity_likes} user_already_like={item.user_already_like} object_id={item.id}/>

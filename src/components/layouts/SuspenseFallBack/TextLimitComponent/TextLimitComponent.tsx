@@ -37,7 +37,7 @@ const TextLimitComponent = ({ text, maxCharacters, textFinalClassName="", paragr
   return (
     <div className={twJoin(rest.className)}>
 
-        <p className={twJoin(paragraphClassName)}>{limitedText}{text.length > maxCharacters && <span className={textFinalClassName}>{textFinal}</span>}</p>
+        <p className={twJoin('whitespace-pre-wrap', paragraphClassName)}>{limitedText}{text.length > maxCharacters && <span className={textFinalClassName}>{textFinal}</span>}</p>
 
     </div>
   );
