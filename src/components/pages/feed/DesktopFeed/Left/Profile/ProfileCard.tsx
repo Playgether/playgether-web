@@ -11,12 +11,14 @@ import OrangeButton from "../../../../../elements/OrangeButton/OrangeButton";
 import { TopCard } from "../../MultUseComponents/TopCard";
 import { CldUploadWidget } from "next-cloudinary";
 import { IoCreateOutline } from "react-icons/io5";
+import { useRouter } from 'next/navigation';
 
 
 /** Este componente é o wrapper principal do card de profile na página feed. Seu intuito é ser o wrapper de todo o card e seus componentes filhos. */
 const ProfileCard = ({}) => {
     const {user} = useAuthContext()
     const {profile} = useProfileContext()
+    const route = useRouter()
 
     return (
         
@@ -58,7 +60,7 @@ const ProfileCard = ({}) => {
                 <SiCounterstrike />
             </div>
             <div>
-                <OrangeButton className="text-sm font-semibold xl:px-6 2xl:py-3 lg:px-6 lg:py-2">Ver Perfil</OrangeButton>
+                <OrangeButton className="text-sm font-semibold xl:px-6 2xl:py-3 lg:px-6 lg:py-2" onClick={() => route.push('/profile')}>Ver Perfil</OrangeButton>
             </div>
         </div>
       

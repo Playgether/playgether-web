@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import jwt_decode from 'jwt-decode';
 import { loginUser } from "../services/loginUser";
 import { loginUserProps } from "../services/loginUser";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname  } from "next/navigation";
 import { updateTokenRequest, TokenData } from "../services/updateTokenRequest";
 
 export type UserProps = {
@@ -27,6 +27,7 @@ const AuthContext = createContext<AuthContextProps>({} as AuthContextProps);
 
 const AuthProvider = ({children}: {children: React.ReactNode}) => {
   const router = useRouter()
+  const pathname = usePathname()
   const [authTokens, setAuthTokens] = useState<TokenData | null>();
   const [user, setUser] = useState<UserProps | null>(null);
   const [loading, setLoading] = useState(true)
@@ -65,8 +66,6 @@ const AuthProvider = ({children}: {children: React.ReactNode}) => {
     }
   };
 
-
-
   const logout = () => {
     setIsLoggedOut(true);
     setAuthTokens(null)
@@ -75,6 +74,22 @@ const AuthProvider = ({children}: {children: React.ReactNode}) => {
     router.push('/')
   
   };
+
+  const redirect = async () => {
+    if (user && authTokens) {
+      if (pathname === '/') {
+        router.push('/feed');
+      }
+    } else if (!user && !authTokens && pathname !== '/') {
+      router.push('/');
+    }
+  }
+
+  useEffect(() => {
+    if (!loading) {
+      redirect();
+    }
+  }, [user, authTokens, loading]);
 
   const updateToken = async ()=> {
     if (authTokens && authTokens.refresh) {
