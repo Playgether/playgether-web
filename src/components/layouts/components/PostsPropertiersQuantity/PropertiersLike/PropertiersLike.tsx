@@ -81,7 +81,7 @@ const PropertiersLike = ({quantity_likes, iconClassName, user_already_like, cont
                 onClickLike()
             }}
             />}
-            <p className="text-black-200">{formatNumber(quantity_likes)}</p>
+            <p className="text-black-200">{formatNumber(quantitylikesNumber)}</p>
         </div>
     )
 }
