@@ -36,12 +36,12 @@ export interface PostsProps extends HTMLAttributes<HTMLDivElement>{
      */
     slideIndex?:number 
     
-    /** Essa prop recebe a altura do post em valor numérico. Ela é necessária para criar uma altura exata para o container do post, caso nenhuma seja,
+    /** Essa prop recebe a altura do post em valor numérico(px). Ela é necessária para criar uma altura exata para o container do post, caso nenhuma seja,
      * passada, o padrão será 720
      */
     postHeight?:number
 
-    /** Essa prop recebe a largura do post em valor númerico. Ela é necessária para criar uma largura exata para o container do post, caso nenhuma seja,
+    /** Essa prop recebe a largura do post em valor númerico(px). Ela é necessária para criar uma largura exata para o container do post, caso nenhuma seja,
      * passada, o padrão será 1080
      */
     postWidth?:number
@@ -89,7 +89,7 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, postHeight=720, po
             className='h-full z-10 relative'
             onSlideChange={handleSlideChange}
             initialSlide={slideIndex}
-            autoHeight={true}
+            // autoHeight={true}
             noSwiping={true}
             noSwipingClass="swiper-no-swiping"
             >
@@ -97,12 +97,12 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, postHeight=720, po
                 {media.map((item)=> (
                     <SwiperSlide key={item.id}>
                         {item.media_type === "image" ? (
-                            <div className={`rounded h-[${postHeight}] w-[${postWidth}] items-center justify-center`}>
+                            <div className='rounded items-center justify-center'>
                                 <CldImage
                                     src={item.media_file}
-                                    width={item.width}
-                                    height={item.height}
-                                    className='rounded object-contain'
+                                    width={postWidth}
+                                    height={postHeight}
+                                    className={`rounded object-contain max-h-[${postHeight}px]`}
                                     sizes="(max-width: 768px) 100vw,
                                     (max-width: 1200px) 50vw,
                                     33vw"
@@ -112,7 +112,7 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, postHeight=720, po
                                 />
                             </div>
                         ) : (
-                            <div className={`h-[${postHeight}] w-[${postWidth}] rounded flex items-center justify-center swiper-no-swiping`} onClick={(e) => e.stopPropagation()}>
+                            <div className='rounded items-center justify-center swiper-no-swiping'>
                                 <Suspense fallback={<VideoLoadingFallback/>}>
                                 <CldVideoPlayer
                                     width={postWidth}
@@ -127,7 +127,7 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, postHeight=720, po
                                     autoplay="on-screen"
                                     playsinline={true}
                                     fluid={true}
-                                    className='rounded absolute z-10'
+                                    className={`rounded object-contain  max-h-[${postHeight}px] max-w-[${postWidth}px]`}
                                 />
                                 </Suspense>
                             </div>    
