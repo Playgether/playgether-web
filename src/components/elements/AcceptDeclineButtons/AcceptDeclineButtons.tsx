@@ -1,10 +1,14 @@
 import { IoCheckmarkOutline, IoCloseOutline } from "react-icons/io5"
 
 type AcceptDeclineButtonsProps = {
+    /** Esta prop recebe a ação que deve ser executada quando o CheckMark (Botão de accept) for clicado */
     acceptAction: () => any,
+        /** Esta prop recebe a ação que deve ser executada quando o CloseOutline (Botão de decline) for clicado */
     declineAction: () => any,
 }
-const AcceptDeclineButtons = ({acceptAction, declineAction}) => {
+
+/** Este componente cria dois botões de accept e decline. Cada button recebe uma função que será executada ao clicar neles*/
+const AcceptDeclineButtons = ({acceptAction, declineAction}:AcceptDeclineButtonsProps) => {
     return (
         <>
             <div className="h-14 w-14 bg-gray-200 flex justify-center items-center rounded hover:bg-green-200 group cursor-pointer transition-all duration-200 ease-in-out" onClick={() => acceptAction()}>

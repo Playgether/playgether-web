@@ -89,7 +89,6 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, postHeight=720, po
             className='h-full z-10 relative'
             onSlideChange={handleSlideChange}
             initialSlide={slideIndex}
-            // autoHeight={true}
             noSwiping={true}
             noSwipingClass="swiper-no-swiping"
             >
@@ -102,7 +101,8 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, postHeight=720, po
                                     src={item.media_file}
                                     width={postWidth}
                                     height={postHeight}
-                                    className={`rounded object-contain max-h-[${postHeight}px]`}
+                                    style={{ maxHeight: `${postHeight}px` }}
+                                    className="rounded object-contain"
                                     sizes="(max-width: 768px) 100vw,
                                     (max-width: 1200px) 50vw,
                                     33vw"
@@ -127,7 +127,7 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, postHeight=720, po
                                     autoplay="on-screen"
                                     playsinline={true}
                                     fluid={true}
-                                    className={`rounded object-contain  max-h-[${postHeight}px] max-w-[${postWidth}px]`}
+                                    className={`rounded object-contain max-h-[${postHeight}px] max-w-[${postWidth}px]`}
                                 />
                                 </Suspense>
                             </div>    
