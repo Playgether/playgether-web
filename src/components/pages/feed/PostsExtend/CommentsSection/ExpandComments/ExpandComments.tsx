@@ -14,6 +14,7 @@ import TextAreaLayout from "../../../../../layouts/TextAreaLayout/TextAreaLayout
 import { ErrosInput } from "../../../../../layouts/ErrosInputLayout/ErrorsInputLayout"
 import OrangeButton from "../../../../../elements/OrangeButton/OrangeButton"
 import EditAnswer from "../EditAnswer/EditAnswer"
+import EditedComment from "../EditedComment/EditedComment"
 
 
 
@@ -37,8 +38,8 @@ export const ExpandedComments = ({comment_of_comment, comment_id}: ExpandedComme
     }
 
     const Submiting = async (data : commentPatchProps) => {
-
-        const response = await SubmitingForm(() => patchComment(data, authTokens, comment_of_comment.id));
+        const updatedData = { ...data, edited: true };
+        const response = await SubmitingForm(() => patchComment(updatedData, authTokens, comment_of_comment.id));
         editComment(response.data)
         editAnswerComment(comment_id, comment_of_comment.id, response.data)
         setIsEditing(false)
@@ -47,9 +48,22 @@ export const ExpandedComments = ({comment_of_comment, comment_id}: ExpandedComme
     return (
         <>
         <div key={comment_of_comment.id} className="mb-4 w-full">
-            <div className="flex flex-row justify-between">
-                <ProfileAndUsername username={comment_of_comment.created_by_user_name} profile_photo={comment_of_comment.created_by_user_photo} timestamp={comment_of_comment.timestamp} className="w-full" usernameAndTimestampDiv="w-full flex flex-row justify-between pr-4" imageClassName="h-6 w-6"/>
-                <PostPropertiersAnswer object_id={comment_of_comment.id} quantity_likes={comment_of_comment.quantity_likes} user_already_like={comment_of_comment.user_already_like}/>
+            <div className="flex justify-between w-full">
+                <div className="w-full space-y-1">
+                    <ProfileAndUsername username={comment_of_comment.created_by_user_name} 
+                    profile_photo={comment_of_comment.created_by_user_photo} 
+                    timestamp={comment_of_comment.timestamp} 
+                    className="w-full" 
+                    usernameAndTimestampDiv="w-full flex flex-row justify-between pr-4" 
+                    imageClassName="h-6 w-6"
+                    />
+                {comment_of_comment.edited === true ? <EditedComment/>: null}
+                </div>
+                <PostPropertiersAnswer 
+                object_id={comment_of_comment.id} 
+                quantity_likes={comment_of_comment.quantity_likes} 
+                user_already_like={comment_of_comment.user_already_like}
+                />
             </div>
             <div className="flex flex-row justify-between gap-2 pt-2">
                 {isEditing ? (
@@ -77,7 +91,7 @@ export const ExpandedComments = ({comment_of_comment, comment_id}: ExpandedComme
                     </div>
                 ):
                 <div className="break-all lg:text-sm xl:text-sm">
-                    <p>{comment_of_comment.comment}</p> 
+                    <p className="whitespace-pre-wrap">{comment_of_comment.comment}</p> 
                 </div>
                 }
             </div>

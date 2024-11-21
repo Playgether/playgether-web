@@ -2,7 +2,8 @@ import { api } from "./api";
 import { TokenData } from "./updateTokenRequest";
 
 export interface commentPatchProps {
-    comment: string
+    comment: string;
+    edited:boolean;
 }
 
 export const patchComment = async (data: commentPatchProps, authTokens : TokenData | null | undefined, object_id: number) => {

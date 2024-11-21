@@ -12,8 +12,13 @@ export interface PostPropertiersPostsAnswerProps {
 /** Este é o componente responsável por criar as propriedades das respostas dos comentários dos posts em PostExpand (ele utiliza o Composite) */
 const PostPropertiersPostsAnswer = ({quantity_likes, user_already_like, object_id}: PostPropertiersPostsAnswerProps ) => {
     return (
-        <PostPropertiers.Root className="items-start">
-            <PostPropertiers.Like quantity_likes={quantity_likes} user_already_like={user_already_like} object_id={object_id} content_type={CommentContentType.comment} iconClassName="h-4 w-4"/>
+        <PostPropertiers.Root className="h-6">
+            <PostPropertiers.Like 
+            quantity_likes={quantity_likes} 
+            user_already_like={user_already_like} 
+            object_id={object_id} 
+            content_type={CommentContentType.comment} 
+            iconClassName="h-4 w-4"/>
         </PostPropertiers.Root>
     )
 }

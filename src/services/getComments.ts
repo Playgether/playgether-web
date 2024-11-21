@@ -15,6 +15,7 @@ export interface PostsCommentsProps {
     content_type: string;
     user: number;
     comments_of_comments: PostCommentsOfCommentsProps[]
+    edited:boolean;
     
 }
 
@@ -32,6 +33,7 @@ export interface PostCommentsOfCommentsProps {
     user_already_like: boolean
     user: number;
     comments_of_comments: PostCommentsOfCommentsProps[];
+    edited:boolean;
     
 }
 

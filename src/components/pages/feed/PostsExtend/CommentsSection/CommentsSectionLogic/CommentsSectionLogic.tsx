@@ -8,6 +8,8 @@ import { ExpandedComments } from "../ExpandComments/ExpandComments"
 import { NoHaveAnswersYet } from "../NoHaveAnswersYet/NoHaveAnswersYet"
 import NoHaveCommentsYet from "../NoHaveCommentsYet/NoHaveCommentsYet"
 import { useCommentsContext } from "../../../../../../context/CommentsContext"
+import EditedComment from "../EditedComment/EditedComment"
+import PostPropertiersPostsExpand from "../../../DesktopFeed/Middle/PostsComponents/PostPropertiers/PostPropertiers"
 
 
 /** Este componente é responsável por gerar toda a lógica de exibição da seção de comentários em PostsExpand, ou seja, fazer map nos comentários, exibir os componente corretos quando não houver
@@ -30,8 +32,25 @@ const CommentsSection = ({post_id}:{post_id:number}) => {
             {comments?.data.length > 0 ? (
                 comments?.data.map((item) => (
                     <div className="text-gray-500 flex flex-row bg-white-200 items-center justify-start w-full pl-4" key={item.id}> 
-                        <div className="w-full ">
-                            <ProfileAndUsername className="mt-4 mb-1 w-full" profile_photo={item.created_by_user_photo} username={item.created_by_user_name} timestamp={item.timestamp} usernameAndTimestampDiv="flex flex-row w-full justify-between pr-4" imageClassName="h-6 w-6"/>
+                        <div className="w-full">
+                            <div className="w-full flex justify-between mt-4 ">
+                                <div className="w-full space-y-1">
+                                    <ProfileAndUsername 
+                                    className="w-full " 
+                                    profile_photo={item.created_by_user_photo} 
+                                    username={item.created_by_user_name} 
+                                    timestamp={item.timestamp} 
+                                    usernameAndTimestampDiv="flex flex-row w-full justify-between pr-4"
+                                    imageClassName="h-6 w-6"/>
+                                    {item.edited === true ? <EditedComment/>: null}
+                                </div>
+                                <PostPropertiersPostsExpand 
+                                quantity_comment={item.quantity_comment} 
+                                quantity_likes={item.quantity_likes} 
+                                user_already_like={item.user_already_like} 
+                                object_id={item.id}
+                                />
+                            </div>
                             <div className="w-full flex flex-col items-start justify-start text-sm">
                                 <Comments post_id={post_id} item={item}/>
                                 <p className='text-blue-500 cursor-pointer text-xs pl-1 pt-2 h-10' onClick={() => handleExpandComment(item.id)}>{expandedComments[item.id] === true ? 'Ocultar Respostas' : 'Ver Respostas'}</p>

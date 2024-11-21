@@ -14,8 +14,13 @@ export interface PostPropertiersPostsExpandProps {
 /** Este é o componente responsável por criar as propriedades dos posts em PostExpand (ele utiliza o Composite) */
 const PostPropertiersPostsExpand = ({quantity_comment, quantity_likes, user_already_like, object_id}: PostPropertiersPostsExpandProps ) => {
     return (
-        <PostPropertiers.Root className="items-start">
-            <PostPropertiers.Like quantity_likes={quantity_likes} user_already_like={user_already_like} object_id={object_id} content_type={CommentContentType.comment} iconClassName="h-4 w-4"/>
+        <PostPropertiers.Root className="h-fit mr-2">
+            <PostPropertiers.Like 
+            quantity_likes={quantity_likes} 
+            user_already_like={user_already_like} 
+            object_id={object_id} 
+            content_type={CommentContentType.comment} 
+            iconClassName="h-4 w-4"/>
             <PostPropertiers.Comment quantity_comment={quantity_comment}/>
         </PostPropertiers.Root>
     )
