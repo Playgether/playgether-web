@@ -6,7 +6,7 @@ export interface PostTextPostExpandProps {
 export const PostTextPostExpand = ({text}:PostTextPostExpandProps) => {
     return (
         <div className="pt-4 pl-4">
-            <p>{text}</p>
+            <p className='whitespace-pre-wrap'>{text}</p>
         </div> 
     )
 }

@@ -38,13 +38,14 @@ export const Comments = ({item, post_id}: CommentsProps) => {
         setIsEditing(value);
     }
 
-    const Submiting = async (data : commentPatchProps) => {
-
-        const response = await SubmitingForm(() => patchComment(data, authTokens, item.id));
-        editComment(response.data)
-        setIsEditing(false)
-
-    }
+    const Submiting = async (data: commentPatchProps) => {
+        const updatedData = { ...data, edited: true };
+    
+        const response = await SubmitingForm(() => patchComment(updatedData, authTokens, item.id));
+        editComment(response.data);
+    
+        setIsEditing(false);
+    };
     
 
     return (
@@ -75,10 +76,9 @@ export const Comments = ({item, post_id}: CommentsProps) => {
                 </div>
             ):
                 <div className="w-full">
-                    <p key={item.id}>{item.comment}</p>
+                    <p className="whitespace-pre-wrap" key={item.id}>{item.comment}</p>
                 </div>
             }
-            <PostPropertiersPostsExpand quantity_comment={item.quantity_comment} quantity_likes={item.quantity_likes} user_already_like={item.user_already_like} object_id={item.id}/>
         </div>
         <div className="flex flex-col w-full -ml-5 mt-3 items-center justify-center gap-4">
             <EditComment post_id={post_id} Comment={item} handleEditClick={handleEditClick} isEditing={isEditing} setIsEditing={setIsEditing} className="ml-4 pb-4"/>

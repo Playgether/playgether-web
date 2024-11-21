@@ -56,7 +56,7 @@ const FeedComponent = () => {
             </div>
       
             {resource?.has_post_media ? (
-                <div className="cursor-pointer bg-white-200">
+                <div className="cursor-pointer bg-white-200 ">
                   <Posts media={resource.medias} onClick={() => handlePostsExtend(resource)} setSlideIndex={setSlideIndex} postHeight={400} postWidth={600} className="max-w-[600px] p-4"/>
                 </div>
             ) : null}

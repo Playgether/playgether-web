@@ -79,14 +79,14 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, postHeight=720, po
 
 
     return (
-        <div className={twJoin("relative", rest.className)}>
+        <div className={twJoin("relative bg-blue-400", rest.className)}>
             {media && media.length > 0 ? (
             <Swiper
             slidesPerView={1}
             pagination={{type:'fraction', el:'.swiper-custom-pagination',}}
             navigation
             modules={[Navigation, Pagination]}
-            className='h-full z-10 relative'
+            className='h-full relative flex justify-center items-center bg-red-500'
             onSlideChange={handleSlideChange}
             initialSlide={slideIndex}
             noSwiping={true}
@@ -94,9 +94,9 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, postHeight=720, po
             >
                 <CustomPagination/>
                 {media.map((item)=> (
-                    <SwiperSlide key={item.id}>
+                    <SwiperSlide key={item.id} style={{ maxHeight: `${postHeight}px` }}>
                         {item.media_type === "image" ? (
-                            <div className='rounded items-center justify-center'>
+                            <div className='rounded'>
                                 <CldImage
                                     src={item.media_file}
                                     width={postWidth}
@@ -112,7 +112,7 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, postHeight=720, po
                                 />
                             </div>
                         ) : (
-                            <div className='rounded items-center justify-center swiper-no-swiping'>
+                            <div className='rounded items-center justify-center swiper-no-swiping flex'>
                                 <Suspense fallback={<VideoLoadingFallback/>}>
                                 <CldVideoPlayer
                                     width={postWidth}
