@@ -83,7 +83,6 @@ const PostComponent = ({}) => {
 
     return (
         <div className='w-full bg-white-200 h-[300px] mt-2 rounded-lg flex flex-col shadow-lg mb-4 gap-1'>
-            {/* <CustomToaster/> */}
             <div className='w-full text-center text-black-200 pt-1'>
                 {step === 1 && (
                     <h1>Texto</h1>

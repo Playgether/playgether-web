@@ -12,6 +12,7 @@ const Step3 = ({setUploadedFiles, handleSubmit, makeUploadRequest, uploadedFiles
     const [activeUploads, setActiveUploads] = useState(0);
 
     const handleUploadSuccess = async(result) => {
+        console.log(result)
         await setUploadedFiles((prevFiles:PostMediaProps[]) => [
             ...prevFiles,
             {
@@ -79,6 +80,8 @@ const Step3 = ({setUploadedFiles, handleSubmit, makeUploadRequest, uploadedFiles
                         sources:['local'],
                         minImageHeight:320,
                         minImageWidth:320,
+                        maxImageHeight:1080,
+                        maxImageWidth:1980,
                         maxFiles:5,
                         tags:[`${user?.username}`, getCurrentDate(), "post", "user"],
                         detection:"unidet",

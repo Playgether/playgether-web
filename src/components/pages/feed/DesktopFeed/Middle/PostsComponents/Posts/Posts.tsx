@@ -105,9 +105,9 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, postHeight=720, po
                                     height={postHeight}
                                     style={{ maxHeight: `${postHeight}px` }}
                                     className="rounded object-contain"
-                                    sizes="(max-width: 768px) 100vw,
-                                    (max-width: 1200px) 50vw,
-                                    33vw"
+                                    // sizes="(max-width: 768px) 100vw,
+                                    // (max-width: 1200px) 50vw,
+                                    // 33vw"
                                     alt="No information available"
                                     loading='lazy'
                                     onClick={onClick} 
@@ -122,7 +122,7 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, postHeight=720, po
                                     src={item.media_file}
                                     autoPlay="on-scroll" 
                                     colors={{accent:"orange", text:"orange"}} 
-                                    playbackRates={["0.25", "0.5", "0.75", "1", "1.25", "1.50", "1.75", "2"]} 
+                                    // playbackRates={["0.25", "0.5", "0.75", "1", "1.25", "1.50", "1.75", "2"]} 
                                     showJumpControls={true}
                                     seekThumbnails={false}
                                     logo={false}

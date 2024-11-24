@@ -4,11 +4,18 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { useAuthContext } from "./AuthContext";
 import { FeedProps, getFeed } from "../services/getFeed";
 import { useProfileContext } from "./ProfileContext";
+import { FetchNextPageOptions, InfiniteData, InfiniteQueryObserverResult, useInfiniteQuery } from "@tanstack/react-query";
 
 type FeedContextProps = {
     feed: FeedProps[] | null | void | undefined;
     alterCommentQuantity: (post_id: number) => void;
     subtractCommentQuantity: (post_id: number) => void;
+    fetchNextPage:(options?: FetchNextPageOptions | undefined) => Promise<InfiniteQueryObserverResult<InfiniteData<{
+        data: any;
+        next_page: any;
+    }, unknown>, Error>>;
+    hasNextPage: boolean;
+    isFetchingNextPage: boolean;
 }
 
 const FeedContext = createContext<FeedContextProps>({} as FeedContextProps)
@@ -17,6 +24,26 @@ const FeedContextProvider = ({children}: {children: React.ReactNode}) => {
     const {authTokens} = useAuthContext()
     const {profile} = useProfileContext()
     const [feed, setFeed] = useState<FeedProps[] | void | null | undefined>();
+
+    const {
+        data,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+    } = useInfiniteQuery({
+        queryKey: ["feed-posts"],
+        queryFn: ({ pageParam }) => 
+            getFeed(authTokens, profile?.id, pageParam), 
+        getNextPageParam: (lastPage) => {
+            if (lastPage?.next_page) {
+                const url = new URL(lastPage.next_page);
+                return url.searchParams.get("cursor"); 
+            }
+            return null;
+        },
+        enabled: !!authTokens && !!profile?.id,
+        initialPageParam: null,
+    });
 
     const alterCommentQuantity = (post_id: number) => {
         if (!feed) return; 
@@ -48,24 +75,30 @@ const FeedContextProvider = ({children}: {children: React.ReactNode}) => {
         }
     };
 
-    const fetchData = async () => {
-        try {
-            const response = await getFeed(authTokens, profile?.id);
-            setFeed(response.data);
-        } catch (error) {
-            console.error("Erro ao buscar conteúdo:", error);
-        }
-    };
+    const cleanFeed = () => {
+        setFeed([]);
+    }
 
     useEffect(()=> {
-        if (!feed && authTokens && profile?.id){
-            fetchData();
+        if (authTokens === null){
+            cleanFeed()
         }
-    }, [profile]);
 
+    }, [authTokens]);
+
+    useEffect(()=> {
+        setFeed(data?.pages?.flatMap((page) => page.data) || []);
+    }, [data])
 
     return(
-        <FeedContext.Provider value={{feed, alterCommentQuantity, subtractCommentQuantity}}>
+        <FeedContext.Provider value={{
+            feed, 
+            alterCommentQuantity, 
+            subtractCommentQuantity,
+            fetchNextPage,
+            hasNextPage,
+            isFetchingNextPage,
+            }}>
             {children}
         </FeedContext.Provider>
         

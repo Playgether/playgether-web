@@ -46,6 +46,12 @@ export interface PostMedias {
     
 }
 
+export interface PaginationProps {
+    next:string;
+    previous: string;
+    results:FeedProps[];
+}
+
 export interface FeedProps {
     created_by_user: number;
     created_by_user_name: string;
@@ -66,18 +72,31 @@ export interface FeedProps {
     user_already_like: boolean;
 }
 
-export const getFeed = async (authTokens : TokenData | undefined | null, userId : number | undefined) => {
-
+export const getFeed = async (
+    authTokens: TokenData | undefined | null,
+    userId: number | undefined,
+    pageParam: string | null = null
+) => {
     try {
-        const response = await api.get<FeedProps[]>(`/api/v1/posts/${userId}/feed/`, {
+        const response = await api.get(`/api/v1/posts/${userId}/feed/`, {
             headers: {
-                'Authorization':'Bearer ' + String(authTokens?.access)
-            }})
-        return response
-    } catch (error) {   
-        return error;
-    };
-   
+                Authorization: `Bearer ${authTokens?.access}`,
+            },
+            params: {
+                cursor: pageParam, 
+            },
+        });
+        return {
+            data: response.data.results,
+            next_page: response.data.next,
+        };
+    } catch (error) {
+        console.error("Error fetching feed:", error);
+        return {
+            data: [],
+            next_page: null,
+        };
+    }
 };
 
   

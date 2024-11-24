@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 
 import Posts from "./PostsComponents/Posts/Posts";
 import PostProperies from "./PostsComponents/PostsProperies";
@@ -9,6 +9,7 @@ import PostsExtend from "../../PostsExtend/PostsExtend";
 import ProfileAndUsername from "../../../../layouts/components/ProfileAndUsername";
 import PostText from "../../../../layouts/PostText/PostText";
 import { useFeedContext } from "../../../../../context/FeedContext";
+import InfiniteScrollFallback from "../MultUseComponents/InfiniteScroll/InfiniteScrollFallback";
 
 
 interface ApiResponse {
@@ -16,10 +17,28 @@ interface ApiResponse {
 }
 
 const FeedComponent = () => {
-  const {feed} = useFeedContext()
+  const {feed, isFetchingNextPage, hasNextPage, fetchNextPage} = useFeedContext()
   const [openPostsExtend, setOpenPostsExtend] = useState(false)
   const [resourceObject, setResourceObject] = useState<FeedProps>()
   const [slideIndex, setSlideIndex] = useState(0)
+  const observer = useRef<IntersectionObserver | null>(null);
+
+  const lastFeedElementRef = useCallback(
+      (node: HTMLDivElement | null) => {
+          if (isFetchingNextPage) return;
+
+          if (observer.current) observer.current.disconnect();
+
+          observer.current = new IntersectionObserver((entries) => {
+              if (entries[0].isIntersecting && hasNextPage) {
+                  fetchNextPage();
+              }
+          });
+
+          if (node) observer.current.observe(node);
+      },
+      [isFetchingNextPage, fetchNextPage, hasNextPage]
+  );
 
 
   const handlePostsCloseExtend = () => {
@@ -30,7 +49,6 @@ const FeedComponent = () => {
     setResourceObject(resourceObject)
     setOpenPostsExtend(!openPostsExtend)
   }
-  
 
   return (
       <>
@@ -39,8 +57,11 @@ const FeedComponent = () => {
           <PostsExtend resource={resourceObject} onClose={handlePostsCloseExtend} slideIndex={slideIndex}/>
         </div>
       }
-        {feed && feed.map((resource) => (
-          <div key={resource.id}>
+        {feed && feed.map((resource, index) => (
+          <div 
+          key={resource.id}
+          ref={index === Math.max(0, feed.length - 4) ? lastFeedElementRef : null}
+          >
             <div className="bg-white-200 flex items-start justify-start">
                 <ProfileAndUsername 
                 username={resource.created_by_user_name}
@@ -71,6 +92,7 @@ const FeedComponent = () => {
             </div>
           </div>
       ))}
+      {isFetchingNextPage && <InfiniteScrollFallback message={"Estamos carregando mais posts para você"} className="w-5/6 h-24 p-5"/>}
     </>
   );
 };
