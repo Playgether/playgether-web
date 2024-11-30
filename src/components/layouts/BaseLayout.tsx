@@ -7,26 +7,32 @@ import { twMerge } from "tailwind-merge";
 import { ResponsiveGlobalChat } from "./Megafone/ResponsiveGlobalChat";
 
 
-const BaseLayout = ({children, ...rest}) => {
-    return (
-        <div className={twMerge('h-screen w-screen bg-white-200 bg-opacity-85 flex flex-col overflow-x-hidden gap-3 overflow-y-hidden max-h-screen relative', rest.className)}>
-            <HeaderBase />
+const BaseLayout = ({ children, ...rest }) => {
+  return (
+    <div className="h-fit flex flex-col max-w-screen">
+      {/* Header fixado no topo */}
+      <div className="sticky top-0 z-10 min-w-screen bg-purple-600">
+        <HeaderBase />
+      </div>
 
-            <div className="flex flex-row w-full items-center justify-center h-4/6 flex-grow shrink-0 mb-4">
-                <AsideBase />
-                {children}
-            </div>   
-            <div className="hidden lg:flex">
-                <GlobalChat />
-            </div>
-
-            <div className="lg:hidden">
-                <ResponsiveGlobalChat />
-            </div>
+      {/* Corpo principal */}
+      <div className={twMerge("flex flex-row w-full flex-grow max-w-screen mt-2", rest.className)}>
+        <div className="sticky top-16 h-[calc(100vh-160px)] z-10 max-w-screen">
+            <AsideBase />
         </div>
-      )
-  }
+        {children}
+      </div>
+
+      {/* Chat fixado na parte inferior */}
+      <div className="hidden lg:flex sticky z-10 bottom-0 max-w-screen w-full">
+        <GlobalChat />
+      </div>
+      <div className="lg:hidden sticky bottom-0 max-w-screen">
+        <ResponsiveGlobalChat />
+      </div>
+    </div>
+  );
+};
 
 export default BaseLayout;
-
 

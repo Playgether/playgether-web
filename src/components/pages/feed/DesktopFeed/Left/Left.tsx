@@ -7,14 +7,17 @@ import ProfileCard from "./Profile/ProfileCard"
 const Left = () => {
     return (
 
-        <div className="flex flex-row space-x-2 w-full 2xl:sticky top-0 h-full">
-            <div className="bg-opacity-80 flex-1 flex flex-col space-y-4 items-end gap-2 2xl:sticky top-0 2xl:h-fit sticky-last">
+        <div className="flex flex-row space-x-2 w-full h-full 2xl:h-fit 2xl:sticky 2xl:top-16">
+            <div className="bg-opacity-80 flex-1 flex flex-col space-y-4 items-end gap-2 h-full">
                 <ProfileCard />
-                <OnlineFriendsCard />
+                <div className="sticky top-[calc(4rem+16px)] 2xl:top-0 2xl:static">
+                    <OnlineFriendsCard />
+                </div>
             </div>
         </div>
+
 
     )
 }
 
-export default Left
+export default Left 

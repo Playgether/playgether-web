@@ -14,7 +14,7 @@ export const AppProvider = ({ children } : { children: React.ReactNode }) => {
         <QueryClientProvider client={queryClient}>
             <ProfileContextProvider>
                 <NotificationsContextProvider>
-                    {children}
+                        {children}
                 </NotificationsContextProvider>
             </ProfileContextProvider>  
         </QueryClientProvider>

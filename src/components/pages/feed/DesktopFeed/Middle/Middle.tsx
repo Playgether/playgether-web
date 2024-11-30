@@ -4,14 +4,16 @@ import FeedComponent from "./FeedComponent";
 import FinishFeed from "../MultUseComponents/FinishFeed";
 import { UploadCompoent } from "./Upload/UploadComponent";
 import { useFeedContext } from "@/context/FeedContext";
+import InfiniteScrollFallback from "../MultUseComponents/InfiniteScroll/InfiniteScrollFallback";
 
 const Middle = () => {
-    const {hasNextPage} = useFeedContext()
+    const {hasNextPage, isFetchingNextPage} = useFeedContext()
     
     return (
-        <div className="h-full mt-4 pb-14 scrollable shadow-lg">
+        <div className="h-full mt-4 pb-14 shadow-lg">
            <UploadCompoent/>
            <FeedComponent />
+           {isFetchingNextPage && <InfiniteScrollFallback message={"Estamos carregando mais posts para você"} className="w-5/6 h-24 p-5 mt-[100px]"/>}
            {!hasNextPage ? <FinishFeed /> : null}
         </div>
     )

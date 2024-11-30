@@ -77,23 +77,43 @@ font-size: 22px !important;
   --swiper-navigation-size: 26px;
 }
 
+/* .data-virtuoso-scroller{
+  height: 100% !important;
+  max-height: 600px !important;
+} */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5); /* Escurece o fundo */
+  z-index: 40; /* Atrás do modal */
+}
+
+.modal {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 70px;
+  margin: auto;
+  background: white;
+  z-index: 50; /* Na frente do backdrop */
+  height: calc(100vh - 70px); /* Calcula o espaço do viewport */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
 
 .swiper-contrainer {
   overflow: visible;
 }
 
 .swiper-custom-pagination {
-  top: 30px;
   text-align: center;
   font-weight: bold;
   font-size: 1.3rem;
-  z-index: 10;
+  z-index: 20;
   background-color: #62B7F8;
-  margin-top: 4px;
-  max-width: 5rem;
-  margin-left: auto;
-  margin-right: auto;
-  border-radius: 10px;
+  text-align: center;
+  color: white !important;
 }
 
 @layer base {

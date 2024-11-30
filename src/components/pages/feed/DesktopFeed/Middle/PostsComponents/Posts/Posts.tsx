@@ -1,6 +1,6 @@
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
-import { twJoin} from 'tailwind-merge';
+import { twMerge } from 'tailwind-merge';
 import { HTMLAttributes, Suspense, useEffect, useRef} from 'react';
 import { PostMedias } from '../../../../../../../services/getFeed';
 import 'swiper/css'
@@ -79,70 +79,79 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, postHeight=720, po
 
 
     return (
-        <div className={twJoin("relative", rest.className)}>
+        <div className={twMerge("relative w-full flex items-center justify-center h-full", rest.className)}>
             {media && media.length > 0 ? (
-            <Swiper
-            slidesPerView={1}
-            pagination={{type:'fraction', el:'.swiper-custom-pagination',}}
-            navigation
-            style={{ height: `${postHeight}px` }}
-            modules={[Navigation, Pagination]}
-            className='h-full relative flex justify-center items-center'
-            onSlideChange={handleSlideChange}
-            initialSlide={slideIndex}
-            noSwiping={true}
-            // autoHeight={true}
-            noSwipingClass="swiper-no-swiping"
-            >
-                <CustomPagination/>
-                {media.map((item)=> (
-                    <SwiperSlide key={item.id} style={{ maxHeight: `${postHeight}px`, height:`${postHeight}px` }} className='rounded'>
-                        {item.media_type === "image" ? (
-                            <div className='rounded h-full flex items-center justify-center'>
-                                <CldImage
-                                    src={item.media_file}
-                                    width={postWidth}
-                                    height={postHeight}
+                <Swiper
+                    slidesPerView={1}
+                    pagination={{ type: 'fraction', el: '.swiper-custom-pagination' }}
+                    navigation
+                    style={{ maxHeight: `${postHeight}px` }}
+                    modules={[Navigation, Pagination]}
+                    className='h-full relative flex justify-center items-center w-full'
+                    onSlideChange={handleSlideChange}
+                    initialSlide={slideIndex}
+                    noSwiping={true}
+                    noSwipingClass="swiper-no-swiping"
+                >
+                    {media.map((item) => (
+                        <SwiperSlide
+                            key={item.id}
+                            style={{ maxHeight: `${postHeight}px` }}
+                            className='rounded h-full w-full'
+                        >
+                            {item.media_type === "image" ? (
+                                <div
+                                    className='fixed rounded h-full w-full flex items-center justify-center object-contain'
                                     style={{ maxHeight: `${postHeight}px` }}
-                                    className="rounded object-contain"
-                                    // sizes="(max-width: 768px) 100vw,
-                                    // (max-width: 1200px) 50vw,
-                                    // 33vw"
-                                    alt="No information available"
-                                    loading='lazy'
-                                    onClick={onClick} 
-                                />
-                            </div>
-                        ) : (
-                            <div className='rounded items-center justify-center swiper-no-swiping flex'>
-                                <Suspense fallback={<VideoLoadingFallback/>}>
-                                <CldVideoPlayer
-                                    width={postWidth}
-                                    height={postHeight}
-                                    src={item.media_file}
-                                    autoPlay="on-scroll" 
-                                    colors={{accent:"orange", text:"orange"}} 
-                                    // playbackRates={["0.25", "0.5", "0.75", "1", "1.25", "1.50", "1.75", "2"]} 
-                                    showJumpControls={true}
-                                    seekThumbnails={false}
-                                    logo={false}
-                                    autoplay="on-screen"
-                                    playsinline={true}
-                                    fluid={true}
-                                    className={`rounded object-contain max-h-[${postHeight}px] max-w-[${postWidth}px]`}
-                                />
-                                </Suspense>
-                            </div>    
-                        )
-                    
-                    }
-                    </SwiperSlide>
-                ))}
-            </Swiper>
-        ) : null}
-                
+                                >
+                                    <CldImage
+                                        src={item.media_file}
+                                        width={postWidth}
+                                        height={postHeight}
+                                        style={{
+                                            maxHeight: `${postHeight}px`,
+                                            height: '100%',
+                                            objectFit: 'contain',
+                                        }}
+                                        className="rounded object-contain h-full w-full"
+                                        alt="No information available"
+                                        loading='lazy'
+                                        onClick={onClick}
+                                    />
+                                </div>
+                            ) : (
+                                <div
+                                    className='rounded items-center justify-center swiper-no-swiping flex h-full w-full object-contain'
+                                    style={{
+                                        maxHeight: `${postHeight}px`,
+                                        objectFit: 'contain',
+                                    }}
+                                >
+                                    <Suspense fallback={<VideoLoadingFallback />}>
+                                        <CldVideoPlayer
+                                            width={postWidth}
+                                            height={postHeight}
+                                            src={item.media_file}
+                                            autoPlay="on-scroll"
+                                            colors={{ accent: "orange", text: "orange" }}
+                                            showJumpControls={true}
+                                            seekThumbnails={false}
+                                            logo={false}
+                                            autoplay="on-screen"
+                                            playsinline={true}
+                                            fluid={true}
+                                            className='rounded w-full'
+                                        />
+                                    </Suspense>
+                                </div>
+                            )}
+                        </SwiperSlide>
+                    ))}
+                <CustomPagination />
+                </Swiper>
+            ) : null}
         </div>
     );
-};
+}    
 
 export default Posts;

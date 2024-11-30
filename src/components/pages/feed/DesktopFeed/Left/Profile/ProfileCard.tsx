@@ -35,7 +35,7 @@ const ProfileCard = ({}) => {
                     className="rounded-full"/>
                 )}
             </div>
-            <CldUploadWidget 
+            {/* <CldUploadWidget 
                 signatureEndpoint="/api/signed-profile"
                 options={{
                     uploadPreset:"profile-images",
@@ -49,7 +49,7 @@ const ProfileCard = ({}) => {
                         <IoCreateOutline className='h-8 w-8 text-black-400 cursor-pointer absolute top-12 right-2' onClick={() => open()}/>
                         );
                     }}
-            </CldUploadWidget>
+            </CldUploadWidget> */}
             <div className="text-center w-full">
                 <h1 className="text-xl text-black-300">{user?.first_name} {user?.last_name}</h1>
                 <p className="text-sm text-black-200 opacity-90">{user?.username}</p>

@@ -3,6 +3,7 @@ import { ClosePostExpand } from "./ClosePostExpand"
 import PostsExtendHasPostMedia from "./PostsHasPostMedia/PostsExtendHasPostMedia"
 import PostsExtendHasNoPostMedia from "./PostsHasNoPostMedia/PostsExtendHasNoPostMedia"
 import { CommentsContextProvider } from "../../../../context/CommentsContext"
+import { useEffect } from "react"
 
 export interface PostsExtendProps {
     /** Esta prop recebe uma função que retorna void, esta função diz respeito ao que você quer que aconteça quando o componente for fechado, quando o usuário clicar no "X"
@@ -21,23 +22,53 @@ export interface PostsExtendProps {
 
 /** Este é o componente responsável por gerar a página extendida de um post que foi clicado no feed(Expande o post mostrando os comentários etc).  */
 const PostsExtend = ({onClose, resource, slideIndex}:PostsExtendProps) => {
+
+    useEffect(() => {
+        const disableScrollAndEvents = (e: Event) => e.stopPropagation(); // Impede propagação para o fundo
+        const preventScroll = () => (document.body.style.overflow = 'hidden');
+      
+        preventScroll();
+        const backdrop = document.querySelector('.backdrop');
+        backdrop?.addEventListener('scroll', disableScrollAndEvents, { passive: false });
+        backdrop?.addEventListener('click', disableScrollAndEvents);
+      
+        return () => {
+          document.body.style.overflow = 'auto';
+          backdrop?.removeEventListener('scroll', disableScrollAndEvents);
+          backdrop?.removeEventListener('click', disableScrollAndEvents);
+        };
+      }, []);
+      
     
-    return (
+      return (
         <>
-        <div className="absolute flex flex-row left-0 right-0 z-50 w-full h-[80vh] pl-10 pr-10 divide-x-2">
-            {resource.has_post_media ? (
+          <div 
+            className="fixed inset-0 z-40 bg-black bg-opacity-50" 
+            onClick={onClose} 
+          />
+          <div 
+            className="fixed z-50 flex left-0 right-0 justify-center bottom-[65px] mx-auto w-full bg-white shadow-lg bg-black-300 bg-opacity-50"
+            style={{ height: 'calc(100vh - 65px)' }}
+          >
+            <div
+                className="flex w-11/12 bg-white shadow-lg mt-[60px] mb-[20px] gap-[2px]"
+                // style={{ height: 'calc(100% - 60px)' }}
+            >
+                {resource.has_post_media ? (
                 <CommentsContextProvider>
-                    <PostsExtendHasPostMedia resource={resource} slideIndex={slideIndex}/>
-                </CommentsContextProvider>            
-            ):   
-                <CommentsContextProvider>
-                    <PostsExtendHasNoPostMedia resource={resource}/>
+                    <PostsExtendHasPostMedia resource={resource} slideIndex={slideIndex} />
                 </CommentsContextProvider>
-            }
-            <ClosePostExpand onClose={onClose}/>
-        </div> 
+                ) : (
+                <CommentsContextProvider>
+                    <PostsExtendHasNoPostMedia resource={resource} />
+                </CommentsContextProvider>
+                )}
+                <ClosePostExpand onClose={onClose} />
+            </div>
+          </div>
         </>
-    )
+      );
+      
 }
 
 export default PostsExtend

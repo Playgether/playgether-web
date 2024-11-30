@@ -7,7 +7,7 @@ import { TopCard } from "../../MultUseComponents/TopCard";
 const OnlineFriendsCard = ({}) => {
     return (
 
-        <div className="bg-white-200 h-[350px] w-[250px] 2xl:w-[250px] max-h-[350px] shadow-lg rounded-lg">
+        <div className="bg-white-200 h-[350px] w-[250px] 2xl:w-[250px] max-h-[350px] shadow-lg rounded-lg ">
             <TopCard title={"Amigos online"}/>
             <div className="flex bg-white-200 items-center justify-center pt-4">
                 <MdSearch className="w-1/6 h-6"/>
