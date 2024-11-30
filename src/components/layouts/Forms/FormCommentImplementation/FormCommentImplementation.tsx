@@ -27,9 +27,9 @@ export const FormCommentImplementation = ({handleSubmit, register, errors, Submi
         <>
         <form
             onSubmit={handleSubmit(Submiting)}
-            className="h-full w-full relative border border-solid border-blue-500 bg-white-200 "
+            className="h-full w-full border border-solid border-blue-500 bg-white-200 sticky bottom-0 flex flex-col"
           >
-          <div className="flex w-full h-full justify-end items-center"> 
+          <div className="flex w-full h-4/6 justify-end items-center flex-col"> 
               <TextAreaLayout
                 register={register('comment')}
                 maxRows={10}
@@ -39,9 +39,9 @@ export const FormCommentImplementation = ({handleSubmit, register, errors, Submi
                 textAreaClassName="resize-none py-4 focus:bg-gray-50 border focus:border-none h-full"
               />
             </div> 
-            <div className=" h-full flex justify-end bg-gray-50">
+            <div className="justify-end bg-gray-50 ">
                 <OrangeButton
-                  className="py-2 w-full"
+                  className="h-full w-full"
                   type="submit"
                 >
                   Enviar

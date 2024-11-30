@@ -5,7 +5,7 @@ export interface PostTextPostExpandProps {
 /** Este componente é responsável por gerar o texto de um post/comentário, ele é extremamente simples e apenas recebe uma string e retorna uma div com esta string */
 export const PostTextPostExpand = ({text}:PostTextPostExpandProps) => {
     return (
-        <div className="pt-4 pl-4">
+        <div className="pt-4 pl-4 pb-4">
             <p className='whitespace-pre-wrap'>{text}</p>
         </div> 
     )

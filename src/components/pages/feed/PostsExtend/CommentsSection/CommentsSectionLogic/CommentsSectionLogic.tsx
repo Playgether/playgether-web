@@ -31,7 +31,7 @@ const CommentsSection = ({post_id}:{post_id:number}) => {
         <>
             {comments?.data.length > 0 ? (
                 comments?.data.map((item) => (
-                    <div className="text-gray-500 flex flex-row bg-white-200 items-center justify-start w-full pl-4" key={item.id}> 
+                    <div className="text-gray-500 flex flex-row bg-white-200 items-center justify-start w-full pl-4 " key={item.id}> 
                         <div className="w-full">
                             <div className="w-full flex justify-between mt-4 ">
                                 <div className="w-full space-y-1">

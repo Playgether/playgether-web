@@ -12,7 +12,7 @@ export interface CommentProps {
  */
 const CommentInput = ({id}: CommentProps) => {
     return (
-        <div className="container w-full h-18 sticky bottom-0">
+        <div className="container w-full h-fit max-h-[150px] sticky flex-1 bottom-0">
             <FormComment content_type={CommentContentType.post} object_id={id}/>
         </div>
     )
