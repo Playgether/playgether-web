@@ -1,5 +1,3 @@
-import { IoCheckmarkOutline, IoCloseOutline } from "react-icons/io5"
-
 const Step4 = () => {
     return (
         <div className="w-full text-center flex flex-col justify-center">

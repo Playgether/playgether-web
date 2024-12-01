@@ -8,6 +8,8 @@ import { FormCommentImplementation } from "../FormCommentImplementation/FormComm
 import { useAuthContext } from "../../../../context/AuthContext";
 import { useCommentsContext } from "../../../../context/CommentsContext";
 import { useFeedContext } from "../../../../context/FeedContext";
+import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
+import { CustomToastErrorMessages, CustomToastProps } from "@/error/custom-toaster/enum";
 
 export type FormCommentProps = {
     /** Este componente recebe o content_type do componente pai, esta prop vai utilizar CommentTypes para pegar a chave para definir em que esta sendo comentado, neste caso
@@ -42,24 +44,31 @@ const FormComment = ({content_type, object_id} : FormCommentProps) => {
             user: user?.user_id,
             ...data
         };
-        try {
-            const response = await SubmitingForm(() => postComment(newData, authTokens));
-            addNewComment(response);
+
+        const response = await SubmitingForm(() => postComment(newData, authTokens));
+        console.log(response);
+        if (response.status === 201){
+            addNewComment(response.data);
             alterCommentQuantity(object_id)
             reset({comment: ''});
-        } catch (error) {
-            console.error('Erro ao buscar comentários:', error);
-        }
-    }
+        } else {
+        CustomToast.error(CustomToastErrorMessages.defaultTitle, {
+            description: CustomToastErrorMessages.commentErrorMessage,
+            duration: CustomToastProps.defaultDuration
+        });
+    }    
+}
 
 return (
-  
-    <FormCommentImplementation 
-    handleSubmit={handleSubmit}
-    register={register}
-    Submiting={Submiting}
-    errors={errors}
-    />
+    <>
+        <CustomToaster/>
+        <FormCommentImplementation 
+        handleSubmit={handleSubmit}
+        register={register}
+        Submiting={Submiting}
+        errors={errors}
+        />
+    </>
 
 )}
 

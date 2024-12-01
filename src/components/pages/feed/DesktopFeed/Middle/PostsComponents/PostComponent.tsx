@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Step2 from "./SharePost/Step2";
 import Step1 from "./SharePost/Step1";
 import Step3 from "./SharePost/Step3";
@@ -13,8 +13,8 @@ import { SubmitingForm } from "../../../../../layouts/SubmitingFormLayout";
 import { PostMediaProps, postPost } from "../../../../../../services/postPost";
 import Step4 from "./SharePost/Step4";
 import { deletePostFile } from "@/services/cloudinary_requests/deletePostFile";
-import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
-import { ErrosInput } from "@/components/layouts/ErrosInputLayout/ErrorsInputLayout";
+import { CustomToast, CustomToaster } from "@/components/ui/customSonner";import { CustomToastErrorMessages, CustomToastProps } from "@/error/custom-toaster/enum";
+;
 
 
 type dataForm = {
@@ -62,27 +62,29 @@ const PostComponent = ({}) => {
             has_post_media:hasPostMedia,
             medias: hasPostMedia ? uploadedFiles : []
         }
-        try {
-            const response = await SubmitingForm(() => postPost(newPost, authTokens));
-            if (response.status === 201){
-                setStep(4)
+
+        const response = await SubmitingForm(() => postPost(newPost, authTokens));
+        console.log(response.status)
+        if (response.status === 201){
+            setStep(4)
+        } else {
+
+        CustomToast.error(CustomToastErrorMessages.defaultTitle, {
+            description: CustomToastErrorMessages.postErrorMessage,
+            duration:CustomToastProps.defaultDuration
+        })
+        if (uploadedFiles.length > 0) {
+            for (const media of uploadedFiles) {   
+                await deletePostFile(media.media_file, media.media_folder, media.media_type);
             }
-        } catch (error) {
-            CustomToast.error("Ops...", {
-                description: "Parece que algum erro aconteceu durante o processo de upload, pedimos desculpa pelo ocorrido. Por favor, tente novamente.",
-                duration:5000
-            })
-            if (uploadedFiles.length > 0) {
-                for (const media of uploadedFiles) {   
-                    await deletePostFile(media.media_file, media.media_folder, media.media_type);
-                }
-                setUploadedFiles([])
-            }
+            setUploadedFiles([])
         }
     }
+}
 
     return (
         <div className='w-full bg-white-200 h-[300px] mt-2 rounded-lg flex flex-col shadow-lg mb-4 gap-1'>
+            <CustomToaster></CustomToaster>
             <div className='w-full text-center text-black-200 pt-1'>
                 {step === 1 && (
                     <h1>Texto</h1>

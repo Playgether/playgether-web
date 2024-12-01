@@ -29,6 +29,6 @@ export const postPost = async (data: postPostProps, authTokens : TokenData | nul
             }})
         return response
     } catch (error) {
-        console.log(error)
+        return error.response
     }
 }
