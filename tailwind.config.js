@@ -22,9 +22,45 @@ module.exports = {
   			menuRight: 'menuRight 0.5s linear',
   			menuLeft: 'menuLeft 0.5s linear',
   			hoverUp: 'hoverUp 0.05s linear',
-  			hoverDown: 'hoverDown 0.07s linear'
+  			hoverDown: 'hoverDown 0.07s linear',
+			expandVertical: "expandVertical 0.5s ease-out",
+			shrinkVertical: "shrinkVertical 0.5s ease-out",
   		},
   		keyframes: {
+			expandVertical: {
+				"0%": {
+					height: "30%", // Altura inicial (ajuste conforme necessário)
+				},
+				"100%": {
+					height: "100%", // Altura final, assume o conteúdo total
+				},
+			},
+			shrinkVertical: {
+				"0%": {
+					height: "100%",
+					opacity:0 
+				},
+				"20%":{
+					height:"80%",
+					opacity:0.2
+				},
+				"40%":{
+					height:"60%",
+					opacity:0.4
+				},
+				"60%":{
+					height:"40%",
+					opacity:0.6
+				},
+				"80%":{
+					height:"35%",
+					opacity:0.8
+				},
+				"100%": {
+					height: "30%", 
+					opacity: 1
+				},
+			},
   			moveRight: {
   				'0%': {
   					opacity: '0.25',
