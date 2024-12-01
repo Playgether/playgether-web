@@ -71,7 +71,7 @@ export default async function TestPage() {
     <BaseLayout>
             <div className="w-[600px] text-black-300 h-[300px] 2xl:h-[400px] max-h-[600px] bg-red-400">
             <Suspense fallback={<VideoLoadingFallback/>}>
-                <Posts media={medias} onClick={()=> false} slideIndex={0} postHeight={720} postWidth={1080} className="max-w-[600px] p-4"/>
+                <Posts media={medias} onClick={()=> false} slideIndex={0} postHeight={720} postWidth={1080} className="max-w-[600px] h-full w-full p-4"/>
             </Suspense>
         </div>
     </BaseLayout>

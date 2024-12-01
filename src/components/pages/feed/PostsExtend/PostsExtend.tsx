@@ -51,7 +51,7 @@ const PostsExtend = ({onClose, resource, slideIndex}:PostsExtendProps) => {
             style={{ height: 'calc(100vh - 65px)' }}
           >
             <div
-                className="flex w-11/12 bg-white shadow-lg mt-[60px] mb-[20px] gap-[2px]"
+                className="flex w-11/12 bg-white shadow-lg mt-[60px] mb-[20px] gap-[2px] max-w-[1920px] max-h-[1080px]"
                 // style={{ height: 'calc(100% - 60px)' }}
             >
                 {resource.has_post_media ? (

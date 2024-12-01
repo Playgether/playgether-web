@@ -121,16 +121,10 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, postHeight=720, po
                                 </div>
                             ) : (
                                 <div
-                                    className='rounded items-center justify-center swiper-no-swiping flex h-full w-full object-contain'
-                                    style={{
-                                        maxHeight: `${postHeight}px`,
-                                        objectFit: 'contain',
-                                    }}
+                                    className='rounded items-center justify-center swiper-no-swiping flex h-full w-full pb-14'
                                 >
                                     <Suspense fallback={<VideoLoadingFallback />}>
                                         <CldVideoPlayer
-                                            width={postWidth}
-                                            height={postHeight}
                                             src={item.media_file}
                                             autoPlay="on-scroll"
                                             colors={{ accent: "orange", text: "orange" }}
@@ -140,7 +134,7 @@ const Posts = ({ media, slideIndex=0, onClick, setSlideIndex, postHeight=720, po
                                             autoplay="on-screen"
                                             playsinline={true}
                                             fluid={true}
-                                            className='rounded w-full'
+                                            className='rounded'
                                         />
                                     </Suspense>
                                 </div>

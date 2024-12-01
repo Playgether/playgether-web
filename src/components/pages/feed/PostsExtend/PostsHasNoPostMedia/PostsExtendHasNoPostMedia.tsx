@@ -15,20 +15,22 @@ interface PostsExtendHasNoPostMediaProps {
 const PostsExtendHasNoPostMedia = ({resource}: PostsExtendHasNoPostMediaProps) => {
     return (
         <>
-        <div className="w-3/6 text-black-300 h-full bg-white-300 overflow-x-auto">
+        <div className="w-3/6 text-black-300 h-full bg-white-300 overflow-hidden">
             <ProfileAndUsername profile_photo={resource.created_by_user_photo} username={resource.created_by_user_name} timestamp={resource.timestamp} imageClassName="mt-3 ml-3 h-16 w-16"/>
             <BorderLine/>
             <PostTextPostExpand text={resource.comment}/> 
         </div> 
-            <div className=" text-black-300 bg-white-300 w-full overflow-y-auto overflow-x-hidden h-full flex-1">
-                <div className="w-full h-4/6">
-                    <BorderLine className="pt-0"/>
+        <div className=" text-black-300 w-3/6 overflow-hidden bg-white-300">
+            <div className="h-full w-full flex flex-col relative">
+                <BorderLine/>
+                <div className="w-full h-[calc(100%-80px)] overflow-y-auto overflow-x-hidden">
                     <Suspense fallback={<CommentSectionFallback/>}>
                         <CommentSectionFetchData postId={resource.id} />
                     </Suspense>
-                    <CommentInput id={resource.id} />
                 </div>
+                <CommentInput id={resource.id}/>
             </div>
+        </div>
         </>
     )
 }
