@@ -90,7 +90,7 @@ export const ExpandedComments = ({comment_of_comment, comment_id}: ExpandedComme
                 </div>
                     </div>
                 ):
-                <div className="break-all lg:text-sm xl:text-sm">
+                <div className="lg:text-sm xl:text-sm">
                     <p className="whitespace-pre-wrap">{comment_of_comment.comment}</p> 
                 </div>
                 }
