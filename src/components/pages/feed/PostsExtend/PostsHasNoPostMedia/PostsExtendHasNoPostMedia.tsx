@@ -18,7 +18,13 @@ const PostsExtendHasNoPostMedia = ({resource}: PostsExtendHasNoPostMediaProps) =
         <div className="w-3/6 text-black-300 h-full bg-white-300 overflow-y-auto overflow-x-hidden">
             <ProfileAndUsername profile_photo={resource.created_by_user_photo} username={resource.created_by_user_name} timestamp={resource.timestamp} imageClassName="mt-3 ml-3 h-8 w-8"/>
             <BorderLine/>
-            <PostTextPostExpand text={resource.comment} created_by_user_name={resource.created_by_user_name} created_by_user_photo={resource.created_by_user_photo} timestamp={resource.timestamp} showExpandButton={false}/> 
+            <PostTextPostExpand
+            text={resource.comment} 
+            created_by_user_name={resource.created_by_user_name} 
+            created_by_user_photo={resource.created_by_user_photo} 
+            timestamp={resource.timestamp} 
+            showExpandButton={false}
+            /> 
         </div> 
         <div className=" text-black-300 w-3/6 overflow-hidden bg-white-300">
             <div className="h-full w-full flex flex-col relative">

@@ -14,7 +14,6 @@ import { commentPatchProps } from "../../../../../../services/patchComment"
 import { AnswerComment } from "../AnswerComment/AnswerComment"
 import { PostsCommentsProps } from "../../../../../../services/getComments"
 import { useCommentsContext } from "../../../../../../context/CommentsContext"
-import PostPropertiersPostsExpand from "../../../DesktopFeed/Middle/PostsComponents/PostPropertiers/PostPropertiers"
 
 export interface CommentsProps {
     /** Esta prop recebe um comentário específico que é do tipo PostsCommentsProps */

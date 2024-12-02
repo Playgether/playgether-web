@@ -17,6 +17,8 @@ export interface PostTextPostExpandProps {
     timestamp?: Date,
     /** Esta propriedade recebe um boolean (true ou false) para mostrar ou não um button para expandir a div que possui o texto (ela recebe um absolute z-10 h-full) */
     showExpandButton:boolean,
+
+    
 }
 /** Este componente é responsável por gerar / expandir o texto de um post em PostsExtend */
 export const PostTextPostExpand = ({text, showExpandButton, created_by_user_photo, created_by_user_name, timestamp}:PostTextPostExpandProps) => {
@@ -35,29 +37,27 @@ export const PostTextPostExpand = ({text, showExpandButton, created_by_user_phot
                         hasInteracted ? "animate-expandVertical" : ""
                     }`}
                 >
-                    {showExpandButton ? (
-                        <>
-                         <ProfileAndUsername 
-                         profile_photo={created_by_user_photo} 
-                         username={created_by_user_name} 
-                         timestamp={timestamp} 
-                         imageClassName="mt-3 ml-3 h-10 w-10"
-                         usernameAndTimestampDiv="self-end"
-                         />
-                         <BorderLine/>
-                        <div className="pt-4 pl-4 pb-4 overflow-y-auto">
-                            <p className="whitespace-pre-wrap">{text}</p>
-                        </div>
-                        </>
-                    ) : null
-                    }
-                    <div
-                        className="text-blue-400 sticky bottom-0 pl-4 cursor-pointer p-2 text-center gap-2 text-2xl flex items-end justify-center flex-1"
-                        onClick={handleToggle}
-                    >
-                        <p className="text-base">Esconder texto</p>
-                        <RiArrowUpSLine className="animate-bounce"/>
+
+                    <ProfileAndUsername 
+                    profile_photo={created_by_user_photo} 
+                    username={created_by_user_name} 
+                    timestamp={timestamp} 
+                    imageClassName="mt-3 ml-3 h-10 w-10"
+                    usernameAndTimestampDiv="self-end"
+                    />
+                    <BorderLine/>
+                    <div className="pt-4 pl-4 pb-4 overflow-y-auto">
+                        <p className="whitespace-pre-wrap">{text}</p>
                     </div>
+                    {showExpandButton ? ( 
+                        <div
+                            className="text-blue-400 sticky bottom-0 pl-4 cursor-pointer p-2 text-center gap-2 text-2xl flex items-end justify-center flex-1"
+                            onClick={handleToggle}
+                        >
+                            <p className="text-base">Esconder texto</p>
+                            <RiArrowUpSLine className="animate-bounce"/>
+                        </div>
+                    ):null}
                 </div>
             ) : (
                 <div
@@ -65,13 +65,6 @@ export const PostTextPostExpand = ({text, showExpandButton, created_by_user_phot
                         hasInteracted ? "animate-shrinkVertical" : ""
                     }`}
                 >
-                    <div className="pt-4 pl-4 pb-4 hidden">
-                        <TextLimitComponent
-                            text={text}
-                            maxCharacters={150}
-                            className="whitespace-pre-wrap"
-                        />
-                    </div>
                     {showExpandButton ? (
                         <div
                         className="text-blue-400  pl-4 cursor-pointer p-2 text-center text-2xl flex gap-2 items-center justify-center"
@@ -80,7 +73,11 @@ export const PostTextPostExpand = ({text, showExpandButton, created_by_user_phot
                             <p className="text-base">Ver texto</p>
                             <RiArrowDownSLine  className="animate-bounce"/>
                         </div>
-                    ):null}
+                    ):(
+                        <div className="pt-4 pl-4 pb-4">
+                            <p>{text}</p>
+                        </div>
+                    )}
                 </div>
             )}
         </>

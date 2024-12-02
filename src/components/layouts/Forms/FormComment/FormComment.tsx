@@ -46,7 +46,6 @@ const FormComment = ({content_type, object_id} : FormCommentProps) => {
         };
 
         const response = await SubmitingForm(() => postComment(newData, authTokens));
-        console.log(response);
         if (response.status === 201){
             addNewComment(response.data);
             alterCommentQuantity(object_id)
@@ -56,6 +55,7 @@ const FormComment = ({content_type, object_id} : FormCommentProps) => {
             description: CustomToastErrorMessages.commentErrorMessage,
             duration: CustomToastProps.defaultDuration
         });
+        console.error('Algo deu errado', response)
     }    
 }
 

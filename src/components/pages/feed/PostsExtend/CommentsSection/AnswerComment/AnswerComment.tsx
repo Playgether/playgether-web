@@ -8,6 +8,8 @@ import { postComment } from "../../../../../../services/postComment"
 import { ErrosInput } from "../../../../../layouts/ErrosInputLayout/ErrorsInputLayout"
 import { CommentContentType } from "../../../../../content_types/CommentContentType"
 import { useCommentsContext } from "../../../../../../context/CommentsContext"
+import { CustomToast, CustomToaster } from "@/components/ui/customSonner"
+import { CustomToastErrorMessages, CustomToastProps } from "@/error/custom-toaster/enum"
 
 
 export type FormCommentProps = {
@@ -34,17 +36,23 @@ export const AnswerComment = ({object_id}: FormCommentProps) => {
             user: user?.user_id,
             ...data
         };
-        try {
-            const response = await SubmitingForm(() => postComment(newData, authTokens));
-            addAnswerComment(object_id, response)
-            reset({comment: ''})
-        } catch (error) {
-            console.error('Algo deu errado', error)
-        }
 
+        const response = await SubmitingForm(() => postComment(newData, authTokens));
+        if (response.status === 201){
+            addAnswerComment(object_id, response.data)
+            reset({comment: ''})
+        } else {
+            CustomToast.error(CustomToastErrorMessages.defaultTitle, {
+                description: CustomToastErrorMessages.commentErrorMessage,
+                duration: CustomToastProps.defaultDuration
+            });
+            console.error('Algo deu errado', response)
+        }
     }
 
     return (
+        <>
+        <CustomToaster/>
         <form
         className="w-full"
         onSubmit={handleSubmit(Submiting)}
@@ -67,5 +75,6 @@ export const AnswerComment = ({object_id}: FormCommentProps) => {
                 />
             ): null}
         </form>
+        </>
     )
 }
