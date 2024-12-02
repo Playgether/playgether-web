@@ -54,7 +54,7 @@ export const FormCommentImplementation = ({handleSubmit, register, errors, Submi
       {errors && (
         <ErrosInput
           field={errors.comment}
-          className="pl-4 absolute top-8 h-full px-2 flex flex-col"
+          className="pl-4 absolute top-8 h-full px-2 flex flex-col mt-4"
         />
       )}
     </form>

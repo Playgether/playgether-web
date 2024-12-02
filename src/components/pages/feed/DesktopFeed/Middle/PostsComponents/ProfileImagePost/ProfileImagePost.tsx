@@ -23,19 +23,21 @@ const ProfileImagePost = ({ link_photo, ...rest }: Resource & DivProps) => {
     return (   
         <div 
         {...rest}
-        className = {twJoin("relative bg-white-200 rounded-full", rest.className)}>
-            {typeof link_photo !== 'string' ? (
-                <CgProfile className="h-full w-full text-gray-300" />
-            ) : (
-                <Image
-                    src={`${link_photo}`}
-                    alt={"Imagem de perfil de quem postou um post no feed"}
-                    className="rounded-full h-10"
-                    layout="fill"
-                    objectFit="cover"
-                    unoptimized
-                />
-            )}
+        className = "flex items-center justify-center ">
+            <div className={twJoin(" bg-white-200 rounded-full", rest.className)}>
+                {typeof link_photo !== 'string' ? (
+                    <CgProfile className="h-full w-full text-gray-300" />
+                ) : (
+                    <Image
+                        src={`${link_photo}`}
+                        alt={"Imagem de perfil de quem postou um post no feed"}
+                        className="rounded-full h-10"
+                        layout="fill"
+                        objectFit="cover"
+                        unoptimized
+                    />
+                )}
+            </div>
         </div>
     );
 };

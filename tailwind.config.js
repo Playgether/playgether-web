@@ -24,41 +24,23 @@ module.exports = {
   			hoverUp: 'hoverUp 0.05s linear',
   			hoverDown: 'hoverDown 0.07s linear',
 			expandVertical: "expandVertical 0.5s ease-out",
-			shrinkVertical: "shrinkVertical 0.5s ease-out",
+			shrinkVertical: "shrinkVertical 0.5s ease-out reverse",
   		},
   		keyframes: {
 			expandVertical: {
 				"0%": {
-					height: "30%", // Altura inicial (ajuste conforme necessário)
+					height: "30%", 
 				},
 				"100%": {
-					height: "100%", // Altura final, assume o conteúdo total
+					height: "100%", 
 				},
 			},
 			shrinkVertical: {
 				"0%": {
-					height: "100%",
-					opacity:0 
-				},
-				"20%":{
-					height:"80%",
-					opacity:0.2
-				},
-				"40%":{
-					height:"60%",
-					opacity:0.4
-				},
-				"60%":{
-					height:"40%",
-					opacity:0.6
-				},
-				"80%":{
-					height:"35%",
-					opacity:0.8
+					height: "30%", 
 				},
 				"100%": {
-					height: "30%", 
-					opacity: 1
+					height: "100%", 
 				},
 			},
   			moveRight: {

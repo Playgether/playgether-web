@@ -32,8 +32,8 @@ const ProfileAndUsername = ({username, profile_photo, imageClassName, timestamp,
     return (
         <div className={twJoin("", rest.className)} {...rest}>
             <div className="flex items-center gap-2">
-                <ProfileImagePost link_photo={profile_photo} className={imageClassName}/>
-                <div className={twJoin('text-lg', usernameAndTimestampDiv)}>
+                <ProfileImagePost link_photo={profile_photo} className={`${imageClassName} h-10 w-10`}/>
+                <div className={twJoin('text-lg', usernameAndTimestampDiv)}>   
                 <UserNamePost username={username}/>
                 {timestamp ?
                     <div className="text-gray-400 text-sm">

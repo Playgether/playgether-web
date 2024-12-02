@@ -28,9 +28,21 @@ const PostsExtendHasPostMedia = ({resource, slideIndex}: PostsExtendHasPostMedia
         <SlidePostExpand medias={resource.medias} slideIndex={slideIndex}/>
         <div className=" text-black-300 w-3/6 2xl:w-2/6 overflow-hidden bg-white-300 relative">
             <div className="h-full w-full flex flex-col relative">
-                <ProfileAndUsername profile_photo={resource.created_by_user_photo} username={resource.created_by_user_name} timestamp={resource.timestamp} imageClassName="mt-3 ml-3 h-16 w-16"/>
+                <ProfileAndUsername 
+                profile_photo={resource.created_by_user_photo} 
+                username={resource.created_by_user_name} 
+                timestamp={resource.timestamp} 
+                imageClassName="mt-3 ml-3 h-10 w-10"
+                usernameAndTimestampDiv="self-end"
+                />
                 <BorderLine/>
-                <PostTextPostExpand text={resource.comment} showExpandButton={true}/>
+                <PostTextPostExpand
+                text={resource.comment} 
+                created_by_user_name={resource.created_by_user_name} 
+                created_by_user_photo={resource.created_by_user_photo} 
+                timestamp={resource.timestamp} 
+                showExpandButton={true}
+                />
                 <div className="w-full h-[calc(100%-80px)] overflow-y-auto overflow-x-hidden">
                     <Suspense fallback={<CommentSectionFallback/>}>
                         <CommentSectionFetchData postId={resource.id} />
