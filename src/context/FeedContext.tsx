@@ -7,7 +7,7 @@ import { useProfileContext } from "./ProfileContext";
 import { FetchNextPageOptions, InfiniteData, InfiniteQueryObserverResult, useInfiniteQuery } from "@tanstack/react-query";
 
 type FeedContextProps = {
-    feed: FeedProps[] | null | void | undefined;
+    feed: FeedProps[] | undefined; 
     alterCommentQuantity: (post_id: number) => void;
     subtractCommentQuantity: (post_id: number) => void;
     fetchNextPage:(options?: FetchNextPageOptions | undefined) => Promise<InfiniteQueryObserverResult<InfiniteData<{
@@ -23,7 +23,7 @@ const FeedContext = createContext<FeedContextProps>({} as FeedContextProps)
 const FeedContextProvider = ({children}: {children: React.ReactNode}) => {
     const {authTokens} = useAuthContext()
     const {profile} = useProfileContext()
-    const [feed, setFeed] = useState<FeedProps[] | void | null | undefined>();
+    const [feed, setFeed] = useState<FeedProps[] | []>();
 
     const {
         data,
