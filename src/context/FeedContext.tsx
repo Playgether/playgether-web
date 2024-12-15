@@ -40,7 +40,7 @@ const FeedContextProvider = ({ children }: { children: React.ReactNode }) => {
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
     useInfiniteQuery({
-      queryKey: ["feed-posts", authTokens, profile?.id],
+      queryKey: ["feed-posts", user?.user_id, profile?.id],
       queryFn: ({ pageParam }) => getFeed(authTokens, user?.user_id, pageParam),
       getNextPageParam: (lastPage) => {
         if (lastPage?.next_page) {
