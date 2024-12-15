@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import FeedComponent from "./FeedComponent";
 import FinishFeed from "../MultUseComponents/FinishFeed";
@@ -7,15 +7,20 @@ import { useFeedContext } from "@/context/FeedContext";
 import InfiniteScrollFallback from "../MultUseComponents/InfiniteScroll/InfiniteScrollFallback";
 
 const Middle = () => {
-    const {hasNextPage, isFetchingNextPage} = useFeedContext()
-    
-    return (
-        <div className="h-full mt-4 pb-14 shadow-lg">
-           <UploadCompoent/>
-           <FeedComponent />
-           {isFetchingNextPage && <InfiniteScrollFallback message={"Estamos carregando mais posts para você"} className="w-5/6 h-24 p-5 mt-[100px]"/>}
-           {!hasNextPage ? <FinishFeed /> : null}
-        </div>
-    )
-}
+  const { hasNextPage, isFetchingNextPage } = useFeedContext();
+
+  return (
+    <div className="h-full mt-4 pb-14 shadow-lg">
+      <UploadCompoent />
+      <FeedComponent />
+      {isFetchingNextPage && (
+        <InfiniteScrollFallback
+          message={"Estamos carregando mais posts para você"}
+          className="w-5/6 h-24 p-5 mt-[100px]"
+        />
+      )}
+      {!hasNextPage ? <FinishFeed /> : null}
+    </div>
+  );
+};
 export default Middle;

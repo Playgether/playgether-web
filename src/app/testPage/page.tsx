@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { LoadingPosts } from "./LoadingPosts";
 import { LoadingComments } from "./LoadingComments";
 import dynamic from "next/dynamic";
@@ -32,24 +32,29 @@ import { Skeleton } from "@/components/ui/skeleton";
 // });
 
 export default async function TestPage() {
+  const url = getCldVideoUrl({
+    width: 1080,
+    height: 720,
+    src: "ahini9loos6m5sqru8lu",
+  });
   const { feed, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useFeedContext();
   const [slideIndex, setSlideIndex] = useState(1);
   const medias = [
     {
       id: 20,
-      media_file: "uxfq2uxjbh9gtuzcavja",
-      media_type: "image",
-    },
-    {
-      id: 20,
-      media_file: "hrpezhkivtc8jy8pfjqe",
+      media_file: "av0doj7wgvdghe8th9jy",
       media_type: "video",
     },
     {
       id: 20,
-      media_file: "pyyydgcoxv4qjbjmgont",
-      media_type: "image",
+      media_file: "bvh6ojgigdhsxpouowun",
+      media_type: "video",
+    },
+    {
+      id: 20,
+      media_file: "tlut4m61l8y9ppmoogfz",
+      media_type: "video",
     },
   ];
   // return (
@@ -69,26 +74,31 @@ export default async function TestPage() {
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  useEffect(() => {
+    console.log(url);
+  }, []);
+
   return (
     <BaseLayout>
-      <div className="w-[600px] text-black-300 h-[300px] 2xl:h-[400px] max-h-[600px]">
-        {/* <Suspense fallback={<VideoLoadingFallback />}>
-          <Posts
-            media={medias}
-            onClick={() => false}
-            slideIndex={0}
-            postHeight={720}
-            postWidth={1080}
-            className="max-w-[600px] h-full w-full p-4"
+      <div className="w-[1080px] text-black-300 max-h-[600px] flex flex-col gap-2 bg-green-400 justify-center items-center">
+        <div className="w-[600px] rounded bg-red-400"></div>
+        <Posts
+          media={medias}
+          onClick={() => false}
+          slideIndex={0}
+          postHeight={600}
+          postWidth={600}
+          className="max-w-[600px] h-[600px] w-full p-4"
+        />
+        {/* <div className="w-[600px] rounded bg-red-400">
+          <CldVideoPlayer
+            src="frdwntu18mar6k77gmlg"
+            transformation={{ width: 1080, crop: "limit" }}
+            quality={"auto:good"}
+            fluid={false}
+            className="w-fit object-contain rounded"
           />
-        </Suspense> */}
-        <div className="flex items-center space-x-6">
-          <Skeleton className="h-12 w-12 rounded-full" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-[250px]" />
-            <Skeleton className="h-4 w-[200px]" />
-          </div>
-        </div>
+        </div> */}
       </div>
     </BaseLayout>
   );
