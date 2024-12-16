@@ -48,7 +48,7 @@ const VirtualizedFeed = ({ setSlideIndex, handlePostsExtend }) => {
                 onClick={() => handlePostsExtend(resource)}
                 setSlideIndex={setSlideIndex}
                 postHeight={720}
-                postWidth={1080}
+                postWidth={1280}
                 className="w-[600px] p-4 h-[368px]"
               />
             </div>

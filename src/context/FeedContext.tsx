@@ -38,7 +38,7 @@ const FeedContextProvider = ({ children }: { children: React.ReactNode }) => {
   const { profile } = useProfileContext();
   const [feed, setFeed] = useState<FeedProps[] | []>();
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteQuery({
       queryKey: ["feed-posts", user?.user_id, profile?.id],
       queryFn: ({ pageParam }) => getFeed(authTokens, user?.user_id, pageParam),
@@ -81,10 +81,6 @@ const FeedContextProvider = ({ children }: { children: React.ReactNode }) => {
 
       setFeed(updatedFeed);
     }
-  };
-
-  const cleanFeed = () => {
-    setFeed([]);
   };
 
   useEffect(() => {

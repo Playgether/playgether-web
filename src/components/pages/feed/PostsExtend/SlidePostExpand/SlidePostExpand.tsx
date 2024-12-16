@@ -24,7 +24,7 @@ export const SlidePostExpand = ({
             onClick={() => false}
             slideIndex={slideIndex}
             postHeight={600}
-            postWidth={1080}
+            postWidth={1280}
             className="max-w-[1080px] w-full"
           />
         </div>
