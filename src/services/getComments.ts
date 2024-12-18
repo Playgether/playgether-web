@@ -1,12 +1,13 @@
 import { api } from "./api";
 import { TokenData } from "./updateTokenRequest";
 
-interface PostCommentsApiReturn {
+export interface PostCommentsApiReturn {
   next: string;
   previous: string;
   results: PostsCommentsProps[];
 }
 export interface PostsCommentsProps {
+  answers: PostCommentsApiReturn;
   id: number;
   created_by_user_name: string;
   created_by_user_photo: string;
@@ -18,7 +19,6 @@ export interface PostsCommentsProps {
   quantity_likes: number;
   content_type: string;
   user: number;
-  comments_of_comments: PostCommentsOfCommentsProps[];
   edited: boolean;
 }
 
@@ -34,7 +34,7 @@ export interface PostCommentsOfCommentsProps {
   content_type: string;
   user_already_like: boolean;
   user: number;
-  comments_of_comments: PostCommentsOfCommentsProps[];
+  answers: PostCommentsOfCommentsProps[];
   edited: boolean;
 }
 
@@ -58,12 +58,14 @@ export const getComments = async (
     return {
       data: response.data.results,
       next_page: response.data.next,
+      previous_page: response.data.previous,
     };
   } catch (error) {
     console.log(error);
     return {
       data: [],
       next_page: null,
+      previous_page: null,
     };
   }
 };

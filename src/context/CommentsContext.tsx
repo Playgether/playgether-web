@@ -6,11 +6,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import {
-  PostCommentsOfCommentsProps,
-  PostsCommentsProps,
-  getComments,
-} from "../services/getComments";
+import { PostsCommentsProps, getComments } from "../services/getComments";
 import { commentProps } from "../services/postComment";
 import {
   FetchNextPageOptions,
@@ -19,6 +15,7 @@ import {
   useInfiniteQuery,
 } from "@tanstack/react-query";
 import { useAuthContext } from "./AuthContext";
+import { getAnswers } from "@/services/getAnswers";
 
 export interface ApiResponseComments {
   data: PostsCommentsProps[];
@@ -28,17 +25,18 @@ type CommentsContextProps = {
   initializeComments: (postId: number) => void;
   comments: ApiResponseComments;
   addNewComment: (newComment: PostsCommentsProps) => void;
+  openAnswers: (commentId: number, pageParam?: string) => void;
   editComment: (updatedComment: PostsCommentsProps) => void;
   deleteCommentContext: (Comment: commentProps) => void;
   deleteAnswerContext: (comment_id: number, answer_id: number) => void;
   addAnswerComment: (
     objectId: number,
-    answerComment: PostCommentsOfCommentsProps
+    answerComment: PostsCommentsProps
   ) => void;
   editAnswerComment: (
     comment_id: number,
     answer_id: number,
-    answerComment: PostCommentsOfCommentsProps
+    answerComment: PostsCommentsProps
   ) => void;
   fetchNextPage: (options?: FetchNextPageOptions | undefined) => Promise<
     InfiniteQueryObserverResult<
@@ -63,6 +61,9 @@ export const CommentsContext = createContext<CommentsContextProps>(
 export function CommentsContextProvider({ children }: { children: ReactNode }) {
   const [comments, setComments] = useState<ApiResponseComments>({ data: [] });
   const [postId, setPostId] = useState<number>(0);
+  const [alreadyFetchedPostsIds, setAlreadyFetchedPostsIds] = useState<
+    number[]
+  >([]);
   const { authTokens } = useAuthContext();
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
@@ -79,11 +80,44 @@ export function CommentsContextProvider({ children }: { children: ReactNode }) {
       },
       enabled: !!postId,
       initialPageParam: null,
+      staleTime: 1000 * 60 * 2,
+      cacheTime: 1000 * 60 * 3,
     });
 
-  // Função para inicializar o postId
+  const openAnswers = async (commentId, pageParam = "") => {
+    const comment = comments.data.find((c) => c.id === commentId);
+
+    if (
+      comment &&
+      (!comment.answers || comment.answers.results.length === 0) &&
+      comment.quantity_comment > 0
+    ) {
+      const response = await getAnswers(authTokens, commentId, pageParam);
+
+      setComments((prevComments) => {
+        const commentsList = prevComments.data.map((c) => {
+          if (c.id === commentId) {
+            c.answers = {
+              previous: response.previous_page || "",
+              next: response.next_page || "",
+              results: response.data,
+            };
+          }
+          return c;
+        });
+
+        return {
+          data: commentsList,
+        };
+      });
+    }
+  };
+
   const initializeComments = (id: number) => {
-    setPostId(id);
+    if (!alreadyFetchedPostsIds.includes(id)) {
+      setPostId(id);
+      setAlreadyFetchedPostsIds((prevIds) => [id, ...prevIds]);
+    }
   };
 
   const addNewComment = (newComment: PostsCommentsProps) => {
@@ -97,7 +131,7 @@ export function CommentsContextProvider({ children }: { children: ReactNode }) {
 
   const addAnswerComment = (
     objectId: number,
-    answerComment: PostCommentsOfCommentsProps
+    answerComment: PostsCommentsProps
   ) => {
     setComments((prevComments) => {
       const commentsList = prevComments.data.map((comment) => {
@@ -105,10 +139,10 @@ export function CommentsContextProvider({ children }: { children: ReactNode }) {
           const newComment = {
             ...comment,
             quantity_comment: comment.quantity_comment + 1,
-            comments_of_comments: [
-              answerComment,
-              ...comment.comments_of_comments,
-            ],
+            answers: {
+              ...comment.answers,
+              results: [answerComment, ...comment.answers.results],
+            },
           };
           return newComment;
         }
@@ -161,7 +195,7 @@ export function CommentsContextProvider({ children }: { children: ReactNode }) {
       );
 
       if (commentIndex !== -1) {
-        const answersComment = commentsList[commentIndex].comments_of_comments;
+        const answersComment = commentsList[commentIndex].answers.results;
         const answerIndex = answersComment.findIndex(
           (answer) => answer.id === answer_id
         );
@@ -182,7 +216,7 @@ export function CommentsContextProvider({ children }: { children: ReactNode }) {
       );
 
       if (commentIndex !== -1) {
-        const listAnswers = listComments[commentIndex].comments_of_comments;
+        const listAnswers = listComments[commentIndex].answers.results;
         const answerIndex = listAnswers.findIndex(
           (answer) => answer.id === answer_id
         );
@@ -197,7 +231,13 @@ export function CommentsContextProvider({ children }: { children: ReactNode }) {
   };
   useEffect(() => {
     setComments((prevComments) => ({
-      data: data?.pages?.flatMap((page) => page.data) || [],
+      data:
+        data?.pages?.flatMap((page) =>
+          page.data.map((item) => ({
+            ...item,
+            answers: { next_page: "", previous_page: "", results: [] },
+          }))
+        ) || [],
       next_page: data?.pages?.[data.pages.length - 1]?.next_page || null,
     }));
   }, [data]);
@@ -209,6 +249,7 @@ export function CommentsContextProvider({ children }: { children: ReactNode }) {
         addAnswerComment,
         deleteCommentContext,
         editComment,
+        openAnswers,
         addNewComment,
         initializeComments,
         editAnswerComment,
