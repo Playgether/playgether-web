@@ -22,14 +22,14 @@ export const getAnswers = async (
     return {
       data: response.data.results,
       next_page: response.data.next,
-      previous_page: response.data.previous
+      previous_page: response.data.previous,
     };
   } catch (error) {
     console.log(error);
     return {
       data: [],
       next_page: null,
-      previous_page:null,
+      previous_page: null,
     };
   }
 };

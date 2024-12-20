@@ -22,6 +22,7 @@ export interface ApiResponseComments {
 }
 
 type CommentsContextProps = {
+  fetchNextAnswers?: (comment: PostsCommentsProps) => void;
   initializeComments: (postId: number) => void;
   comments: ApiResponseComments;
   addNewComment: (newComment: PostsCommentsProps) => void;
@@ -61,9 +62,6 @@ export const CommentsContext = createContext<CommentsContextProps>(
 export function CommentsContextProvider({ children }: { children: ReactNode }) {
   const [comments, setComments] = useState<ApiResponseComments>({ data: [] });
   const [postId, setPostId] = useState<number>(0);
-  const [alreadyFetchedPostsIds, setAlreadyFetchedPostsIds] = useState<
-    number[]
-  >([]);
   const { authTokens } = useAuthContext();
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
@@ -83,6 +81,36 @@ export function CommentsContextProvider({ children }: { children: ReactNode }) {
       staleTime: 1000 * 60 * 2,
       cacheTime: 1000 * 60 * 3,
     });
+
+  const fetchNextAnswers = async (comment: PostsCommentsProps) => {
+    console.log(comment.answers);
+    const cursor = comment.answers.next
+      ? new URL(comment.answers.next).searchParams.get("cursor")
+      : null;
+    const response = await getAnswers(authTokens, comment.id, cursor);
+    console.log(comment.id);
+    setComments((prevComments) => {
+      const commentsList = prevComments.data.map((c) => {
+        // Renomeie aqui
+        if (c.id === comment.id) {
+          // Use o id do comentário externo para comparação
+          const newComment = {
+            ...c,
+            answers: {
+              results: [...(c.answers?.results || []), ...response.data], // Use resultados existentes, se houver
+              next: response.next_page,
+              previous: response.previous_page,
+            },
+          };
+          return newComment;
+        }
+        return c;
+      });
+      return {
+        data: commentsList,
+      };
+    });
+  };
 
   const openAnswers = async (commentId, pageParam = "") => {
     const comment = comments.data.find((c) => c.id === commentId);
@@ -114,10 +142,7 @@ export function CommentsContextProvider({ children }: { children: ReactNode }) {
   };
 
   const initializeComments = (id: number) => {
-    if (!alreadyFetchedPostsIds.includes(id)) {
-      setPostId(id);
-      setAlreadyFetchedPostsIds((prevIds) => [id, ...prevIds]);
-    }
+    setPostId(id);
   };
 
   const addNewComment = (newComment: PostsCommentsProps) => {
@@ -257,6 +282,7 @@ export function CommentsContextProvider({ children }: { children: ReactNode }) {
         fetchNextPage,
         isFetchingNextPage,
         hasNextPage,
+        fetchNextAnswers,
       }}
     >
       {children}
