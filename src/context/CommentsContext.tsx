@@ -78,8 +78,6 @@ export function CommentsContextProvider({ children }: { children: ReactNode }) {
       },
       enabled: !!postId,
       initialPageParam: null,
-      staleTime: 1000 * 60 * 2,
-      cacheTime: 1000 * 60 * 3,
     });
 
   const fetchNextAnswers = async (comment: PostsCommentsProps) => {
@@ -146,10 +144,18 @@ export function CommentsContextProvider({ children }: { children: ReactNode }) {
   };
 
   const addNewComment = (newComment: PostsCommentsProps) => {
+    const newCommentEdited = {
+      ...newComment,
+      answers: {
+        next_page: "",
+        previous_page: "",
+        results: [],
+      },
+    };
     setComments((prevState) => {
       return {
         ...prevState,
-        data: [newComment, ...prevState.data],
+        data: [newCommentEdited, ...prevState.data],
       };
     });
   };
@@ -187,7 +193,7 @@ export function CommentsContextProvider({ children }: { children: ReactNode }) {
       );
 
       if (commentIndex !== -1) {
-        updatedComments[commentIndex] = updatedComment;
+        updatedComments[commentIndex].comment = updatedComment.comment;
       }
 
       return { data: updatedComments };
