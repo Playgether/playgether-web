@@ -1,0 +1,12 @@
+.green {
+  --blue: #11307a;
+  --primary-color: #5eff14;
+  --primary-color-variant-ToB: none --tertiary-color: #ceffb7;
+  --secondary-color: #0a0a0a;
+  --secondary-color-variant-toB: none;
+  --tertiary-colorr-variant-toB: none;
+}
+
+.green .testPage-2 {
+  background: var(--blue);
+}

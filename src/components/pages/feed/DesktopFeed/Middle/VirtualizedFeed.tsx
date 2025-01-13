@@ -25,8 +25,8 @@ const VirtualizedFeed = ({ setSlideIndex, handlePostsExtend }) => {
       endReached={loadMore}
       overscan={3}
       itemContent={(index, resource) => (
-        <div key={resource.id}>
-          <div className="bg-white-200 flex items-start justify-start">
+        <div key={resource.id} className="VirtualizedFeed-wrapper">
+          <div className="flex items-start justify-start">
             <ProfileAndUsername
               username={resource.created_by_user_name}
               profile_photo={resource.created_by_user_photo}
@@ -35,7 +35,7 @@ const VirtualizedFeed = ({ setSlideIndex, handlePostsExtend }) => {
             />
           </div>
           <div
-            className="pt-4 flex min-h-[5rem] pb-4 bg-white-200 cursor-pointer"
+            className="pt-4 flex min-h-[5rem] pb-4 cursor-pointer"
             onClick={() => handlePostsExtend(resource)}
           >
             <PostText resource={resource} maxCharacteres={300} />

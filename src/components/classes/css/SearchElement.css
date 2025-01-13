@@ -1,0 +1,16 @@
+.SearchElement-container {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.SearchElement-input {
+  color: var(--texts-color);
+  background: transparent;
+}
+
+.SearchElement-icon {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.SearchElement-home-icon {
+  color: var(--white);
+}

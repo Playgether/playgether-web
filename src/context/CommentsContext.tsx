@@ -89,13 +89,11 @@ export function CommentsContextProvider({ children }: { children: ReactNode }) {
     console.log(comment.id);
     setComments((prevComments) => {
       const commentsList = prevComments.data.map((c) => {
-        // Renomeie aqui
         if (c.id === comment.id) {
-          // Use o id do comentário externo para comparação
           const newComment = {
             ...c,
             answers: {
-              results: [...(c.answers?.results || []), ...response.data], // Use resultados existentes, se houver
+              results: [...(c.answers?.results || []), ...response.data],
               next: response.next_page,
               previous: response.previous_page,
             },

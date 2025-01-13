@@ -1,17 +1,15 @@
-import '@/app/globals.css'
-import { AppProvider } from '../context'
-import { cn } from '@/lib/utils'
-
-
+import "@/app/globals.css";
+import { AppProvider } from "../context";
+import { cn } from "@/lib/utils";
 
 export const metadata = {
-  description: 'Create by gamers for gamers',
-}
+  description: "Create by gamers for gamers",
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en">
@@ -21,5 +19,5 @@ export default function RootLayout({
         </AppProvider>
       </body>
     </html>
-  )
+  );
 }

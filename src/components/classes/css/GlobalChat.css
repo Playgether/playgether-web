@@ -1,0 +1,4 @@
+.GlobalChat-wrapper {
+  background: var(--background-components-hexa);
+  backdrop-filter: blur(10px);
+}

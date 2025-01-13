@@ -18,7 +18,7 @@ import {
 import { SubmitingForm } from "../../../../../layouts/SubmitingFormLayout";
 import TextAreaLayout from "../../../../../layouts/TextAreaLayout/TextAreaLayout";
 import { ErrosInput } from "../../../../../layouts/ErrosInputLayout/ErrorsInputLayout";
-import OrangeButton from "../../../../../elements/OrangeButton/OrangeButton";
+import DefaultButton from "../../../../../elements/DefaultButton/DefaultButton";
 import EditAnswer from "../EditAnswer/EditAnswer";
 import EditedComment from "../EditedComment/EditedComment";
 
@@ -92,15 +92,15 @@ export const ExpandedComments = ({
                     <ErrosInput field={errors.comment} />
                   </div>
                   <div className="flex gap-2">
-                    <OrangeButton className="bg-gray-400 h-10 w-16 hover:bg-gray-500">
+                    <DefaultButton className="bg-gray-400 h-10 w-16 hover:bg-gray-500">
                       Editar
-                    </OrangeButton>
-                    <OrangeButton
+                    </DefaultButton>
+                    <DefaultButton
                       className="h-10 w-20 bg-gradient-to-r bg-gray-400 from-gray-400 via-gray-500 to-gray-500 hover:bg-gray-500 cursor-pointer hover:from-gray-500 hover:via-gray-600 hover:to-gray-600"
                       onClick={() => setIsEditing(false)}
                     >
                       Cancelar
-                    </OrangeButton>
+                    </DefaultButton>
                   </div>
                 </form>
               </div>

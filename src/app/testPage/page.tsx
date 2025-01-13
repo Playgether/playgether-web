@@ -80,24 +80,27 @@ export default async function TestPage() {
 
   return (
     <BaseLayout>
-      <div className="w-[1080px] text-black-300 max-h-[600px] flex flex-col gap-2 bg-green-400 justify-center items-center">
-        <div className="w-[600px] rounded bg-red-400"></div>
-        <Posts
-          media={medias}
-          onClick={() => false}
-          slideIndex={0}
-          postHeight={600}
-          postWidth={600}
-          className="max-w-[600px] h-[600px] w-full p-4"
-        />
-        {/* <div className="w-[600px] rounded bg-red-400">
-          <CldVideoPlayer
-            src="frdwntu18mar6k77gmlg"
-            transformation={{ width: 1080, crop: "limit" }}
-            quality={"auto:good"}
-            fluid={false}
-            className="w-fit object-contain rounded"
-          />
+      <div className="flex items-center justify-center p-10 w-screen testPage-wrapper">
+        <div className="h-20 w-80 p-4 testPage-1">
+          <div className="bg-primaryColor-toB testPage-1-1">
+            <p>test</p>
+          </div>
+        </div>
+        <div className="h-20 w-80 p-4 testPage-2">
+          <div className="testPage-2-1">
+            <p>test</p>
+          </div>
+          <div className="testPage-2-2">
+            <p>test</p>
+          </div>
+        </div>
+        {/* <div className="h-20 w-80 p-4 testPage-3">
+          <div className="testPage-3-1">
+            <p>test</p>
+          </div>
+        </div>
+        <div className=" py-10 px-10 testPage-4">
+          <p className="testPage-textsColors"> A PARTE </p>
         </div> */}
       </div>
     </BaseLayout>

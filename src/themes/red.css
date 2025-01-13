@@ -1,0 +1,16 @@
+.red {
+  --overlay: #03a9fa;
+  font-family: "Poppins", sans-serif;
+  --primary-color: #ff0000;
+  --primary-color-variant-toB: none;
+  --secondary-color: linear-gradient(to bottom, #ff3366, #ffb703);
+  --secondary-color-variant-toB: linear-gradient(to right, #ff3366, #ffb703);
+  --tertiary-color: linear-gradient(to right, #eef1f5, #e6e9f0);
+  --tertiary-color-variant-toB: linear-gradient(to bottom, #eef1f5, #e6e9f0);
+  --titles-color: #ff0000;
+  --texts-color: #0a0a0a;
+}
+
+.red .testPage-2 {
+  background: blue;
+}

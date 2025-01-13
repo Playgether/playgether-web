@@ -1,26 +1,31 @@
-'use client'
+"use client";
 
 import { useState } from "react";
 import { IoArrowDownCircleSharp, IoArrowUpCircle } from "react-icons/io5";
 import PostComponent from "../PostsComponents/PostComponent";
 
 export const UploadCompoent = () => {
-    const [isComponentVisible, setComponentVisible] = useState(false);
+  const [isComponentVisible, setComponentVisible] = useState(false);
 
-    const toggleComponentVisibility = () => {
-        setComponentVisible(!isComponentVisible);
-    }
+  const toggleComponentVisibility = () => {
+    setComponentVisible(!isComponentVisible);
+  };
 
-    return (
-        <>
-        <div className="flex flex-row w-full space-x-3 items-center justify-center text-orange-500">
-            <div className="text-sm bg-white-300 w-full flex flex-row justify-center items-center space-x-2 pt-1">
-                <h1>{isComponentVisible ? "Fechar" : "Compartilhe algo conosco"}</h1>
-                <button className="" onClick={toggleComponentVisibility}>{isComponentVisible ? <IoArrowUpCircle className="pt-1 h-8 w-8 animate-bounce"/> : <IoArrowDownCircleSharp className="pt-1 animate-bounce h-8 w-8"/>}</button>
-            </div>
+  return (
+    <>
+      <div className="flex flex-row w-full space-x-3 items-center justify-center UploadComponent-wrapper">
+        <div className="text-sm w-full flex flex-row justify-center items-center space-x-2 pt-1">
+          <h1>{isComponentVisible ? "Fechar" : "Compartilhe algo conosco"}</h1>
+          <button className="" onClick={toggleComponentVisibility}>
+            {isComponentVisible ? (
+              <IoArrowUpCircle className="pt-1 h-8 w-8 animate-bounce" />
+            ) : (
+              <IoArrowDownCircleSharp className="pt-1 animate-bounce h-8 w-8" />
+            )}
+          </button>
         </div>
-        {isComponentVisible && <PostComponent />}
-        </>
-    )
-
-}
+      </div>
+      {isComponentVisible && <PostComponent />}
+    </>
+  );
+};

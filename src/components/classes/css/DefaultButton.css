@@ -1,0 +1,11 @@
+:root {
+  --default-button-hover: linear-gradient(to right, #ff3366, #ffb703);
+}
+.DefaultButton-wrapper {
+  background: var(--primary-color);
+  color: var(--white-no-change);
+}
+
+.DefaultButton-wrapper:hover {
+  background: var(--default-button-hover);
+}

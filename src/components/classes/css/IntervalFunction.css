@@ -1,0 +1,12 @@
+.IntervalFunction-wrapper {
+  background: var(--background-components);
+  backdrop-filter: blur(10px);
+}
+
+.IntervalFunction-name {
+  background: var(--background-components-hexa);
+  backdrop-filter: blur(10px);
+}
+
+.IntervalFunction-message {
+}
