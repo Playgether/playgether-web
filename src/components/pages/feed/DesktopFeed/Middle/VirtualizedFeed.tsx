@@ -25,7 +25,7 @@ const VirtualizedFeed = ({ setSlideIndex, handlePostsExtend }) => {
       endReached={loadMore}
       overscan={3}
       itemContent={(index, resource) => (
-        <div key={resource.id} className="VirtualizedFeed-wrapper">
+        <div key={resource.id} className="VirtualizedFeed-wrapper rounded-xl">
           <div className="flex items-start justify-start">
             <ProfileAndUsername
               username={resource.created_by_user_name}

@@ -79,7 +79,7 @@ export const IntervalFunctionComponent = () => {
             text={message.username + ":"}
             maxCharacters={40}
             className={`relative z-10 IntervalFunction-name lg:h-full text-xs lg:text-sm flex items-center justify-center -mt-4 -ml-14 lg:ml-0 lg:mt-0 ${index === currentIndex ? "animate-fadeIn" : "animate-fadeOut"}`}
-            paragraphClassName="pl-2 font-semibold text-blue-500"
+            paragraphClassName="pl-2 font-semibold text-blue-500 pr-1"
           />
 
           <TextLimitComponent

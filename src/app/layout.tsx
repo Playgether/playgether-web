@@ -13,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={cn("text-zinc-50")}>
+      <body className={cn("text-zinc-50 dark")}>
         <AppProvider>
           <main>{children}</main>
         </AppProvider>

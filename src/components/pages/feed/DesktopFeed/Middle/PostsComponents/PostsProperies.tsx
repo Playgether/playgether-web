@@ -17,7 +17,6 @@ const PostProperies = ({
 }: PostProperies) => {
   return (
     <>
-      <div className="border-b border-opacity-30"></div>
       <div className="PostPropertiers-wrapper pl-3 pr-3 flex flex-col justify-center items-center h-12">
         <div className="w-5/6 flex flex-row justify-between">
           <PostPropertiers.Root className="w-full flex flex-row justify-between">

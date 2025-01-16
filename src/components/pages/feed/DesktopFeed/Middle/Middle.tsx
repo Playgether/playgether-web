@@ -10,7 +10,7 @@ const Middle = () => {
   const { hasNextPage, isFetchingNextPage } = useFeedContext();
 
   return (
-    <div className="h-full mt-4 pb-14 shadow-lg">
+    <div className="h-full mt-4 pb-14 shadow-lg space-y-4">
       <UploadCompoent />
       <FeedComponent />
       {isFetchingNextPage && (

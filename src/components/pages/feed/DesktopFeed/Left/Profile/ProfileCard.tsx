@@ -20,7 +20,7 @@ const ProfileCard = ({}) => {
   const route = useRouter();
 
   return (
-    <div className=" ProfileCard-wrapper h-[400px] flex flex-col items-center justify-center space-y-2 shadow-lg w-[250px] 2xl:w-[250px] max-h-[350px] 2xl:max-h-[400px] rounded-lg">
+    <div className=" ProfileCard-wrapper h-[400px] flex flex-col items-center justify-center space-y-2 shadow-lg w-[250px] 2xl:w-[250px] max-h-[350px] 2xl:max-h-[400px] rounded-2xl ">
       {/* <TopCard title={"Profile"} /> */}
       <div className="rounded-full h-20 w-20 flex items-center justify-center bg-white-200 relative">
         {profile?.profile_photo === null ||
