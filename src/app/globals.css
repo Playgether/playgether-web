@@ -18,16 +18,8 @@
     --primary-color-variant-toB: linear-gradient(to bottom, #4776e6, #8e54e9);
     --secondary-color: linear-gradient(to right, #ff3366, #ffb703);
     --secondary-color-variant-toB: linear-gradient(to bottom, #ff3366, #ffb703);
-    --tertiary-color: linear-gradient(
-      to right,
-      rgba(255, 255, 255, 1),
-      rgba(255, 255, 255, 0.5)
-    );
-    --background-components: linear-gradient(
-      to bottom,
-      rgba(219, 224, 231, 0.4),
-      rgba(219, 224, 231, 0.5)
-    );
+    --tertiary-color: #fff;
+    --background-components: rgba(219, 224, 231, 0.5);
 
     /* --tertiary-color: linear-gradient(to bottom, #eef1f5, #e6e9f0);
     --background-components: linear-gradient(
@@ -44,12 +36,9 @@
     ); */
 
     --tertiary-color-variant-toB: linear-gradient(to bottom, #eef1f5, #e6e9f0);
-    --background-components-hexa: #e7eaee;
-    --background-components-high-opacity: rgba(212, 216, 220, 0.75);
     --background-components-full-opacity: rgba(212, 216, 220, 1);
     --titles-color: #ff3366;
     --texts-color: rgba(10, 10, 10, 1);
-    --texts-color-light: rgba(10, 10, 10, 0.7);
     --white: #ffffff;
     --white-no-change: #ffffff;
     --light-white: #f5f5f5;

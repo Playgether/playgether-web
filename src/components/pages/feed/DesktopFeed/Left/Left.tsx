@@ -1,4 +1,3 @@
-import { ProfileContextProvider } from "../../../../../context/ProfileContext";
 import OnlineFriendsCard from "./OnlineFriends/OnlineFriendsCard";
 import ProfileCard from "./Profile/ProfileCard";
 

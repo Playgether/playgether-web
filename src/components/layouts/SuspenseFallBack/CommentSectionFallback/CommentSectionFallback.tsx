@@ -1,6 +1,4 @@
 import SkeletonComments from "@/components/elements/SkeletonComments/SkeletonComments";
-import { LoadingComponent } from "../../components/LoadingComponent";
-import { Skeleton } from "@/components/ui/skeleton";
 
 /** Este componente serve como fallback enquanto o fetch de comentários não acontece */
 export const CommentSectionFallback = () => {

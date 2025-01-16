@@ -54,7 +54,7 @@ const VirtualizedFeed = ({ setSlideIndex, handlePostsExtend }) => {
             </div>
           )}
 
-          <div className="mb-5 shadow-lg">
+          <div className="mb-5 shadow-lg rounded-xl">
             <PostProperies
               object_id={resource.id}
               user_already_like={resource.user_already_like}
