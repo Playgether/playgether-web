@@ -16,7 +16,7 @@ export const SlidePostExpand = ({
   slideIndex,
 }: SlidePostExpandProps) => {
   return (
-    <div className="2xl:w-4/6 w-3/6 text-black-300 h-full max-w-[1080px] bg-white-200">
+    <div className="2xl:w-4/6 w-3/6 h-full max-w-[1080px] SlidePostExpand-wrapper">
       <Suspense fallback={<VideoLoadingFallback />}>
         <div className="w-[1080px] h-full">
           <Posts

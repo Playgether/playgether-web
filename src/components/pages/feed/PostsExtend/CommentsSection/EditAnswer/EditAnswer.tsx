@@ -58,7 +58,7 @@ const EditAnswer = ({
             shouldShow={shouldShowModal}
             onRequestClose={() => setShouldShowModal(false)}
           >
-            <div className=" flex flex-col justify-center items-center gap-6 pt-2">
+            <div className=" flex flex-col justify-center EditComments-wrapper items-center gap-6 pt-2">
               <RiDeleteBin6Line className="h-12 w-12 text-red-400 mt-2" />
               <div className="flex flex-col text-center gap-3">
                 <p className="text-lg font-medium">
@@ -85,7 +85,7 @@ const EditAnswer = ({
                   Excluir
                 </ButtonClose>
                 <DefaultButton
-                  className="h-8 w-20 bg-gradient-to-r bg-gray-400 from-gray-400 via-gray-500 to-gray-500 hover:bg-gray-500 cursor-pointer hover:from-gray-500 hover:via-gray-600 hover:to-gray-600"
+                  className="h-8 w-20 Comments-cancel-button"
                   onClick={() => setShouldShowModal(false)}
                 >
                   Cancelar

@@ -3,9 +3,9 @@
 }
 
 .OnlineFriends-search-icon {
-  color: var(--texts-color-light);
+  color: var(--texts-color);
 }
 
 .OnlineFriendsCard-expand {
-  color: var(--texts-color-light);
+  color: var(--light-gray);
 }

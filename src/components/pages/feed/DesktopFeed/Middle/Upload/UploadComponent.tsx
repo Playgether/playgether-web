@@ -13,7 +13,7 @@ export const UploadCompoent = () => {
 
   return (
     <>
-      <div className="bg-blue-200 flex flex-row w-full space-x-3 items-center justify-center UploadComponent-wrapper rounded-lg">
+      <div className="flex flex-row w-full space-x-3 items-center justify-center UploadComponent-wrapper rounded-md">
         <div className="text-sm w-full flex flex-row justify-center items-center space-x-2 pt-1">
           <h1>{isComponentVisible ? "Fechar" : "Compartilhe algo conosco"}</h1>
           <button className="" onClick={toggleComponentVisibility}>

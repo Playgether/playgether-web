@@ -31,22 +31,22 @@ export const FormCommentImplementation = ({
   return (
     <form
       onSubmit={handleSubmit(Submiting)}
-      className="h-full w-full border border-solid border-blue-500 bg-white-200 flex flex-col overflow-y-hidden max-h-[80vh]"
+      className="h-full w-full flex flex-col overflow-y-hidden max-h-[80vh]"
     >
       {/* Área do TextArea */}
-      <div className="flex-grow flex flex-col justify-start items-center w-full overflow-y-auto h-full">
+      <div className="flex-grow flex flex-col AnswerComment-wrapper justify-start items-center w-full overflow-y-auto h-full">
         <TextAreaLayout
           register={register("comment")}
           maxRows={10}
           minRows={2}
           placeholder="Digite um comentário"
           className="h-full max-h-[124px] w-full"
-          textAreaClassName="resize-none h-full max-h-[124px] py-4 focus:bg-gray-50 border focus:border-none"
+          textAreaClassName="resize-none h-full max-h-[124px] py-4 AnswerComment-text-area"
         />
       </div>
 
       {/* Botão na parte inferior */}
-      <div className="bg-gray-50 flex-shrink-0">
+      <div className="flex-shrink-0">
         <DefaultButton className="w-full" type="submit">
           Enviar
         </DefaultButton>

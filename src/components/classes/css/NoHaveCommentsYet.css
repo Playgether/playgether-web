@@ -1,0 +1,11 @@
+.NoHaveCommentsYet-wrapper {
+  background: var(--tertiary-color-variant-light);
+}
+
+.NoHaveCommentsYet-first-message {
+  color: var(--dark-gray);
+}
+
+.NoHaveCommentsYet-second-message {
+  color: var(--light-gray);
+}

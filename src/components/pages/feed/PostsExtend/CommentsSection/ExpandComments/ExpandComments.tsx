@@ -76,7 +76,7 @@ export const ExpandedComments = ({
         </div>
         <div className="flex flex-row justify-between gap-2 pt-2">
           {isEditing ? (
-            <div className="w-full">
+            <div className="w-full EditComments-wrapper">
               <div className="cursor-pointer w-full pl-5">
                 <form onSubmit={handleSubmit(Submiting)}>
                   <div className="flex h-full w-full ">
@@ -84,19 +84,17 @@ export const ExpandedComments = ({
                       autoFocus
                       register={{ ...register("comment") }}
                       placeholder="Edite o comentário"
-                      className="h-full bg-white-200 w-full mb-3"
-                      textAreaClassName="resize-none"
+                      className="h-full w-full mb-3"
+                      textAreaClassName="resize-none AnswerComment-text-area"
                       defaultValue={answer.comment}
                       maxRows={10}
                     />
                     <ErrosInput field={errors.comment} />
                   </div>
                   <div className="flex gap-2">
-                    <DefaultButton className="bg-gray-400 h-10 w-16 hover:bg-gray-500">
-                      Editar
-                    </DefaultButton>
+                    <DefaultButton className="h-10 w-16">Editar</DefaultButton>
                     <DefaultButton
-                      className="h-10 w-20 bg-gradient-to-r bg-gray-400 from-gray-400 via-gray-500 to-gray-500 hover:bg-gray-500 cursor-pointer hover:from-gray-500 hover:via-gray-600 hover:to-gray-600"
+                      className="h-10 w-20 Comments-cancel-button"
                       onClick={() => setIsEditing(false)}
                     >
                       Cancelar

@@ -1,3 +1,14 @@
 .Step1-wrapper {
-  color: var(--light-gray);
+  color: var(--dark-gray);
+}
+
+.Step1-TextArea {
+  background: transparent;
+  border: solid 1px var(--light-gray);
+  color: var(--texts-color);
+  outline: none;
+}
+
+.Step1-TextArea:focus {
+  border: solid 2px var(--texts-color);
 }

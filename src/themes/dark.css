@@ -5,11 +5,10 @@
   --primary-color-variant-toB: linear-gradient(to bottom, #4776e6, #8e54e9);
   --secondary-color: linear-gradient(to right, #ff3366, #ffb703);
   --secondary-color-variant-toB: linear-gradient(to bottom, #ff3366, #ffb703);
+  --tertiary-color-variant-dark: #191919;
   --tertiary-color: #0f0f0f;
+  --tertiary-color-variant-light: #232327;
   --background-components: rgba(44, 44, 50, 0.7);
-  --tertiary-color-variant-toB: linear-gradient(to bottom, #6c6c72, #1f1f23);
-  --background-components-hexa: #e7eaee;
-  --background-components-high-opacity: rgba(212, 216, 220, 0.75);
   --background-components-full-opacity: rgba(44, 44, 50, 1);
   --titles-color: #ff3366;
   --texts-color: #ffffff;

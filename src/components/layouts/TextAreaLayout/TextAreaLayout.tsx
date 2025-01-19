@@ -22,7 +22,7 @@ const TextAreaLayout = ({
         {...rest}
         {...register}
         className={twMerge(
-          "apperance-none block w-full min-h-full px-4 py-3 leading-tight TextAreaLayout-wrapper rounded focus:outline-none",
+          "apperance-none block w-full min-h-full px-4 py-3 leading-tight rounded",
           textAreaClassName
         )}
       />

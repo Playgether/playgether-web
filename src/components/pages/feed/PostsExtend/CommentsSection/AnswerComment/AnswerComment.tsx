@@ -58,19 +58,16 @@ export const AnswerComment = ({ object_id }: FormCommentProps) => {
     <>
       <CustomToaster />
       <form className="w-full" onSubmit={handleSubmit(Submiting)}>
-        <div className="w-full flex pt-4 pl-1 -ml-2 items-end relative">
+        <div className="w-full flex pt-4 pl-1 -ml-2 items-end relative AnswerComment-wrapper">
           <TextAreaLayout
             register={{ ...register("comment") }}
             placeholder="Responder"
             className="w-full"
-            textAreaClassName="resize-none"
+            textAreaClassName="resize-none AnswerComment-text-area"
             maxRows={15}
           />
           <button className="pl-2 rounded mb-2" type="submit">
-            <BsFillSendFill
-              className="h-6 w-8 text-orange-400 cursor-pointer"
-              type="submit"
-            />
+            <BsFillSendFill className="h-6 w-8 cursor-pointer" type="submit" />
           </button>
         </div>
         {errors ? (

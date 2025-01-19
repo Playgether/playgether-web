@@ -16,7 +16,7 @@ const Step1 = ({ register, errors }) => {
         minRows={2}
         placeholder="Digite o texto e avance"
         className="h-5/6 w-full"
-        textAreaClassName="resize-none focus:bg-gray-50 border focus:border-none max-h-full"
+        textAreaClassName="resize-none max-h-full Step1-TextArea"
       />
     </div>
   );

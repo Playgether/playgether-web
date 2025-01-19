@@ -14,6 +14,7 @@ import { commentPatchProps } from "../../../../../../services/patchComment";
 import { AnswerComment } from "../AnswerComment/AnswerComment";
 import { PostsCommentsProps } from "../../../../../../services/getComments";
 import { useCommentsContext } from "../../../../../../context/CommentsContext";
+import { BorderLine } from "../../../DesktopFeed/MultUseComponents/BorderLine/BorderLine";
 
 export interface CommentsProps {
   /** Esta prop recebe um comentário específico que é do tipo PostsCommentsProps */
@@ -59,19 +60,19 @@ export const Comments = ({ item, post_id }: CommentsProps) => {
                     autoFocus
                     register={{ ...register("comment") }}
                     placeholder="Edite o comentário"
-                    className="h-full bg-white-200 w-full mb-3"
-                    textAreaClassName="resize-none"
+                    className="h-full w-full mb-3"
+                    textAreaClassName="resize-none AnswerComment-text-area"
                     defaultValue={item.comment}
                     maxRows={10}
                   />
                   <ErrosInput field={errors.comment} />
                 </div>
                 <div className="flex gap-2">
-                  <DefaultButton className="bg-gray-400 h-10 w-16 hover:bg-gray-500">
+                  <DefaultButton className="h-10 w-20 Comments-edit-button">
                     Editar
                   </DefaultButton>
                   <DefaultButton
-                    className="h-10 w-20 bg-gradient-to-r bg-gray-400 from-gray-400 via-gray-500 to-gray-500 hover:bg-gray-500 cursor-pointer hover:from-gray-500 hover:via-gray-600 hover:to-gray-600"
+                    className="h-10 w-20 Comments-cancel-button"
                     onClick={() => setIsEditing(false)}
                   >
                     Cancelar
@@ -99,7 +100,7 @@ export const Comments = ({ item, post_id }: CommentsProps) => {
         />
       </div>
       <AnswerComment object_id={item.id} />
-      <div className="border-b w-full border-b-gray-300 pt-2 pl-1"></div>
+      <BorderLine className="Comments-border-line w-full pt-2 pl-1" />
     </>
   );
 };

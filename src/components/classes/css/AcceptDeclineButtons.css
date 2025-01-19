@@ -1,0 +1,19 @@
+.AcceptDeclineButtons-accept {
+  background: var(--light-white);
+  border: 1px solid var(--light-gray);
+  color: var(--black);
+}
+
+.AcceptDeclineButtons-accept:hover {
+  background-color: #bbf7d0;
+}
+
+.AcceptDeclineButtons-decline {
+  background: var(--light-white);
+  border: 1px solid var(--light-gray);
+  color: var(--black);
+}
+
+.AcceptDeclineButtons-decline:hover {
+  background: #fecaca;
+}

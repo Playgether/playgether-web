@@ -52,7 +52,7 @@ const VirtualizedComments = ({ post_id }: { post_id: number }) => {
           itemContent={(index, item) => (
             <>
               <div
-                className="text-gray-500 flex flex-row bg-white-200 items-center justify-start w-full pl-4 overflow-x-hidden"
+                className="VirtualizedComments-wrapper flex flex-row items-center justify-start w-full pl-4 overflow-x-hidden"
                 key={item.id}
               >
                 <div className="w-full">
@@ -78,7 +78,7 @@ const VirtualizedComments = ({ post_id }: { post_id: number }) => {
                   <div className="w-full flex flex-col items-start justify-start text-sm">
                     <Comments post_id={post_id} item={item} />
                     <p
-                      className="text-blue-500 cursor-pointer text-xs pl-1 pt-2 h-10"
+                      className="VirtualizedComments-expand cursor-pointer text-xs pl-1 pt-2 h-10"
                       onClick={() => handleExpandComment(item.id)}
                     >
                       {expandedComments[item.id] === true

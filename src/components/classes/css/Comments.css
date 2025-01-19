@@ -1,0 +1,18 @@
+.Comments-border-line {
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.Comments-edit-button {
+  background: var(--primary-color);
+}
+
+.Comments-cancel-button {
+  background: transparent;
+  border: 1px solid var(--light-gray);
+  color: var(--texts-color);
+}
+
+.Comments-cancel-button:hover {
+  background: var(--light-gray);
+  color: var(--white) !important;
+}

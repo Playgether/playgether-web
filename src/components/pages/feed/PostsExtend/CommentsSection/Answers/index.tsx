@@ -9,7 +9,7 @@ export const Answers = ({ expandedComments, item }) => {
   return (
     <>
       {expandedComments[item.id] && (
-        <div className="w-11/12 ml-auto flex flex-col items-start mb-3 bg-white-300 rounded-3xl p-4 mt-2 mr-2">
+        <div className="w-11/12 ml-auto flex flex-col items-start mb-3 Answers-wrapper rounded-3xl p-4 mt-2 mr-2">
           {item.answers.results.length > 0 ? (
             <>
               {item.answers.results.map((answer) => (
@@ -25,7 +25,7 @@ export const Answers = ({ expandedComments, item }) => {
               ))}
               {item.answers.next && (
                 <div
-                  className="flex gap-2 text- cursor-pointer text-blue-400"
+                  className="flex gap-2 text- cursor-pointer VirtualizedComments-expand"
                   onClick={() => fetchNextAnswers(item)}
                 >
                   <BsArrowReturnRight />

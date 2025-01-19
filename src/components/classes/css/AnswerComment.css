@@ -1,0 +1,14 @@
+.AnswerComment-wrapper {
+  color: var(--titles-color);
+}
+
+.AnswerComment-text-area {
+  background: var(--tertiary-color-variant-light);
+  border: solid 1px var(--light-gray);
+  color: var(--texts-color);
+  outline: none;
+}
+
+.AnswerComment-text-area:focus {
+  border: solid 2px var(--texts-color);
+}

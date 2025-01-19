@@ -1,0 +1,9 @@
+.PostsExtendHasPostMedia-right-top {
+  background: var(--tertiary-color-variant-light);
+  color: var(--texts-color);
+}
+
+/* .PostsExtendHasPostMedia-right {
+  background: var(--tertiary-color-variant-light);
+  color: var(--light-white);
+} */

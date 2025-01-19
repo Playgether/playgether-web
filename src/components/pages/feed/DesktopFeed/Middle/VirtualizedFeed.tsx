@@ -25,7 +25,10 @@ const VirtualizedFeed = ({ setSlideIndex, handlePostsExtend }) => {
       endReached={loadMore}
       overscan={3}
       itemContent={(index, resource) => (
-        <div key={resource.id} className="VirtualizedFeed-wrapper rounded-xl">
+        <div
+          key={resource.id}
+          className="VirtualizedFeed-wrapper rounded-xl transition-shadow duration-100 ease-out hover:shadow-md"
+        >
           <div className="flex items-start justify-start">
             <ProfileAndUsername
               username={resource.created_by_user_name}
@@ -54,7 +57,7 @@ const VirtualizedFeed = ({ setSlideIndex, handlePostsExtend }) => {
             </div>
           )}
 
-          <div className="mb-5 shadow-lg rounded-xl">
+          <div className="mb-5 rounded-xl">
             <PostProperies
               object_id={resource.id}
               user_already_like={resource.user_already_like}

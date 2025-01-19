@@ -1,0 +1,9 @@
+.PostsExtendHasNoPostMedia-left {
+  background: var(--tertiary-color-variant-dark);
+  color: var(--texts-color);
+}
+
+.PostsExtendHasNoPostMedia-right {
+  background: var(--tertiary-color-variant-dark);
+  color: var(--light-white);
+}
