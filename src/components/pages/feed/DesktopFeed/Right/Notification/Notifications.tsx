@@ -6,7 +6,7 @@ const Notifications = () => {
   const { notifications } = useNotificationContext();
 
   return (
-    <div className="flex flex-col w-full pl-2 flex-wrap flex-1 justify-center 2xl:space-y-4 mb-4 p-6 pt-0">
+    <div className="flex flex-col w-full pl-2 flex-wrap flex-1 2xl:space-y-4 mb-4 p-6 pt-0">
       {notifications &&
         notifications.map((notification) => (
           <NotificationWrapper

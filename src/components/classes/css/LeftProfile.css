@@ -1,0 +1,17 @@
+.LeftProfile-card {
+  background: var(--tertiary-color-variant-light);
+  color: var(--texts-color);
+}
+
+.LeftProfile-verified {
+  color: var(--texts-color-variant);
+}
+
+.LeftProfile-status {
+  color: #4ade80;
+  border: solid 1px #4ade80;
+}
+
+.LeftProfile-shadow {
+  shadow-color: var(light-gray);
+}

@@ -88,11 +88,11 @@ export const FormRegisterImplementation = ({
       <ErrosInput field={errors.last_name} />
 
       <div className="mb-4">
-        <div className="flex flex-row gap-2 text-black-300 items-center">
+        <div className="flex flex-row gap-2 FormRegisterImplementation-wrapper items-center">
           <div className="flex flex-col items-center justify-center">
             <input type="checkbox" {...register("agree")} />
           </div>
-          <div className="mb-1">
+          <div>
             <p>Concordo com os termos</p>
           </div>
         </div>

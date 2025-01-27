@@ -13,7 +13,7 @@ export const UploadCompoent = () => {
 
   return (
     <>
-      <div className="flex flex-row w-full space-x-3 items-center justify-center UploadComponent-wrapper rounded-md">
+      <div className="flex flex-row w-full space-x-3 items-center justify-center UploadComponent-wrapper rounded-md motion-preset-slide-down">
         <div className="text-sm w-full flex flex-row justify-center items-center space-x-2 pt-1">
           <h1>{isComponentVisible ? "Fechar" : "Compartilhe algo conosco"}</h1>
           <button className="" onClick={toggleComponentVisibility}>
@@ -25,7 +25,9 @@ export const UploadCompoent = () => {
           </button>
         </div>
       </div>
-      {isComponentVisible && <PostComponent />}
+      {isComponentVisible && (
+        <PostComponent isComponentVisible={isComponentVisible} />
+      )}
     </>
   );
 };

@@ -1,0 +1,12 @@
+.MenuProfile-wrapper {
+  color: var(--white-no-change);
+  background: var(--primary-color);
+}
+
+.MenuProfile-option:hover {
+  background: var(--texts-color-variant);
+}
+
+.MenuProfile-selected {
+  background: var(--texts-color-variant-dark);
+}

@@ -11,6 +11,8 @@ module.exports = {
       animation: {
         sideways: "sideways 3s linear infinite",
         slideLeft: "slideLeft 30s linear infinite",
+        slideLeft2: "slideLeft 20s linear infinite",
+        slideLeft3: "slideLeft 10s linear infinite",
         slideLeftResponsive: "slideLeftResponsive 30s linear infinite",
         like: "like 0.2s alternate 2",
         deleteLike: "deleteLike 0.2s alternate 2",
@@ -295,5 +297,5 @@ module.exports = {
       transitionProperty: ["responsive", "motion-safe", "motion-reduce"],
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate"), require("tailwindcss-motion")],
 };

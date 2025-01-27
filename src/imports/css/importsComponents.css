@@ -5,9 +5,9 @@
 @import "../../components/classes/css/IconsHeader.css";
 @import "../../components/classes/css/SearchElement.css";
 @import "../../components/classes/css/AsideBase.css";
-@import "../../components/classes/css/GlobalChat.css";
+@import "../../components/classes/css/Megafone.css";
 @import "../../components/classes/css/IntervalFunction.css";
-@import "../../components/classes/css/ResponsiveGlobalChat.css";
+@import "../../components/classes/css/ResponsiveMegafone.css";
 @import "../../components/classes/css/ProfileCard.css";
 @import "../../components/classes/css/ProfileCardBio.css";
 @import "../../components/classes/css/OnlineFriends.css";
@@ -46,3 +46,14 @@
 @import "../../components/classes/css/NoHaveCommentsYet.css";
 @import "../../components/classes/css/Answers.css";
 @import "../../components/classes/css/SlidePostExpand.css";
+@import "../../components/classes/css/HeaderIndex.css";
+@import "../../components/classes/css/Cadastro.css";
+@import "../../components/classes/css/FormRegisterImplementation.css";
+@import "../../components/classes/css/AlreadyHaveAccount.css";
+@import "../../components/classes/css/LeftProfile.css";
+@import "../../components/classes/css/Bio.css";
+@import "../../components/classes/css/BioConquists.css";
+@import "../../components/classes/css/BioPerformance.css";
+@import "../../components/classes/css/MenuProfile.css";
+@import "../../components/classes/css/Conquists.css";
+@import "../../components/classes/css/ConquistsText.css";

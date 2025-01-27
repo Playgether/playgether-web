@@ -1,10 +1,10 @@
 import React from "react";
 
 import AsideBase from "./AsideBase";
-import GlobalChat from "./Megafone/GlobalChat";
+import Megafone from "./Megafone/Megafone";
 import HeaderBase from "./HeaderBase";
 import { twMerge } from "tailwind-merge";
-import { ResponsiveGlobalChat } from "./Megafone/ResponsiveGlobalChat";
+import { ResponsiveMegafone } from "./Megafone/ResponsiveMegafone";
 
 const BaseLayout = ({ children, ...rest }) => {
   return (
@@ -17,11 +17,11 @@ const BaseLayout = ({ children, ...rest }) => {
       {/* Corpo principal */}
       <div
         className={twMerge(
-          "flex flex-row w-full flex-grow max-w-screen mt-2",
+          "flex flex-row w-full flex-grow h-full max-w-screen mt-2 gap-0 justify-center",
           rest.className
         )}
       >
-        <div className="sticky top-16 h-[calc(100vh-160px)] z-10 max-w-screen">
+        <div className="sticky top-16 h-[calc(100vh-160px)] z-10 max-w-screen mr-2">
           <AsideBase />
         </div>
         {children}
@@ -29,10 +29,10 @@ const BaseLayout = ({ children, ...rest }) => {
 
       {/* Chat fixado na parte inferior */}
       <div className="hidden lg:flex sticky z-10 bottom-0 max-w-screen w-full">
-        <GlobalChat />
+        <Megafone />
       </div>
       <div className="lg:hidden sticky bottom-0 max-w-screen">
-        <ResponsiveGlobalChat />
+        <ResponsiveMegafone />
       </div>
     </div>
   );

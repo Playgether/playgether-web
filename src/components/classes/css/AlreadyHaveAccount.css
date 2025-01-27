@@ -1,0 +1,7 @@
+.AlreadyHaveAccount-p {
+  color: var(--dark-gray);
+}
+
+.AlreadyHaveAccount-a {
+  color: var(--texts-color-variant);
+}

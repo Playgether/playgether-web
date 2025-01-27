@@ -21,7 +21,11 @@ import DefaultButton from "@/components/elements/DefaultButton/DefaultButton";
 type dataForm = {
   text: string;
 };
-const PostComponent = ({}) => {
+const PostComponent = ({
+  isComponentVisible,
+}: {
+  isComponentVisible: Boolean;
+}) => {
   const [step, setStep] = useState(1);
   const Step1Schema = PostFormSchema();
   const { register, handleSubmit, errors, reset } = UseFormState(Step1Schema);
@@ -88,7 +92,9 @@ const PostComponent = ({}) => {
   };
 
   return (
-    <div className="w-full PostComponent-wrapper h-[300px] mt-2 rounded-lg flex flex-col shadow-lg mb-4 gap-1">
+    <div
+      className={` ${isComponentVisible ? "motion-preset-slide-down-sm" : "motion-preset-slide-up-lg"} w-full PostComponent-wrapper h-[300px] mt-2 rounded-lg flex flex-col shadow-lg mb-4 gap-1`}
+    >
       <CustomToaster></CustomToaster>
       <div className="w-full text-center pt-1">
         {step === 1 && <h1>Texto</h1>}

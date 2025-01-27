@@ -1,0 +1,12 @@
+.Bio-performance-wrapper {
+  background: var(--tertiary-color-variant-light);
+  color: var(--texts-color);
+}
+
+.Bio-performance-title {
+  color: var(--texts-color-variant);
+}
+
+.Bio-performance-text {
+  color: var(--light-gray);
+}
