@@ -7,11 +7,11 @@
 @tailwind utilities;
 
 @layer base {
-  * {
-    @apply transition-colors duration-500 ease-in-out;
+  .BaseLayout-wrapper {
+    @apply transition-colors duration-1000 ease-in-out;
   }
-
   :root {
+    --transition-colors: transition-colors duration-500 ease-in-out;
     --overlay: #03a9fa;
     font-family: "Poppins", sans-serif;
     --primary-color: linear-gradient(to right, #4776e6, #8e54e9);

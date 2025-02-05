@@ -1,19 +1,19 @@
-import React, { FC } from 'react'
+import React, { FC } from "react";
 
 interface CardGameMainContainerProps {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }
 
-export const CardGameMainContainer: FC<CardGameMainContainerProps> = ({ children }) => {
+export const CardGameMainContainer: FC<CardGameMainContainerProps> = ({
+  children,
+}) => {
   return (
-
     <>
-        <section className="text-center pt-20 font-extrabold text-orange-500 text-2xl">
-            <h1>Conecte seus jogos</h1>
-        </section>
+      <section className="text-center pt-20 font-extrabold CardGameMainContainer-wrapper text-2xl">
+        <h1>Conecte seus jogos</h1>
+      </section>
 
-        {children}
+      {children}
     </>
-
-  )
-}
+  );
+};

@@ -1,0 +1,8 @@
+.ProfileValorant-title {
+  color: var(--texts-color-variant);
+}
+
+.ProfileValorant-background-cards {
+  color: var(--texts-color);
+  background: var(--tertiary-color-variant-light);
+}

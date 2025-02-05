@@ -16,9 +16,9 @@ export const Game = () => {
         <>
           <DefaultButton
             onClick={handleBackPage}
-            className="w-[5rem] h-[2rem] mx-5 my-6"
+            className="2xl:px-5 2xl:py-1 px-3 py-1 rounded mx-5 my-6"
           >
-            <h1 className="text-lg font-semibold">Voltar</h1>
+            <h1>Voltar</h1>
           </DefaultButton>
           {page && GamesList[page]?.component}
         </>

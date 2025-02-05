@@ -11,27 +11,27 @@ export const BioConquists = () => {
         <GiRibbonMedal className="h-20 w-20 absolute Bio-conquists-title right-0 pt-4" />
       </div>
       <div className="w-full flex flex-col gap-4 p-4">
-        <div className="w-full flex gap-2 items-center">
+        <div className="w-full flex gap-2 items-center font-light">
           <FaMedal className="text-yellow-200 h-8 w-8" />
           <p>1st. Cs2 First America Championship</p>
         </div>
 
-        <div className="w-full flex gap-2 items-center">
+        <div className="w-full flex gap-2 items-center font-light">
           <FaMedal className=" text-yellow-950 h-8 w-8" />
           <p>3st. Valorant High Cup</p>
         </div>
 
-        <div className="w-full flex gap-2 items-center">
+        <div className="w-full flex gap-2 items-center font-light">
           <FaMedal className=" text-slate-400 h-8 w-8" />
           <p>2st. League of Legends Ult Power</p>
         </div>
 
-        <div className="w-full flex gap-2 items-center">
+        <div className="w-full flex gap-2 items-center font-light">
           <FaUserShield className=" text-white-200 h-8 w-8" />
           <p>Play Grand Guild (Marechal)</p>
         </div>
 
-        <div className="w-full flex gap-2 items-center">
+        <div className="w-full flex gap-2 items-center font-light">
           <GiImperialCrown className="text-red-500 h-8 w-8" />
           <p>King of League (1x1)</p>
         </div>

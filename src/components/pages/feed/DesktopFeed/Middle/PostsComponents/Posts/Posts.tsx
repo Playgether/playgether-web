@@ -43,6 +43,10 @@ export interface PostsProps extends HTMLAttributes<HTMLDivElement> {
    * passada, o padrão será 1080
    */
   postWidth?: number;
+
+  objectFit?: string;
+
+  plays?: boolean;
 }
 
 /** Este componente é responsável por criar o carrousel (slide) dos posts que possuem media, sejam eles imagens, vídeos, ou os dois juntos. Você pode passar um className para
@@ -56,6 +60,8 @@ const Posts = ({
   setSlideIndex,
   postHeight = 720,
   postWidth = 1080,
+  objectFit = "contain",
+  plays = true,
   ...rest
 }: PostsProps) => {
   const volumeRef = useRef<HTMLVideoElement | null>(null);
@@ -122,7 +128,7 @@ const Posts = ({
                     style={{
                       maxHeight: `${postHeight}px`,
                       height: "100%",
-                      objectFit: "contain",
+                      objectFit: objectFit,
                     }}
                     className="rounded object-contain h-full"
                     alt="No information available"
@@ -143,16 +149,29 @@ const Posts = ({
                       onClick={(e) => e.stopPropagation()}
                       className="rounded items-center justify-center swiper-no-swiping flex w-full h-fit relative"
                     >
-                      <CldVideoPlayer
-                        src={item.media_file}
-                        transformation={{ width: postWidth, crop: "limit" }}
-                        quality={"auto:good"}
-                        fluid={false}
-                        colors={{ accent: "orange", text: "orange" }}
-                        logo={false}
-                        showJumpControls={true}
-                        playsinline={true}
-                      />
+                      {plays ? (
+                        <CldVideoPlayer
+                          src={item.media_file}
+                          transformation={{ width: postWidth, crop: "limit" }}
+                          quality={"auto:good"}
+                          fluid={false}
+                          colors={{ accent: "orange", text: "orange" }}
+                          logo={false}
+                          showJumpControls={true}
+                          playsinline={true}
+                          // height={postHeight}
+                          // width={postWidth}
+                        />
+                      ) : (
+                        <CldImage
+                          src={item.media_file}
+                          width={postWidth}
+                          height={postHeight}
+                          // crop="limit"
+                          // format="jpg"
+                          alt="Thumbnail do vídeo"
+                        />
+                      )}
                     </div>
                   </Suspense>
                 </div>

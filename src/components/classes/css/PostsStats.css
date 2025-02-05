@@ -1,0 +1,8 @@
+.PostsStats-wrapper {
+  background: var(--tertiary-color-variant-light);
+  color: var(--texts-color);
+}
+
+.PostsStats-icons {
+  color: var(--titles-color);
+}

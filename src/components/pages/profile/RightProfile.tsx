@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { MenuProfile } from "./MenuProfile";
-import { Texts } from "./Texts";
+import { TextsProfilePosts } from "./TextsProfilePosts";
 import { Medias } from "./Medias";
 import { Bio } from "./Bio";
 import { Conquists } from "./Conquists";
@@ -14,15 +14,15 @@ export const RightProfile = () => {
   const [content, setContent] = useState("bio");
 
   return (
-    <div className="w-full rounded-t-lg h-full overflow-hidden min-h-[90vh]">
+    <div className="w-full rounded-t-lg h-full overflow-hidden min-h-[90vh] pb-[30px]">
       <MenuProfile setContent={setContent} content={content} />
       {content === "bio" && <Bio />}
       {content === "medias" && <Medias />}
-      {content === "textos" && <Texts />}
+      {content === "textos" && <TextsProfilePosts />}
       {content === "estatisticas" && <Statistics />}
       {content === "conquistas" && <Conquists />}
       {content === "marcos" && <Moments />}
-      {content === "games" && <Game />}
+      {content === "jogos" && <Game />}
     </div>
   );
 };

@@ -11,7 +11,7 @@ export const Conquists = () => {
         <p>Suas Conquistas</p>
       </div>
 
-      <div className="h-fit rounded-lg font-medium text-xl w-full min-h-[65vh]">
+      <div className="h-fit rounded-lg font-medium text-xl w-full min-h-[60vh]">
         <div className="Conquists-border ml-3 z-10 space-y-4">
           <ConquistText
             date={"2023-03-28"}

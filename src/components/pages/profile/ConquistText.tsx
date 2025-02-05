@@ -6,7 +6,7 @@ export const ConquistText = ({
 }: {
   text: string;
   title: string;
-  Icon: React.ReactNode;
+  Icon?: React.ReactNode;
   date: string;
 }) => {
   return (
@@ -16,17 +16,17 @@ export const ConquistText = ({
       </div>
 
       <div className="w-full pl-4 space-y-2">
-        <p className="text-lg font-semibold">{title}</p>
+        <p className="text-xl font-semibold">{title}</p>
         <p className="font-thin bg-opacity-20 flex justify-start items-center w-1/6 Conquists-date">
           {date}
         </p>
         <div className="flex justify-between">
-          <div className="relative whitespace-normal font-thin Conquists-text text-md">
+          <div className="relative font-thin Conquists-text text-md whitespace-pre-wrap">
             <p>{text}</p>
           </div>
-          <div className="pr-4">{Icon}</div>
         </div>
       </div>
+      {Icon ? <div className="pr-4">{Icon}</div> : null}
     </div>
   );
 };
