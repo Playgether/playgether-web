@@ -4,7 +4,7 @@ import { MdVerified } from "react-icons/md";
 
 export const LeftProfile = () => {
   return (
-    <div className="aspect-[3/4] w-2/6 max-h-[calc(100vh-160px)] h-full lg:h-auto rounded-lg top-[4.6rem] sticky">
+    <div className="aspect-[3/4] w-2/6 max-h-[calc(100vh-160px)] h-full lg:h-auto rounded-lg top-[4.6rem] sticky shadow-lg shadow-[rgba(#red)]">
       <div className=" rounded-lg w-full h-full items-center">
         <div>
           <Image

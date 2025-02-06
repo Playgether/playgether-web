@@ -98,7 +98,7 @@ export const TextsProfilePosts = () => {
       {objPosts.map((obj, index) => (
         <div
           key={index}
-          className={`TextsProfilePosts-wrapper cursor-pointer rounded-lg shadow-md shadow-gray-400 relative ${
+          className={`TextsProfilePosts-wrapper cursor-pointer rounded-lg shadow-md shadow-[var(--shadow-color)] border relative ${
             hoveredIndex === index ? "hovered" : ""
           }`}
           onMouseOver={() => handleMouseOver(index)}
