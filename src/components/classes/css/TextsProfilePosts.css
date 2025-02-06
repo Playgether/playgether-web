@@ -4,5 +4,5 @@
 }
 
 .TextsProfilePosts-wrapper:hover {
-  background: var(--light-gray);
+  background: var(--hover-color);
 }

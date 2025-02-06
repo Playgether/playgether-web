@@ -13,10 +13,10 @@ export const Bio = () => {
         </div>
       </div>
       <div className="flex w-full h-[300px] gap-4 justify-center items-center">
-        <div className="relative w-[450px] h-full Bio-conquists rounded-lg overflow-y-auto">
+        <div className="relative w-[450px] h-full Bio-conquists rounded-lg overflow-y-auto shadow shadow-[var(--shadow-color)] border">
           <BioConquists />
         </div>
-        <div className="h-full w-[450px] Bio-performance rounded-lg overflow-y-auto">
+        <div className="h-full w-[450px] Bio-performance rounded-lg overflow-y-auto shadow shadow-[var(--shadow-color)] border">
           <BioPerformance />
         </div>
       </div>

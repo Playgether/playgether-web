@@ -9,7 +9,7 @@ interface CardGamesProps {
 export const CardGames: React.FC<CardGamesProps> = ({ children, onClick }) => {
   return (
     <div
-      className="max-w-[20rem] max-h-56 shadow-md shadow-slate-300 hover:cursor-pointer overflow-hidden"
+      className="max-w-[20rem] max-h-56 shadow-md shadow-[var(--shadow-color)] hover:cursor-pointer overflow-hidden"
       onClick={onClick}
     >
       {children}
