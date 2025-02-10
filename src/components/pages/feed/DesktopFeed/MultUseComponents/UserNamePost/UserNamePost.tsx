@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { HTMLAttributes } from "react";
 import { twJoin } from "tailwind-merge";
 
@@ -12,7 +13,9 @@ interface UserNameProps extends HTMLAttributes<HTMLDivElement> {
 const UserNamePost = ({ username, ...rest }: UserNameProps) => {
   return (
     <div className={twJoin("", rest.className)} {...rest}>
-      <h1 className="UserNamePost-wrapper text-sm lg:text-md">{username}</h1>
+      <h1 className="UserNamePost-wrapper text-sm lg:text-md">
+        <Link href={`/profile/${username}`}>{username}</Link>
+      </h1>
     </div>
   );
 };

@@ -1,8 +1,13 @@
 import Image from "next/legacy/image";
 import DefaultButton from "../../elements/DefaultButton/DefaultButton";
 import { MdVerified } from "react-icons/md";
+import { getProfileByUsernameProps } from "@/services/getProfileByUsername";
 
-export const LeftProfile = () => {
+export const LeftProfile = ({
+  profile,
+}: {
+  profile: getProfileByUsernameProps | null;
+}) => {
   return (
     <div className="aspect-[3/4] w-2/6 max-h-[calc(100vh-160px)] h-full lg:h-auto rounded-lg top-[4.6rem] sticky shadow-lg shadow-[rgba(#red)]">
       <div className=" rounded-lg w-full h-full items-center">
@@ -30,12 +35,14 @@ export const LeftProfile = () => {
                 className="rounded-full"
               />
             </div>
-            <div className="-mt-5 px-20 absolute">
-              <MdVerified className="LeftProfile-verified" />
-            </div>
+            {profile?.verified && (
+              <div className="-mt-5 px-20 absolute">
+                <MdVerified className="LeftProfile-verified" />
+              </div>
+            )}
             <div className="flex justify-between">
-              <div className="ml-4 pt-2 font-medium 2xl:text-lg flex items-center">
-                <p>Neel Litorya</p>
+              <div className="ml-6 font-medium 2xl:text-lg flex items-center">
+                <p>{profile?.name}</p>
               </div>
               <div className="flex justify-center items-center LeftProfile-status rounded-full h-10 w-10 2xl:w-14 2xl:h-14">
                 <p className="2xl:text-2xl text-lg font-bold">4.6</p>
@@ -60,14 +67,18 @@ export const LeftProfile = () => {
                 <p className="text-sm 2xl:text-lg font-normal 2xl:font-normal">
                   Curtidas
                 </p>
-                <p className="2xl:text-lg text-sm font-light">500</p>
+                <p className="2xl:text-lg text-sm font-light">
+                  {profile?.quantity_likes}
+                </p>
               </div>
 
               <div className="flex flex-col justify-center items-center mr-4 2xl:mr-10">
                 <p className="text-sm 2xl:text-lg  font-normal 2xl:font-normal">
                   Comentários
                 </p>
-                <p className="2xl:text-lg text-sm font-light">253</p>
+                <p className="2xl:text-lg text-sm font-light">
+                  {profile?.quantity_comment}
+                </p>
               </div>
             </div>
           </div>

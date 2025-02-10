@@ -1,7 +1,8 @@
+import { notFound } from "next/navigation";
 import { api } from "./api";
 import { TokenData } from "./updateTokenRequest";
 
-export interface ProfileProps {
+export interface getProfileByUsernameProps {
   id: number;
   bio: string;
   profile_photo: string;
@@ -16,13 +17,13 @@ export interface ProfileProps {
   followed_by: [];
   name: string;
 }
-export const getProfile = async (
+export const getProfileByUsername = async (
   authTokens: TokenData | undefined | null,
-  userId: number | undefined
+  username: string
 ) => {
   try {
-    const response = await api.get<ProfileProps[]>(
-      `/api/v1/users/${userId}/profiles/`,
+    const response = await api.get<getProfileByUsernameProps>(
+      `/api/v1/profiles/?user__username=${username}`,
       {
         headers: {
           Authorization: "Bearer " + String(authTokens?.access),
@@ -31,6 +32,7 @@ export const getProfile = async (
     );
     return response;
   } catch (error) {
+    notFound: true;
     return error;
   }
 };
