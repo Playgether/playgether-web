@@ -40,6 +40,7 @@ const ProfileAndUsername = ({
     <div className={twJoin("", rest.className)} {...rest}>
       <div className="flex items-center gap-2">
         <ProfileImagePost
+          username={username}
           link_photo={profile_photo}
           className={`${imageClassName} h-10 w-10`}
         />

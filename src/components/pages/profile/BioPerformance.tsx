@@ -3,8 +3,13 @@ import { TbChartInfographic } from "react-icons/tb";
 import { MdOutlineAssessment } from "react-icons/md";
 import { LiaGamepadSolid } from "react-icons/lia";
 import { TfiTimer } from "react-icons/tfi";
+import { getProfileByUsernameProps } from "@/services/getProfileByUsername";
 
-export const BioPerformance = () => {
+export const BioPerformance = ({
+  profile,
+}: {
+  profile: getProfileByUsernameProps | null;
+}) => {
   return (
     <div className="relative h-full w-full Bio-performance-wrapper rounded-lg">
       <div className=" flex w-full h-12 ounded-lg items-center justify-center">
@@ -14,7 +19,7 @@ export const BioPerformance = () => {
       <div className=" w-full grid grid-cols-2 grid-rows-2 gap-4 p-4">
         <div className="w-full flex flex-col gap-1 items-center">
           <TbChartInfographic className="Bio-performance-title h-8 w-8" />
-          <p className="font-medium text-lg">ALTO</p>
+          <p className="font-medium text-lg">{profile?.performance}</p>
           <p className="Bio-performance-text">Desempenho</p>
         </div>
         <div className="w-full flex flex-col gap-1 items-center">
@@ -24,12 +29,12 @@ export const BioPerformance = () => {
         </div>
         <div className="w-full flex flex-col gap-1 items-center">
           <LiaGamepadSolid className="h-8 w-8 -rotate-45 Bio-performance-title" />
-          <p className="font-medium text-lg">143</p>
+          <p className="font-medium text-lg">{profile?.matches_played}</p>
           <p className="Bio-performance-text">Partidas</p>
         </div>
         <div className="w-full flex flex-col gap-1 items-center">
           <TfiTimer className="h-8 w-8 Bio-performance-title" />
-          <p className=" font-medium text-lg">348</p>
+          <p className=" font-medium text-lg">{profile?.hours_played}</p>
           <p className="Bio-performance-text">Horas</p>
         </div>
       </div>
