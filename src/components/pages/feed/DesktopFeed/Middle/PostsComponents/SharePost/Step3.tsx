@@ -12,7 +12,6 @@ const Step3 = ({setUploadedFiles, handleSubmit, makeUploadRequest, uploadedFiles
     const [activeUploads, setActiveUploads] = useState(0);
 
     const handleUploadSuccess = async(result) => {
-        console.log(result)
         await setUploadedFiles((prevFiles:PostMediaProps[]) => [
             ...prevFiles,
             {

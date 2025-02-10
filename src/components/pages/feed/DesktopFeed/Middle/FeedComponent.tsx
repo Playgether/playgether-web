@@ -31,7 +31,7 @@ const FeedComponent = () => {
   return (
       <div>
         {openPostsExtend && !!resourceObject && 
-          <div className="h-screen bg-red-500">
+          <div className="h-screen">
             <PostsExtend resource={resourceObject} onClose={handlePostsCloseExtend} slideIndex={slideIndex}/>
           </div>
         }

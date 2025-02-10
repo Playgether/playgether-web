@@ -1,6 +1,5 @@
 import { IoIosMegaphone } from "react-icons/io"
-import { IntervalFunctionComponent } from "./IntervalFunction"
-
+import { ResponsiveIntervalFunctionComponent } from "./ResponsiveIntervalFunction"
 
 export const ResponsiveGlobalChat = () => {
 
@@ -17,7 +16,7 @@ export const ResponsiveGlobalChat = () => {
 
             </div>
             <div className="w-5/6 z-0">     
-                <IntervalFunctionComponent/>
+                <ResponsiveIntervalFunctionComponent/>
             </div>
         </div>
     )

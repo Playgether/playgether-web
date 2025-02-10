@@ -64,7 +64,6 @@ const PostComponent = ({}) => {
         }
 
         const response = await SubmitingForm(() => postPost(newPost, authTokens));
-        console.log(response.status)
         if (response.status === 201){
             setStep(4)
         } else {

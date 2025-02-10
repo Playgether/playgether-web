@@ -42,12 +42,21 @@ export const FormCommentImplementation = ({handleSubmit, register, errors, Submi
   
       {/* Botão na parte inferior */}
       <div className="bg-gray-50 flex-shrink-0">
-        <OrangeButton
+        {window.innerWidth < 768 
+          ? 
+            <OrangeButton
+            className="w-full h-[2rem]"
+            type="submit"
+          >
+            Enviar
+          </OrangeButton> 
+          :
+          <OrangeButton
           className="w-full"
           type="submit"
         >
           Enviar
-        </OrangeButton>
+        </OrangeButton> }
       </div>
   
       {/* Exibição de erros */}

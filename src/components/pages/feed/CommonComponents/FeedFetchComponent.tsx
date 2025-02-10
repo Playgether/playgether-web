@@ -2,14 +2,17 @@
 
 import { useEffect, useState } from "react";
 import ContentFeed from "../DesktopFeed/MultUseComponents/ContentFeed"
-import { ResponsiveContainer } from "../ResponsiveFeed/Container"
+import ResponsiveFeedContainer from "../ResponsiveFeed/ResponsiveFeedContainer";
 
 export const FeedFetchComponent = () => {
     const [isDesktop, setIsDesktop] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
         const handleResize = () => {
-            setIsDesktop(window.innerWidth > 1224);
+            const width = window.innerWidth;
+            setIsDesktop(width >= 1224);
+            setIsMobile(width <= 768);
         };
 
         // Verificar o tamanho da tela ao montar o componente
@@ -28,10 +31,12 @@ export const FeedFetchComponent = () => {
                 <div className='hidden lg:flex flex-col h-full w-full overflow-visible'>
                     <ContentFeed />
                 </div> 
-            ): (
+            ): isMobile ? (
                 <div className='lg:hidden h-full w-full'>
-                    <ResponsiveContainer />
+                    <ResponsiveFeedContainer />
                 </div> 
+            ): (
+                undefined
             )}
         </>
     )
