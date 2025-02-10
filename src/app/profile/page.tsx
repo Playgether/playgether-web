@@ -1,13 +1,10 @@
 import BaseLayout from "@/components/layouts/BaseLayout";
 import Page from "@/components/pages/profile/Page";
 
-export interface Props {
-  params?: { username: string };
-}
-export default function Profile({ params }: Props) {
+export default function PageProfile() {
   return (
     <BaseLayout>
-      <Page params={params} />
+      <Page />
     </BaseLayout>
   );
 }

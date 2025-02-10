@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { Suspense, useCallback, useMemo, useRef, useState } from "react";
 import { FeedProps } from "../../../../../services/getFeed";
 import PostsExtend from "../../PostsExtend/PostsExtend";
 import VirtualizedFeed from "./VirtualizedFeed";
+import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 
 interface ApiResponse {
   data: FeedProps[];
@@ -37,10 +38,12 @@ const FeedComponent = () => {
           />
         </div>
       )}
-      <VirtualizedFeed
-        handlePostsExtend={handlePostsExtend}
-        setSlideIndex={setSlideIndex}
-      />
+      <Suspense fallback={<LoadingComponent />}>
+        <VirtualizedFeed
+          handlePostsExtend={handlePostsExtend}
+          setSlideIndex={setSlideIndex}
+        />
+      </Suspense>
     </div>
   );
 };
