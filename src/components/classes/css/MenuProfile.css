@@ -1,0 +1,18 @@
+.MenuProfile-wrapper {
+  color: var(--light-gray);
+  background: transparent;
+  transition: duration 0.5s ease-in-out !important;
+}
+
+.MenuProfile-option:hover {
+  color: var(--texts-color-variant);
+}
+
+.MenuProfile-option:after {
+  background: var(--texts-color-variant);
+}
+
+.MenuProfile-selected {
+  color: var(--texts-color-variant);
+  border-bottom: 1px solid var(--texts-color-variant);
+}

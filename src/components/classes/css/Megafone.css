@@ -1,0 +1,4 @@
+.Megafone-wrapper {
+  background: var(--background-components-full-opacity);
+  backdrop-filter: blur(10px);
+}

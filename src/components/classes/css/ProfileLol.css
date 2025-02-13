@@ -1,0 +1,8 @@
+.ProfileLol-title {
+  color: var(--texts-color-variant);
+}
+
+.ProfileLol-background-cards {
+  color: var(--texts-color);
+  background: var(--tertiary-color-variant-light);
+}

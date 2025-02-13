@@ -1,11 +1,10 @@
-import BaseLayout from "../../components/layouts/BaseLayout"
-import Page from "../../components/pages/profile/Page"
+import BaseLayout from "@/components/layouts/BaseLayout";
+import Page from "@/components/pages/profile/Page";
 
-
-export default function Profile() {
+export default function PageProfile() {
   return (
-      <BaseLayout>
-        <Page/>
-      </BaseLayout>
-    )
+    <BaseLayout>
+      <Page />
+    </BaseLayout>
+  );
 }

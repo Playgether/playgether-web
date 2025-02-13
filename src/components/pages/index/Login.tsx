@@ -3,25 +3,28 @@ import ButtonClose from "../../elements/ButtonClose/ButtonClose";
 import FormLogin from "./FormLogin";
 import Image from "next/legacy/image";
 
-
 interface LoginProps {
-    onClickX: () => void
-    onClickAqui: () => void
+  onClickX: () => void;
+  onClickAqui: () => void;
 }
 
-const Login = ({onClickX, onClickAqui} : LoginProps) => {
-    return (
-        <div className='h-screen flex flex-col justify-center bg-blue-400 bg-opacity-30 absolute w-screen'>
-            <div className='bg-white-200 mx-auto max-w-md py-8 px-10 shadow rounded-lg overflow-auto'>
-                <div className='mb-4 flex flex-col justify-between text-center'>
-                <ButtonClose onClick={onClickX}>X</ButtonClose>
-                <Image src={"/index/logoWhiteBackground.png"} width={400} height={400} alt={"Logo com Background"}/>
-                </div>
-                <FormLogin onClickAqui={onClickAqui}/>
-            </div>
+const Login = ({ onClickX, onClickAqui }: LoginProps) => {
+  return (
+    <div className="h-screen flex flex-col justify-center bg-opacity-30 absolute w-screen">
+      <div className="Cadastro-wrapper mx-auto max-w-md py-8 px-10 shadow rounded-lg overflow-auto">
+        <div className="mb-4 flex flex-col justify-between text-center">
+          <ButtonClose onClick={onClickX}>X</ButtonClose>
+          <Image
+            src={"/index/logoWhiteBackground.png"}
+            width={400}
+            height={400}
+            alt={"Logo com Background"}
+          />
+        </div>
+        <FormLogin onClickAqui={onClickAqui} />
+      </div>
     </div>
-
-    );
+  );
 };
 
 export default Login;

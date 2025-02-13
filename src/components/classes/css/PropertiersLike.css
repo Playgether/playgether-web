@@ -1,0 +1,11 @@
+.PropertiersLike-wrapper-thin {
+  color: var(--titles-color);
+}
+
+.PropertiersLike-wrapper-fill {
+  color: var(--titles-color);
+}
+
+.PropertiersLike-number {
+  color: var(--texts-color);
+}

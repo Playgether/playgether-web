@@ -42,10 +42,7 @@ const PostsExtend = ({ onClose, resource, slideIndex }: PostsExtendProps) => {
 
   return (
     <>
-      <div
-        className="fixed inset-0 z-40 bg-black bg-opacity-50"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 z-40 bg-opacity-50" onClick={onClose} />
       <div
         className="fixed z-50 flex left-0 right-0 justify-center bottom-[65px] mx-auto w-full bg-white shadow-lg bg-black-300 bg-opacity-50"
         style={{ height: "calc(100vh - 65px)" }}

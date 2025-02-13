@@ -1,0 +1,23 @@
+.testPage-wrapper {
+  background: var(--tertiary-color);
+}
+
+.testPage-1 {
+  background: var(--primary-color);
+}
+
+.testPage-1-1 {
+  background: var(--secondary-color);
+}
+
+.testPage-2 {
+  background: var(--secondary-color-variant-ToB);
+}
+
+.testPage-2-1 {
+  color: var(--titles-color);
+}
+
+.testPage-2-2 {
+  background: var(--texts-color);
+}

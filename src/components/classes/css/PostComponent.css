@@ -1,0 +1,4 @@
+.PostComponent-wrapper {
+  background: var(--background-components);
+  color: var(--texts-color);
+}

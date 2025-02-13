@@ -1,0 +1,8 @@
+.PostTextPostExpand-toggle {
+  color: #62b7f8;
+}
+
+.PostTextPostExpand-wrapper {
+  background: var(--tertiary-color-variant-light);
+  transition: none;
+}

@@ -1,0 +1,11 @@
+.OnlineFriends-wrapper {
+  background: var(--background-components);
+}
+
+.OnlineFriends-search-icon {
+  color: var(--texts-color);
+}
+
+.OnlineFriendsCard-expand {
+  color: var(--light-gray);
+}

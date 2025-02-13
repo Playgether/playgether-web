@@ -4,29 +4,11 @@ import PostProperies from "./PostsComponents/PostsProperies";
 import Posts from "./PostsComponents/Posts/Posts";
 import PostText from "@/components/layouts/PostText/PostText";
 import { useFeedContext } from "@/context/FeedContext";
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 
 const VirtualizedFeed = ({ setSlideIndex, handlePostsExtend }) => {
   const { feed, isFetchingNextPage, hasNextPage, fetchNextPage } =
     useFeedContext();
-  const observer = useRef<IntersectionObserver | null>(null);
-
-  const lastFeedElementRef = useCallback(
-    (node: HTMLDivElement | null) => {
-      if (isFetchingNextPage) return;
-
-      if (observer.current) observer.current.disconnect();
-
-      observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasNextPage) {
-          fetchNextPage();
-        }
-      });
-
-      if (node) observer.current.observe(node);
-    },
-    [isFetchingNextPage, fetchNextPage, hasNextPage]
-  );
 
   const loadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -43,8 +25,11 @@ const VirtualizedFeed = ({ setSlideIndex, handlePostsExtend }) => {
       endReached={loadMore}
       overscan={3}
       itemContent={(index, resource) => (
-        <div key={resource.id}>
-          <div className="bg-white-200 flex items-start justify-start">
+        <div
+          key={resource.id}
+          className="VirtualizedFeed-wrapper rounded-xl transition-shadow duration-100 ease-out hover:shadow-md hover:shadow[var(--shadow-color)]"
+        >
+          <div className="flex items-start justify-start">
             <ProfileAndUsername
               username={resource.created_by_user_name}
               profile_photo={resource.created_by_user_photo}
@@ -53,26 +38,26 @@ const VirtualizedFeed = ({ setSlideIndex, handlePostsExtend }) => {
             />
           </div>
           <div
-            className="pt-4 flex min-h-[5rem] pb-4 bg-white-200 cursor-pointer"
+            className="pt-4 flex min-h-[5rem] pb-4 cursor-pointer"
             onClick={() => handlePostsExtend(resource)}
           >
             <PostText resource={resource} maxCharacteres={300} />
           </div>
 
           {resource?.has_post_media && (
-            <div className="cursor-pointer h-[300px] 2xl:h-[400px]">
+            <div className="cursor-pointer">
               <Posts
                 media={resource.medias}
                 onClick={() => handlePostsExtend(resource)}
                 setSlideIndex={setSlideIndex}
                 postHeight={720}
-                postWidth={1080}
-                className="max-w-[600px] w-full p-4"
+                postWidth={1280}
+                className="w-[600px] p-4 h-[368px]"
               />
             </div>
           )}
 
-          <div className="mb-5 shadow-lg">
+          <div className="mb-5 rounded-xl">
             <PostProperies
               object_id={resource.id}
               user_already_like={resource.user_already_like}

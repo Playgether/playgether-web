@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { Suspense, useCallback, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { LoadingPosts } from "./LoadingPosts";
 import { LoadingComments } from "./LoadingComments";
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 import { Component2 } from "./Component2";
 import Component from "./Component";
 import { ComponentTest } from "./ComponentTest";
@@ -12,7 +12,7 @@ import App from "./Almost1";
 import { useFeedContext } from "../../context/FeedContext";
 import Posts from "../../components/pages/feed/DesktopFeed/Middle/PostsComponents/Posts/Posts";
 import { CldVideoPlayer, getCldVideoUrl } from "next-cloudinary";
-import 'next-cloudinary/dist/cld-video-player.css';
+import "next-cloudinary/dist/cld-video-player.css";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
 import { CustomPagination } from "@/components/elements/CustomPagination/CustomPagination";
@@ -23,7 +23,8 @@ import PostProperies from "@/components/pages/feed/DesktopFeed/Middle/PostsCompo
 import BaseLayout from "@/components/layouts/BaseLayout";
 import FinishFeed from "@/components/pages/feed/DesktopFeed/MultUseComponents/FinishFeed";
 import { VideoLoadingFallback } from "@/components/pages/feed/DesktopFeed/Middle/PostsComponents/Posts/VideoLoadingFallBack";
- 
+import { Skeleton } from "@/components/ui/skeleton";
+
 // const url = getCldVideoUrl({
 //   width: 1080,
 //   height: 720,
@@ -31,51 +32,77 @@ import { VideoLoadingFallback } from "@/components/pages/feed/DesktopFeed/Middle
 // });
 
 export default async function TestPage() {
-    const { feed, fetchNextPage, hasNextPage, isFetchingNextPage } = useFeedContext();
-    const [slideIndex, setSlideIndex] = useState(1)
-    const medias = [
-        {
-            id: 20,
-            media_file:"uxfq2uxjbh9gtuzcavja",
-            media_type:"image"
-        },
-        {
-            id: 20,
-            media_file:"hrpezhkivtc8jy8pfjqe",
-            media_type:"video"
-        },
-        {
-            id: 20,
-            media_file:"pyyydgcoxv4qjbjmgont",
-            media_type:"image"
-        },
-    ]
-    // return (
-    //     <>
-    //     <Suspense fallback={<LoadingPosts />}>
-    //         <ComponentTest />
-    //     </Suspense>
-    //     <Suspense fallback={<LoadingComments />}>
-    //         <ComponentTest2 />
-    //     </Suspense>
-    //     <App />
-    //     </>
-    // )
-    const loadMore = useCallback(() => {
-        if (hasNextPage && !isFetchingNextPage) {
-          fetchNextPage();
-        }
-      }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-    
-    return (
+  const url = getCldVideoUrl({
+    width: 1080,
+    height: 720,
+    src: "ahini9loos6m5sqru8lu",
+  });
+  const { feed, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useFeedContext();
+  const [slideIndex, setSlideIndex] = useState(1);
+  const medias = [
+    {
+      id: 20,
+      media_file: "av0doj7wgvdghe8th9jy",
+      media_type: "video",
+    },
+    {
+      id: 20,
+      media_file: "bvh6ojgigdhsxpouowun",
+      media_type: "video",
+    },
+    {
+      id: 20,
+      media_file: "tlut4m61l8y9ppmoogfz",
+      media_type: "video",
+    },
+  ];
+  // return (
+  //     <>
+  //     <Suspense fallback={<LoadingPosts />}>
+  //         <ComponentTest />
+  //     </Suspense>
+  //     <Suspense fallback={<LoadingComments />}>
+  //         <ComponentTest2 />
+  //     </Suspense>
+  //     <App />
+  //     </>
+  // )
+  const loadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  useEffect(() => {
+    console.log(url);
+  }, []);
+
+  return (
     <BaseLayout>
-            <div className="w-[600px] text-black-300 h-[300px] 2xl:h-[400px] max-h-[600px] bg-red-400">
-            <Suspense fallback={<VideoLoadingFallback/>}>
-                <Posts media={medias} onClick={()=> false} slideIndex={0} postHeight={720} postWidth={1080} className="max-w-[600px] h-full w-full p-4"/>
-            </Suspense>
+      <div className="flex items-center justify-center p-10 w-screen testPage-wrapper">
+        <div className="h-20 w-80 p-4 testPage-1">
+          <div className="bg-primaryColor-toB testPage-1-1">
+            <p>test</p>
+          </div>
         </div>
+        <div className="h-20 w-80 p-4 testPage-2">
+          <div className="testPage-2-1">
+            <p>test</p>
+          </div>
+          <div className="testPage-2-2">
+            <p>test</p>
+          </div>
+        </div>
+        {/* <div className="h-20 w-80 p-4 testPage-3">
+          <div className="testPage-3-1">
+            <p>test</p>
+          </div>
+        </div>
+        <div className=" py-10 px-10 testPage-4">
+          <p className="testPage-textsColors"> A PARTE </p>
+        </div> */}
+      </div>
     </BaseLayout>
-    )
-
-
+  );
 }

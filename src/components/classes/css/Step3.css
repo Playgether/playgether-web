@@ -1,0 +1,7 @@
+.Step3-wrapper {
+  color: var(--dark-gray);
+}
+
+.Step3-error {
+  color: red;
+}

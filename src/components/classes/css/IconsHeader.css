@@ -1,0 +1,11 @@
+.IconsHeader-fa-align-icon {
+  color: var(--texts-color);
+}
+
+.IconsHeader-wrapper {
+  background: var(--light-gray);
+}
+
+.IconsHeader-wrapper.close {
+  background: transparent;
+}

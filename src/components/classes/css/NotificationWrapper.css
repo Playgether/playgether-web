@@ -1,0 +1,11 @@
+.NotificationWrapper-name {
+  color: var(--titles-color);
+}
+
+.NotificationWrapper-text {
+  color: var(--texts-color);
+}
+
+.NotificationWrapper-date {
+  color: var(--dark-gray);
+}

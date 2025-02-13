@@ -1,0 +1,8 @@
+.Bio-conquists-wrapper {
+  color: var(--texts-color);
+  background: var(--tertiary-color-variant-light);
+}
+
+.Bio-conquists-title {
+  color: var(--texts-color-variant);
+}

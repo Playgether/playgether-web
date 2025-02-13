@@ -1,9 +1,9 @@
 const EditedComment = () => {
-    return (
-        <div className="pb-3">
-            <p className="text-xs text-gray-400">este comentário foi editado</p>
-        </div>
-    )
-}
+  return (
+    <div className="pb-3 EditedComment-wrapper">
+      <p className="text-xs">este comentário foi editado</p>
+    </div>
+  );
+};
 
 export default EditedComment;

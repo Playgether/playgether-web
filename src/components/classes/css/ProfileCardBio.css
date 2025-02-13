@@ -1,0 +1,7 @@
+.ProfileCardBio-wrapper {
+  color: var(--texts-color);
+}
+
+.ProfileCard-username {
+  color: var(--dark-gray);
+}

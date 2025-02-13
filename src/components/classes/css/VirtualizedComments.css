@@ -1,0 +1,8 @@
+.VirtualizedComments-wrapper {
+  color: var(--texts-color);
+  background: var(--tertiary-color-variant-light);
+}
+
+.VirtualizedComments-expand {
+  color: var(--texts-color-variant);
+}

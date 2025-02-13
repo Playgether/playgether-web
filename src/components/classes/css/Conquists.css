@@ -1,0 +1,9 @@
+.Conquists-wrapper {
+  color: var(--texts-color-variant);
+  /* background: var(--tertiary-color-variant-light); */
+  background: transparent;
+}
+
+.Conquists-border {
+  border-left: 1px solid var(--texts-color);
+}

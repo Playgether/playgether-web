@@ -1,0 +1,8 @@
+.TextsProfilePosts-wrapper {
+  color: var(--texts-color);
+  background: var(--tertiary-color-variant-light);
+}
+
+.TextsProfilePosts-wrapper:hover {
+  background: var(--hover-color);
+}
