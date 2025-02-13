@@ -31,11 +31,6 @@ const BaseLayout = ({ children, ...rest }) => {
       <div className="hidden lg:flex sticky z-10 bottom-0 max-w-screen w-full">
         <Megafone />
       </div>
-      <div className="lg:hidden sticky bottom-0 max-w-screen">
-        <ResponsiveMegafone />
-      <div className="lg:hidden sticky z-10 bottom-0 max-w-screen w-full">
-        <ResponsiveGlobalChat />
-      </div>
     </div>
   );
 };
