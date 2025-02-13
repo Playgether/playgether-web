@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import ContentFeed from "../DesktopFeed/MultUseComponents/ContentFeed";
-import { ResponsiveContainer } from "../ResponsiveFeed/Container";
 
 export const FeedFetchComponent = () => {
   const [isDesktop, setIsDesktop] = useState(false);
@@ -29,9 +28,7 @@ export const FeedFetchComponent = () => {
           <ContentFeed />
         </div>
       ) : (
-        <div className="lg:hidden h-full w-full">
-          <ResponsiveContainer />
-        </div>
+        undefined
       )}
     </>
   );
