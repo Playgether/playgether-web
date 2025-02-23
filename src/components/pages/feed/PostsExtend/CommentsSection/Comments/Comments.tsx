@@ -7,7 +7,7 @@ import { ErrosInput } from "../../../../../layouts/ErrosInputLayout/ErrorsInputL
 import DefaultButton from "../../../../../elements/DefaultButton/DefaultButton";
 import { SubmitingForm } from "../../../../../layouts/SubmitingFormLayout";
 import { patchComment } from "../../../../../../services/patchComment";
-import { useAuthContext } from "../../../../../../context/AuthContext";
+import {} from "../../../../../../context/AuthContext";
 import { useCommentFormSchema } from "../../../../../layouts/Forms/CommentFormSchema";
 import { UseFormState } from "../../../../../layouts/ConstFormStateLayout";
 import { commentPatchProps } from "../../../../../../services/patchComment";
@@ -28,7 +28,7 @@ export interface CommentsProps {
  */
 export const Comments = ({ item, post_id }: CommentsProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const { authTokens } = useAuthContext();
+  // const { authTokens } = ();
   const CommentFormSchema = useCommentFormSchema();
   const { register, handleSubmit, errors } = UseFormState(CommentFormSchema);
   const { editComment } = useCommentsContext();

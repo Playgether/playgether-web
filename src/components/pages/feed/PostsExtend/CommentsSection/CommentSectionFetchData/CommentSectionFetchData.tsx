@@ -1,5 +1,4 @@
-"use client";
-
+import { useEffect } from "react";
 import { useCommentsContext } from "../../../../../../context/CommentsContext";
 import CommentsSection from "../CommentsSectionLogic/CommentsSectionLogic";
 import VirtualizedComments from "../VirtualizedComments/VirtualizedComments";
@@ -7,6 +6,7 @@ import VirtualizedComments from "../VirtualizedComments/VirtualizedComments";
 async function fetchData(postId) {
   const { initializeComments } = useCommentsContext();
   initializeComments(postId);
+  console.log(postId);
 }
 
 export interface CommentSectionLogicInterface {
@@ -22,7 +22,10 @@ export interface CommentSectionLogicInterface {
 const CommentSectionFetchData = async ({
   postId,
 }: CommentSectionLogicInterface) => {
-  await fetchData(postId);
+  useEffect(() => {
+    console.log(postId);
+  });
+  // await fetchData(postId);
 
   return <VirtualizedComments post_id={postId} />;
 };

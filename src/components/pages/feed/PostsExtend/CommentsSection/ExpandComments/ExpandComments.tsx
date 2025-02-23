@@ -7,7 +7,7 @@ import ProfileAndUsername from "../../../../../layouts/components/ProfileAndUser
 import PostPropertiersPostsExpand from "../../../DesktopFeed/Middle/PostsComponents/PostPropertiers/PostPropertiers";
 import PostPropertiersAnswer from "../../../DesktopFeed/Middle/PostsComponents/PostPropertiers/PostPropertiersAnswer";
 import EditComment from "../EditComment/EditComment";
-import { useAuthContext } from "../../../../../../context/AuthContext";
+import {} from "../../../../../../context/AuthContext";
 import { useCommentFormSchema } from "../../../../../layouts/Forms/CommentFormSchema";
 import { UseFormState } from "../../../../../layouts/ConstFormStateLayout";
 import { useCommentsContext } from "../../../../../../context/CommentsContext";
@@ -35,7 +35,7 @@ export const ExpandedComments = ({
   comment_id,
 }: ExpandedCommentsProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const { authTokens } = useAuthContext();
+  // const { authTokens } = ();
   const CommentFormSchema = useCommentFormSchema();
   const { register, handleSubmit, errors } = UseFormState(CommentFormSchema);
   const { editComment, editAnswerComment } = useCommentsContext();

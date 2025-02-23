@@ -1,7 +1,9 @@
-import ProfileAndUsername from "@/components/layouts/components/ProfileAndUsername";
-import { useState } from "react";
-import { RiArrowDownSLine, RiArrowUpSLine } from "react-icons/ri";
-import { BorderLine } from "../../DesktopFeed/MultUseComponents/BorderLine/BorderLine";
+"use client";
+import HideTextButton from "./HideTextButton";
+import ExpandTextButton from "./ExpandTextButton";
+import ShowPostText from "./ShowPostText";
+import PhotoAndText from "./PhotoAndText";
+import { FeedProps } from "@/services/getFeed";
 
 export interface PostTextPostExpandProps {
   /** Este é o texto do post propriamente dito */
@@ -16,22 +18,24 @@ export interface PostTextPostExpandProps {
   timestamp?: Date;
   /** Esta propriedade recebe um boolean (true ou false) para mostrar ou não um button para expandir a div que possui o texto (ela recebe um absolute z-10 h-full) */
   showExpandButton: boolean;
+  /** Esta propriedade recebe um boolean que define se o texto esta expandido ou não */
+  isExtended: boolean;
+  /** Esta propriedade recebe um boolean que define se o usuário interagiu com o texto para então aplicar uma animação */
+  hasInteracted: boolean;
+  /** Esta propriedade recebe uma função que gerencia o toggle para exibir o texto ou não */
+  handleToggle: () => void;
+
+  resourceObject: FeedProps | undefined;
 }
 /** Este componente é responsável por gerar / expandir o texto de um post em PostsExtend */
 export const PostTextPostExpand = ({
   text,
   showExpandButton,
-  created_by_user_photo,
-  created_by_user_name,
-  timestamp,
+  isExtended,
+  hasInteracted,
+  handleToggle,
+  resourceObject,
 }: PostTextPostExpandProps) => {
-  const [isExtended, setIsExtended] = useState(false);
-  const [hasInteracted, setHasInteracted] = useState(false);
-
-  const handleToggle = () => {
-    setIsExtended((prev) => !prev);
-    setHasInteracted(true);
-  };
   return (
     <>
       {isExtended ? (
@@ -40,25 +44,16 @@ export const PostTextPostExpand = ({
             hasInteracted ? "animate-expandVertical" : ""
           }`}
         >
-          <ProfileAndUsername
-            profile_photo={created_by_user_photo}
-            username={created_by_user_name}
-            timestamp={timestamp}
-            imageClassName="mt-3 ml-3 h-10 w-10"
-            usernameAndTimestampDiv="self-end"
-          />
-          <BorderLine />
-          <div className="pt-4 pl-4 pb-4 overflow-y-auto">
-            <p className="whitespace-pre-wrap">{text}</p>
-          </div>
+          {resourceObject && (
+            <PhotoAndText
+              created_by_user_photo={resourceObject.created_by_user_photo}
+              created_by_user_name={resourceObject.created_by_user_name}
+              timestamp={resourceObject.timestamp}
+              text={resourceObject.comment}
+            />
+          )}
           {showExpandButton ? (
-            <div
-              className="PostTextPostExpand-toggle sticky bottom-0 pl-4 cursor-pointer p-2 text-center gap-2 text-2xl flex items-end justify-center flex-1"
-              onClick={handleToggle}
-            >
-              <p className="text-base">Esconder texto</p>
-              <RiArrowUpSLine className="animate-bounce" />
-            </div>
+            <HideTextButton handleToggle={handleToggle} />
           ) : null}
         </div>
       ) : (
@@ -66,17 +61,9 @@ export const PostTextPostExpand = ({
           className={`w-full ${hasInteracted ? "animate-shrinkVertical" : ""}`}
         >
           {showExpandButton ? (
-            <div
-              className="text-blue-400  pl-4 cursor-pointer p-2 text-center text-2xl flex gap-2 items-center justify-center"
-              onClick={handleToggle}
-            >
-              <p className="text-base">Ver texto</p>
-              <RiArrowDownSLine className="animate-bounce" />
-            </div>
+            <ExpandTextButton handleToggle={handleToggle} />
           ) : (
-            <div className="pt-4 pl-4 pb-4">
-              <p>{text}</p>
-            </div>
+            <ShowPostText text={text} />
           )}
         </div>
       )}

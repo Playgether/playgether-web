@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuthContext } from "../../../../../../context/AuthContext";
+import {} from "../../../../../../context/AuthContext";
 import { useState } from "react";
 import DefaultButton from "../../../../../elements/DefaultButton/DefaultButton";
 import ControlledModal from "../../../../../elements/ControlledModal/ControlledModal";
@@ -35,7 +35,7 @@ const EditAnswer = ({
   isEditing: boolean;
   setIsEditing: (boolean) => void;
 } & RestProps) => {
-  const { user, authTokens } = useAuthContext();
+  // const { user, authTokens } = ();
   const [shouldShowModal, setShouldShowModal] = useState(false);
   const { deleteAnswerContext } = useCommentsContext();
 

@@ -1,26 +1,12 @@
-"use client";
-
-import FeedComponent from "./FeedComponent";
-import FinishFeed from "../MultUseComponents/FinishFeed";
-import { UploadCompoent } from "./Upload/UploadComponent";
-import { useFeedContext } from "@/context/FeedContext";
-import InfiniteScrollFallback from "../MultUseComponents/InfiniteScroll/InfiniteScrollFallback";
+import React from "react";
+import { MiddleFeedContextProvider } from "@/context/MiddleFeedContext";
+import MiddleWrapper from "./MiddleWrapper";
 
 const Middle = () => {
-  const { hasNextPage, isFetchingNextPage } = useFeedContext();
-
   return (
-    <div className="h-full mt-4 pb-14 space-y-4 Middle-wrapper w-full">
-      <UploadCompoent />
-      <FeedComponent />
-      {isFetchingNextPage && (
-        <InfiniteScrollFallback
-          message={"Estamos carregando mais posts para você"}
-          className="w-5/6 h-24 p-5 mt-[100px]"
-        />
-      )}
-      {!hasNextPage ? <FinishFeed /> : null}
-    </div>
+    <MiddleFeedContextProvider>
+      <MiddleWrapper />
+    </MiddleFeedContextProvider>
   );
 };
 export default Middle;

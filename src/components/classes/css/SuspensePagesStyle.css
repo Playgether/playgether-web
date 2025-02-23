@@ -1,0 +1,7 @@
+.SuspensePagesStyle-wrapper {
+  background: var(--tertiary-color);
+}
+
+.SuspensePagesStyle-icon {
+  color: var(--texts-color-variant);
+}

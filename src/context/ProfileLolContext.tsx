@@ -2,7 +2,7 @@
 
 import { createContext, useState, useContext} from "react"
 import { getProfileLol } from "../services/getProfileLol"
-import { useAuthContext } from "./AuthContext"
+import {  } from "./AuthContext"
 import { ProfileLolProps } from "../services/getProfileLol"
 
 type ProfileLolContextProps = {
@@ -13,7 +13,7 @@ type ProfileLolContextProps = {
 const ProfileLolContext = createContext<ProfileLolContextProps>({} as ProfileLolContextProps)
 
 const ProfileLolContextProvider = ({children}: {children: React.ReactNode}) => {
-    const {user, authTokens} = useAuthContext()
+    const {user, authTokens} = ()
     const [profile, setProfile] = useState<ProfileLolProps | void | null | undefined>();
 
     async function fetchProfile(){    

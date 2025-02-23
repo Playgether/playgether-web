@@ -179,8 +179,8 @@ export const IntervalFunctionComponent = () => {
       showed: true,
     }));
     setVisibleMessages(initialMessages);
-    console.log(initialMessages);
-    console.log(visibleMessages);
+    // console.log(initialMessages);
+    // console.log(visibleMessages);
 
     // Inicializa os timers com os tempos das mensagens
     setTimers(initialMessages.map((msg) => msg.time));

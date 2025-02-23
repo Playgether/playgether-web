@@ -81,7 +81,21 @@ export default async function TestPage() {
 
   return (
     <BaseLayout>
-      <Chat />
+      <div className="flex items-center justify-center p-10 w-screen testPage-wrapper">
+        <div className="h-20 w-80 p-4 testPage-1">
+          <div className="bg-primaryColor-toB testPage-1-1">
+            <p>test</p>
+          </div>
+        </div>
+        <div className="h-20 w-80 p-4 testPage-2">
+          <div className="testPage-2-1">
+            <p>test</p>
+          </div>
+          <div className="testPage-2-2">
+            <p>test</p>
+          </div>
+        </div>
+      </div>
     </BaseLayout>
   );
 }

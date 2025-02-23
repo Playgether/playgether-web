@@ -1,5 +1,3 @@
-"use client";
-
 import {
   MdOutlineNotifications,
   MdOutlineLogout,
@@ -8,17 +6,9 @@ import {
   MdOutlineVolumeUp,
   MdOutlineChatBubbleOutline,
 } from "react-icons/md";
-import { useAuthContext } from "../../context/AuthContext";
-import { useRouter } from "next/navigation";
+import LogoutHeader from "./LogoutHeader";
 
 export const ItemsHeader = () => {
-  const { logout } = useAuthContext();
-  const router = useRouter();
-  const handleLogout = async () => {
-    await logout();
-    router.push("/");
-  };
-
   return (
     <div className="lg:bg-opacity-0 flex flex-col justify-center items-center lg:flex-row w-screen lg:w-full lg:items-center lg:justify-between mr-5 HeaderItens-wrapper text-opacity-90 lg:pr-2 gap-4 p-4">
       <div className="flex md:h-5 md:w-5 lg:h-8 lg:w-8 gap-4 items-center justify-center">
@@ -52,12 +42,9 @@ export const ItemsHeader = () => {
         </button>
       </div>
       <div className="flex md:h-5 md:w-5 lg:h-8 lg:w-8 gap-4">
-        <p className="lg:hidden text-xl" onClick={() => handleLogout()}>
-          Logout
-        </p>
-        <button onClick={() => handleLogout()} className="h-full w-full">
+        <LogoutHeader>
           <MdOutlineLogout className="lg:h-full lg:w-full h-7 w-7" />
-        </button>
+        </LogoutHeader>
       </div>
     </div>
   );

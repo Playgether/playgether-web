@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { useAuthContext } from "./AuthContext";
-import { FeedProps, getFeed } from "../services/getFeed";
 import { useProfileContext } from "./ProfileContext";
 import {
   FetchNextPageOptions,
@@ -10,6 +9,8 @@ import {
   InfiniteQueryObserverResult,
   useInfiniteQuery,
 } from "@tanstack/react-query";
+import { FeedProps } from "@/types/FeedProps";
+import { getFeed } from "@/actions/getFeed";
 
 type FeedContextProps = {
   feed: FeedProps[] | undefined;
@@ -34,14 +35,14 @@ type FeedContextProps = {
 const FeedContext = createContext<FeedContextProps>({} as FeedContextProps);
 
 const FeedContextProvider = ({ children }: { children: React.ReactNode }) => {
-  const { authTokens, user } = useAuthContext();
+  const { user } = useAuthContext();
   const { profile } = useProfileContext();
   const [feed, setFeed] = useState<FeedProps[] | []>();
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteQuery({
-      queryKey: ["feed-posts", user?.user_id, profile?.id],
-      queryFn: ({ pageParam }) => getFeed(authTokens, user?.user_id, pageParam),
+      queryKey: ["feed-posts"],
+      queryFn: ({ pageParam }) => getFeed(pageParam),
       getNextPageParam: (lastPage) => {
         if (lastPage?.next_page) {
           const url = new URL(lastPage.next_page);
@@ -49,7 +50,7 @@ const FeedContextProvider = ({ children }: { children: React.ReactNode }) => {
         }
         return null;
       },
-      enabled: !!authTokens && !!profile?.id,
+      enabled: !!user,
       initialPageParam: null,
     });
 

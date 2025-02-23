@@ -7,7 +7,7 @@ import Step3 from "./SharePost/Step3";
 import { IoCaretBackOutline, IoCaretForwardOutline } from "react-icons/io5";
 import { PostFormSchema } from "./SharePost/PostFormSchema";
 import { UseFormState } from "../../../../../layouts/ConstFormStateLayout";
-import { useAuthContext } from "../../../../../../context/AuthContext";
+import {} from "../../../../../../context/AuthContext";
 import { SubmitingForm } from "../../../../../layouts/SubmitingFormLayout";
 import { PostMediaProps, postPost } from "../../../../../../services/postPost";
 import Step4 from "./SharePost/Step4";
@@ -30,7 +30,7 @@ const PostComponent = ({
   const Step1Schema = PostFormSchema();
   const { register, handleSubmit, errors, reset } = UseFormState(Step1Schema);
   const [uploadedFiles, setUploadedFiles] = useState<PostMediaProps[]>([]);
-  const { user, authTokens } = useAuthContext();
+  // const { user, authTokens } = ();
 
   const nextStep = () => {
     handleSubmit(() => {
@@ -93,7 +93,11 @@ const PostComponent = ({
 
   return (
     <div
-      className={` ${isComponentVisible ? "motion-preset-slide-down-sm" : "motion-preset-slide-up-lg"} w-full PostComponent-wrapper h-[300px] mt-2 rounded-lg flex flex-col shadow-lg mb-4 gap-1`}
+      className={` ${
+        isComponentVisible
+          ? "motion-preset-slide-down-sm"
+          : "motion-preset-slide-up-lg"
+      } w-full PostComponent-wrapper h-[300px] mt-2 rounded-lg flex flex-col shadow-lg mb-4 gap-1`}
     >
       <CustomToaster></CustomToaster>
       <div className="w-full text-center pt-1">
