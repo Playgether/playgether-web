@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useAuthContext } from "../../context/AuthContext";
+import {} from "../../context/AuthContext";
 
 export const useResource = <T>(
   getResourceFunc: (...props) => void | Promise<T | null | undefined | void>
