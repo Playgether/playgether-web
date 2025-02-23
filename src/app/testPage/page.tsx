@@ -94,14 +94,6 @@ export default async function TestPage() {
             <p>test</p>
           </div>
         </div>
-        {/* <div className="h-20 w-80 p-4 testPage-3">
-          <div className="testPage-3-1">
-            <p>test</p>
-          </div>
-        </div>
-        <div className=" py-10 px-10 testPage-4">
-          <p className="testPage-textsColors"> A PARTE </p>
-        </div> */}
       </div>
     </BaseLayout>
   );

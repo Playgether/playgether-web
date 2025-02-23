@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { ItemsHeader } from "./HeaderItems";
 import { FiAlignJustify } from "react-icons/fi";
 
-const IconsHeader = ({}) => {
+const IconsHeader = ({ children }: { children: React.ReactNode }) => {
   const [isMenuResponsiveShowing, setIsMenuResponsiveShowing] = useState(false);
 
   const handleMenuResponsive = () => {
@@ -24,7 +23,7 @@ const IconsHeader = ({}) => {
           <div
             className={`w-full ${isMenuResponsiveShowing ? null : "hidden"} lg:flex`}
           >
-            <ItemsHeader />
+            {children}
           </div>
         </div>
       </div>

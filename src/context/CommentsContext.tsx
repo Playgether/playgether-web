@@ -14,7 +14,7 @@ import {
   InfiniteQueryObserverResult,
   useInfiniteQuery,
 } from "@tanstack/react-query";
-import { useAuthContext } from "./AuthContext";
+import {} from "./AuthContext";
 import { getAnswers } from "@/services/getAnswers";
 
 export interface ApiResponseComments {
@@ -62,7 +62,7 @@ export const CommentsContext = createContext<CommentsContextProps>(
 export function CommentsContextProvider({ children }: { children: ReactNode }) {
   const [comments, setComments] = useState<ApiResponseComments>({ data: [] });
   const [postId, setPostId] = useState<number>(0);
-  const { authTokens } = useAuthContext();
+  // const { authTokens } = ();
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteQuery({
@@ -81,12 +81,10 @@ export function CommentsContextProvider({ children }: { children: ReactNode }) {
     });
 
   const fetchNextAnswers = async (comment: PostsCommentsProps) => {
-    console.log(comment.answers);
     const cursor = comment.answers.next
       ? new URL(comment.answers.next).searchParams.get("cursor")
       : null;
     const response = await getAnswers(authTokens, comment.id, cursor);
-    console.log(comment.id);
     setComments((prevComments) => {
       const commentsList = prevComments.data.map((c) => {
         if (c.id === comment.id) {

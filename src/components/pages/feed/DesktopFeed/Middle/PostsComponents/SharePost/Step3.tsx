@@ -1,9 +1,10 @@
 import { CldUploadWidget } from "next-cloudinary";
 import { GoFileMedia } from "react-icons/go";
-import { useAuthContext } from "../../../../../../../context/AuthContext";
+import {} from "../../../../../../../context/AuthContext";
 import { useEffect, useState } from "react";
 import { PostMediaProps } from "../../../../../../../services/postPost";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
+import { CustomToastProps } from "@/error/custom-toaster/enum";
 
 const Step3 = ({
   setUploadedFiles,
@@ -12,7 +13,7 @@ const Step3 = ({
   uploadedFiles,
   returnFirstStep,
 }) => {
-  const { user } = useAuthContext();
+  // const { user } = ();
   const [widgetKey, setWidgetKey] = useState(0);
   const [activeUploads, setActiveUploads] = useState(0);
 
@@ -38,7 +39,7 @@ const Step3 = ({
   const handleUploadError = (file) => {
     CustomToast.error("Um dos seus uploads não cumpre as diretrizes", {
       description: file.statusText,
-      duration: 5000,
+      duration: CustomToastProps.defaultDuration,
     });
     setWidgetKey((prevCount) => prevCount + 1);
     setUploadedFiles([]);
@@ -66,7 +67,9 @@ const Step3 = ({
 
   const getCurrentDate = () => {
     const date = new Date();
-    return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
+    return `${date.getFullYear()}-${(date.getMonth() + 1)
+      .toString()
+      .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
   };
 
   return (

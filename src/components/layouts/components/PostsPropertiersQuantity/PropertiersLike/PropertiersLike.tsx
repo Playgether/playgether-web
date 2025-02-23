@@ -3,7 +3,7 @@
 import { PiHeartFill, PiHeartThin } from "react-icons/pi";
 import { twJoin } from "tailwind-merge";
 import { useState } from "react";
-import { useAuthContext } from "../../../../../context/AuthContext";
+import {} from "../../../../../context/AuthContext";
 import { postLike } from "../../../../../services/postLike";
 import { deleteLike } from "../../../../../services/deleteLike";
 
@@ -41,7 +41,7 @@ const PropertiersLike = ({
     useState(quantity_likes);
   const [effectThin, setEffectThin] = useState(false);
   const [effectFill, setEffectFill] = useState(false);
-  const { user, authTokens } = useAuthContext();
+  // const { user, authTokens } = ();
 
   const onClickLike = () => {
     const data = {

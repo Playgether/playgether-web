@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useState } from "react";
-import { useAuthContext } from "../../context/AuthContext";
+import {  } from "../../context/AuthContext";
 import { api } from "../../services/api";
 import { PostsCommentsProps } from "../../services/getComments";
 import { useFeedContext } from "../../context/FeedContext";
@@ -11,7 +11,7 @@ let fullfilled = false;
 let promise;
 
 const fetchData = async() => {
-    const {authTokens} = useAuthContext()
+    const {authTokens} = ()
   if (!fullfilled) {
     if (!promise) {
       promise = await new Promise(async (resolve) => {
@@ -37,12 +37,12 @@ const Main = () => {
     return (
       <>
         <div className="text-black-400">Loaded</div>
-        {feed && feed.map((resource) => (
+        {/* {feed && feed.map((resource) => (
                 <div className="bg-white-200 h-4/6">
                     <Posts media={resource.medias} setSlideIndex={setSlideIndex} postsSize="h-1/2" className="h-5/6"/>
                 </div>
             ))}
-            <h1>PORRA</h1>
+            <h1>PORRA</h1> */}
       </>
     )
     

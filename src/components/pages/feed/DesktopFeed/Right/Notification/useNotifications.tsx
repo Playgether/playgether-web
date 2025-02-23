@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getNotifications, getNotificationsProps } from "../../../../../../services/getNotifications";
-import { useAuthContext } from "../../../../../../context/AuthContext";
+import {  } from "../../../../../../context/AuthContext";
 
 
 export const useNotifications = () => {
     const [notifications, setNotifications] = useState<getNotificationsProps[]>([]);
-    const { authTokens, user } = useAuthContext();
+    const { authTokens, user } = ();
 
     const handleFetchNotifications = useCallback(async () => {
         if (authTokens) {

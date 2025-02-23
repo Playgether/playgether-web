@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import { SiValorant, SiCounterstrike } from "react-icons/si";
 
@@ -5,7 +6,7 @@ import { ProfileCardBio } from "./ProfileCardBio";
 
 import Image from "next/legacy/image";
 import { CgProfile } from "react-icons/cg";
-import { useAuthContext } from "../../../../../../context/AuthContext";
+import {} from "../../../../../../context/AuthContext";
 import { useProfileContext } from "../../../../../../context/ProfileContext";
 import DefaultButton from "../../../../../elements/DefaultButton/DefaultButton";
 import { TopCard } from "../../MultUseComponents/TopCard";
@@ -14,8 +15,8 @@ import { IoCreateOutline } from "react-icons/io5";
 import { useRouter } from "next/navigation";
 
 /** Este componente é o wrapper principal do card de profile na página feed. Seu intuito é ser o wrapper de todo o card e seus componentes filhos. */
-const ProfileCard = ({}) => {
-  const { user } = useAuthContext();
+const ProfileCard = ({ children }: { children: React.ReactNode }) => {
+  // const { user } = ();
   const { profile } = useProfileContext();
   const route = useRouter();
 
@@ -52,11 +53,12 @@ const ProfileCard = ({}) => {
                     }}
             </CldUploadWidget> */}
       <div className="text-center w-full">
-        <h1 className="text-xl">
+        {/* <h1 className="text-xl">
           {user?.first_name} {user?.last_name}
-        </h1>
+        </h1> */}
+        {children}
         <p className="text-sm ProfileCard-username opacity-90">
-          {user?.username}
+          {/* {user?.username} */}
         </p>
       </div>
       <ProfileCardBio />

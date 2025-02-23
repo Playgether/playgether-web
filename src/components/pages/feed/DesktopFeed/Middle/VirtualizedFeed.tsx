@@ -1,3 +1,4 @@
+"use client";
 import ProfileAndUsername from "@/components/layouts/components/ProfileAndUsername";
 import { Virtuoso } from "react-virtuoso";
 import PostProperies from "./PostsComponents/PostsProperies";
@@ -5,10 +6,12 @@ import Posts from "./PostsComponents/Posts/Posts";
 import PostText from "@/components/layouts/PostText/PostText";
 import { useFeedContext } from "@/context/FeedContext";
 import { useCallback } from "react";
+import { useMiddleFeedContext } from "@/context/MiddleFeedContext";
 
-const VirtualizedFeed = ({ setSlideIndex, handlePostsExtend }) => {
+const VirtualizedFeed = () => {
   const { feed, isFetchingNextPage, hasNextPage, fetchNextPage } =
     useFeedContext();
+  const { setSlideIndex, handlePostsExtend } = useMiddleFeedContext();
 
   const loadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {

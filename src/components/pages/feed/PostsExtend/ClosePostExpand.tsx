@@ -1,13 +1,14 @@
-import ButtonClose from "../../../elements/ButtonClose/ButtonClose"
+"use client";
+import { useMiddleFeedContext } from "@/context/MiddleFeedContext";
+import ButtonClose from "../../../elements/ButtonClose/ButtonClose";
 
-interface ClosePostExpandProps {
-    onClose: () => void
-}
-
-export const ClosePostExpand = ({onClose}: ClosePostExpandProps) => {
-    return (
-        <div className="h-10 ">
-            <ButtonClose className="h-full" onClick={onClose}>X</ButtonClose>
-        </div>
-    )
-}
+export const ClosePostExpand = () => {
+  const { handlePostsCloseExtend } = useMiddleFeedContext();
+  return (
+    <div className="h-10 ">
+      <ButtonClose className="h-full" onClick={handlePostsCloseExtend}>
+        X
+      </ButtonClose>
+    </div>
+  );
+};

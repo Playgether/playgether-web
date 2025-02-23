@@ -7,10 +7,11 @@ import { SlidePostExpand } from "../SlidePostExpand/SlidePostExpand";
 import { Suspense } from "react";
 import { CommentSectionFallback } from "../../../../layouts/SuspenseFallBack/CommentSectionFallback/CommentSectionFallback";
 import CommentSectionFetchData from "../CommentsSection/CommentSectionFetchData/CommentSectionFetchData";
+import { useMiddleFeedContext } from "@/context/MiddleFeedContext";
 
 export interface PostsExtendHasPostMediaProps {
   /** Esta prop recebe um objeto post que deve ser expandido, ou seja, um post com todas as suas propriedades */
-  resource: FeedProps;
+  resourceObject: FeedProps;
   /** Esta prop recebe um número que define em que index o slide de medias deste post deve começar (Por qual position de medias) */
   slideIndex: number;
 }
@@ -21,38 +22,43 @@ export interface PostsExtendHasPostMediaProps {
  * no uso do componente, ele não é em coluna e sim em linha, ou seja, a parte de comentários deveria ficar para o lado direito >> e não embaixo. Além disso, as medias também
  * não estão aparecendo porque o Storybook não está exibindo o componente de medias por alguma razão...
  */
-const PostsExtendHasPostMedia = ({
-  resource,
-  slideIndex,
-}: PostsExtendHasPostMediaProps) => {
+const PostsExtendHasPostMedia = () => {
+  const { resourceObject, slideIndex } = useMiddleFeedContext();
   return (
     <>
-      <SlidePostExpand medias={resource.medias} slideIndex={slideIndex} />
-      <div className="w-3/6 2xl:w-2/6 overflow-hidden PostsExtendHasPostMedia-right-top relative">
-        <div className="h-full w-full flex flex-col relative">
-          <ProfileAndUsername
-            profile_photo={resource.created_by_user_photo}
-            username={resource.created_by_user_name}
-            timestamp={resource.timestamp}
-            imageClassName="mt-3 ml-3 h-10 w-10"
-            usernameAndTimestampDiv="self-end"
+      {resourceObject && (
+        <>
+          <SlidePostExpand
+            medias={resourceObject.medias}
+            slideIndex={slideIndex}
           />
-          <BorderLine />
-          <PostTextPostExpand
-            text={resource.comment}
-            created_by_user_name={resource.created_by_user_name}
-            created_by_user_photo={resource.created_by_user_photo}
-            timestamp={resource.timestamp}
-            showExpandButton={true}
-          />
-          <div className="w-full h-[calc(100%-80px)] PostsExtendHasPostMedia-right overflow-y-auto overflow-x-hidden">
-            <Suspense fallback={<CommentSectionFallback />}>
-              <CommentSectionFetchData postId={resource.id} />
-            </Suspense>
+          <div className="w-3/6 2xl:w-2/6 overflow-hidden PostsExtendHasPostMedia-right-top relative">
+            <div className="h-full w-full flex flex-col relative">
+              <ProfileAndUsername
+                profile_photo={resourceObject.created_by_user_photo}
+                username={resourceObject.created_by_user_name}
+                timestamp={resourceObject.timestamp}
+                imageClassName="mt-3 ml-3 h-10 w-10"
+                usernameAndTimestampDiv="self-end"
+              />
+              <BorderLine />
+              <PostTextPostExpand
+                text={resourceObject.comment}
+                created_by_user_name={resourceObject.created_by_user_name}
+                created_by_user_photo={resourceObject.created_by_user_photo}
+                timestamp={resourceObject.timestamp}
+                showExpandButton={true}
+              />
+              <div className="w-full h-[calc(100%-80px)] PostsExtendHasPostMedia-right overflow-y-auto overflow-x-hidden">
+                <Suspense fallback={<CommentSectionFallback />}>
+                  <CommentSectionFetchData postId={resourceObject.id} />
+                </Suspense>
+              </div>
+              <CommentInput id={resourceObject.id} />
+            </div>
           </div>
-          <CommentInput id={resource.id} />
-        </div>
-      </div>
+        </>
+      )}
     </>
   );
 };

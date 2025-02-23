@@ -13,7 +13,7 @@ const Right = () => {
         <div className="Right-notifications h-3/6 flex mt-2 flex-col items-center space-y-2 rounded-2xl w-10/12 2xl:w-[374px] min-h-[300px] max-h-[350px] 2xl:h-[400px] 2xl:max-h-[400px] 2xl:static top-[calc(4rem+16px)]">
           <TopCard title={"Notificações recentes"} />
           <div className="overflow-y-auto h-full flex flex-col grow">
-            <Suspense fallback={<LoadingComponent />}>
+            <Suspense fallback={<LoadingComponent showText={true} />}>
               <Notifications />
             </Suspense>
           </div>
