@@ -24,6 +24,7 @@ import BaseLayout from "@/components/layouts/BaseLayout";
 import FinishFeed from "@/components/pages/feed/DesktopFeed/MultUseComponents/FinishFeed";
 import { VideoLoadingFallback } from "@/components/pages/feed/DesktopFeed/Middle/PostsComponents/Posts/VideoLoadingFallBack";
 import { Skeleton } from "@/components/ui/skeleton";
+import Chat from "@/components/elements/Chat/Chat";
 
 // const url = getCldVideoUrl({
 //   width: 1080,
@@ -80,29 +81,7 @@ export default async function TestPage() {
 
   return (
     <BaseLayout>
-      <div className="flex items-center justify-center p-10 w-screen testPage-wrapper">
-        <div className="h-20 w-80 p-4 testPage-1">
-          <div className="bg-primaryColor-toB testPage-1-1">
-            <p>test</p>
-          </div>
-        </div>
-        <div className="h-20 w-80 p-4 testPage-2">
-          <div className="testPage-2-1">
-            <p>test</p>
-          </div>
-          <div className="testPage-2-2">
-            <p>test</p>
-          </div>
-        </div>
-        {/* <div className="h-20 w-80 p-4 testPage-3">
-          <div className="testPage-3-1">
-            <p>test</p>
-          </div>
-        </div>
-        <div className=" py-10 px-10 testPage-4">
-          <p className="testPage-textsColors"> A PARTE </p>
-        </div> */}
-      </div>
+      <Chat />
     </BaseLayout>
   );
 }
