@@ -36,7 +36,7 @@ const VirtualizedFeed = () => {
             <ProfileAndUsername
               username={resource.created_by_user_name}
               profile_photo={resource.created_by_user_photo}
-              imageClassName="mt-3 ml-3 h-16 w-16"
+              imageClassName="mt-3 ml-3 h-10 w-10"
               timestamp={resource.timestamp}
             />
           </div>

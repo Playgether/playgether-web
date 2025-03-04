@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { api } from "./api";
 import { TokenData } from "./updateTokenRequest";
 
@@ -39,16 +40,16 @@ export interface PostCommentsOfCommentsProps {
 }
 
 export const getComments = async (
-  authTokens: TokenData | undefined | null,
   postId: number | undefined,
   pageParam: string | null = null
 ) => {
+  // const accessToken = (await cookies()).get("accessToken")?.value;
   try {
     const response = await api.get<PostCommentsApiReturn>(
       `/api/v1/posts/${postId}/comments/`,
       {
         headers: {
-          Authorization: "Bearer " + String(authTokens?.access),
+          // Authorization: "Bearer " + String(accessToken),
         },
         params: {
           cursor: pageParam,

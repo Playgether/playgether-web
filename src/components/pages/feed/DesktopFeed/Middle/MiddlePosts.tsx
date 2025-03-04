@@ -4,9 +4,7 @@ import FeedComponent from "./FeedComponent";
 import FeedComponentPostExtendLogic from "./FeedComponentPostExtendLogic";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 import VirtualizedFeed from "./VirtualizedFeed";
-import PostsExtendChildrenWrapper from "../../PostsExtend/PostsExtendChildrenWrapper";
-import PostExtendHasNoMediaWrapper from "../../PostsExtend/PostsHasNoPostMedia/PostExtendHasNoMediaWrapper";
-import PostsExtendHasNoPostMedia from "../../PostsExtend/PostsHasNoPostMedia/PostsExtendHasNoPostMedia";
+import PostsExtendWrapper from "../../PostsExtend/PostsExtendWrapper";
 
 function MiddlePosts() {
   return (
@@ -14,11 +12,7 @@ function MiddlePosts() {
       <UploadCompoent />
       <FeedComponent>
         <FeedComponentPostExtendLogic>
-          <PostsExtendChildrenWrapper>
-            <PostExtendHasNoMediaWrapper>
-              <PostsExtendHasNoPostMedia />
-            </PostExtendHasNoMediaWrapper>
-          </PostsExtendChildrenWrapper>
+          <PostsExtendWrapper />
         </FeedComponentPostExtendLogic>
         <Suspense fallback={<LoadingComponent />}>
           <VirtualizedFeed />

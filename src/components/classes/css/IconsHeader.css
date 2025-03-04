@@ -3,7 +3,7 @@
 }
 
 .IconsHeader-wrapper {
-  background: var(--light-gray);
+  background: var(--dark-gray);
 }
 
 .IconsHeader-wrapper.close {

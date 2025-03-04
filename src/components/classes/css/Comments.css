@@ -1,5 +1,5 @@
 .Comments-border-line {
-  border-bottom: 1px solid var(--light-gray);
+  border-bottom: 1px solid var(--dark-gray);
 }
 
 .Comments-edit-button {
@@ -8,11 +8,11 @@
 
 .Comments-cancel-button {
   background: transparent;
-  border: 1px solid var(--light-gray);
+  border: 1px solid var(--dark-gray);
   color: var(--texts-color);
 }
 
 .Comments-cancel-button:hover {
-  background: var(--light-gray);
+  background: var(--dark-gray);
   color: var(--white) !important;
 }

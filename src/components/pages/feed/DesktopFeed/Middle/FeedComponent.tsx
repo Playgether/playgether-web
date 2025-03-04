@@ -1,4 +1,5 @@
-import { FeedProps } from "../../../../../services/getFeed";
+import { FeedProps } from "@/types/FeedProps";
+
 interface ApiResponse {
   data: FeedProps[];
 }
