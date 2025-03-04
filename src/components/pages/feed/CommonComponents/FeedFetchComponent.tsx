@@ -1,5 +1,4 @@
 import ContentFeed from "../DesktopFeed/MultUseComponents/ContentFeed";
-import { ResponsiveContainer } from "../ResponsiveFeed/Container";
 
 export const FeedFetchComponent = () => {
   return (
