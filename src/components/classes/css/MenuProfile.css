@@ -1,5 +1,5 @@
 .MenuProfile-wrapper {
-  color: var(--light-gray);
+  color: var(--dark-gray);
   background: transparent;
   transition: duration 0.5s ease-in-out !important;
 }

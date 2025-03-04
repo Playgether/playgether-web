@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { useAuthContext } from "./AuthContext";
-import { useProfileContext } from "./ProfileContext";
 import {
   FetchNextPageOptions,
   InfiniteData,
@@ -36,7 +35,6 @@ const FeedContext = createContext<FeedContextProps>({} as FeedContextProps);
 
 const FeedContextProvider = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuthContext();
-  const { profile } = useProfileContext();
   const [feed, setFeed] = useState<FeedProps[] | []>();
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =

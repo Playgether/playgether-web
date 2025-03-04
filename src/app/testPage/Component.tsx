@@ -1,30 +1,79 @@
+"use client";
+import DefaultButton from "@/components/elements/DefaultButton/DefaultButton";
+import { useAuthContext } from "@/context/AuthContext";
+import React, { useEffect, useState, useRef } from "react";
+import useWebSocket, { ReadyState } from "react-use-websocket";
 
-'use client'
+function Component({ chatroom, token }) {
+  const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
+    `ws://192.168.18.8:8000/ws/chatroom/${chatroom}?token=${token}`,
+    {
+      share: false,
+      shouldReconnect: () => true,
+    }
+  );
 
-import { Suspense, useEffect, useState } from "react";
-import { api } from "../../services/api";
-import { LoadingPosts } from "./LoadingPosts";
-import { LoadingComponent } from "../../components/layouts/components/LoadingComponent";
-import { useResource } from "../../components/custom_hooks/useResource";
+  const { user } = useAuthContext();
+  const [newMessage, setNewMessage] = useState("");
+  const [realTimeMessages, setRealTimeMessages] = useState([]);
+  const messagesDiv = useRef(null);
 
-export default async function Component () {
-    await new Promise((resolve)=>setTimeout(resolve, 4000))
-    return (
-        <div className="w-full">
-            <p className="w-full bg-green-200 text-black-200">DADOS CARREGADOS</p>
-            <p className="text-3xl bg-black-200">Posts</p>
-            <ul className="list-disc pl-6 mt-4 space-y-2 text-black-200">
-                {/* {posts.length > 0 ? (
-                    posts.map((post)=> ( */}
-                    {/* <div key={posts.userId} className="bg-blue-400">
-                        <li>{posts.title}</li>
-                        <br></br>
-                        <li>{posts.body}</li>
-                    </div> */}
-                    <p>CERTO</p>
-                {/* ))
-                ):null} */}
-            </ul>
-        </div>
-    )
+  // Função para rolar automaticamente até o final das mensagens
+  const scrollToBottom = () => {
+    if (messagesDiv.current) {
+      messagesDiv.current.scrollTop = messagesDiv.current.scrollHeight;
+    }
+  };
+
+  // Efeito para atualizar mensagens recebidas
+  useEffect(() => {
+    if (
+      lastJsonMessage &&
+      typeof lastJsonMessage === "object" &&
+      "author" in lastJsonMessage &&
+      "body" in lastJsonMessage
+    ) {
+      const message = {
+        author: lastJsonMessage.author,
+        body: lastJsonMessage.body,
+      };
+      setRealTimeMessages((prevMessages) => [...prevMessages, message]);
+    }
+    scrollToBottom();
+  }, [lastJsonMessage]);
+
+  // Função para enviar mensagem
+  const sendMessage = () => {
+    if (!newMessage.trim()) return;
+
+    sendJsonMessage({
+      event: "message_handler",
+      body: newMessage,
+    });
+
+    setNewMessage("");
+    setTimeout(scrollToBottom, 50);
+  };
+
+  return (
+    <div ref={messagesDiv} className="text-black-200">
+      <h1>Chat {chatroom}</h1>
+      <div style={{ maxHeight: "300px", overflowY: "auto" }}>
+        {realTimeMessages.map((msg, index) => (
+          <p key={index}>
+            <strong>{msg.author}:</strong> {msg.body}
+          </p>
+        ))}
+      </div>
+      <input
+        type="text"
+        value={newMessage}
+        onChange={(e) => setNewMessage(e.target.value)}
+        placeholder="Digite sua mensagem..."
+      />
+      <DefaultButton onClick={sendMessage}>Enviar</DefaultButton>
+    </div>
+  );
 }
+
+export default Component;

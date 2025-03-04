@@ -8,7 +8,8 @@ interface DivProps extends HTMLAttributes<HTMLDivElement> {}
 
 export type Resource = {
   /** Esta propriedade recebe uma string, que deve ser a url da foto de perfil. */
-  link_photo: string;
+  link_photo?: string;
+  /** Esta propriedade recebe o username (string) para ser criado um link para seu perfil */
   username: string;
 };
 
@@ -23,23 +24,31 @@ const ProfileImagePost = ({
   ...rest
 }: Resource & DivProps) => {
   return (
-    <div {...rest} className="flex items-center justify-center ">
-      <div className={twJoin(" bg-white-200 rounded-full", rest.className)}>
-        {typeof link_photo !== "string" ? (
-          <CgProfile className="h-full w-full text-gray-300" />
-        ) : (
+    <div
+      className={twJoin(
+        " ProfilePhotoLink-wrapper rounded-full",
+        rest.className
+      )}
+    >
+      {typeof link_photo !== "string" ? (
+        <Link
+          href={`/profile/${username}`}
+          className="h-full w-full underline "
+        >
+          <CgProfile className="h-full w-full" />
+        </Link>
+      ) : (
+        <Link href={`/profile/${username}`} className="h-full w-full underline">
           <Image
-            src={`${link_photo}`}
-            alt={"Imagem de perfil de quem postou um post no feed"}
-            className="rounded-full h-10"
-            layout="fill"
+            src={link_photo}
             objectFit="cover"
-            unoptimized
-          >
-            <Link href={`/profile/${username}`}>{username}</Link>
-          </Image>
-        )}
-      </div>
+            width={400}
+            height={400}
+            alt="Imagem de perfil do card profile do feed"
+            className="rounded-full"
+          />
+        </Link>
+      )}
     </div>
   );
 };

@@ -7,7 +7,8 @@ export const FeedFetchComponent = () => {
         <ContentFeed />
       </div>
       <div className="lg:hidden h-full w-full">
-        <ResponsiveContainer />
+        {/* <ResponsiveContainer /> */}
+        <div>test</div>
       </div>
     </>
   );

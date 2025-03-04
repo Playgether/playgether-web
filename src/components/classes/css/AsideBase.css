@@ -1,3 +1,4 @@
 .AsideBase-wrapper {
   background: var(--primary-color-variant-toB);
+  color: var(--white-no-change);
 }
