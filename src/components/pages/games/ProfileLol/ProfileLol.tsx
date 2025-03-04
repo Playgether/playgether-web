@@ -1,6 +1,6 @@
 import React from "react";
 
-import {  } from "../../../../context/AuthContext";
+import { useAuthContext } from "../../../../context/AuthContext";
 import { useProfileLolContext } from "../../../../context/ProfileLolContext";
 import { ProfileLolProps } from "../../../../services/getProfileLol";
 import { useResource } from "../../../custom_hooks/useResource";
@@ -15,7 +15,7 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const ProfileLol = ({}) => {
-  const { user } = ();
+  const { user } = useAuthContext();
   const { profile, fetchProfile } = useProfileLolContext();
   useResource<ProfileLolProps>(() => fetchProfile());
 
