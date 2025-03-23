@@ -93,8 +93,8 @@
 }
 .swiper-button-next::after,
 .swiper-button-prev::after {
-  color: transparent !important;
-  mix-blend-mode: difference;
+  color: var(--texts-color);
+  font-size: 16px !important;
 }
 
 :root {
@@ -133,7 +133,7 @@
 .swiper-custom-pagination {
   text-align: center;
   font-weight: bold;
-  font-size: 1.3rem;
+  font-size: 1rem;
   z-index: 20;
   background-color: var(--titles-color);
   text-align: center;

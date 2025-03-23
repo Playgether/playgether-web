@@ -2,8 +2,7 @@
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
 import { twMerge } from "tailwind-merge";
-import { HTMLAttributes, Suspense, useEffect, useRef } from "react";
-import { PostMedias } from "../../../../../../../services/getFeed";
+import { HTMLAttributes, Suspense, useEffect, useRef, useState } from "react";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
@@ -66,6 +65,7 @@ const Posts = ({
   ...rest
 }: PostsProps) => {
   const volumeRef = useRef<HTMLVideoElement | null>(null);
+  const [fileType, setFileType] = useState("");
 
   const handleSlideChange = (swiper) => {
     const videos = document.querySelectorAll("video");
@@ -120,6 +120,7 @@ const Posts = ({
                   onClick={onClick}
                 >
                   <CldImage
+                    onLoad={() => setFileType("image")}
                     key={item.id}
                     id={`${item.id}`}
                     src={item.media_file}
@@ -171,6 +172,7 @@ const Posts = ({
                         <video
                           controls
                           src="https://res.cloudinary.com/dg5o3xko6/video/upload/c_limit,q_auto:good,w_1280/v1742654555/ld8caqeocyu6blchv3ou.mp4"
+                          onLoad={() => setFileType("video")}
                         ></video>
                       ) : (
                         // <video
@@ -192,7 +194,7 @@ const Posts = ({
               )}
             </SwiperSlide>
           ))}
-          <CustomPagination />
+          <CustomPagination file_type={fileType} />
         </Swiper>
       ) : null}
     </div>
