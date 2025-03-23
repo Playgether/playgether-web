@@ -18,14 +18,14 @@ export const GlobalMessages = [
     time: 10000,
     showed: false,
   },
-  {
-    id: 2,
-    username: "Marcos Andrade",
-    message: "Segunda mensagem (7 segundos)",
-    volume: "medium",
-    time: 20000,
-    showed: false,
-  },
+  // {
+  //   id: 2,
+  //   username: "Marcos Andrade",
+  //   message: "Segunda mensagem (7 segundos)",
+  //   volume: "medium",
+  //   time: 20000,
+  //   showed: false,
+  // },
   {
     id: 3,
     username: "Rodrigo Santos",
@@ -69,7 +69,8 @@ export const GlobalMessages = [
   {
     id: 8,
     username: "Sophia Andrade",
-    message: "Oitava mensagem (10 segundos)",
+    message:
+      "Oitava mensagem (10 segundos) kdospakdopsakdopsakpdksapodkaskdopaskdopsakdopsakopdkaspodksopakdposakdopksopadopas",
     volume: "high",
     time: 30000,
     showed: false,
@@ -227,17 +228,17 @@ export const IntervalFunctionComponent = () => {
   };
 
   return (
-    <div className="IntervalFunction-wrapper flex w-screen justify-between items-center">
+    <div className="IntervalFunction-wrapper flex w-screen max-w-[100%] justify-center items-center">
       {visibleMessages.map((message, index) => (
         <div
-          key={message.id}
-          className="border-2 cursor-pointer border-white-200 text-sm h-[95%] ml-2 mr-2 mt-1 mb-1 rounded w-[500px] motion-preset-fade-lg motion-duration-1000 overflow-hidden p-1 flex flex-col gap-1"
+          key={index}
+          className="border-2 cursor-pointer IntervalFunction-border text-xs h-[95%] w-[358px] 2xl:w-[550px] ml-2 mr-2 mt-1 mb-1 rounded motion-preset-fade-lg motion-duration-1000 overflow-hidden p-1 flex flex-col gap-1"
         >
           <div className="flex items-center gap-1">
             <p className="text-blue-500 whitespace-nowrap">
               {message.username}:
             </p>
-            <p className="whitespace-nowrap overflow-hidden text-ellipsis">
+            <p className="whitespace-nowrap overflow-hidden text-ellipsis IntervalFunction-message">
               {message.message}
             </p>
           </div>

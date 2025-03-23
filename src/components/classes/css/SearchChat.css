@@ -1,0 +1,18 @@
+.SearchChat-wrapper {
+  background: var(--background-components);
+}
+
+.SearchChat-input {
+  color: var(--texts-color);
+  background-color: var(--background-components-hexa);
+}
+
+.dark {
+  & .SearchChat-wrapper {
+    background: var(--background-components-full-opacity);
+  }
+
+  & .SearchChat-input {
+    background-color: var(--background-components-hexa);
+  }
+}

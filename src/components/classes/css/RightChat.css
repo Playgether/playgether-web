@@ -1,0 +1,8 @@
+.RightChat-wrapper {
+  background: var(--background-components-hexa);
+  color: var(--texts-color);
+}
+
+.RightChat-wrapper-border {
+  border-color: var(--background-components-full-opacity);
+}

@@ -12,10 +12,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={cn("text-zinc-50")}>
+    <html lang="en" className="w-fit h-fit max-w-[100vw] overflow-x-hidden">
+      <body className={cn("text-zinc-50 max-w-[100vw] w-fit h-fit dark")}>
         <AppProvider>
-          <main>{children}</main>
+          <main className="max-w-[100vw] w-fit h-fit">{children}</main>
         </AppProvider>
       </body>
     </html>

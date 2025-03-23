@@ -3,6 +3,10 @@
   backdrop-filter: blur(10px);
 }
 
+.IntervalFunction-border {
+  border-color: var(--light-gray);
+}
+
 .IntervalFunction-name {
   background: transparent;
 }

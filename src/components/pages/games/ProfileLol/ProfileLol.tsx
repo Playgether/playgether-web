@@ -4,14 +4,7 @@ import { useAuthContext } from "../../../../context/AuthContext";
 import { useProfileLolContext } from "../../../../context/ProfileLolContext";
 import { ProfileLolProps } from "../../../../services/getProfileLol";
 import { useResource } from "../../../custom_hooks/useResource";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const ProfileLol = ({}) => {

@@ -1,0 +1,4 @@
+.NewMessage-wrapper {
+  color: var(--titles-color);
+  background: rgba(31, 31, 31, 0.9);
+}

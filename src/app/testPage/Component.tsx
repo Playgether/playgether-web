@@ -27,6 +27,7 @@ function Component({ chatroom, token }) {
 
   // Efeito para atualizar mensagens recebidas
   useEffect(() => {
+    console.log(lastJsonMessage);
     if (
       lastJsonMessage &&
       typeof lastJsonMessage === "object" &&

@@ -1,0 +1,10 @@
+.LeftChat-wrapper {
+  border-color: var(--background-components-full-opacity);
+  background: var(--background-components-full-opacity);
+}
+
+.dark {
+  & .LeftChat-wrapper {
+    background: var(--background-components);
+  }
+}

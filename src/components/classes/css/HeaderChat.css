@@ -1,0 +1,15 @@
+.HeaderChat-wrapper {
+  color: var(--texts-color);
+  border-color: var(--background-components-full-opacity);
+  background: var(--background-components-full-opacity);
+}
+
+.HeaderChat-Icons {
+  background: var(--dark-gray);
+}
+
+.dark {
+  & .HeaderChat-wrapper {
+    background: var(--background-components-full-opacity);
+  }
+}

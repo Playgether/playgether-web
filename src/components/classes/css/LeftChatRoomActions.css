@@ -1,0 +1,17 @@
+.LeftChatRoomActions-wrapper {
+  background: var(--background-components);
+}
+
+.LeftChatRoomActionsDoor {
+  color: #ef4444;
+}
+
+.LeftChatRoomActionsStar {
+  color: var(--texts-color);
+}
+
+.dark {
+  & .LeftChatRoomActions-wrapper {
+    background: var(--background-components-full-opacity);
+  }
+}

@@ -25,6 +25,7 @@
     "clsx": "^2.1.1",
     "debug": "^4.3.4",
     "eslint-config-next": "^15.1.7",
+    "framer-motion": "^12.4.10",
     "frontend": "file:",
     "javascript-time-ago": "^2.5.9",
     "jwt-decode": "^3.1.2",
@@ -61,6 +62,7 @@
     "@storybook/nextjs": "^8.5.6",
     "@storybook/react": "^8.5.6",
     "@storybook/test": "^8.5.6",
+    "postcss-nested": "^7.0.2",
     "storybook": "^8.5.6",
     "tailwindcss-motion": "^1.0.1"
   },

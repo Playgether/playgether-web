@@ -107,7 +107,7 @@ const Posts = ({
           noSwiping={true}
           noSwipingClass="swiper-no-swiping"
         >
-          {media.map((item) => (
+          {media.map((item, index) => (
             <SwiperSlide
               key={item.id}
               style={{ maxHeight: `${postHeight}px` }}
@@ -151,19 +151,32 @@ const Posts = ({
                       className="rounded items-center justify-center swiper-no-swiping flex w-full h-fit relative"
                     >
                       {plays ? (
-                        <CldVideoPlayer
-                          src={item.media_file}
-                          transformation={{ width: postWidth, crop: "limit" }}
-                          quality={"auto:good"}
-                          fluid={false}
-                          colors={{ accent: "orange", text: "orange" }}
-                          logo={false}
-                          showJumpControls={true}
-                          playsinline={true}
-                          // height={postHeight}
-                          // width={postWidth}
-                        />
+                        // <CldVideoPlayer
+                        //   id={`video-${item.id}-${index}`}
+                        //   key={`video-${item.id}-${index}`}
+                        //   src={item.media_file}
+                        //   transformation={{ width: postWidth, crop: "limit" }}
+                        //   quality={"auto:good"}
+                        //   fluid={false}
+                        //   colors={{ accent: "orange", text: "orange" }}
+                        //   logo={false}
+                        //   showJumpControls={true}
+                        //   playsinline={true}
+                        //   onDataLoad={(e) =>
+                        //     console.log("Carregou:", item.id + " " + index)
+                        //   }
+                        //   // height={postHeight}
+                        //   // width={postWidth}
+                        // />
+                        <video
+                          controls
+                          src="https://res.cloudinary.com/dg5o3xko6/video/upload/c_limit,q_auto:good,w_1280/v1742654555/ld8caqeocyu6blchv3ou.mp4"
+                        ></video>
                       ) : (
+                        // <video
+                        //   controls
+                        //   src="https://res.cloudinary.com/dg5o3xko6/video/upload/c_limit,q_auto:good,w_1280/v1742654555/ld8caqeocyu6blchv3ou.mp4"
+                        // ></video>
                         <CldImage
                           src={item.media_file}
                           width={postWidth}

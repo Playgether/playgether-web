@@ -14,26 +14,64 @@
     --transition-colors: transition-colors duration-500 ease-in-out;
     --overlay: #03a9fa;
     font-family: "Poppins", sans-serif;
+
+    /* Primary color of the application, the major color that is placed in parts where the attention of the user is needed. */
     --primary-color: linear-gradient(to right, #4776e6, #8e54e9);
-    --primary-color-variant-toB: linear-gradient(to bottom, #4776e6, #8e54e9);
+
+    /* Second color of the application, used to give support for primary-color. */
     --secondary-color: linear-gradient(to right, #ff3366, #ffb703);
+
+    /* For primary colors that use gradient */
+    --primary-color-first-color: #4776e6;
+    --primary-color-second-color: #8e54e9;
+    --primary-color-variant-toB: linear-gradient(to bottom, #4776e6, #8e54e9);
+
+    /* For secondary colors that use gradient */
+    --secondary-color-first-color: #ff3366;
+    --secondary-color-second-color: #ffb703;
     --secondary-color-variant-toB: linear-gradient(to bottom, #ff3366, #ffb703);
+
+    /* Mostly used for backgrounds of pages */
     --tertiary-color: #fff;
+
+    /* Mostly used for places that need a contrast with --tertiary-color */
     --tertiary-color-variant-light: #eef1f5;
     --tertiary-color-variant-dark: #e6e9f0;
+
+    /* Mostly used for titles (as user names etc.) and some buttons */
     --titles-color: #ff3366;
+
+    /* Mostly used for texts (as content, labels etc.) and some backgrounds */
     --texts-color: rgba(10, 10, 10, 1);
+
+    /* Mostly used for hover effects, and some places that need a text variation color */
     --texts-color-variant: #008bf5;
     --texts-color-variant-dark: #0082e5;
+
+    /* Mostly used for backgrounds of components and parts of the page */
     --background-components: rgba(219, 224, 231, 0.5);
     --background-components-full-opacity: rgba(212, 216, 220, 1);
+
+    /* Mostly used for backgrounds of components and parts of the page in hexadecimal format to not have transparency */
+    --background-components-hexa: #edeff3;
+    --background-components-full-opacity-hexa: #d4d8dc;
+
+    /* Mostly used for icons, buttons etc. */
     --white: #ffffff;
     --black: #000000;
+
+    /* Mostly used for places where is going to be white and will not change */
     --white-no-change: #ffffff;
+
+    /* Mostly used for places where is needed variations of white and gray, such as dates for example */
     --light-white: #f5f5f5;
     --light-gray: #969c9e;
     --dark-gray: #6e7175;
+
+    /* Mostly used for hover effects */
     --hover-color: #d9dde3;
+
+    /* Mostly used for shadows */
     --shadow-color: rgba(100, 100, 111, 0.2);
   }
 }
@@ -45,17 +83,18 @@
 
 .swiper-button-next,
 .swiper-button-prev {
-  background-color: #addcff;
+  background-color: var(--titles-color);
   right: 0px;
-  padding: 22px;
-  color: #008bf5 !important;
-  fill: #008bf5 !important;
+  color: var(--texts-color) !important;
   border-radius: 50% !important;
-  border: solid #008bf5;
+  height: 30px !important;
+  width: 30px !important;
+  padding: 5px !important;
 }
 .swiper-button-next::after,
 .swiper-button-prev::after {
-  font-size: 22px !important;
+  color: transparent !important;
+  mix-blend-mode: difference;
 }
 
 :root {
@@ -96,9 +135,9 @@
   font-weight: bold;
   font-size: 1.3rem;
   z-index: 20;
-  background-color: #62b7f8;
+  background-color: var(--titles-color);
   text-align: center;
-  color: white !important;
+  color: var(--texts-color) !important;
 }
 
 @layer base {

@@ -1,6 +1,6 @@
 import { CldUploadWidget } from "next-cloudinary";
 import { GoFileMedia } from "react-icons/go";
-import {} from "../../../../../../../context/AuthContext";
+import { useAuthContext } from "../../../../../../../context/AuthContext";
 import { useEffect, useState } from "react";
 import { PostMediaProps } from "../../../../../../../services/postPost";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
@@ -16,6 +16,7 @@ const Step3 = ({
   // const { user } = ();
   const [widgetKey, setWidgetKey] = useState(0);
   const [activeUploads, setActiveUploads] = useState(0);
+  const { user } = useAuthContext();
 
   const handleUploadSuccess = async (result) => {
     console.log(result);

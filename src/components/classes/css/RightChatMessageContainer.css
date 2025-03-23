@@ -1,0 +1,8 @@
+.RightChatMessageContainer-wrapper {
+  color: var(--white-no-change);
+  background: #4776e6;
+}
+
+.RightChatMessageContainer-hours {
+  color: var(--dark-gray);
+}

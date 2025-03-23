@@ -1,0 +1,8 @@
+.RightChatMineMessage-wrapper {
+  color: var(--white-no-change);
+  background: #8e54e9;
+}
+
+.RightChatMineMessage-hours {
+  color: var(--dark-gray);
+}

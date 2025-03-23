@@ -1,12 +1,12 @@
 import React from "react";
-import { GiExitDoor } from "react-icons/gi";
 import Link from "next/link";
 import { HiOutlineHome } from "react-icons/hi2";
-import { BsChatSquare } from "react-icons/bs";
 import { PiDoorOpen } from "react-icons/pi";
 import { GoPeople } from "react-icons/go";
 import { IoPersonOutline } from "react-icons/io5";
 import { BiShield } from "react-icons/bi";
+import Chat from "../elements/Chat/Chat";
+import AsideBaseChat from "./AsideBaseChat";
 
 const AsideBase = ({}) => {
   return (
@@ -14,7 +14,9 @@ const AsideBase = ({}) => {
       <Link href={"/feed"}>
         <HiOutlineHome className="h-8 w-8 cursor-pointer" />
       </Link>
-      <BsChatSquare className="h-8 w-8 cursor-pointer" />
+      <AsideBaseChat>
+        <Chat />
+      </AsideBaseChat>
       <IoPersonOutline className="h-8 w-8 cursor-pointer" />
       <GoPeople className="h-8 w-8 cursor-pointer" />
       <BiShield className="h-8 w-8 cursor-pointer" />

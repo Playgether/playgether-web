@@ -1,0 +1,34 @@
+.ChatConversations-wrapper {
+  color: var(--texts-color);
+  background: var(--background-components);
+}
+
+.ChatConversations-person-selected {
+  background: var(--hover-color);
+}
+
+.ChatConversations-person:hover {
+  background: var(--hover-color);
+}
+
+.ChatConversations-message {
+  color: var(--dark-gray);
+}
+
+.ChatConversations-online {
+  background: #22c55e;
+}
+
+.ChatConversations-new-message {
+  background: var(--titles-color);
+}
+
+.dark {
+  & .ChatConversations-wrapper {
+    background: var(--background-components-full-opacity);
+  }
+
+  & .ChatConversations-message {
+    color: var(--light-gray);
+  }
+}

@@ -69,3 +69,16 @@
 @import "../../components/classes/css/EmptyData.css";
 @import "../../components/classes/css/ProfilePhotoLink.css";
 @import "../../components/classes/css/CardRoomContainer.css";
+@import "../../components/classes/css/LeftChat.css";
+@import "../../components/classes/css/HeaderChat.css";
+@import "../../components/classes/css/SearchChat.css";
+@import "../../components/classes/css/ChatConversations.css";
+@import "../../components/classes/css/RightChat.css";
+@import "../../components/classes/css/RightChatTop.css";
+@import "../../components/classes/css/RightChatMessageContainer.css";
+@import "../../components/classes/css/RightChatMineMessage.css";
+@import "../../components/classes/css/RightChatInputWrapper.css";
+@import "../../components/classes/css/LeftChatRoomActions.css";
+@import "../../components/classes/css/HeaderChatRoom.css";
+@import "../../components/classes/css/RightChatRoomOnline.css";
+@import "../../components/classes/css/NewMessage.css";

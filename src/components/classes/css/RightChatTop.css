@@ -1,0 +1,11 @@
+.RightChatTop-wrapper {
+  border-color: var(--background-components);
+}
+
+.RightChatTop-online {
+  background: #22c55e;
+}
+
+.RightChatTop-hours-and-icons {
+  color: var(--light-gray);
+}

@@ -1,5 +1,8 @@
+import NotFoundPages from "@/components/elements/NotFound/NotFoundPages";
 import BaseLayout from "@/components/layouts/BaseLayout";
 import CardRoomContainer from "@/components/pages/rooms/CardRoomContainer";
+import { getChatRooms } from "@/services/getChatRooms";
+import { ChatRoomPagination } from "@/types/ChatRoom";
 import { Metadata } from "next";
 import React from "react";
 
@@ -9,15 +12,29 @@ export const metadata: Metadata = {
 };
 
 export default async function Room() {
+  const response = await getChatRooms();
+  const rooms: ChatRoomPagination = response.data;
   return (
     <BaseLayout>
-      <div className="text-black-300 max-w-[1420px] w-[90vw] h-full mt-2 flex flex-wrap gap-1 mb-4">
-        <CardRoomContainer />
-        <CardRoomContainer />
-        <CardRoomContainer />
-        <CardRoomContainer />
-        <CardRoomContainer />
-        <CardRoomContainer />
+      <div className="h-fit mt-2 grid w-full grid-cols-[repeat(auto-fit,minmax(350px,1fr))]">
+        {rooms && rooms.results.length > 0 ? (
+          rooms.results.map((room) => (
+            <>
+              <CardRoomContainer
+                name={room.group_name}
+                summary={room.summary}
+                banner={room.banner}
+                key={room.id}
+              />
+            </>
+          ))
+        ) : (
+          <NotFoundPages
+            message="Não encontramos nenhuma sala disponível no momento"
+            href="/feed"
+            page="Feed"
+          />
+        )}
       </div>
     </BaseLayout>
   );

@@ -1,0 +1,16 @@
+.RightChatInputWrapper-wrapper {
+  color: var(--texts-color);
+  border-color: var(--background-components);
+}
+
+.RightChatInputWrapper-Icons:hover {
+  background: var(--primary-color);
+}
+
+.RightChatInputWrapper-Input {
+  background: var(--background-components-full-opacity);
+}
+
+.RightChatInputWrapper-Send {
+  color: var(--titles-color);
+}
