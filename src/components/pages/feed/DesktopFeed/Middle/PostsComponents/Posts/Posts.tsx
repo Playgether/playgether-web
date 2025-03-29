@@ -10,6 +10,7 @@ import { CustomPagination } from "../../../../../../elements/CustomPagination/Cu
 import { VideoLoadingFallback } from "./VideoLoadingFallBack";
 import { CldImage, CldVideoPlayer } from "next-cloudinary";
 import "next-cloudinary/dist/cld-video-player.css";
+import Image from "next/legacy/image";
 
 export interface PostsProps extends HTMLAttributes<HTMLDivElement> {
   /** Esta prop recebe uma lista de objetos do tipo (PostMedias) localizado no service getFeed, em resumo, uma lista de arquivos de medias de algum post. */
@@ -66,6 +67,10 @@ const Posts = ({
 }: PostsProps) => {
   const volumeRef = useRef<HTMLVideoElement | null>(null);
   const [fileType, setFileType] = useState("");
+
+  const getCloudinaryUrl = (width: number, public_id: string) => {
+    return `https://res.cloudinary.com/dg5o3xko6/video/upload/c_limit,q_auto:good,w_${width}/v1742654555/${public_id}.mp4`;
+  };
 
   const handleSlideChange = (swiper) => {
     const videos = document.querySelectorAll("video");
@@ -171,21 +176,22 @@ const Posts = ({
                         // />
                         <video
                           controls
-                          src="https://res.cloudinary.com/dg5o3xko6/video/upload/c_limit,q_auto:good,w_1280/v1742654555/ld8caqeocyu6blchv3ou.mp4"
+                          src={getCloudinaryUrl(postWidth, item.media_file)}
                           onLoad={() => setFileType("video")}
                         ></video>
                       ) : (
-                        // <video
-                        //   controls
-                        //   src="https://res.cloudinary.com/dg5o3xko6/video/upload/c_limit,q_auto:good,w_1280/v1742654555/ld8caqeocyu6blchv3ou.mp4"
-                        // ></video>
-                        <CldImage
-                          src={item.media_file}
-                          width={postWidth}
+                        // <CldImage
+                        //   src={item.media_file}
+                        //   width={postWidth}
+                        //   height={postHeight}
+                        //   // crop="limit"
+                        //   // format="jpg"
+                        //   alt="Thumbnail do vídeo"
+                        // />
+                        <Image
+                          src={getCloudinaryUrl(postWidth, item.media_file)}
                           height={postHeight}
-                          // crop="limit"
-                          // format="jpg"
-                          alt="Thumbnail do vídeo"
+                          width={postWidth}
                         />
                       )}
                     </div>

@@ -41,6 +41,9 @@
     /* Mostly used for titles (as user names etc.) and some buttons */
     --titles-color: #ff3366;
 
+    /* DefaultButton component hover (component used in a lot places of the application) */
+    --default-button-hover: linear-gradient(to right, #ff3366, #ffb703);
+
     /* Mostly used for texts (as content, labels etc.) and some backgrounds */
     --texts-color: rgba(10, 10, 10, 1);
 

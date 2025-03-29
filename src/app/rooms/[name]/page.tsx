@@ -3,22 +3,20 @@ import { Metadata } from "next";
 import React from "react";
 import { ChatComponents } from "@/components/elements/Chat";
 
-export interface Props {
-  params?: { name: string };
-}
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params }): Promise<Metadata> {
+  const { name } = await params;
   return {
-    title: `Playgether - ${params?.name || "Sala Desconhecida"}`,
+    title: `Playgether - ${name || "Sala Desconhecida"}`,
   };
 }
 
-export default function Page({ params }: Props) {
+export default async function Page({ params }) {
+  const { name } = await params;
   return (
     <BaseLayout>
       <ChatComponents.Root>
         <ChatComponents.LeftRoomChat />
-        <ChatComponents.RightRoomChat group_name={params?.name} />
+        <ChatComponents.RightRoomChat group_name={name} />
       </ChatComponents.Root>
     </BaseLayout>
   );

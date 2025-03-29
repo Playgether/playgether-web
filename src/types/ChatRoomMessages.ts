@@ -5,6 +5,7 @@ export interface ChatRoomMessages {
   author_profile_photo: string;
   body: string;
   created_at: Date;
+  viewed: boolean;
 }
 
 export interface ChatRoomMessagesPagination {

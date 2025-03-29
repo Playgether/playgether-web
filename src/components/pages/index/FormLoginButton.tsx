@@ -22,14 +22,14 @@ function FormLoginButton() {
           </DefaultButton>
         </>
       ) : (
-        <>
+        <div className="mb-4">
           <DefaultButton
-            className="inline-block w-full leading-none shadow px-8, py-4"
+            className="w-full leading-none shadow px-8, py-4"
             type="submit"
           >
             LOGAR
           </DefaultButton>
-        </>
+        </div>
       )}
     </>
   );

@@ -9,13 +9,18 @@ function CardRoomContainer({
   banner,
   name,
   summary,
+  id,
 }: {
   banner: string;
   summary: string;
   name: string;
+  id: number;
 }) {
   return (
-    <div className="h-[384px] w-[350px] border CardRoomContainer-wrapper rounded-md motion-preset-fade-lg justify-self-start mb-4">
+    <div
+      className="h-[384px] w-[350px] border CardRoomContainer-wrapper rounded-md motion-preset-fade-lg justify-self-start mb-4"
+      key={id}
+    >
       <div className="h-1/2 relative">
         <CldImage
           src={banner}

@@ -8,24 +8,27 @@ import { LoadingComponent } from "@/components/layouts/components/LoadingCompone
 import { useChatHandlerContext } from "@/context/ChatHandlerContext";
 import { useAuthContext } from "@/context/AuthContext";
 import NewMessage from "../../NewMessage";
+import ScrollToBottom from "@/components/elements/ScrollToBottom/ScrollToBottom";
+import ScrollToBottonIcon from "./ScrollToBottonIcon";
 
-function RightChatRoomMessages({
-  token,
-  group_name,
-  messages,
-}: {
-  token: string;
-  group_name: string;
-  messages: ChatRoomMessages[];
-}) {
+function RightChatRoomMessages({ messages }: { messages: ChatRoomMessages[] }) {
   const [isLoading, setIsLoading] = useState(true);
-  const { realTimeMessages, handleRealTimeMessages, newMessages } =
-    useChatHandlerContext();
+  const {
+    realTimeMessages,
+    handleRealTimeMessages,
+    messagesDiv,
+    resetMessagesQuantity,
+    messagesQuantity,
+    handleScroll,
+    shouldScrollToBottom,
+    executeScrollBottom,
+    newMessageId,
+  } = useChatHandlerContext();
   const { user } = useAuthContext();
 
   useEffect(() => {
     if (messages && messages.length > 0) {
-      handleRealTimeMessages(messages);
+      handleRealTimeMessages([...messages].reverse());
     }
     setIsLoading(false);
   }, [messages]);
@@ -35,9 +38,13 @@ function RightChatRoomMessages({
       {isLoading ? (
         <LoadingComponent />
       ) : (
-        <div className="flex-1 overflow-y-auto space-y-4 min-h-0">
+        <div
+          className="flex-1 overflow-y-auto space-y-4"
+          onScroll={handleScroll}
+          ref={messagesQuantity === 1 ? messagesDiv : null}
+        >
           <RightChatRoomOnline quantity="16 pessoas online agora" />
-          <div className="p-4">
+          <div className="p-4 relative">
             {realTimeMessages && realTimeMessages.length > 0 ? (
               realTimeMessages.map((message) =>
                 message?.author_username === user?.username ? (
@@ -48,11 +55,13 @@ function RightChatRoomMessages({
                   />
                 ) : (
                   <RightChatRoomMessagesContainer
+                    id={message.id}
                     key={message.id}
                     image={message.author_profile_photo}
                     message={message.body}
                     hour={message.created_at}
                     name={message.author_name}
+                    newMessageId={newMessageId}
                   />
                 )
               )
@@ -65,9 +74,21 @@ function RightChatRoomMessages({
               </div>
             )}
           </div>
-          {newMessages.length > 0 && (
-            <NewMessage quantity={newMessages.length} />
+          {messagesQuantity > 0 ? (
+            <NewMessage
+              quantity={messagesQuantity}
+              resetFunction={resetMessagesQuantity}
+              shouldScrollToBottom={shouldScrollToBottom}
+              newMessageId={newMessageId}
+            />
+          ) : (
+            <>
+              {!shouldScrollToBottom && (
+                <ScrollToBottonIcon executeScrollBottom={executeScrollBottom} />
+              )}
+            </>
           )}
+          <ScrollToBottom shouldScroll={shouldScrollToBottom} />
         </div>
       )}
     </>

@@ -25,6 +25,7 @@ export default async function Room() {
                 summary={room.summary}
                 banner={room.banner}
                 key={room.id}
+                id={room.id}
               />
             </>
           ))
