@@ -12,6 +12,7 @@ import {
 import useWebSocket from "react-use-websocket";
 import { useAuthContext } from "./AuthContext";
 import { ChatRoom } from "@/types/ChatRoom";
+import { OnlineUsersChatRoom } from "@/types/OnlineUsersChatRoom";
 
 type ChatHandlerContextProps = {
   newMessage: string;
@@ -26,6 +27,7 @@ type ChatHandlerContextProps = {
   handleScroll: (e: React.UIEvent<HTMLDivElement>) => void;
   executeScrollBottom: () => void;
   newMessageId: number;
+  onlineUsers: OnlineUsersChatRoom[];
 };
 
 const ChatHandlerContext = createContext<ChatHandlerContextProps>(
@@ -45,7 +47,7 @@ const ChatHandlerContextProvider = ({
     `ws://192.168.18.8:8000/ws/chatroom/${chatroom}?token=${token}`,
     {
       share: false,
-      shouldReconnect: () => true,
+      shouldReconnect: () => false,
     }
   );
 
@@ -59,6 +61,30 @@ const ChatHandlerContextProvider = ({
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
   const [newMessageId, setNewMessageId] = useState(0);
   const [newMessageObject, setNewMessageObject] = useState<ChatRoom | {}>({});
+  const [onlineUsers, setOnlineUsers] = useState<OnlineUsersChatRoom[]>([]);
+
+  const eventHandlers = {
+    online_users: (data) => {
+      setOnlineUsers(data.users);
+    },
+    message_handler: (data) => {
+      const message = data.message as ChatRoomMessages;
+      setRealTimeMessages((prevMessages) => [...prevMessages, message]);
+      if (message.author_username !== user?.username) {
+        if (shouldScrollToBottom) {
+          setShouldScrollToBottom(false);
+          setTimeout(() => setShouldScrollToBottom(true), 0);
+        } else {
+          setMessagesQuanity((prevQuanity) => prevQuanity + 1);
+          setNewMessageObject(message);
+        }
+      } else {
+        setShouldScrollToBottom(false);
+        setTimeout(() => setShouldScrollToBottom(true), 0);
+      }
+    },
+    // Adicione outros manipuladores de eventos conforme necessário
+  };
 
   const handleRealTimeMessages = (messages: []) => {
     setRealTimeMessages(messages);
@@ -87,23 +113,11 @@ const ChatHandlerContextProvider = ({
     setMessagesQuanity(0);
   };
 
-  // Efeito para atualizar mensagens recebidas
   useEffect(() => {
     if (lastJsonMessage && typeof lastJsonMessage === "object") {
-      const message = lastJsonMessage as ChatRoomMessages;
-
-      setRealTimeMessages((prevMessages) => [...prevMessages, message]);
-      if (message.author_username !== user?.username) {
-        if (shouldScrollToBottom) {
-          setShouldScrollToBottom(false);
-          setTimeout(() => setShouldScrollToBottom(true), 0);
-        } else {
-          setMessagesQuanity((prevQuanity) => prevQuanity + 1);
-          setNewMessageObject(message);
-        }
-      } else {
-        setShouldScrollToBottom(false);
-        setTimeout(() => setShouldScrollToBottom(true), 0);
+      const eventType = (lastJsonMessage as { type: string }).type;
+      if (eventType && eventHandlers[eventType]) {
+        eventHandlers[eventType](lastJsonMessage);
       }
     }
   }, [lastJsonMessage]);
@@ -146,6 +160,7 @@ const ChatHandlerContextProvider = ({
         handleScroll,
         executeScrollBottom,
         newMessageId,
+        onlineUsers,
       }}
     >
       {children}

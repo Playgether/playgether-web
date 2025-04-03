@@ -1,40 +1,24 @@
-import React from "react";
+"use client";
+import React, { useState } from "react";
 import RightChatRoomTop from "./RightChatRoomTop";
-import RightChatInputWrapper from "../../RightChatInputWrapper";
-import RightChatRoomMessages from "./RightChatRoomMessages";
-import { getRoomMessages } from "@/services/getRoomMessages";
-import { ChatRoomMessages } from "@/types/ChatRoomMessages";
-import { cookies } from "next/headers";
-import { ChatHandlerContextProvider } from "@/context/ChatHandlerContext";
+import ChatRoomNavigation from "./ChatNavigation";
 
-async function RightRoomChat({
-  group_name,
-}: {
-  group_name: string | undefined;
-}) {
-  const accessToken = (await cookies()).get("accessToken")?.value;
+async function RightRoomChat({ messages, room }) {
+  const [rightChatActive, setRightChatActive] = useState("chat");
 
-  if (!accessToken) {
-    throw new Error("access_token is undefined");
-  }
-  if (!group_name) {
-    throw new Error("group_name is undefined");
-  }
+  const handleRightChatActive = (key: string) => {
+    setRightChatActive(key);
+  };
 
-  const response = await getRoomMessages(group_name);
-  const messages: ChatRoomMessages = response?.data?.results;
-
+  const data = {
+    key: rightChatActive,
+    messages: messages,
+    room: room,
+  };
   return (
-    <div className="flex-1 flex flex-col RightChat-wrapper min-h-0">
-      <RightChatRoomTop />
-      <ChatHandlerContextProvider token={accessToken} chatroom={group_name}>
-        <RightChatRoomMessages
-          group_name={group_name}
-          messages={messages}
-          token={accessToken}
-        />
-        <RightChatInputWrapper />
-      </ChatHandlerContextProvider>
+    <div className="flex-1 flex flex-col RightChat-wrapper min-h-[calc(100vh-160px)] overflow-auto">
+      <RightChatRoomTop handleRightChatActive={handleRightChatActive} />
+      <ChatRoomNavigation data={data} />
     </div>
   );
 }

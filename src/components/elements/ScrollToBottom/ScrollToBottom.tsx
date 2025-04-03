@@ -30,7 +30,6 @@ function ScrollToBottom({
   };
 
   useEffect(() => {
-    console.log(shouldScroll, target);
     if (shouldScroll) {
       scrollToBottom();
     }

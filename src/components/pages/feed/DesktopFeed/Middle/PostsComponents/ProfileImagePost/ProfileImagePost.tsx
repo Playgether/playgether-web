@@ -30,7 +30,7 @@ const ProfileImagePost = ({
         rest.className
       )}
     >
-      {typeof link_photo !== "string" ? (
+      {typeof link_photo !== "string" || link_photo === "" ? (
         <Link
           href={`/profile/${username}`}
           className="h-full w-full underline "

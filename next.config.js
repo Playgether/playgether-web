@@ -11,6 +11,7 @@ const nextConfig = {
       "192.168.15.60",
       "images.unsplash",
       "images.unsplash.com",
+      "res.cloudinary.com",
     ],
   },
 

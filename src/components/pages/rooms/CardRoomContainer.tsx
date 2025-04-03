@@ -3,7 +3,7 @@ import React from "react";
 import DefaultButton from "@/components/elements/DefaultButton/DefaultButton";
 import { RxPerson } from "react-icons/rx";
 import Link from "next/link";
-import { CldImage } from "next-cloudinary";
+import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
 
 function CardRoomContainer({
   banner,
@@ -22,16 +22,7 @@ function CardRoomContainer({
       key={id}
     >
       <div className="h-1/2 relative">
-        <CldImage
-          src={banner}
-          width={480}
-          height={0}
-          alt="Banner"
-          style={{
-            maxHeight: 191,
-            objectFit: "cover",
-          }}
-        />
+        <ImageComponent media_id={banner} width={400} />
       </div>
       <div className="h-1/2 space-y-3 p-4 flex flex-col">
         <h1 className="text-2xl font-semibold">{name}</h1>

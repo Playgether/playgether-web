@@ -11,6 +11,7 @@ import { VideoLoadingFallback } from "./VideoLoadingFallBack";
 import { CldImage, CldVideoPlayer } from "next-cloudinary";
 import "next-cloudinary/dist/cld-video-player.css";
 import Image from "next/legacy/image";
+import { getCloudinaryUrl } from "@/functions/getCloudinaryUrl";
 
 export interface PostsProps extends HTMLAttributes<HTMLDivElement> {
   /** Esta prop recebe uma lista de objetos do tipo (PostMedias) localizado no service getFeed, em resumo, uma lista de arquivos de medias de algum post. */
@@ -67,10 +68,6 @@ const Posts = ({
 }: PostsProps) => {
   const volumeRef = useRef<HTMLVideoElement | null>(null);
   const [fileType, setFileType] = useState("");
-
-  const getCloudinaryUrl = (width: number, public_id: string) => {
-    return `https://res.cloudinary.com/dg5o3xko6/video/upload/c_limit,q_auto:good,w_${width}/v1742654555/${public_id}.mp4`;
-  };
 
   const handleSlideChange = (swiper) => {
     const videos = document.querySelectorAll("video");

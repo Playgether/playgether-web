@@ -20,7 +20,7 @@ export async function loginAction(formData: FormData) {
     (await cookies()).set("accessToken", response.data.access, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 3600, // 1 hora
+      // maxAge: 3600, // 1 hora
     });
 
     // Salva o token de refresh em um cookie

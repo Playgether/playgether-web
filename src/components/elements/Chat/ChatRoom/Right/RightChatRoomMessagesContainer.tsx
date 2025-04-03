@@ -1,9 +1,7 @@
 "use client";
 import React from "react";
-import brazilianStrings from "react-timeago/lib/language-strings/pt-br";
-import buildFormatter from "react-timeago/lib/formatters/buildFormatter";
-import TimeAgo from "react-timeago";
 import ProfileImagePost from "@/components/pages/feed/DesktopFeed/Middle/PostsComponents/ProfileImagePost/ProfileImagePost";
+import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
 
 function RightChatRoomMessagesContainer({
   image,
@@ -20,7 +18,6 @@ function RightChatRoomMessagesContainer({
   id: number;
   newMessageId: number;
 }) {
-  const formatter = buildFormatter(brazilianStrings);
   return (
     <>
       {newMessageId === id && (
@@ -45,7 +42,7 @@ function RightChatRoomMessagesContainer({
             <p>{message}</p>
           </div>
           <p className="text-xs RightChatMessageContainer-hours mt-1 ">
-            <TimeAgo date={hour} formatter={formatter} />
+            <DateAndHour date={hour} />
           </p>
         </div>
       </div>

@@ -23,6 +23,7 @@ function RightChatRoomMessages({ messages }: { messages: ChatRoomMessages[] }) {
     shouldScrollToBottom,
     executeScrollBottom,
     newMessageId,
+    onlineUsers,
   } = useChatHandlerContext();
   const { user } = useAuthContext();
 
@@ -43,7 +44,9 @@ function RightChatRoomMessages({ messages }: { messages: ChatRoomMessages[] }) {
           onScroll={handleScroll}
           ref={messagesQuantity === 1 ? messagesDiv : null}
         >
-          <RightChatRoomOnline quantity="16 pessoas online agora" />
+          <RightChatRoomOnline
+            quantity={`${onlineUsers.length} pessoas online agora`}
+          />
           <div className="p-4 relative">
             {realTimeMessages && realTimeMessages.length > 0 ? (
               realTimeMessages.map((message) =>
