@@ -28,11 +28,11 @@ function CardRoomContainer({
         <h1 className="text-2xl font-semibold">{name}</h1>
         <p className="text-sm w-[90%] flex-1">{summary}</p>
         <div className="w-full flex justify-between">
-          <Link href={`/rooms/${name}`}>
-            <DefaultButton className="py-2 px-8 font-medium">
+          <form action={`/rooms/validate/${name}`} method="get">
+            <DefaultButton type="submit" className="py-2 px-8 font-medium">
               Entrar
             </DefaultButton>
-          </Link>
+          </form>
           <div className="flex gap-2 CardRoomContainer-online items-end">
             <RxPerson className="h-7" />
             <span>15/30</span>
