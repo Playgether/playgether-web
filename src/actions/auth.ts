@@ -34,7 +34,7 @@ export async function loginAction(formData: FormData) {
     (await cookies()).set("user_id", decodedAccessToken.user_id, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 3600, // 1 hora
+      // maxAge: 3600, // 1 hora
     });
 
     return { error: null };

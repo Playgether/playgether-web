@@ -2,13 +2,13 @@ import React from "react";
 import Link from "next/link";
 
 export default function NotFoundPages({
-  message,
-  page,
-  href,
+  message="Não encontramos o que você estava procurando.",
+  page="Feed",
+  href="/feed",
 }: {
-  message: string;
-  page: string;
-  href: string;
+  message?: string;
+  page?: string;
+  href?: string;
 }) {
   return (
     <main className="text-center flex flex-col max-h-[calc(100vh-160px)] min-h-[calc(100vh-160px)] w-full items-center justify-center ">

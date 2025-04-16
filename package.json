@@ -28,6 +28,7 @@
     "framer-motion": "^12.4.10",
     "frontend": "file:",
     "javascript-time-ago": "^2.5.9",
+    "jose": "^6.0.10",
     "jwt-decode": "^3.1.2",
     "msw-storybook-addon": "^2.0.4",
     "next": "^15.1.7",

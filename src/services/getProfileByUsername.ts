@@ -1,6 +1,5 @@
-import { notFound } from "next/navigation";
 import { api } from "./api";
-import { TokenData } from "./updateTokenRequest";
+import { cookies } from "next/headers";
 
 export interface getProfileByUsernameProps {
   id: number;
@@ -18,15 +17,15 @@ export interface getProfileByUsernameProps {
   name: string;
 }
 export const getProfileByUsername = async (
-  authTokens: TokenData | undefined | null,
   username: string
 ) => {
+  const accessToken = (await cookies()).get("accessToken")?.value;
   try {
     const response = await api.get<getProfileByUsernameProps>(
       `/api/v1/profiles/?user__username=${username}`,
       {
         headers: {
-          Authorization: "Bearer " + String(authTokens?.access),
+          Authorization: "Bearer " + String(accessToken),
         },
       }
     );

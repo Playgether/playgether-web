@@ -1,5 +1,6 @@
 import BaseLayout from "@/components/layouts/BaseLayout";
 import Page from "@/components/pages/profile/Page";
+import ProfileBaseInformation from "@/components/pages/profile/ProfileBaseInformations";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -10,10 +11,13 @@ export const metadata: Metadata = {
 export interface Props {
   params?: { username: string };
 }
-export default function Profile({ params }: Props) {
+export default async function Profile({ params }) {
+  const {username} = await params;
   return (
     <BaseLayout>
-      <Page params={params} />
+      <Page>
+        <ProfileBaseInformation username={username} />
+      </Page>
     </BaseLayout>
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { loginUserProps } from "../services/loginUser";
 import { useRouter } from "next/navigation";
 import { decodeUser } from "@/actions/decodeUser";
 import { logoutServer } from "@/actions/logout";

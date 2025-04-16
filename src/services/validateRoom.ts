@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { api } from "./api";
 
-export const validadeRoom = async (roomName: string) => {
+export const validateRoomService = async (roomName: string) => {
     const accessToken = (await cookies()).get("accessToken")?.value;
   
     try {
@@ -13,14 +13,14 @@ export const validadeRoom = async (roomName: string) => {
   
       return {
         ok: true,
-        response, // o response real do axios
+        response, 
       };
     } catch (error: any) {
       console.error("Erro ao validar sala:", error);
   
       return {
         ok: false,
-        error: error.response || error.message, // você pode adaptar isso como quiser
+        error: error.response || error.message, 
       };
     }
   };

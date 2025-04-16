@@ -16,7 +16,7 @@ export default async function Room() {
   const rooms: ChatRoomPagination = response.data;
   return (
     <BaseLayout>
-      <div className="h-fit mt-2 grid w-full grid-cols-[repeat(auto-fit,minmax(350px,1fr))]">
+      <div className="mt-2 grid w-full gap-4 grid-cols-[repeat(auto-fill,minmax(300px,1fr))] justify-start">
         {rooms && rooms.results.length > 0 ? (
           rooms.results.map((room) => (
             <>

@@ -1,0 +1,10 @@
+.CardRoomEnter-error {
+    color: #ef4444;
+    background: #1f1f1f;
+    border: solid 1px;
+    border-color: #fca5a5;
+}
+
+.CardRoomContainer-online {
+  color: #4ade80;
+}
