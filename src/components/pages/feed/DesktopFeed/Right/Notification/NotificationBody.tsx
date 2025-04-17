@@ -23,18 +23,22 @@ function NotificationBody({ notificationsParent, user_id, token }) {
       "message" in lastJsonMessage &&
       "actors" in lastJsonMessage &&
       "timestamp" in lastJsonMessage &&
-      "object_id" in lastJsonMessage
+      "object_id" in lastJsonMessage &&
+      "content_type" in lastJsonMessage &&
+      "notification_type" in lastJsonMessage
     ) {
       const message = {
         object_id: lastJsonMessage.object_id, // Adicionando para facilitar a comparação
         message: lastJsonMessage.message,
         actors: lastJsonMessage.actors,
         timestamp: lastJsonMessage.timestamp,
+        content_type: lastJsonMessage.content_type,
+        notification_type: lastJsonMessage.notification_type,
       };
 
       setNotifications((prevNotifications) => {
         const exists = prevNotifications.some(
-          (notification) => notification.object_id === message.object_id
+          (notification) => notification.object_id === message.object_id && notification.content_type === message.content_type && notification.notification_type === message.notification_type
         );
 
         if (exists) {

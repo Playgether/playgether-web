@@ -4,7 +4,6 @@ import React from "react";
 import { ChatComponents } from "@/components/elements/Chat";
 import { ChatHandlerContextProvider } from "@/context/ChatHandlerContext";
 import { cookies } from "next/headers";
-import { getRoomMessages } from "@/services/getRoomMessages";
 import { ChatRoomMessages } from "@/types/ChatRoomMessages";
 import { getChatRoomDetailed } from "@/services/getChatRoomDetailed";
 import { ChatRoom } from "@/types/ChatRoom";

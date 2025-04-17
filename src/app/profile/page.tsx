@@ -6,6 +6,7 @@ import { Metadata } from "next";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 import NotFoundPages from "@/components/elements/NotFound/NotFoundPages";
+import { getProfileByUsername } from "@/services/getProfileByUsername";
 
 export const metadata: Metadata = {
   title: "Playgether - Profile",
@@ -40,12 +41,17 @@ export default async function PageProfile() {
   }
 
   const username = payload.username;
-
+  const response = await getProfileByUsername(username);
+  const profile = response.data[0];
   return (
     <BaseLayout>
+      {profile ? (
       <Page>
-        <ProfileBaseInformation username={username} />
+        <ProfileBaseInformation profile={profile} />
       </Page>
+      ):(
+        <NotFoundPages message="Perfil não encontrado" />
+      )}
     </BaseLayout>
   );
 }

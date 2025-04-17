@@ -3,19 +3,11 @@ import { LeftProfile } from "./LeftProfile";
 import { RightProfile } from "./RightProfile";
 import NotFoundProfile from "@/app/profile/[username]/not-found";
 
-export default async function ProfileBaseInformation({ username }: { username: string }) {
-  const response = await getProfileByUsername(username);
-  const profile = response.data[0];
+export default async function ProfileBaseInformation({ profile }) {
   return (
     <>
-      {profile ? (
-        <>
-          <LeftProfile profile={profile} />
-          <RightProfile profile={profile} />
-        </>
-      ) : (
-        <NotFoundProfile />
-      )}
+      <LeftProfile profile={profile} />
+      <RightProfile profile={profile} />
     </>
   );
 }
