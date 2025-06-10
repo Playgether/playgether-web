@@ -2,6 +2,7 @@
 
 import { FeedProps } from "@/types/FeedProps";
 import { createContext, useContext, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface MiddleFeedContextProps {
   openPostsExtend: boolean;
@@ -25,15 +26,19 @@ export const MiddleFeedContextProvider = ({
   const [slideIndex, setSlideIndex] = useState(0);
   const [saveSlideIndexOnOpen, setSaveSlideIndexOnOpen] = useState(0);
 
+  const router = useRouter();
+
   const handlePostsCloseExtend = () => {
     setOpenPostsExtend(!openPostsExtend);
     setSlideIndex(saveSlideIndexOnOpen);
+    history.pushState(null, "", `/feed`);
   };
 
   const handlePostsExtend = (resourceObject) => {
     setResourceObject(resourceObject);
     setOpenPostsExtend(!openPostsExtend);
     setSaveSlideIndexOnOpen(slideIndex);
+    history.pushState(null, "", `/post/${resourceObject.id}`);
   };
 
   return (
