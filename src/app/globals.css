@@ -31,6 +31,9 @@
     --secondary-color-second-color: #ffb703;
     --secondary-color-variant-toB: linear-gradient(to bottom, #ff3366, #ffb703);
 
+    /* Used for components that doens't have a background color, just a border */
+    --component-border-color: #e5e7eb;
+
     /* Mostly used for backgrounds of pages */
     --tertiary-color: #fff;
 

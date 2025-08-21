@@ -3,7 +3,8 @@ import HideTextButton from "./HideTextButton";
 import ExpandTextButton from "./ExpandTextButton";
 import ShowPostText from "./ShowPostText";
 import PhotoAndText from "./PhotoAndText";
-import { FeedProps } from "@/services/getFeed";
+import { FeedProps } from "../../../../../types/FeedProps";
+import {motion, AnimatePresence} from "framer-motion";
 
 export interface PostTextPostExpandProps {
   /** Este é o texto do post propriamente dito */
@@ -38,35 +39,79 @@ export const PostTextPostExpand = ({
 }: PostTextPostExpandProps) => {
   return (
     <>
-      {isExtended ? (
-        <div
-          className={`absolute z-10 h-full flex flex-col w-full PostTextPostExpand-wrapper ${
-            hasInteracted ? "animate-expandVertical" : ""
-          }`}
-        >
-          {resourceObject && (
-            <PhotoAndText
-              created_by_user_photo={resourceObject.created_by_user_photo}
-              created_by_user_name={resourceObject.created_by_user_name}
-              timestamp={resourceObject.timestamp}
-              text={resourceObject.comment}
-            />
-          )}
-          {showExpandButton ? (
+
+      {/* <AnimatePresence>
+        {shouldShow && (
+          <motion.div
+            className="absolute z-10 left-20 min-w-[50vw] top-0 h-[calc(100vh-160px)] flex motion-preset-slide-right-sm"
+            exit={{ opacity: 0 }}
+            transition={{ type: "tween", duration: 0.3 }}
+          >
+            {children}
+            <ButtonClose
+              className="h-10 mt-2"
+              onClick={() => setShouldShow(false)}
+            >
+              X
+            </ButtonClose>
+          </motion.div>
+        )}
+      </AnimatePresence> */}
+      {/* <AnimatePresence>
+        {isExtended ? (
+          <motion.div
+            initial={{ height: isExtended ? "30%" : "100%" }}
+            animate={{ height: isExtended ? "100%" : "30%" }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className={`absolute z-10 h-full flex flex-col w-full PostTextPostExpand-wrapper ${
+              hasInteracted ? "animate-expandVertical" : ""
+            }`}
+          >
+            {resourceObject && (
+              <PhotoAndText
+                created_by_user_photo={resourceObject.created_by_user_photo}
+                created_by_user_name={resourceObject.created_by_user_name}
+                timestamp={resourceObject.timestamp}
+                text={resourceObject.comment}
+              />
+            )}
+            {showExpandButton ? (
+              <HideTextButton handleToggle={handleToggle} />
+            ) : null}
+          </motion.div>
+        ) : (
+          <motion.div
+            className={`w-full ${hasInteracted ? "animate-shrinkVertical" : ""}`}
+          >
+            {showExpandButton ? (
+              <ExpandTextButton handleToggle={handleToggle} />
+            ) : (
+              <ShowPostText text={text} />
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence> */}
+      <AnimatePresence>
+        {isExtended ? (
+          <motion.div 
+          className="absolute z-10 h-full flex flex-col w-full PostTextPostExpand-wrapper animate-expandVertical"
+          exit={{ animation: "animate-shrinkVertical" }}
+          transition={{ type: "tween", duration: 0.3 }}
+          >
+           {resourceObject && (
+              <PhotoAndText
+                created_by_user_photo={resourceObject.created_by_user_photo}
+                created_by_user_name={resourceObject.created_by_user_name}
+                timestamp={resourceObject.timestamp}
+                text={resourceObject.comment}
+              />
+            )}
             <HideTextButton handleToggle={handleToggle} />
-          ) : null}
-        </div>
-      ) : (
-        <div
-          className={`w-full ${hasInteracted ? "animate-shrinkVertical" : ""}`}
-        >
-          {showExpandButton ? (
-            <ExpandTextButton handleToggle={handleToggle} />
-          ) : (
-            <ShowPostText text={text} />
-          )}
-        </div>
-      )}
+          </motion.div>
+        ): (
+          <ExpandTextButton handleToggle={handleToggle} />
+        )}
+      </AnimatePresence>
     </>
   );
 };

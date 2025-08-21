@@ -1,7 +1,9 @@
 .Right-notifications {
-  background: var(--background-components);
+  border: solid 1px;
+  border-color: var(--component-border-color);
 }
 
 .Right-topics {
-  background: var(--background-components);
+  border: solid 1px;
+  border-color: var(--component-border-color);
 }

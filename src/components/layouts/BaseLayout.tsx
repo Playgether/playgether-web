@@ -4,7 +4,6 @@ import AsideBase from "./AsideBase";
 import Megafone from "./Megafone/Megafone";
 import HeaderBase from "./HeaderBase";
 import { twMerge } from "tailwind-merge";
-import { ResponsiveMegafone } from "./Megafone/ResponsiveMegafone";
 
 const BaseLayout = ({ children, ...rest }) => {
   return (

@@ -1,3 +1,6 @@
 .HeaderBase-wrapper {
-  background: var(--primary-color);
+  /* background: var(--primary-color); */
+  border: solid 1px;
+  border-color:var(--component-border-color);
+  background: white;
 }

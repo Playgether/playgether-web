@@ -12,6 +12,9 @@ import { CldImage, CldVideoPlayer } from "next-cloudinary";
 import "next-cloudinary/dist/cld-video-player.css";
 import Image from "next/legacy/image";
 import { getCloudinaryUrl } from "@/functions/getCloudinaryUrl";
+import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
+import { getCloudinaryVideoUrl } from "@/functions/getCloudinaryVideo";
+import { PostMedias } from "@/types/PostMediaProps";
 
 export interface PostsProps extends HTMLAttributes<HTMLDivElement> {
   /** Esta prop recebe uma lista de objetos do tipo (PostMedias) localizado no service getFeed, em resumo, uma lista de arquivos de medias de algum post. */
@@ -63,7 +66,7 @@ const Posts = ({
   postHeight = 720,
   postWidth = 1080,
   objectFit = "contain",
-  plays = true,
+  // plays = true,
   ...rest
 }: PostsProps) => {
   const volumeRef = useRef<HTMLVideoElement | null>(null);
@@ -117,11 +120,12 @@ const Posts = ({
             >
               {item.media_type === "image" ? (
                 <div
-                  className="fixed rounded h-full w-full flex items-center justify-center object-contain"
+                  // className= {twMerge("relative w-full flex items-center justify-center h-full", rest.className )} 
+                  className={`fixed rounded h-full w-full flex items-center justify-center`}
                   style={{ maxHeight: `${postHeight}px` }}
                   onClick={onClick}
                 >
-                  <CldImage
+                  {/* <CldImage
                     onLoad={() => setFileType("image")}
                     key={item.id}
                     id={`${item.id}`}
@@ -141,6 +145,14 @@ const Posts = ({
                       width: postWidth,
                       type: "limit",
                     }}
+                  /> */}
+                  <Image
+                    src={getCloudinaryUrl(postWidth, item.media_file)}
+                    // media_id={item.media_file}
+                    height={postHeight}
+                    width={postWidth}
+                    objectFit={objectFit}
+                    layout="fill"
                   />
                 </div>
               ) : (
@@ -151,46 +163,29 @@ const Posts = ({
                   <Suspense fallback={<VideoLoadingFallback />}>
                     <div
                       onClick={(e) => e.stopPropagation()}
-                      className="rounded items-center justify-center swiper-no-swiping flex w-full h-fit relative"
+                      className="rounded items-center justify-center swiper-no-swiping flex w-full h-screen relative overflow-hidden"
                     >
-                      {plays ? (
-                        // <CldVideoPlayer
-                        //   id={`video-${item.id}-${index}`}
-                        //   key={`video-${item.id}-${index}`}
-                        //   src={item.media_file}
-                        //   transformation={{ width: postWidth, crop: "limit" }}
-                        //   quality={"auto:good"}
-                        //   fluid={false}
-                        //   colors={{ accent: "orange", text: "orange" }}
-                        //   logo={false}
-                        //   showJumpControls={true}
-                        //   playsinline={true}
-                        //   onDataLoad={(e) =>
-                        //     console.log("Carregou:", item.id + " " + index)
-                        //   }
-                        //   // height={postHeight}
-                        //   // width={postWidth}
-                        // />
                         <video
                           controls
-                          src={getCloudinaryUrl(postWidth, item.media_file)}
+                          src={getCloudinaryVideoUrl(postWidth, item.media_file)}
                           onLoad={() => setFileType("video")}
+                          className="object-fill"
                         ></video>
-                      ) : (
-                        // <CldImage
-                        //   src={item.media_file}
-                        //   width={postWidth}
-                        //   height={postHeight}
-                        //   // crop="limit"
-                        //   // format="jpg"
-                        //   alt="Thumbnail do vídeo"
-                        // />
-                        <Image
-                          src={getCloudinaryUrl(postWidth, item.media_file)}
-                          height={postHeight}
-                          width={postWidth}
-                        />
-                      )}
+                        {/* <CldVideoPlayer
+                        id={`video-${item.id}-${index}`}
+                        key={`video-${item.id}-${index}`}
+                        src={item.media_file}
+                        transformation={{ width: postWidth, crop: "limit" }}
+                        quality={"auto:good"}
+                        fluid={false}
+                        colors={{ accent: "orange", text: "orange" }}
+                        logo={false}
+                        showJumpControls={true}
+                        playsinline={true}
+
+                         height={postHeight}
+                        width={postWidth}
+                        /> */}
                     </div>
                   </Suspense>
                 </div>

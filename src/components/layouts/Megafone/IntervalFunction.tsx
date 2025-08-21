@@ -232,7 +232,7 @@ export const IntervalFunctionComponent = () => {
       {visibleMessages.map((message, index) => (
         <div
           key={index}
-          className="border-2 cursor-pointer IntervalFunction-border text-xs h-[95%] w-[358px] 2xl:w-[550px] ml-2 mr-2 mt-1 mb-1 rounded motion-preset-fade-lg motion-duration-1000 overflow-hidden p-1 flex flex-col gap-1"
+          className="border cursor-pointer IntervalFunction-border text-xs h-[95%] w-[358px] 2xl:w-[550px] ml-2 mr-2 mt-1 mb-1 rounded motion-preset-fade-lg motion-duration-1000 overflow-hidden p-1 flex flex-col gap-1"
         >
           <div className="flex items-center gap-1">
             <p className="text-blue-500 whitespace-nowrap">

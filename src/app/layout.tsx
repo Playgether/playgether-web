@@ -13,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="w-fit h-fit max-w-[100vw] overflow-x-hidden">
-      <body className={cn("text-zinc-50 max-w-[100vw] w-fit h-fit dark")}>
+      <body className={cn("text-zinc-50 max-w-[100vw] w-fit h-fit ")}>
         <AppProvider>
           <main className="max-w-[100vw] w-fit h-fit">{children}</main>
         </AppProvider>

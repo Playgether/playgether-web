@@ -49,7 +49,7 @@ const VirtualizedFeed = () => {
           itemContent={(index, resource) => (
             <div
               key={resource.id}
-              className="VirtualizedFeed-wrapper rounded-xl transition-shadow duration-100 ease-out hover:shadow-md hover:shadow[var(--shadow-color)]"
+              className="VirtualizedFeed-wrapper mb-4 rounded-xl transition-shadow duration-100 ease-out hover:shadow-md hover:shadow[var(--shadow-color)]"
             >
               <div className="flex items-start justify-start">
                 <ProfileAndUsername

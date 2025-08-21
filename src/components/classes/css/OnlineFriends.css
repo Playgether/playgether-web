@@ -1,5 +1,6 @@
 .OnlineFriends-wrapper {
-  background: var(--background-components);
+  border: solid 1px;
+  border-color: var(--component-border-color);
 }
 
 .OnlineFriends-search-icon {

@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import { useMiddleFeedContext } from "@/context/MiddleFeedContext";
 
 /** Este é o componente responsável por gerar a página extendida de um post que foi clicado no feed(Expande o post mostrando os comentários etc).  */
-const PostsExtend = ({ children }: { children: React.ReactNode }) => {
+const PostsExtend = ({ children, resourceObject }: { children: React.ReactNode }) => {
   const { handlePostsCloseExtend, slideIndex } = useMiddleFeedContext();
   useEffect(() => {
     const disableScrollAndEvents = (e: Event) => e.stopPropagation(); // Impede propagação para o fundo
@@ -33,8 +33,8 @@ const PostsExtend = ({ children }: { children: React.ReactNode }) => {
         className="fixed inset-0 z-40 bg-opacity-50"
         onClick={handlePostsCloseExtend}
       />
-      {children}
-      {/* <div
+      {/* {children} */}
+      <div
         className="fixed z-50 flex left-0 right-0 justify-center bottom-[65px] mx-auto w-full bg-white shadow-lg bg-black-300 bg-opacity-50"
         style={{ height: "calc(100vh - 65px)" }}
       >
@@ -50,7 +50,7 @@ const PostsExtend = ({ children }: { children: React.ReactNode }) => {
           )}
           <ClosePostExpand />
         </div>
-      </div> */}
+      </div>
     </div>
   );
 };

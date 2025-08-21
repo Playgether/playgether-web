@@ -1,5 +1,5 @@
 .SearchElement-container {
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--light-white);
 }
 
 .SearchElement-input {
@@ -12,5 +12,5 @@
 }
 
 .SearchElement-home-icon {
-  color: var(--white-no-change);
+  color: var(--texts-color);
 }

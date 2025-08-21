@@ -7,7 +7,7 @@ export const Medias = () => {
   const medias = [
     {
       id: 20,
-      media_file: "htwuptge8fytogzjaywc",
+      media_file: "hdcboa7x5yvi7ve1pnfy",
       media_type: "video",
     },
     {
@@ -24,7 +24,7 @@ export const Medias = () => {
   const medias2 = [
     {
       id: 20,
-      media_file: "htwuptge8fytogzjaywc",
+      media_file: "hdcboa7x5yvi7ve1pnfy",
       media_type: "video",
     },
     {
@@ -46,8 +46,8 @@ export const Medias = () => {
           media={medias}
           onClick={() => false}
           slideIndex={0}
-          postWidth={480}
-          className="h-full w-full p-4"
+          postWidth={1920}
+          className="w-full h-full"
           objectFit="cover"
         />
       </div>
@@ -56,10 +56,11 @@ export const Medias = () => {
           media={medias2}
           onClick={() => false}
           slideIndex={0}
-          postWidth={480}
-          className="h-full w-full p-4"
+          postWidth={1920}
+          className="w-full h-full"
           objectFit="cover"
           plays={false}
+          postHeight={720}
         />
       </div>
     </div>

@@ -25,8 +25,8 @@ module.exports = {
         menuLeft: "menuLeft 0.5s linear",
         hoverUp: "hoverUp 0.05s linear",
         hoverDown: "hoverDown 0.07s linear",
-        expandVertical: "expandVertical 0.5s ease-out",
-        shrinkVertical: "shrinkVertical 0.5s ease-out reverse",
+        expandVertical: "expandVertical 0.5s forwards",
+        shrinkVertical: "shrinkVertical 0.5s forwards",
       },
       keyframes: {
         expandVertical: {
@@ -39,10 +39,10 @@ module.exports = {
         },
         shrinkVertical: {
           "0%": {
-            height: "30%",
+            height: "100%",
           },
           "100%": {
-            height: "100%",
+            height: "30%",
           },
         },
         moveRight: {

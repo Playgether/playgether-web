@@ -1,10 +1,10 @@
-import { FeedProps } from "../../../../../services/getFeed";
+import { FeedProps } from "../../../../../types/FeedProps";
 import ProfileAndUsername from "../../../../layouts/components/ProfileAndUsername";
 import { BorderLine } from "../../DesktopFeed/MultUseComponents/BorderLine/BorderLine";
 import CommentInput from "../../DesktopFeed/MultUseComponents/CommentInput/CommentInput";
 import { PostTextPostExpand } from "../PostTextPostExpand/PostTextPostExpand";
 import { SlidePostExpand } from "../SlidePostExpand/SlidePostExpand";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { CommentSectionFallback } from "../../../../layouts/SuspenseFallBack/CommentSectionFallback/CommentSectionFallback";
 import CommentSectionFetchData from "../CommentsSection/CommentSectionFetchData/CommentSectionFetchData";
 import { useMiddleFeedContext } from "@/context/MiddleFeedContext";
@@ -22,8 +22,16 @@ export interface PostsExtendHasPostMediaProps {
  * no uso do componente, ele não é em coluna e sim em linha, ou seja, a parte de comentários deveria ficar para o lado direito >> e não embaixo. Além disso, as medias também
  * não estão aparecendo porque o Storybook não está exibindo o componente de medias por alguma razão...
  */
-const PostsExtendHasPostMedia = () => {
+const PostsExtendHasPostMedia = ({children}:{children:React.ReactNode}) => {
   const { resourceObject, slideIndex } = useMiddleFeedContext();
+  const [isExtended, setIsExtended] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
+
+  const handleToggle = () => {
+    setIsExtended((prev) => !prev);
+    setHasInteracted(true);
+  };
+
   return (
     <>
       {resourceObject && (
@@ -48,11 +56,16 @@ const PostsExtendHasPostMedia = () => {
                 created_by_user_photo={resourceObject.created_by_user_photo}
                 timestamp={resourceObject.timestamp}
                 showExpandButton={true}
+                resourceObject={resourceObject}
+                isExtended={isExtended}
+                hasInteracted={hasInteracted}
+                handleToggle={handleToggle}
               />
               <div className="w-full h-[calc(100%-80px)] PostsExtendHasPostMedia-right overflow-y-auto overflow-x-hidden">
-                <Suspense fallback={<CommentSectionFallback />}>
+                {/* <Suspense fallback={<CommentSectionFallback />}>
                   <CommentSectionFetchData postId={resourceObject.id} />
-                </Suspense>
+                </Suspense> */}
+                {children}
               </div>
               <CommentInput id={resourceObject.id} />
             </div>

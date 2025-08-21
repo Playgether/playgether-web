@@ -68,7 +68,7 @@ export function CommentsContextProvider({ children }: { children: ReactNode }) {
     useInfiniteQuery({
       queryKey: ["feed-comments", postId],
       queryFn: async ({ pageParam }) =>
-        await getComments(authTokens, postId, pageParam),
+        await getComments(postId, pageParam),
       getNextPageParam: (lastPage) => {
         if (lastPage?.next_page) {
           const url = new URL(lastPage.next_page);

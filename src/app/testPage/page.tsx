@@ -1,18 +1,23 @@
-import { getChat } from "@/services/getChat";
 import Component from "./Component";
 import { cookies } from "next/headers";
-import Chat from "@/components/elements/Chat/Chat";
 import BaseLayout from "@/components/layouts/BaseLayout";
+import ClientComponent from "./ClientComponent";
+import ServerComponent from "./ServerComponent";
+import DefaultButtonWrapper from "./DefaultButtonWrapper";
 
 const testPage = async ({}) => {
   const chatroom = "psychedelic";
   const accessToken = (await cookies()).get("accessToken")?.value;
 
   return (
-    <BaseLayout>
-      <Component chatroom={chatroom} token={accessToken} />
-      {/* <Chat /> */}
-    </BaseLayout>
+    // <BaseLayout>
+    //   <Component chatroom={chatroom} token={accessToken} />
+    // </BaseLayout>
+    <div className="flex justify-center items-center h-screen w-screen">
+      <ClientComponent>
+        {(someText) => <ServerComponent someText={someText} />}
+      </ClientComponent>
+    </div>
   );
 };
 

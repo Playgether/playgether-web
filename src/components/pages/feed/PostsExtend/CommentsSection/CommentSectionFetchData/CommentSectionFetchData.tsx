@@ -1,13 +1,16 @@
-import { useEffect } from "react";
+import { getComments } from "@/services/getComments";
 import { useCommentsContext } from "../../../../../../context/CommentsContext";
-import CommentsSection from "../CommentsSectionLogic/CommentsSectionLogic";
 import VirtualizedComments from "../VirtualizedComments/VirtualizedComments";
 
-async function fetchData(postId) {
-  const { initializeComments } = useCommentsContext();
-  initializeComments(postId);
-  console.log(postId);
+
+export interface Props {
+  params?: { username: string };
 }
+// async function fetchData() {
+//   // const { initializeComments } = useCommentsContext();
+//   // initializeComments(postId);
+//   console.log(postId);
+// }
 
 export interface CommentSectionLogicInterface {
   /**  Esta prop recebe o número do post em que você quer dar o get nos comentários */
@@ -19,15 +22,21 @@ export interface CommentSectionLogicInterface {
  * requisição afim de ser possível ver o fallback do Suspense. Neste caso CommentsSection esta retornando o componente "NoCommentsYet" porque nós não estamos fazendo uma
  * para o backend."
  */
-const CommentSectionFetchData = async ({
-  postId,
-}: CommentSectionLogicInterface) => {
-  useEffect(() => {
-    console.log(postId);
-  });
+
+
+// const CommentSectionFetchData = async ({
+//   postId,
+// }: CommentSectionLogicInterface) => {
+//   await fetchData(postId);
+
+//   return <VirtualizedComments post_id={postId} />;
+// };
+
+// export default CommentSectionFetchData;
+
+export default async function CommentSectionFetchData({postId}) {
+  // const response = await getComments(postId);
+  // console.log(response)
   // await fetchData(postId);
-
   return <VirtualizedComments post_id={postId} />;
-};
-
-export default CommentSectionFetchData;
+}

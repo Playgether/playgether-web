@@ -1,5 +1,5 @@
 .IntervalFunction-wrapper {
-  background: var(--background-components);
+  background: rgba(219, 224, 231, 0.2);
   backdrop-filter: blur(10px);
 }
 

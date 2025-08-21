@@ -1,11 +1,9 @@
-import FeedComponentPostExtendLogic from "@/components/pages/feed/DesktopFeed/Middle/FeedComponentPostExtendLogic";
-import PostsExtendWrapper from "@/components/pages/feed/PostsExtend/PostsExtendWrapper";
 import React from "react";
 
 export default function page() {
   return (
-    <FeedComponentPostExtendLogic>
-      <PostsExtendWrapper />
-    </FeedComponentPostExtendLogic>
+      <div className="flex w-11/12 bg-white shadow-lg mt-[60px] mb-[20px] gap-[2px] max-w-[1920px] max-h-[1080px]">
+    
+      </div>
   );
 }
