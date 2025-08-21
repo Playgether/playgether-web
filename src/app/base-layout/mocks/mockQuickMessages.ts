@@ -1,0 +1,486 @@
+import { QuickMessage } from "../types/structure/QuickMessage";
+import avatarSophia from "@/assets/avatar-sophia.jpg";
+import avatarAline from "@/assets/avatar-aline.jpg";
+
+export const quickMessages: QuickMessage[] = [
+  {
+    id: "1",
+    user: {
+      name: "Sophia Andrade",
+      username: "sophia.andrade",
+      avatar: avatarSophia,
+    },
+    message: "Nova mensagem importante sobre o torneio de amanhã!",
+    fullContent:
+      "Nova mensagem importante sobre o torneio de amanhã! Não esqueçam de se inscrever até às 18h. As vagas são limitadas e serão preenchidas por ordem de chegada.",
+    timeRemaining: "15s",
+    priority: "high",
+    duration: 15,
+    status: "active",
+    timestamp: "2025-08-20T10:05:00Z",
+  },
+  {
+    id: "2",
+    user: {
+      name: "Aline Moreira",
+      username: "aline.moreira",
+      avatar: avatarAline,
+    },
+    message: "Alguém quer formar grupo para o raid de hoje?",
+    fullContent:
+      "Alguém quer formar grupo para o raid de hoje? Preciso de mais 2 pessoas para completar o time. Vamos às 20h!",
+    timeRemaining: "10s",
+    priority: "medium",
+    duration: 10,
+    status: "responded",
+    timestamp: "2025-08-19T22:30:00Z",
+  },
+  {
+    id: "3",
+    user: {
+      name: "Sophia Andrade",
+      username: "sophia.andrade",
+      avatar: avatarSophia,
+    },
+    message: "Evento especial começando em breve!",
+    fullContent:
+      "Evento especial começando em breve! Juntem-se a nós para a grande batalha épica. Prêmios incríveis aguardam os vencedores!",
+    timeRemaining: "8s",
+    priority: "low",
+    duration: 8,
+    status: "expired",
+    timestamp: "2025-08-18T18:45:00Z",
+  },
+  {
+    id: "4",
+    user: {
+      name: "Aline Moreira",
+      username: "aline.moreira",
+      avatar: avatarAline,
+    },
+    message: "Stream ao vivo começando agora!",
+    fullContent:
+      "Stream ao vivo começando agora! Venha assistir gameplay épico de Valorant com dicas exclusivas.",
+    timeRemaining: "12s",
+    priority: "medium",
+    duration: 12,
+    status: "active",
+    timestamp: "2025-08-20T11:00:00Z",
+  },
+  {
+    id: "5",
+    user: {
+      name: "Sophia Andrade",
+      username: "sophia.andrade",
+      avatar: avatarSophia,
+    },
+    message: "Atualização crítica do sistema!",
+    fullContent:
+      "Atualização crítica do sistema! Servidor será reiniciado em 5 minutos. Salvem seus progresso!",
+    timeRemaining: "20s",
+    priority: "high",
+    duration: 20,
+    status: "expired",
+    timestamp: "2025-08-19T23:55:00Z",
+  },
+  {
+    id: "6",
+    user: {
+      name: "Aline Moreira",
+      username: "aline.moreira",
+      avatar: avatarAline,
+    },
+    message: "Novo desafio semanal disponível!",
+    fullContent:
+      "Novo desafio semanal disponível! Complete as missões para ganhar recompensas exclusivas.",
+    timeRemaining: "10s",
+    priority: "medium",
+    duration: 10,
+    status: "responded",
+    timestamp: "2025-08-18T20:15:00Z",
+  },
+  {
+    id: "7",
+    user: {
+      name: "Sophia Andrade",
+      username: "sophia.andrade",
+      avatar: avatarSophia,
+    },
+    message: "Convite para guilda!",
+    fullContent:
+      "Sophia convida você para entrar na guilda! Venha jogar com a gente e conquistar o ranking.",
+    timeRemaining: "15s",
+    priority: "high",
+    duration: 15,
+    status: "active",
+    timestamp: "2025-08-20T09:10:00Z",
+  },
+  {
+    id: "8",
+    user: {
+      name: "Aline Moreira",
+      username: "aline.moreira",
+      avatar: avatarAline,
+    },
+    message: "Treinamento especial liberado!",
+    fullContent:
+      "Treinamento especial liberado! Aproveite para evoluir suas habilidades antes do próximo evento.",
+    timeRemaining: "12s",
+    priority: "medium",
+    duration: 12,
+    status: "expired",
+    timestamp: "2025-08-19T17:30:00Z",
+  },
+  {
+    id: "9",
+    user: {
+      name: "Sophia Andrade",
+      username: "sophia.andrade",
+      avatar: avatarSophia,
+    },
+    message: "Mensagem rápida sobre torneio",
+    fullContent:
+      "O torneio começará às 19h! Preparem-se para uma noite épica de batalhas.",
+    timeRemaining: "8s",
+    priority: "low",
+    duration: 8,
+    status: "responded",
+    timestamp: "2025-08-18T21:40:00Z",
+  },
+  {
+    id: "10",
+    user: {
+      name: "Aline Moreira",
+      username: "aline.moreira",
+      avatar: avatarAline,
+    },
+    message: "Patch de atualização lançado!",
+    fullContent:
+      "O novo patch de atualização foi lançado. Confira as mudanças de balanceamento e novos recursos!",
+    timeRemaining: "15s",
+    priority: "high",
+    duration: 15,
+    status: "active",
+    timestamp: "2025-08-20T08:00:00Z",
+  },
+  {
+    id: "11",
+    user: {
+      name: "Sophia Andrade",
+      username: "sophia.andrade",
+      avatar: avatarSophia,
+    },
+    message: "Alerta de manutenção do servidor",
+    fullContent:
+      "O servidor passará por manutenção hoje às 22h. Planejem suas partidas antes disso.",
+    timeRemaining: "12s",
+    priority: "medium",
+    duration: 12,
+    status: "expired",
+    timestamp: "2025-08-19T12:20:00Z",
+  },
+  {
+    id: "12",
+    user: {
+      name: "Aline Moreira",
+      username: "aline.moreira",
+      avatar: avatarAline,
+    },
+    message: "Novo modo de jogo disponível!",
+    fullContent:
+      "Explore o novo modo de jogo que acabou de ser liberado! Mais diversão para todos.",
+    timeRemaining: "10s",
+    priority: "medium",
+    duration: 10,
+    status: "active",
+    timestamp: "2025-08-20T07:45:00Z",
+  },
+  {
+    id: "13",
+    user: {
+      name: "Sophia Andrade",
+      username: "sophia.andrade",
+      avatar: avatarSophia,
+    },
+    message: "Evento de XP dobrada",
+    fullContent:
+      "O evento de XP dobrada começa hoje à meia-noite! Aproveite para evoluir rapidamente.",
+    timeRemaining: "15s",
+    priority: "high",
+    duration: 15,
+    status: "responded",
+    timestamp: "2025-08-18T23:59:00Z",
+  },
+  {
+    id: "14",
+    user: {
+      name: "Aline Moreira",
+      username: "aline.moreira",
+      avatar: avatarAline,
+    },
+    message: "Novas skins na loja!",
+    fullContent:
+      "Confira as novas skins disponíveis na loja. Não perca as edições limitadas.",
+    timeRemaining: "8s",
+    priority: "low",
+    duration: 8,
+    status: "expired",
+    timestamp: "2025-08-19T09:00:00Z",
+  },
+  {
+    id: "15",
+    user: {
+      name: "Sophia Andrade",
+      username: "sophia.andrade",
+      avatar: avatarSophia,
+    },
+    message: "Alerta de torneio ao vivo",
+    fullContent:
+      "O torneio ao vivo está começando! Assista e torça pelo seu time favorito.",
+    timeRemaining: "12s",
+    priority: "medium",
+    duration: 12,
+    status: "active",
+    timestamp: "2025-08-20T12:15:00Z",
+  },
+  {
+    id: "16",
+    user: {
+      name: "Aline Moreira",
+      username: "aline.moreira",
+      avatar: avatarAline,
+    },
+    message: "Mensagem sobre ranking",
+    fullContent:
+      "Atualização do ranking semanal! Confira sua posição e os líderes do jogo.",
+    timeRemaining: "10s",
+    priority: "medium",
+    duration: 10,
+    status: "responded",
+    timestamp: "2025-08-18T16:30:00Z",
+  },
+  {
+    id: "17",
+    user: {
+      name: "Sophia Andrade",
+      username: "sophia.andrade",
+      avatar: avatarSophia,
+    },
+    message: "Convite para desafio PvP",
+    fullContent:
+      "Desafio PvP disponível! Enfrente outros jogadores e mostre suas habilidades.",
+    timeRemaining: "15s",
+    priority: "high",
+    duration: 15,
+    status: "expired",
+    timestamp: "2025-08-19T20:50:00Z",
+  },
+  {
+    id: "18",
+    user: {
+      name: "Aline Moreira",
+      username: "aline.moreira",
+      avatar: avatarAline,
+    },
+    message: "Dicas rápidas de gameplay",
+    fullContent:
+      "Confira dicas rápidas para melhorar sua gameplay e vencer mais partidas.",
+    timeRemaining: "8s",
+    priority: "low",
+    duration: 8,
+    status: "active",
+    timestamp: "2025-08-20T06:40:00Z",
+  },
+  {
+    id: "19",
+    user: {
+      name: "Sophia Andrade",
+      username: "sophia.andrade",
+      avatar: avatarSophia,
+    },
+    message: "Notícia sobre atualização",
+    fullContent:
+      "Uma nova atualização será lançada amanhã. Fique ligado nas novidades e mudanças.",
+    timeRemaining: "12s",
+    priority: "medium",
+    duration: 12,
+    status: "responded",
+    timestamp: "2025-08-19T19:05:00Z",
+  },
+  {
+    id: "20",
+    user: {
+      name: "Aline Moreira",
+      username: "aline.moreira",
+      avatar: avatarAline,
+    },
+    message: "Evento de guilda começando!",
+    fullContent:
+      "Evento especial de guilda começando! Participe e conquiste prêmios com sua equipe.",
+    timeRemaining: "10s",
+    priority: "medium",
+    duration: 10,
+    status: "expired",
+    timestamp: "2025-08-18T14:15:00Z",
+  },
+  {
+    id: "21",
+    user: {
+      name: "Sophia Andrade",
+      username: "sophia.andrade",
+      avatar: avatarSophia,
+    },
+    message: "Alerta de bug crítico",
+    fullContent:
+      "Bug crítico detectado! Evite certas ações até a correção ser aplicada.",
+    timeRemaining: "15s",
+    priority: "high",
+    duration: 15,
+    status: "active",
+    timestamp: "2025-08-20T05:55:00Z",
+  },
+  {
+    id: "22",
+    user: {
+      name: "Aline Moreira",
+      username: "aline.moreira",
+      avatar: avatarAline,
+    },
+    message: "Mensagem sobre torneio passado",
+    fullContent:
+      "Resumo do último torneio! Veja os destaques e melhores momentos da competição.",
+    timeRemaining: "8s",
+    priority: "low",
+    duration: 8,
+    status: "responded",
+    timestamp: "2025-08-18T11:20:00Z",
+  },
+  {
+    id: "23",
+    user: {
+      name: "Sophia Andrade",
+      username: "sophia.andrade",
+      avatar: avatarSophia,
+    },
+    message: "Nova missão semanal",
+    fullContent:
+      "Uma nova missão semanal está disponível! Complete-a para ganhar recompensas exclusivas.",
+    timeRemaining: "12s",
+    priority: "medium",
+    duration: 12,
+    status: "expired",
+    timestamp: "2025-08-19T08:35:00Z",
+  },
+  {
+    id: "24",
+    user: {
+      name: "Aline Moreira",
+      username: "aline.moreira",
+      avatar: avatarAline,
+    },
+    message: "Novo tutorial disponível",
+    fullContent:
+      "Confira o novo tutorial para iniciantes. Aprenda dicas essenciais e estratégias.",
+    timeRemaining: "10s",
+    priority: "medium",
+    duration: 10,
+    status: "active",
+    timestamp: "2025-08-20T04:10:00Z",
+  },
+  {
+    id: "25",
+    user: {
+      name: "Sophia Andrade",
+      username: "sophia.andrade",
+      avatar: avatarSophia,
+    },
+    message: "Mensagem rápida sobre XP",
+    fullContent:
+      "Evento de XP extra ativo! Não perca tempo e evolua rapidamente seu personagem.",
+    timeRemaining: "15s",
+    priority: "high",
+    duration: 15,
+    status: "responded",
+    timestamp: "2025-08-19T07:45:00Z",
+  },
+  {
+    id: "26",
+    user: {
+      name: "Aline Moreira",
+      username: "aline.moreira",
+      avatar: avatarAline,
+    },
+    message: "Alerta de atualização de regras",
+    fullContent:
+      "Novas regras do jogo foram aplicadas. Fique atento para não ser penalizado.",
+    timeRemaining: "8s",
+    priority: "low",
+    duration: 8,
+    status: "expired",
+    timestamp: "2025-08-18T10:30:00Z",
+  },
+  {
+    id: "27",
+    user: {
+      name: "Sophia Andrade",
+      username: "sophia.andrade",
+      avatar: avatarSophia,
+    },
+    message: "Convite para evento PvE",
+    fullContent:
+      "Um novo evento PvE foi lançado! Junte-se a outros jogadores para conquistar recompensas.",
+    timeRemaining: "12s",
+    priority: "medium",
+    duration: 12,
+    status: "active",
+    timestamp: "2025-08-20T03:20:00Z",
+  },
+  {
+    id: "28",
+    user: {
+      name: "Aline Moreira",
+      username: "aline.moreira",
+      avatar: avatarAline,
+    },
+    message: "Mensagem sobre loja de itens",
+    fullContent:
+      "Novos itens na loja! Aproveite para melhorar seu equipamento.",
+    timeRemaining: "10s",
+    priority: "medium",
+    duration: 10,
+    status: "responded",
+    timestamp: "2025-08-19T06:15:00Z",
+  },
+  {
+    id: "29",
+    user: {
+      name: "Sophia Andrade",
+      username: "sophia.andrade",
+      avatar: avatarSophia,
+    },
+    message: "Atualização importante sobre servidores",
+    fullContent:
+      "Servidores serão reiniciados hoje à noite. Salve seu progresso para evitar perdas.",
+    timeRemaining: "15s",
+    priority: "high",
+    duration: 15,
+    status: "expired",
+    timestamp: "2025-08-18T09:40:00Z",
+  },
+  {
+    id: "30",
+    user: {
+      name: "Aline Moreira",
+      username: "aline.moreira",
+      avatar: avatarAline,
+    },
+    message: "Dicas de evento diário",
+    fullContent:
+      "Confira as dicas do evento diário e maximize suas recompensas.",
+    timeRemaining: "8s",
+    priority: "low",
+    duration: 8,
+    status: "active",
+    timestamp: "2025-08-20T02:50:00Z",
+  },
+];

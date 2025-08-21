@@ -1,204 +1,174 @@
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;800&display=swap");
-@import "../imports/css/importsComponents.css";
-@import "../imports/css/importsThemes.css";
-/* @import "./themes/ProfileCard.css"; */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  .BaseLayout-wrapper {
-    @apply transition-colors duration-1000 ease-in-out;
-  }
-  :root {
-    --transition-colors: transition-colors duration-500 ease-in-out;
-    --overlay: #03a9fa;
-    font-family: "Poppins", sans-serif;
-
-    /* Primary color of the application, the major color that is placed in parts where the attention of the user is needed. */
-    --primary-color: linear-gradient(to right, #4776e6, #8e54e9);
-
-    /* Second color of the application, used to give support for primary-color. */
-    --secondary-color: linear-gradient(to right, #ff3366, #ffb703);
-
-    /* For primary colors that use gradient */
-    --primary-color-first-color: #4776e6;
-    --primary-color-second-color: #8e54e9;
-    --primary-color-variant-toB: linear-gradient(to bottom, #4776e6, #8e54e9);
-
-    /* For secondary colors that use gradient */
-    --secondary-color-first-color: #ff3366;
-    --secondary-color-second-color: #ffb703;
-    --secondary-color-variant-toB: linear-gradient(to bottom, #ff3366, #ffb703);
-
-    /* Used for components that doens't have a background color, just a border */
-    --component-border-color: #e5e7eb;
-
-    /* Mostly used for backgrounds of pages */
-    --tertiary-color: #fff;
-
-    /* Mostly used for places that need a contrast with --tertiary-color */
-    --tertiary-color-variant-light: #eef1f5;
-    --tertiary-color-variant-dark: #e6e9f0;
-
-    /* Mostly used for titles (as user names etc.) and some buttons */
-    --titles-color: #ff3366;
-
-    /* DefaultButton component hover (component used in a lot places of the application) */
-    --default-button-hover: linear-gradient(to right, #ff3366, #ffb703);
-
-    /* Mostly used for texts (as content, labels etc.) and some backgrounds */
-    --texts-color: rgba(10, 10, 10, 1);
-
-    /* Mostly used for hover effects, and some places that need a text variation color */
-    --texts-color-variant: #008bf5;
-    --texts-color-variant-dark: #0082e5;
-
-    /* Mostly used for backgrounds of components and parts of the page */
-    --background-components: rgba(219, 224, 231, 0.5);
-    --background-components-full-opacity: rgba(212, 216, 220, 1);
-
-    /* Mostly used for backgrounds of components and parts of the page in hexadecimal format to not have transparency */
-    --background-components-hexa: #edeff3;
-    --background-components-full-opacity-hexa: #d4d8dc;
-
-    /* Mostly used for icons, buttons etc. */
-    --white: #ffffff;
-    --black: #000000;
-
-    /* Mostly used for places where is going to be white and will not change */
-    --white-no-change: #ffffff;
-
-    /* Mostly used for places where is needed variations of white and gray, such as dates for example */
-    --light-white: #f5f5f5;
-    --light-gray: #969c9e;
-    --dark-gray: #6e7175;
-
-    /* Mostly used for hover effects */
-    --hover-color: #d9dde3;
-
-    /* Mostly used for shadows */
-    --shadow-color: rgba(100, 100, 111, 0.2);
-  }
-}
-
-.sticky-last > :last-child {
-  position: sticky;
-  top: 0;
-}
-
-.swiper-button-next,
-.swiper-button-prev {
-  background-color: var(--titles-color);
-  right: 0px;
-  color: var(--texts-color) !important;
-  border-radius: 50% !important;
-  height: 30px !important;
-  width: 30px !important;
-  padding: 5px !important;
-}
-.swiper-button-next::after,
-.swiper-button-prev::after {
-  color: var(--texts-color);
-  font-size: 16px !important;
-}
-
-:root {
-  --swiper-navigation-size: 26px;
-}
-
-/* .data-virtuoso-scroller{
-  height: 100% !important;
-  max-height: 600px !important;
-} */
-
-.backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5); /* Escurece o fundo */
-  z-index: 40; /* Atrás do modal */
-}
-
-.modal {
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 70px;
-  margin: auto;
-  background: white;
-  z-index: 50; /* Na frente do backdrop */
-  height: calc(100vh - 70px); /* Calcula o espaço do viewport */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.swiper-contrainer {
-  overflow: visible;
-}
-
-.swiper-custom-pagination {
-  text-align: center;
-  font-weight: bold;
-  font-size: 1rem;
-  z-index: 20;
-  background-color: var(--titles-color);
-  text-align: center;
-  color: var(--texts-color) !important;
-}
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    /* Gamer Platform Color Scheme - Light Mode */
+    --background: 210 25% 97%; /* More elegant white with subtle blue undertone */
+    --foreground: 210 40% 8%;
+
+    /* Card colors */
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 10% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
+    --card-foreground: 210 40% 8%;
+
+    /* Primary gamer gradient colors */
+    --primary-start: 221 69% 69%; /* #4776e6 */
+    --primary-end: 262 52% 63%; /* #8e54e9 */
+    --primary: 241 60% 66%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary gamer gradient colors */
+    --secondary-start: 349 100% 60%; /* #ff3366 */
+    --secondary-end: 42 100% 51%; /* #ffb703 */
+    --secondary: 15 100% 55%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Neon accent colors */
+    --neon-green: 120 100% 35%; /* Increased contrast for light mode */
+    --neon-blue: 199 100% 50%;
+    --neon-purple: 262 100% 50%;
+    --neon-pink: 320 100% 50%;
+
+    /* Status colors */
+    --status-online: 120 90% 45%;
+    --status-away: 45 93% 47%;
+    --status-offline: 0 0% 45%;
+
+    /* UI colors */
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 241 60% 66%;
+    --radius: 0.75rem;
+
+    /* Enhanced Responsive Gradients with more intense blue to purple transition */
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(230 90% 75%) 0%,
+      hsl(240 85% 72%) 25%,
+      hsl(250 80% 70%) 50%,
+      hsl(260 85% 68%) 75%,
+      hsl(270 90% 70%) 100%
+    );
+    --gradient-secondary: linear-gradient(
+      135deg,
+      hsl(var(--secondary-start) / 0.9),
+      hsl(var(--secondary-end) / 0.9)
+    );
+    --gradient-primary-vertical: linear-gradient(
+      to bottom,
+      hsl(230 85% 70%) 0%,
+      hsl(240 80% 72%) 20%,
+      hsl(250 75% 74%) 40%,
+      hsl(260 78% 76%) 60%,
+      hsl(270 80% 78%) 80%,
+      hsl(280 85% 80%) 100%
+    );
+    --gradient-neon: linear-gradient(
+      135deg,
+      hsl(var(--neon-blue) / 0.8),
+      hsl(var(--neon-purple) / 0.8)
+    );
+
+    /* Glow effects */
+    --glow-primary: 0 0 20px hsl(var(--primary-start) / 0.3);
+    --glow-secondary: 0 0 20px hsl(var(--secondary-start) / 0.3);
+    --glow-neon: 0 0 30px hsl(var(--neon-blue) / 0.4);
+    --shadow-light: 0 4px 20px hsl(var(--primary-start) / 0.15);
+    --shadow-dark: 0 4px 20px hsl(var(--primary-start) / 0.4);
+
+    /* Quick Messages Priority Effects */
+    --priority-low: hsl(214 32% 91%);
+    --priority-medium: hsl(var(--neon-blue));
+    --priority-high: hsl(var(--neon-purple));
+
+    /* Better contrast for light mode */
+    --better-contrast: 210 30% 88%;
+
+    /* Improved video controls */
+    --video-control-bg: 0 0% 0% / 0.8;
+    --video-control-hover: 0 0% 0% / 0.9;
+
+    /* Sidebar specific */
+    --sidebar-background: var(--gradient-primary);
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 241 60% 66%;
+    --sidebar-accent: 0 0% 100% / 0.1;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 100% / 0.2;
+    --sidebar-ring: 262 100% 50%;
   }
+
   .dark {
-    /* --background: 240 10% 3.9%; */
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    /* Gamer Platform Color Scheme - Dark Mode */
+    --background: 220 13% 9%;
+    --foreground: 210 40% 98%;
+
+    /* Card colors */
+    --card: 220 13% 12%;
+    --card-foreground: 210 40% 98%;
+
+    /* Keep same primary colors but adjust for dark mode */
+    --primary-start: 221 69% 69%;
+    --primary-end: 262 52% 63%;
+    --primary: 241 60% 66%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Keep same secondary colors */
+    --secondary-start: 349 100% 60%;
+    --secondary-end: 42 100% 51%;
+    --secondary: 15 100% 55%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Enhanced neon for dark mode */
+    --neon-green: 127 100% 60%;
+    --neon-blue: 199 100% 60%;
+    --neon-purple: 262 100% 60%;
+    --neon-pink: 320 100% 60%;
+
+    /* Status colors - brighter for dark mode */
+    --status-online: 127 86% 67%;
+    --status-away: 45 93% 57%;
+    --status-offline: 0 0% 55%;
+
+    /* UI colors for dark mode */
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 241 60% 66%;
+
+    /* Enhanced glows for dark mode */
+    --glow-primary: 0 0 30px hsl(var(--primary-start) / 0.5);
+    --glow-secondary: 0 0 30px hsl(var(--secondary-start) / 0.5);
+    --glow-neon: 0 0 40px hsl(var(--neon-blue) / 0.6);
+    --shadow-light: 0 2px 20px hsl(var(--primary-start) / 0.4);
+    --shadow-dark: 0 2px 15px hsl(var(--primary-start) / 0.6);
+
+    /* Sidebar for dark mode */
+    --sidebar-background: var(--gradient-primary);
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 241 60% 66%;
+    --sidebar-accent: 0 0% 100% / 0.15;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 100% / 0.25;
+    --sidebar-ring: 262 100% 60%;
   }
 }
 
@@ -206,7 +176,551 @@
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
   }
+}
+
+@layer components {
+  /* Responsive Gradient utilities */
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .gradient-secondary {
+    background: var(--gradient-secondary);
+  }
+
+  .gradient-primary-vertical {
+    background: var(--gradient-primary-vertical);
+  }
+
+  .gradient-neon {
+    background: var(--gradient-neon);
+  }
+
+  /* Responsive gradient adjustments with vibrant colors */
+  /* @media (orientation: landscape) {
+    body {
+      background: linear-gradient(
+        90deg,
+        hsl(230 85% 70%) 0%,
+        hsl(240 80% 72%) 20%,
+        hsl(250 75% 74%) 40%,
+        hsl(260 78% 76%) 60%,
+        hsl(270 80% 78%) 80%,
+        hsl(280 85% 80%) 100%
+      );
+      background-attachment: fixed;
+    }
+    .gradient-primary {
+      background: linear-gradient(
+        135deg,
+        hsl(230 85% 70%) 0%,
+        hsl(240 80% 72%) 20%,
+        hsl(250 75% 74%) 40%,
+        hsl(260 78% 76%) 60%,
+        hsl(270 80% 78%) 80%,
+        hsl(280 85% 80%) 100%
+      );
+    }
+    .gradient-secondary {
+      background: linear-gradient(
+        135deg,
+        hsl(var(--secondary-start) / 0.9),
+        hsl(var(--secondary-end) / 0.9)
+      );
+    }
+  } */
+
+  @media (orientation: portrait) {
+    body {
+      background: linear-gradient(
+        180deg,
+        hsl(230 85% 70%) 0%,
+        hsl(240 80% 72%) 20%,
+        hsl(250 75% 74%) 40%,
+        hsl(260 78% 76%) 60%,
+        hsl(270 80% 78%) 80%,
+        hsl(280 85% 80%) 100%
+      );
+      background-attachment: fixed;
+    }
+    .gradient-primary {
+      background: linear-gradient(
+        to bottom,
+        hsl(230 85% 70%) 0%,
+        hsl(240 80% 72%) 20%,
+        hsl(250 75% 74%) 40%,
+        hsl(260 78% 76%) 60%,
+        hsl(270 80% 78%) 80%,
+        hsl(280 85% 80%) 100%
+      );
+    }
+    .gradient-secondary {
+      background: linear-gradient(
+        to bottom,
+        hsl(var(--secondary-start) / 0.9),
+        hsl(var(--secondary-end) / 0.9)
+      );
+    }
+  }
+
+  /* camada base mais apagada */
+  /* .neon-border-high::before {
+    content: "";
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    border-radius: inherit;
+    background-image: conic-gradient(
+      from var(--angle),
+      hsl(var(--neon-purple) / 0.15),
+      hsl(var(--neon-blue) / 0.15),
+      hsl(var(--neon-green) / 0.15),
+      hsl(var(--neon-pink) / 0.15),
+      hsl(var(--neon-purple) / 0.15)
+    );
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: -2;
+    padding: 3px;
+    filter: blur(1.5rem);
+    opacity: 0.5;
+  } */
+  /* movimento */
+  /* Efeito de borda neon corrigido */
+  .neon-border-high {
+    position: relative;
+    border-radius: 12px;
+    background: hsl(var(--background));
+    isolation: isolate;
+    overflow: hidden;
+    --neon-purple: 280 100% 60%;
+    --neon-blue: 200 100% 60%;
+    --neon-green: 140 100% 60%;
+    --neon-pink: 320 100% 60%;
+
+    --neon-purple-faded: 280 50% 70%;
+    --neon-blue-faded: 200 50% 70%;
+    --neon-green-faded: 140 50% 70%;
+    --neon-pink-faded: 320 50% 70%;
+  }
+
+  .neon-border-high::before,
+  .neon-border-high::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    z-index: -1;
+    border-radius: inherit;
+    padding: 5px;
+    /* background: conic-gradient(
+      from var(--angle, 0deg),
+      hsl(var(--neon-purple)),
+      hsl(var(--neon-blue)),
+      hsl(var(--neon-green)),
+      hsl(var(--neon-pink)),
+      hsl(var(--neon-purple))
+    ); */
+    background: conic-gradient(
+      from var(--angle, 0deg),
+      hsl(var(--neon-purple-faded)),
+      hsl(var(--neon-blue-faded)),
+      hsl(var(--neon-green-faded)),
+      hsl(var(--neon-pink-faded)),
+      hsl(var(--neon-purple-faded)),
+      hsl(var(--neon-purple)),
+      hsl(var(--neon-blue)),
+      hsl(var(--neon-green)),
+      hsl(var(--neon-pink)),
+      hsl(var(--neon-purple))
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: 3s rotate linear infinite;
+  }
+
+  .neon-border-high::after {
+    filter: blur(12px);
+    opacity: 0.7;
+  }
+
+  @property --angle {
+    syntax: "<angle>";
+    initial-value: 0deg;
+    inherits: false;
+  }
+
+  @keyframes rotate {
+    to {
+      --angle: 360deg;
+    }
+  }
+
+  /* Ajuste para garantir que a animação funcione em todos os navegadores */
+  @supports not (background: conic-gradient(from 0deg, red, blue)) {
+    .neon-border-high::before,
+    .neon-border-high::after {
+      background: linear-gradient(
+        90deg,
+        hsl(var(--neon-purple)),
+        hsl(var(--neon-blue)),
+        hsl(var(--neon-green)),
+        hsl(var(--neon-pink)),
+        hsl(var(--neon-purple))
+      );
+      animation: 3s bg-rotate linear infinite;
+      background-size: 200% 100%;
+    }
+
+    @keyframes bg-rotate {
+      0% {
+        background-position: 0% 0%;
+      }
+      100% {
+        background-position: 200% 0%;
+      }
+    }
+  }
+  /* Slide animation for quick messages */
+  @keyframes slide-right-to-left {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-slide-right-to-left {
+    animation: slide-right-to-left 0.5s ease-out;
+  }
+
+  /* Universal hover effects for cards */
+  .card-hover-effect {
+    @apply transition-all duration-300 hover:shadow-glow-primary/30 hover:scale-[1.02] hover:border-primary/40;
+  }
+
+  /* Message priority effects */
+  .message-high-priority {
+    @apply border-2 border-neon-purple/80 shadow-glow-neon animate-glow-pulse;
+  }
+
+  .message-medium-priority {
+    @apply border border-neon-blue/60 shadow-glow-primary/30;
+  }
+
+  .message-low-priority {
+    @apply border border-border;
+  }
+
+  /* Marquee animation for text */
+  @keyframes marquee {
+    0% {
+      transform: translateX(100%);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  }
+
+  .animate-marquee {
+    animation: marquee 15s linear infinite;
+  }
+
+  .animate-marquee:hover {
+    animation-play-state: paused;
+  }
+
+  /* Improved shadow utilities */
+  .shadow-improved {
+    box-shadow: var(--shadow-light);
+  }
+
+  .dark .shadow-improved {
+    box-shadow: var(--shadow-dark);
+  }
+
+  /* Transition animation for quick messages */
+  @keyframes message-transition {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .animate-message-transition {
+    animation: message-transition 0.4s ease-out;
+  }
+
+  @keyframes message-fade-in {
+    from {
+      opacity: 0;
+      transform: translateX(50px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+  }
+
+  @keyframes message-fade-out {
+    from {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(-50px) scale(0.95);
+    }
+  }
+
+  .animate-message-fade-in {
+    animation: message-fade-in 0.5s ease-out forwards;
+  }
+
+  .animate-message-fade-out {
+    animation: message-fade-out 0.5s ease-out forwards;
+  }
+
+  /* Fade out effect for posts */
+  @keyframes post-fade-out {
+    from {
+      opacity: 1;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+  }
+
+  .animate-post-fade-out {
+    animation: post-fade-out 0.3s ease-out forwards;
+  }
+
+  /* Heart explosion effect */
+  @keyframes heart-burst {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.3);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .animate-heart-burst {
+    animation: heart-burst 0.3s ease-out;
+  }
+
+  /* Custom video controls */
+  .custom-video-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, hsl(var(--video-control-bg)));
+    padding: 1rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .custom-video-controls:hover {
+    opacity: 1;
+  }
+
+  .video-container:hover .custom-video-controls {
+    opacity: 1;
+  }
+
+  /* Better contrast class */
+  .bg-better-contrast {
+    background-color: hsl(var(--better-contrast));
+  }
+
+  .dark .bg-better-contrast {
+    background-color: hsl(var(--muted));
+  }
+
+  /* Glow effects */
+  .glow-primary {
+    box-shadow: var(--glow-primary);
+  }
+
+  .glow-secondary {
+    box-shadow: var(--glow-secondary);
+  }
+
+  .glow-neon {
+    box-shadow: var(--glow-neon);
+  }
+
+  /* Neon text effects */
+  .text-neon-blue {
+    color: hsl(var(--neon-blue));
+    text-shadow: 0 0 10px hsl(var(--neon-blue) / 0.5);
+  }
+
+  .text-neon-green {
+    color: hsl(var(--neon-green));
+    text-shadow: 0 0 10px hsl(var(--neon-green) / 0.5);
+  }
+
+  .text-neon-purple {
+    color: hsl(var(--neon-purple));
+    text-shadow: 0 0 10px hsl(var(--neon-purple) / 0.5);
+  }
+
+  /* Status indicators */
+  .status-online {
+    background: hsl(var(--status-online));
+    box-shadow: 0 0 8px hsl(var(--status-online) / 0.6);
+  }
+
+  .status-away {
+    background: hsl(var(--status-away));
+    box-shadow: 0 0 8px hsl(var(--status-away) / 0.6);
+  }
+
+  .status-offline {
+    background: hsl(var(--status-offline));
+  }
+
+  /* Animations */
+  .animate-fade-up {
+    animation: fadeUp 0.5s ease-out forwards;
+  }
+
+  .animate-glow-pulse {
+    animation: glowPulse 2s ease-in-out infinite alternate;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out forwards;
+  }
+
+  /* Hover effects */
+  .hover-neon {
+    transition: all 0.3s ease;
+  }
+
+  .hover-neon:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--glow-neon);
+  }
+
+  .hover-scale {
+    transition: transform 0.2s ease;
+  }
+
+  .hover-scale:hover {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes glowPulse {
+  0% {
+    box-shadow: 0 0 5px hsl(var(--neon-blue) / 0.3);
+  }
+  100% {
+    box-shadow: 0 0 20px hsl(var(--neon-blue) / 0.8);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Glow animation for high priority messages */
+@keyframes border-flow {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes neon-border {
+  0%,
+  100% {
+    box-shadow: 0 0 5px #00bfff, 0 0 10px #00bfff, 0 0 15px #00bfff,
+      0 0 20px hsl(var(--neon-blue) / 0.8);
+  }
+  50% {
+    box-shadow: 0 0 10px hsl(var(--neon-blue) / 0.5),
+      0 0 20px hsl(var(--neon-blue) / 0.5), 0 0 30px hsl(var(--neon-blue) / 0.5),
+      0 0 40px hsl(var(--neon-blue) / 0.5);
+  }
+}
+
+.animate-border-flow {
+  animation: border-flow 2s infinite linear;
+}
+
+.animate-neon-border {
+  animation: neon-border 2s ease-in-out infinite;
+}
+
+/* Message transition animations */
+@keyframes message-fade-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+@keyframes message-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-message-fade-out {
+  animation: message-fade-out 0.5s ease-in-out forwards;
+}
+
+.animate-message-fade-in {
+  animation: message-fade-in 0.5s ease-in-out forwards;
 }

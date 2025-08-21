@@ -1,7 +1,7 @@
 import { Metadata } from "next";
-import BaseLayout from "../../components/layouts/BaseLayout";
 import { FeedFetchComponent } from "../../components/pages/feed/CommonComponents/FeedFetchComponent";
 import { FeedContextProvider } from "../../context/FeedContext";
+import BaseLayout from "../base-layout/components/structure/BaseLayout";
 
 export const metadata: Metadata = {
   title: "Playgether - Feed",
@@ -12,7 +12,8 @@ export default async function Feed() {
   return (
     <BaseLayout>
       <FeedContextProvider>
-        <FeedFetchComponent />
+        {/* <FeedFetchComponent /> */}
+        <p></p>
       </FeedContextProvider>
     </BaseLayout>
   );
