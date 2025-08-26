@@ -1,9 +1,9 @@
 "use client";
-import { createContext, useContext, ReactElement, ReactNode } from "react";
-import { BaseLayoutServerComponents } from "./BaseLayoutProvider";
+import { createContext, useContext, ReactNode } from "react";
 
 // O tipo é inferido do objeto exportado
-type ComponentsMap = typeof BaseLayoutServerComponents;
+type ComponentsMap =
+  typeof import("./BaseLayoutProvider").BaseLayoutServerComponents;
 
 const BaseLayoutServerContext = createContext<ComponentsMap | null>(null);
 

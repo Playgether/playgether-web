@@ -60,7 +60,7 @@ export const BaseLayoutServerComponents = {
       Separator: <Separator className="mt-6 bg-border/50" />,
     },
     icons: {
-      Pallete: <Palette className="w-5 h-5" />,
+      Palette: <Palette className="w-5 h-5" />,
       Bell: <Bell className="w-5 h-5" />,
       Volume2: <Volume2 className="w-5 h-5" />,
       Shield: <Shield className="w-5 h-5" />,
@@ -90,7 +90,7 @@ export const BaseLayoutServerComponents = {
     },
   },
   ServerTopNavigation: {
-    Icons: {
+    icons: {
       Sun: <Sun className="w-5 h-5 text-neon-blue" />,
       Moon: <Moon className="w-5 h-5 text-primary" />,
       Bell: (

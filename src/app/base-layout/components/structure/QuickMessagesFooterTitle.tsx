@@ -8,7 +8,7 @@ export default function QuickMessagesFooterTitle() {
         <Megaphone className="w-4 h-4 text-white" />
       </div>
       <span className="font-bold hover:text-primary transition-colors w-[160px]">
-        Auto Falante
+        Alto Falante
       </span>
     </>
   );

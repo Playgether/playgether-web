@@ -11,11 +11,14 @@ interface SettingsModalProps {
 export const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
   const { settingSections } = useSettingSections();
   const { BaseLayout } = useBaseLayoutServerContext();
+  const components = BaseLayout?.ServerSettingsModal?.components;
+  const SettingsHeader = components?.SettingsHeader;
+  const Separator = components?.Separator;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg bg-card/95 backdrop-blur-xl border border-primary/20 shadow-glow-primary">
-        {BaseLayout.ServerSettingsModal.components.SettingsHeader}
+        {SettingsHeader}
         <div className="space-y-6 max-h-96 overflow-y-auto">
           {settingSections.map((section, sectionIndex) => (
             <div
@@ -51,8 +54,7 @@ export const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
                 ))}
               </div>
 
-              {sectionIndex < settingSections.length - 1 &&
-                BaseLayout.ServerSettingsModal.components.Separator}
+              {sectionIndex < settingSections.length - 1 && Separator}
             </div>
           ))}
           <div className="flex space-x-3 pt-4">

@@ -1,4 +1,5 @@
 // useSettingSections.tsx
+"use client";
 import { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Moon, Sun } from "lucide-react";
@@ -36,7 +37,7 @@ export function useSettingSections() {
   const settingSections = [
     {
       title: "Aparência",
-      icon: BaseLayout.ServerSettingsModal.icons.Pallete,
+      icon: BaseLayout.ServerSettingsModal.icons.Palette,
       items: [
         {
           label: "Modo Escuro",

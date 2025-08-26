@@ -8,7 +8,7 @@ export default function NoMessagesQuickMessages() {
         <div className="w-8 h-8 bg-gradient-secondary rounded-lg flex items-center justify-center">
           <Megaphone className="w-4 h-4 text-white" />
         </div>
-        <span className="font-bold text-lg">Auto Falante</span>
+        <span className="font-bold text-lg">Alto-falante</span>{" "}
       </div>
       <div className="text-center flex-1 pr-32 font-bold text-lg">
         <p className="text-muted-foreground">Não há mensagens no momento</p>

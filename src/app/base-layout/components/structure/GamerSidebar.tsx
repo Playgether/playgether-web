@@ -26,8 +26,6 @@ const sidebarItems: GamerSideBarItensInterface[] = [
   { icon: <Settings className="w-6 h-6" />, label: "Configurações" },
 ];
 
-const data = JSON.parse(JSON.stringify(sidebarItems));
-
 export const GamerSidebar = () => {
   return (
     <div className="fixed left-0 top-0 h-full w-20 bg-gradient-primary z-40 flex flex-col items-center py-6 border-r border-sidebar-border">

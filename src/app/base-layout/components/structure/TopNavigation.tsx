@@ -14,6 +14,7 @@ export const TopNavigation = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [conversationsOpen, setConversationsOpen] = useState(false);
   const { BaseLayout } = useBaseLayoutServerContext();
+  const icons = BaseLayout?.ServerTopNavigation.icons;
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
@@ -25,7 +26,7 @@ export const TopNavigation = () => {
       {/* Search Bar */}
       <div className="flex-1 max-w-xl">
         <div className="relative">
-          {BaseLayout.ServerTopNavigation.Icons.Search}
+          {icons.Search}
           <Input
             placeholder="Pesquisar"
             className="pl-12 h-11 bg-muted/50 border-border/50 rounded-xl focus:ring-2 focus:ring-primary/30 transition-all duration-300"
@@ -44,9 +45,7 @@ export const TopNavigation = () => {
           title="Toggle dark mode"
           aria-pressed={isDarkMode}
         >
-          {isDarkMode
-            ? BaseLayout.ServerTopNavigation.Icons.Sun
-            : BaseLayout.ServerTopNavigation.Icons.Moon}
+          {isDarkMode ? icons.Sun : icons.Moon}
         </Button>
 
         <Button
@@ -57,7 +56,7 @@ export const TopNavigation = () => {
           aria-label="Open chat"
           title="Open chat"
         >
-          {BaseLayout.ServerTopNavigation.Icons.MessageSquare}
+          {icons.MessageSquare}
           <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-secondary rounded-full text-xs font-bold text-white flex items-center justify-center animate-glow-pulse">
             3
           </span>
@@ -71,7 +70,7 @@ export const TopNavigation = () => {
           aria-label="Open notifications"
           title="Open notifications"
         >
-          {BaseLayout.ServerTopNavigation.Icons.Bell}
+          {icons.Bell}
           <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-primary rounded-full text-xs font-bold text-white flex items-center justify-center animate-glow-pulse">
             7
           </span>
@@ -85,7 +84,7 @@ export const TopNavigation = () => {
           aria-label="Open settings"
           title="Open settings"
         >
-          {BaseLayout.ServerTopNavigation.Icons.Settings}
+          {icons.Settings}
         </Button>
 
         <Button
@@ -95,7 +94,7 @@ export const TopNavigation = () => {
           aria-label="Log out"
           title="Log out"
         >
-          {BaseLayout.ServerTopNavigation.Icons.LogOut}
+          {icons.LogOut}
         </Button>
       </div>
 

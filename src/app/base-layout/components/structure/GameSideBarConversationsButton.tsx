@@ -12,17 +12,17 @@ export default function GamerSidbarConversationsButtons({
 }) {
   const [conversationsOpen, setConversationsOpen] = useState(false);
 
-  const handleItemClick = (label: string) => {
-    if (label === "Mensagens") {
-      setConversationsOpen(true);
-    }
-  };
   return (
     <>
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => handleItemClick(item.label)}
+        onClick={() => setConversationsOpen(true)}
+        type="button"
+        aria-haspopup="dialog"
+        aria-expanded={conversationsOpen}
+        aria-label={item.label}
+        title={item.label}
         className={cn(
           "w-14 h-14 rounded-xl transition-all duration-300 relative",
           "hover:bg-white/20 hover:shadow-glow-neon hover:scale-105",
@@ -31,7 +31,6 @@ export default function GamerSidbarConversationsButtons({
             : "text-white/80 hover:text-white"
         )}
       >
-        {/* <item.icon className="w-6 h-6" /> */}
         {item.icon}
         {item.notifications && (
           <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-secondary rounded-full text-xs font-bold text-white flex items-center justify-center animate-glow-pulse">
