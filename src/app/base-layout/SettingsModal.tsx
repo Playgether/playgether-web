@@ -1,13 +1,7 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Settings } from "lucide-react";
 import { useSettingSections } from "./hooks/useSettingsSections";
+import { useBaseLayoutServerContext } from "./context/BaseLayoutServerContext";
 
 interface SettingsModalProps {
   open: boolean;
@@ -16,19 +10,12 @@ interface SettingsModalProps {
 
 export const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
   const { settingSections } = useSettingSections();
+  const { BaseLayout } = useBaseLayoutServerContext();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg bg-card/95 backdrop-blur-xl border border-primary/20 shadow-glow-primary">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-secondary rounded-lg flex items-center justify-center">
-              <Settings className="w-4 h-4 text-white" />
-            </div>
-            <span>Configurações</span>
-          </DialogTitle>
-        </DialogHeader>
-
+        {BaseLayout.ServerSettingsModal.components.SettingsHeader}
         <div className="space-y-6 max-h-96 overflow-y-auto">
           {settingSections.map((section, sectionIndex) => (
             <div
@@ -64,9 +51,8 @@ export const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
                 ))}
               </div>
 
-              {sectionIndex < settingSections.length - 1 && (
-                <Separator className="mt-6 bg-border/50" />
-              )}
+              {sectionIndex < settingSections.length - 1 &&
+                BaseLayout.ServerSettingsModal.components.Separator}
             </div>
           ))}
           <div className="flex space-x-3 pt-4">
@@ -86,7 +72,7 @@ export const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
             >
               Salvar
             </Button>
-          </div>{" "}
+          </div>
         </div>
       </DialogContent>
     </Dialog>

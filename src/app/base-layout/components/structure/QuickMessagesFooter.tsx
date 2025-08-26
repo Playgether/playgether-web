@@ -1,6 +1,5 @@
 "use client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Megaphone } from "lucide-react";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { AnimatePresence, motion } from "framer-motion";
 import { QuickMessagesHistoryModal } from "./QuickMessagesHistoryModal";
 import { QuickMessageModal } from "./QuickMessageModal";
@@ -12,6 +11,7 @@ import {
 } from "../../utils/quickMessagesUtils";
 import { useQuickMessagesUI } from "../../hooks/useQuickMessagesUI";
 import { quickMessages } from "../../mocks/mockQuickMessages";
+import { useBaseLayoutServerContext } from "../../context/BaseLayoutServerContext";
 
 /* -------------------- Component -------------------- */
 export const QuickMessagesFooter = () => {
@@ -29,6 +29,7 @@ export const QuickMessagesFooter = () => {
     setSelectedMessage,
     historyMessages,
   } = useQuickMessagesUI(quickMessages);
+  const { BaseLayout } = useBaseLayoutServerContext();
 
   if (activeMessages.length === 0) {
     return (
@@ -43,15 +44,10 @@ export const QuickMessagesFooter = () => {
           className="max-w-7xl mx-auto flex items-center hover:cursor-pointer"
           onClick={() => setHistoryOpen(true)}
         >
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-secondary rounded-lg flex items-center justify-center">
-              <Megaphone className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-lg">Auto Falante</span>
-          </div>
-          <div className="text-center flex-1 pr-32 font-bold text-lg">
-            <p className="text-muted-foreground">Não há mensagens no momento</p>
-          </div>
+          {
+            BaseLayout.ServerQuickMessagesFooter.components
+              .NoMessagesQuickMessages
+          }
         </div>
         <QuickMessagesHistoryModal
           open={historyOpen}
@@ -86,12 +82,10 @@ export const QuickMessagesFooter = () => {
           className="flex items-center space-x-2 cursor-pointer"
           onClick={() => setHistoryOpen(true)}
         >
-          <div className="w-8 h-8 bg-gradient-secondary rounded-lg flex items-center justify-center">
-            <Megaphone className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-bold hover:text-primary transition-colors w-[160px]">
-            Auto Falante
-          </span>
+          {
+            BaseLayout.ServerQuickMessagesFooter.components
+              .QuickMessagesFooterTitle
+          }
         </div>
 
         {/* Messages */}
@@ -118,7 +112,7 @@ export const QuickMessagesFooter = () => {
                     transition: { duration: 0.2 },
                   }}
                   transition={{ delay: index * 0.05, duration: 0.2 }}
-                  className={`flex items-center space-x-3 p-4 rounded-xl bg-gradient-to-r from-primary-start/10 to-primary-end/10 hover:shadow-improved ${getPriorityClass(
+                  className={`flex items-center space-x-3 p-4 rounded-xl bg-gradient-to-r from-primary-start/10 to-primary-end/10 hover:shadow-improved cursor-pointer ${getPriorityClass(
                     message.priority
                   )}`}
                   onClick={() => handleMessageClick(message)}

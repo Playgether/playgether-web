@@ -1,18 +1,13 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Clock } from "lucide-react";
 
 import {
   getPriorityConfig,
   getStatusBadge,
 } from "../../utils/quickMessagesHistoryModalUtils";
 import { QuickMessage } from "../../types/structure/QuickMessage";
+import { useBaseLayoutServerContext } from "../../context/BaseLayoutServerContext";
 
 interface QuickMessagesHistoryModalProps {
   open: boolean;
@@ -21,80 +16,20 @@ interface QuickMessagesHistoryModalProps {
   historyMessages: QuickMessage[];
 }
 
-interface HistoryMessage {
-  id: string;
-  user: {
-    name: string;
-    username: string;
-    avatar: string;
-  };
-  message: string;
-  timestamp: string;
-  priority: "high" | "medium" | "low";
-  status: "expired" | "active" | "responded";
-}
-
-// const historyMessages: HistoryMessage[] = [
-//   {
-//     id: "1",
-//     user: {
-//       name: "Sophia Andrade",
-//       username: "sophia.andrade",
-//       avatar: avatarSophia,
-//     },
-//     message: "Nova mensagem importante sobre o torneio de amanhã!",
-//     timestamp: "há 5 minutos",
-//     priority: "high",
-//     status: "active",
-//   },
-//   {
-//     id: "2",
-//     user: {
-//       name: "Aline Moreira",
-//       username: "aline.moreira",
-//       avatar: avatarAline,
-//     },
-//     message: "Alguém quer formar grupo para o raid de hoje?",
-//     timestamp: "há 15 minutos",
-//     priority: "medium",
-//     status: "responded",
-//   },
-//   {
-//     id: "3",
-//     user: {
-//       name: "Samuel Johnson",
-//       username: "samuel.johnson",
-//       avatar: avatarSamuel,
-//     },
-//     message: "Compartilhando dicas para o novo patch do jogo.",
-//     timestamp: "há 1 hora",
-//     priority: "low",
-//     status: "expired",
-//   },
-//   {
-//     id: "4",
-//     user: { name: "Mia Santos", username: "mia.santos", avatar: avatarMia },
-//     message: "Evento especial começando agora! Não percam!",
-//     timestamp: "há 2 horas",
-//     priority: "high",
-//     status: "expired",
-//   },
-// ];
-
 export const QuickMessagesHistoryModal = ({
   open,
   onOpenChange,
   onMessageClick,
   historyMessages,
 }: QuickMessagesHistoryModalProps) => {
+  const { BaseLayout } = useBaseLayoutServerContext();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl w-full h-[80vh] bg-background/95 backdrop-blur-xl border border-primary/20">
-        <DialogHeader className="pb-4 border-b border-border/50">
-          <DialogTitle className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            Histórico de Mensagens Rápidas
-          </DialogTitle>
-        </DialogHeader>
+        {
+          BaseLayout.ServerQuickMessagesHistoryModal.components
+            .QuickMessagesHistoryModalHeader
+        }
 
         <ScrollArea className="flex-1 pr-4">
           <div className="space-y-4">
@@ -144,7 +79,7 @@ export const QuickMessagesHistoryModal = ({
 
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                        <Clock className="w-4 h-4" />
+                        {BaseLayout.ServerQuickMessagesHistoryModal.icons.Clock}
                         <span>{message.timestamp}</span>
                       </div>
                       {getPriorityConfig(message.priority).badge}

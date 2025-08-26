@@ -6,20 +6,12 @@ import {
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import {
-  Bell,
-  Heart,
-  MessageCircle,
-  UserPlus,
-  Trophy,
-  Star,
-} from "lucide-react";
-
 // Import avatars
 import avatarSamuel from "@/assets/avatar-samuel.jpg";
 import avatarMia from "@/assets/avatar-mia.jpg";
 import avatarSophia from "@/assets/avatar-sophia.jpg";
 import { notificationConfig } from "../../config/notifications/NotificationConfig";
+import { useBaseLayoutServerContext } from "../../context/BaseLayoutServerContext";
 
 interface NotificationsModalProps {
   open: boolean;
@@ -69,15 +61,13 @@ export const NotificationsModal = ({
   open,
   onOpenChange,
 }: NotificationsModalProps) => {
+  const { BaseLayout } = useBaseLayoutServerContext();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md bg-card/95 backdrop-blur-xl border border-primary/20 shadow-glow-primary">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <Bell className="w-4 h-4 text-white" />
-            </div>
-            <span>Notificações</span>
+            {BaseLayout.ServerNotificationsModal.components.NotificationsTitle}
             <Badge
               variant="secondary"
               className="ml-auto bg-gradient-secondary text-white"
@@ -113,9 +103,7 @@ export const NotificationsModal = ({
                     </AvatarFallback>
                   </Avatar>
                 ) : (
-                  <div className="w-10 h-10 bg-gradient-secondary rounded-full flex items-center justify-center">
-                    <Star className="w-5 h-5 text-white" />
-                  </div>
+                  BaseLayout.ServerNotificationsModal.icons.Star
                 )}
                 <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-card rounded-full flex items-center justify-center border border-border">
                   {getNotificationIcon(notification.type)}

@@ -1,7 +1,9 @@
+import { StaticImageData } from "next/legacy/image";
+
 export interface ConversationInterface {
   id: string;
   name: string;
-  avatar: string;
+  avatar: StaticImageData | string;
   lastMessage: string;
   timestamp: string;
   unread?: number;

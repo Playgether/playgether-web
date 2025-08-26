@@ -1,27 +1,17 @@
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Users, Crown, MessageCircle } from "lucide-react";
 
 // Import avatars
 import avatarSophia from "@/assets/avatar-sophia.jpg";
-import SearchChatBar from "./SearchChatBar";
 import Conversations from "./Conversations";
-import NoImageClan from "./NoImageClan";
-import NoImageGroup from "./NoImageGroup";
-import NoImageProfile from "@/components/general/NoImageProfile";
 import ChatHeader from "./ChatHeader";
 import ChatMessages from "./ChatMessages";
 import { MessageInterface } from "../../types/chat/MessageInterface";
 import InputMessage from "./InputMessage";
-import NoConversationSelected from "./NoConversationSelected";
 import { ConversationInterface } from "../../types/chat/ConversationInterface";
+import { useBaseLayoutServerContext } from "../../context/BaseLayoutServerContext";
 
 interface ConversationsModalProps {
   open: boolean;
@@ -88,6 +78,7 @@ export const ConversationsModal = ({
   const [selectedConversation, setSelectedConversation] =
     useState<ConversationInterface | null>(null);
   const [messageInput, setMessageInput] = useState("");
+  const { BaseLayout } = useBaseLayoutServerContext();
 
   const onSelectConversation = (conversation: ConversationInterface) => {
     setSelectedConversation(conversation);
@@ -100,32 +91,13 @@ export const ConversationsModal = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl w-full p-0 bg-background/95 backdrop-blur-xl border border-primary/20">
-        <DialogHeader className="p-6 pb-4 border-b border-border/50 ">
-          <DialogTitle className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            Conversas
-          </DialogTitle>
-        </DialogHeader>
-
+        {BaseLayout.ServerConversationsModal.components.ChatModalHeader}
         <div className="flex h-[70vh]">
           {/* Conversations List */}
           <div className="w-1/3 border-r p-0 border-border/50 ">
             <Tabs defaultValue="private" className="h-full">
-              <TabsList className="grid grid-cols-3 ml-4 mr-4 mb-4 bg-muted/50">
-                <TabsTrigger value="private" className="text-xs gap-1">
-                  <MessageCircle className="w-4 h-4" />
-                  Privadas
-                </TabsTrigger>
-                <TabsTrigger value="clan" className="text-xs gap-1">
-                  <Crown className="w-4 h-4" />
-                  Clã
-                </TabsTrigger>
-                <TabsTrigger value="group" className="text-xs gap-1">
-                  <Users className="w-4 h-4" />
-                  Grupos
-                </TabsTrigger>
-              </TabsList>
-
-              <SearchChatBar />
+              {BaseLayout.ServerConversationsModal.components.ChatTabs}
+              {BaseLayout.ServerConversationsModal.components.SearchBar}
 
               <TabsContent value="private" className="mt-0 p-0">
                 <ScrollArea className="h-[calc(100%_-_120px)]">
@@ -135,7 +107,10 @@ export const ConversationsModal = ({
                     selectedConversation={selectedConversation}
                     type="private"
                     notFoundMessage="Nenhuma conversa encontrada."
-                    fallbackAvatar={<NoImageProfile />}
+                    fallbackAvatar={
+                      BaseLayout.ServerConversationsModal.components
+                        .NoImageProfile
+                    }
                   />
                 </ScrollArea>
               </TabsContent>
@@ -148,7 +123,9 @@ export const ConversationsModal = ({
                     selectedConversation={selectedConversation}
                     type="clan"
                     notFoundMessage="Nenhum clan encontrado."
-                    fallbackAvatar={<NoImageClan />}
+                    fallbackAvatar={
+                      BaseLayout.ServerConversationsModal.components.NoImageClan
+                    }
                   />
                 </ScrollArea>
               </TabsContent>
@@ -160,7 +137,9 @@ export const ConversationsModal = ({
                   selectedConversation={selectedConversation}
                   type="group"
                   notFoundMessage="Nenhum grupo encontrado."
-                  fallbackAvatar={<NoImageGroup />}
+                  fallbackAvatar={
+                    BaseLayout.ServerConversationsModal.components.NoImageGroup
+                  }
                 />
               </TabsContent>
             </Tabs>
@@ -182,7 +161,8 @@ export const ConversationsModal = ({
                 <InputMessage onInput={onInput} messageInput={messageInput} />
               </>
             ) : (
-              <NoConversationSelected />
+              BaseLayout.ServerConversationsModal.components
+                .NoConversationSelected
             )}
           </div>
         </div>

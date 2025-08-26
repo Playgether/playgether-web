@@ -1,7 +1,8 @@
 // useSettingSections.tsx
 import { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
-import { Bell, Moon, Palette, Shield, Sun, Volume2 } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
+import { useBaseLayoutServerContext } from "../context/BaseLayoutServerContext";
 
 export function useSettingSections() {
   // Verifica o tema atual do sistema ou localStorage
@@ -18,6 +19,7 @@ export function useSettingSections() {
   const [notifications, setNotifications] = useState(true);
   const [soundEffects, setSoundEffects] = useState(true);
   const [autoPlay, setAutoPlay] = useState(false);
+  const { BaseLayout } = useBaseLayoutServerContext();
 
   // Efeito para sincronizar o tema com a classe do HTML
   useEffect(() => {
@@ -34,7 +36,7 @@ export function useSettingSections() {
   const settingSections = [
     {
       title: "Aparência",
-      icon: <Palette className="w-5 h-5" />,
+      icon: BaseLayout.ServerSettingsModal.icons.Pallete,
       items: [
         {
           label: "Modo Escuro",
@@ -63,7 +65,7 @@ export function useSettingSections() {
     },
     {
       title: "Notificações",
-      icon: <Bell className="w-5 h-5" />,
+      icon: BaseLayout.ServerSettingsModal.icons.Bell,
       items: [
         {
           label: "Notificações Push",
@@ -79,7 +81,7 @@ export function useSettingSections() {
     },
     {
       title: "Áudio",
-      icon: <Volume2 className="w-5 h-5" />,
+      icon: BaseLayout.ServerSettingsModal.icons.Volume2,
       items: [
         {
           label: "Efeitos Sonoros",
@@ -99,7 +101,7 @@ export function useSettingSections() {
     },
     {
       title: "Privacidade",
-      icon: <Shield className="w-5 h-5" />,
+      icon: BaseLayout.ServerSettingsModal.icons.Shield,
       items: [
         {
           label: "Perfil Público",
