@@ -23,13 +23,12 @@ export const QuickMessagesHistoryModal = ({
   historyMessages,
 }: QuickMessagesHistoryModalProps) => {
   const { BaseLayout } = useBaseLayoutServerContext();
+  const components = BaseLayout.ServerQuickMessagesHistoryModal.components;
+  const icons = BaseLayout.ServerQuickMessagesHistoryModal.icons;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl w-full h-[80vh] bg-background/95 backdrop-blur-xl border border-primary/20">
-        {
-          BaseLayout.ServerQuickMessagesHistoryModal.components
-            .QuickMessagesHistoryModalHeader
-        }
+        {components.QuickMessagesHistoryModalHeader}
 
         <ScrollArea className="flex-1 pr-4">
           <div className="space-y-4">
@@ -79,7 +78,7 @@ export const QuickMessagesHistoryModal = ({
 
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                        {BaseLayout.ServerQuickMessagesHistoryModal.icons.Clock}
+                        {icons.Clock}
                         <span>{message.timestamp}</span>
                       </div>
                       {getPriorityConfig(message.priority).badge}

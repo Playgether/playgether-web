@@ -30,6 +30,7 @@ export const QuickMessagesFooter = () => {
     historyMessages,
   } = useQuickMessagesUI(quickMessages);
   const { BaseLayout } = useBaseLayoutServerContext();
+  const components = BaseLayout.ServerQuickMessagesFooter.components;
 
   if (activeMessages.length === 0) {
     return (
@@ -44,10 +45,7 @@ export const QuickMessagesFooter = () => {
           className="max-w-7xl mx-auto flex items-center hover:cursor-pointer"
           onClick={() => setHistoryOpen(true)}
         >
-          {
-            BaseLayout.ServerQuickMessagesFooter.components
-              .NoMessagesQuickMessages
-          }
+          {components.NoMessagesQuickMessages}
         </div>
         <QuickMessagesHistoryModal
           open={historyOpen}
@@ -82,10 +80,7 @@ export const QuickMessagesFooter = () => {
           className="flex items-center space-x-2 cursor-pointer"
           onClick={() => setHistoryOpen(true)}
         >
-          {
-            BaseLayout.ServerQuickMessagesFooter.components
-              .QuickMessagesFooterTitle
-          }
+          {components.QuickMessagesFooterTitle}
         </div>
 
         {/* Messages */}

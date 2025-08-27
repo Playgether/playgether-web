@@ -14,14 +14,13 @@ export const QuickMessageModal = ({
   onReply,
 }: QuickMessageModalProps) => {
   const { BaseLayout } = useBaseLayoutServerContext();
+  const components = BaseLayout.ServerQuickMessagesModal.components;
+  const icons = BaseLayout.ServerQuickMessagesModal.icons;
   if (!message) return null;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl w-full bg-background/95 backdrop-blur-xl border border-primary/20">
-        {
-          BaseLayout.ServerQuickMessagesModal.components
-            .QuickMessagesModalHeader
-        }
+        {components.QuickMessagesModalHeader}
         <div
           className={`rounded-xl p-6 bg-gradient-to-r from-primary-start/10 to-primary-end/10 ${getPriorityColorQuickMessagesConfig(
             message.priority
@@ -49,7 +48,7 @@ export const QuickMessageModal = ({
                 </p>
               )}
               <div className="flex items-center space-x-2 mt-1">
-                {BaseLayout.ServerQuickMessagesModal.icons.Clock}
+                {icons.Clock}
                 <span className="text-sm text-muted-foreground">
                   Tempo restante: {message.timeRemaining}
                 </span>
@@ -84,7 +83,7 @@ export const QuickMessageModal = ({
               }}
               className="bg-gradient-primary hover:shadow-glow-primary/30 text-white"
             >
-              {BaseLayout.ServerQuickMessagesModal.icons.Reply}
+              {icons.Reply}
               Responder
             </Button>
           </div>
