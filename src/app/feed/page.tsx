@@ -1,7 +1,9 @@
 import { Metadata } from "next";
-import { FeedFetchComponent } from "../../components/pages/feed/CommonComponents/FeedFetchComponent";
-import { FeedContextProvider } from "../../context/FeedContext";
 import BaseLayout from "../base-layout/components/structure/BaseLayout";
+import FeedPage from "./components/FeedPage";
+import FeedServerComponentsProvider from "./context/FeedServerComponentsProvider";
+import { getFeed } from "./services/getFeed";
+import { FeedProvider } from "./context/FeedContext";
 
 export const metadata: Metadata = {
   title: "Playgether - Feed",
@@ -9,12 +11,14 @@ export const metadata: Metadata = {
 };
 
 export default async function Feed() {
+  const response = await getFeed();
   return (
     <BaseLayout>
-      <FeedContextProvider>
-        {/* <FeedFetchComponent /> */}
-        <p></p>
-      </FeedContextProvider>
+      <FeedServerComponentsProvider>
+        <FeedProvider response={response}>
+          <FeedPage />
+        </FeedProvider>
+      </FeedServerComponentsProvider>
     </BaseLayout>
   );
 }
