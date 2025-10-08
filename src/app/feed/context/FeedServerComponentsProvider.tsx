@@ -1,5 +1,6 @@
 import {
   ChevronLeft,
+  ChevronRight,
   Eye,
   EyeOff,
   Heart,
@@ -46,6 +47,7 @@ export const FeedServerComponents = {
       Share2: <Share2 className="w-5 h-5 mr-2" />,
       Heart: <Heart className="w-3 h-3 mr-1" />,
       Send: <Send className="w-4 h-4" />,
+      ChevronRight: <ChevronRight className="w-6 h-6" />,
     },
     text: {
       verified: (

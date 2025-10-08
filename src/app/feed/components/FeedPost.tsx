@@ -14,12 +14,13 @@ import ContextMenuNotMine from "./ContextMenuNotMine";
 import ContextMenuAction from "./ContextMenuAction";
 import PostText from "./PostText";
 import PostActions from "./PostActions";
-import Image from "next/image";
-import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
-import { getCloudinaryVideoUrl } from "@/app/utils/getCloudinaryVideo";
 import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
 import { PostProps } from "../types/PostProps";
 import { ShareModal } from "./ShareModal";
+import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
+import VideoComponent from "@/components/layouts/VideoComponent/VideoComponent";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export const FeedPost = ({ post }: { post?: PostProps }) => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -28,6 +29,7 @@ export const FeedPost = ({ post }: { post?: PostProps }) => {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const { Feed } = useFeedServerContext();
   const components = Feed.ServerFeedPost.components;
+  const router = useRouter();
 
   const handleShareModal = useCallback((action: boolean) => {
     setShareModalOpen(action);
@@ -45,14 +47,14 @@ export const FeedPost = ({ post }: { post?: PostProps }) => {
   };
 
   const handlePostClick = () => {
-    setModalOpen(true);
+    router.push(`/feed/${post?.id}`);
   };
 
   return (
-    <Card className="bg-card border-border/50 backdrop-blur-sm hover:shadow-glow-primary/30 hover:scale-[1.02] hover:border-primary/40 transition-all duration-300 animate-fade-up hover:cursor-pointer">
+    <Card className="bg-card border-border/50 backdrop-blur-sm hover:shadow-glow-primary/30 hover:scale-[1.02] hover:border-primary/40 transition-all duration-300 animate-fade-up hover:cursor-pointer mb-7">
       <CardContent className="p-6">
         {post && (
-          <>
+          <Link href={`/feed/${post.id}`} scroll={false}>
             {/* Repost Header */}
             {post.isRepost && <RepostFlag post={post} />}
             {/* Header */}
@@ -61,10 +63,9 @@ export const FeedPost = ({ post }: { post?: PostProps }) => {
                 <div className="w-12 h-12 ring-2 ring-primary/20 rounded-full overflow-hidden">
                   {post.profile_photo ? (
                     <div className="relative w-full h-full">
-                      <Image
-                        src={getCloudinaryUrl(post.profile_photo)}
+                      <ImageComponent
+                        media_id={post.profile_photo}
                         alt={`Profile photo of the user ${post?.username}`}
-                        fill
                         className="object-cover rounded-full"
                       />
                     </div>
@@ -74,7 +75,13 @@ export const FeedPost = ({ post }: { post?: PostProps }) => {
                 </div>
                 <div>
                   <div className="flex items-center space-x-2">
-                    <h3 className="font-semibold text-foreground">
+                    <h3
+                      className="font-semibold text-foreground"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/profile/${post.username}`);
+                      }}
+                    >
                       {/* {(post.isRepost ? post.originalPost?.user : post.user).name} */}
                       {post.name}
                     </h3>
@@ -110,7 +117,7 @@ export const FeedPost = ({ post }: { post?: PostProps }) => {
             </div>
 
             {/* Content */}
-            <PostText handlePostClick={handleContextAction} post={post} />
+            <PostText handlePostClick={handlePostClick} post={post} />
 
             {/* Media */}
             {post.medias && post.medias.length > 0 && (
@@ -129,21 +136,18 @@ export const FeedPost = ({ post }: { post?: PostProps }) => {
                     onClick={handlePostClick}
                   >
                     {item.media_type === "image" ? (
-                      <Image
-                        src={getCloudinaryUrl(item.media_file)}
+                      <ImageComponent
+                        media_id={item.media_file}
                         alt="Post media"
-                        fill
                         className={`w-full h-64 object-cover transition-transform duration-300 ${
                           post.medias.length < 2 && "group-hover:scale-105"
                         }`}
                       />
                     ) : (
                       <div className="relative video-container">
-                        <video
-                          src={getCloudinaryVideoUrl(item.media_file)}
-                          // poster={item.thumbnail}
+                        <VideoComponent
+                          media_id={item.media_file}
                           className="w-full h-64 object-cover rounded-lg"
-                          controls
                           preload="metadata"
                           style={{
                             background:
@@ -175,7 +179,7 @@ export const FeedPost = ({ post }: { post?: PostProps }) => {
                 <PostActions post={post} handleShareModal={handleShareModal} />
               </div>
             </div>
-          </>
+          </Link>
         )}
       </CardContent>
 
@@ -185,9 +189,9 @@ export const FeedPost = ({ post }: { post?: PostProps }) => {
         shareModalOpen={shareModalOpen}
       />
 
-      {modalOpen && (
+      {/* {modalOpen && (
         <PostModal open={modalOpen} onOpenChange={setModalOpen} post={post} />
-      )}
+      )} */}
       <ContextMenuAction
         alertAction={alertAction}
         alertOpen={alertOpen}

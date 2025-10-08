@@ -8,8 +8,7 @@ export default function LayoutTypeHandlerWrapper() {
   return (
     <LayoutTypeHandlerContainer>
       <LayoutTypeHandler
-        FeedPost={<FeedPost />}
-        CenterColumn={<CenterColumn />}
+        CenterColumn={<CenterColumn FeedPost={<FeedPost />} />}
       />
     </LayoutTypeHandlerContainer>
   );

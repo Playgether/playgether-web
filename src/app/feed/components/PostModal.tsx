@@ -1,34 +1,20 @@
-import { useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { use, useState } from "react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Heart } from "lucide-react";
 import { useFeedServerContext } from "../context/FeedServerContext";
+import { PostProps } from "../types/PostProps";
+import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
+import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
+import VideoComponent from "@/components/layouts/VideoComponent/VideoComponent";
+import { useRouter } from "next/navigation";
+import { useCommentsContext } from "@/context/CommentsContext";
 
 interface PostModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  post: {
-    id: string;
-    user: {
-      name: string;
-      username: string;
-      avatar: string;
-      verified?: boolean;
-    };
-    content: string;
-    timestamp: string;
-    likes: number;
-    comments: number;
-    shares: number;
-    liked?: boolean;
-    media?: Array<{
-      type: "image" | "video";
-      url: string;
-    }>;
-  };
+  post: PostProps;
 }
 
 interface Comment {
@@ -80,19 +66,110 @@ const mockComments: Comment[] = [
     timestamp: "há 3 horas",
     likes: 8,
   },
+  {
+    id: "2",
+    user: {
+      name: "Mia Santos",
+      username: "mia.santos",
+      avatar: "/src/assets/avatar-mia.jpg",
+    },
+    content: "Muito bom! Estou esperando ansiosamente pela próxima temporada.",
+    timestamp: "há 3 horas",
+    likes: 8,
+  },
+  {
+    id: "2",
+    user: {
+      name: "Mia Santos",
+      username: "mia.santos",
+      avatar: "/src/assets/avatar-mia.jpg",
+    },
+    content: "Muito bom! Estou esperando ansiosamente pela próxima temporada.",
+    timestamp: "há 3 horas",
+    likes: 8,
+  },
+  {
+    id: "2",
+    user: {
+      name: "Mia Santos",
+      username: "mia.santos",
+      avatar: "/src/assets/avatar-mia.jpg",
+    },
+    content: "Muito bom! Estou esperando ansiosamente pela próxima temporada.",
+    timestamp: "há 3 horas",
+    likes: 8,
+  },
+  {
+    id: "2",
+    user: {
+      name: "Mia Santos",
+      username: "mia.santos",
+      avatar: "/src/assets/avatar-mia.jpg",
+    },
+    content: "Muito bom! Estou esperando ansiosamente pela próxima temporada.",
+    timestamp: "há 3 horas",
+    likes: 8,
+  },
+  {
+    id: "2",
+    user: {
+      name: "Mia Santos",
+      username: "mia.santos",
+      avatar: "/src/assets/avatar-mia.jpg",
+    },
+    content: "Muito bom! Estou esperando ansiosamente pela próxima temporada.",
+    timestamp: "há 3 horas",
+    likes: 8,
+  },
+  {
+    id: "2",
+    user: {
+      name: "Mia Santos",
+      username: "mia.santos",
+      avatar: "/src/assets/avatar-mia.jpg",
+    },
+    content: "Muito bom! Estou esperando ansiosamente pela próxima temporada.",
+    timestamp: "há 3 horas",
+    likes: 8,
+  },
+  {
+    id: "2",
+    user: {
+      name: "Mia Santos",
+      username: "mia.santos",
+      avatar: "/src/assets/avatar-mia.jpg",
+    },
+    content: "Muito bom! Estou esperando ansiosamente pela próxima temporada.",
+    timestamp: "há 3 horas",
+    likes: 8,
+  },
+
+  {
+    id: "2",
+    user: {
+      name: "Mia Santos",
+      username: "mia.santos",
+      avatar: "/src/assets/avatar-mia.jpg",
+    },
+    content: "Muito bom! Estou esperando ansiosamente pela próxima temporada.",
+    timestamp: "há 3 horas",
+    likes: 8,
+  },
 ];
 
-export const PostModal = ({ open, onOpenChange, post }: PostModalProps) => {
+export const PostModal = ({ post }: PostModalProps) => {
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
-  const [showFullText, setShowFullText] = useState(false);
+  const [showFullText, setShowFullText] = useState(true);
   const [newComment, setNewComment] = useState("");
-  const [isLiked, setIsLiked] = useState(post.liked);
+  const [isLiked, setIsLiked] = useState(post.user_already_like);
   const [likeCount, setLikeCount] = useState(post.likes);
+  const { comments } = useCommentsContext();
   const { Feed } = useFeedServerContext();
   const icons = Feed.ServerPostModal.icons;
   const texts = Feed.ServerPostModal.text;
   const buttons = Feed.ServerPostModal.buttons;
-
+  const components = Feed.ServerFeedPost.components;
+  const router = useRouter();
   const handleLike = () => {
     setIsLiked(!isLiked);
     setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1));
@@ -106,7 +183,7 @@ export const PostModal = ({ open, onOpenChange, post }: PostModalProps) => {
   };
 
   const nextMedia = () => {
-    if (post.media && currentMediaIndex < post.media.length - 1) {
+    if (post.medias && currentMediaIndex < post.medias.length - 1) {
       setCurrentMediaIndex(currentMediaIndex + 1);
     }
   };
@@ -117,36 +194,48 @@ export const PostModal = ({ open, onOpenChange, post }: PostModalProps) => {
     }
   };
 
-  const hasMedia = post.media && post.media.length > 0;
+  const hasMedia = post.medias && post.medias.length > 0;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl w-full h-[85vh] p-0 bg-background/95 backdrop-blur-xl border border-primary/20">
-        <div className="flex h-full">
+    <Dialog defaultOpen onOpenChange={() => router.back()}>
+      <DialogContent
+        className="max-w-[70vw] w-full h-[95vh] p-0 bg-background/95 backdrop-blur-xl border border-primary/20 overflow-hidden"
+        // style={{
+        //   maxHeight: "calc(100vh - 164px)",
+        //   // top: "64px",
+        //   // marginBottom: "100px",
+        // }}
+        aria-describedby={undefined}
+      >
+        <VisuallyHidden>
+          <DialogTitle></DialogTitle>
+        </VisuallyHidden>
+        <div className="flex min-h-0 w-full flex-col sm:flex-row">
           {/* Media Section (if exists) */}
           {hasMedia && (
-            <div className="w-3/5 bg-black/50 flex items-center justify-center relative">
-              {post.media![currentMediaIndex].type === "image" ? (
-                <img
-                  src={post.media![currentMediaIndex].url}
+            <div
+              className={`${
+                hasMedia ? "sm:w-[55%] 2xl:w-[65%] w-full" : "w-full"
+              } bg-black/50 flex items-center justify-center relative h-full`}
+            >
+              {post.medias![currentMediaIndex].media_type === "image" ? (
+                <ImageComponent
+                  media_id={post.medias![currentMediaIndex].media_file}
                   alt="Post media"
-                  className="max-h-full max-w-full object-contain"
+                  objectFit="contain"
+                  className="w-full transition-transform duration-300"
                 />
               ) : (
-                <div className="relative">
-                  <video
-                    src={post.media![currentMediaIndex].url}
-                    className="max-h-full max-w-full object-contain"
-                    controls
+                <div className="relative h-full">
+                  <VideoComponent
+                    media_id={post.medias![currentMediaIndex].media_file}
+                    className="max-h-full max-w-full h-full w-full object-cover"
                   />
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    {icons.Play}
-                  </div>
                 </div>
               )}
 
               {/* Media Navigation */}
-              {post.media!.length > 1 && (
+              {post.medias!.length > 1 && (
                 <>
                   {currentMediaIndex > 0 && (
                     <Button
@@ -158,20 +247,20 @@ export const PostModal = ({ open, onOpenChange, post }: PostModalProps) => {
                       {icons.ChevronLeft}
                     </Button>
                   )}
-                  {currentMediaIndex < post.media!.length - 1 && (
+                  {currentMediaIndex < post.medias!.length - 1 && (
                     <Button
                       variant="ghost"
                       size="icon"
                       className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white"
                       onClick={nextMedia}
                     >
-                      {icons.ChevronLeft}
+                      {icons.ChevronRight}
                     </Button>
                   )}
 
                   {/* Media indicators */}
                   <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                    {post.media!.map((_, index) => (
+                    {post.medias!.map((_, index) => (
                       <div
                         key={index}
                         className={`w-2 h-2 rounded-full ${
@@ -188,37 +277,38 @@ export const PostModal = ({ open, onOpenChange, post }: PostModalProps) => {
           )}
 
           {/* Content Section */}
-          <div className={`${hasMedia ? "w-2/5" : "w-full"} flex flex-col`}>
+          <div className="flex flex-col overflow-auto flex-1">
             {/* Post Header */}
-            <div className="p-6 border-b border-border/50">
-              <div className="flex items-center space-x-3 mb-4">
-                <Avatar className="w-12 h-12 ring-2 ring-primary/30">
-                  <AvatarImage src={post.user.avatar} alt={post.user.name} />
-                  <AvatarFallback className="bg-gradient-primary text-white">
-                    {post.user.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </AvatarFallback>
-                </Avatar>
+            <div className="p-6 pb-2 border-b border-border/50 sticky bg-background z-10 top-0 ">
+              <div className="flex items-center space-x-3 mb-2 z-20">
+                <div className="w-12 h-12 relative rounded-full overflow-hidden ring-2 ring-primary/30">
+                  {post.profile_photo ? (
+                    <ImageComponent
+                      media_id={post.profile_photo}
+                      className="object-cover rounded-full h-10 w-10"
+                    />
+                  ) : (
+                    components.NoImageProfile
+                  )}
+                </div>
                 <div className="flex-1">
                   <div className="flex items-center space-x-2">
-                    <h3 className="font-bold text-lg">{post.user.name}</h3>
-                    {post.user.verified && texts.verified}
+                    <h3 className="font-bold text-lg">{post.name}</h3>
+                    {post.verified && texts.verified}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    @{post.user.username}
+                    @{post.username}
                   </p>
                 </div>
               </div>
 
               {/* Post Text Toggle */}
-              {post.content && (
-                <div className="mb-4">
+              {post.comment && (
+                <div className="mb-2">
                   {showFullText ? (
                     <div className="space-y-3">
                       <p className="text-foreground leading-relaxed">
-                        {post.content}
+                        {post.comment}
                       </p>
                       <Button
                         variant="ghost"
@@ -260,7 +350,7 @@ export const PostModal = ({ open, onOpenChange, post }: PostModalProps) => {
                         isLiked ? "fill-current" : ""
                       }`}
                     />
-                    {likeCount}
+                    {post.quantity_likes}
                   </Button>
                   <Button
                     variant="ghost"
@@ -268,7 +358,7 @@ export const PostModal = ({ open, onOpenChange, post }: PostModalProps) => {
                     className="text-muted-foreground hover:text-primary p-2"
                   >
                     {icons.MessageCircle}
-                    {post.comments}
+                    {post.quantity_comment}
                   </Button>
                   <Button
                     variant="ghost"
@@ -276,48 +366,47 @@ export const PostModal = ({ open, onOpenChange, post }: PostModalProps) => {
                     className="text-muted-foreground hover:text-primary p-2"
                   >
                     {icons.Share2}
-                    {post.shares}
+                    {post.quantity_reposts}
                   </Button>
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {post.timestamp}
+                  <DateAndHour date={post.timestamp} />
                 </span>
               </div>
             </div>
 
             {/* Comments Section */}
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col relative">
               {texts.comments}
 
-              <ScrollArea className="flex-1 px-4">
-                {mockComments.length > 0 ? (
+              <ScrollArea className=" px-4 flex-1 flex flex-col">
+                {comments.data.length > 0 ? (
                   <div className="space-y-4 pb-4">
-                    {mockComments.map((comment) => (
+                    {comments.data.map((comment) => (
                       <div key={comment.id} className="space-y-2">
-                        <div className="flex items-start space-x-3">
-                          <Avatar className="w-8 h-8">
-                            <AvatarImage
-                              src={comment.user.avatar}
-                              alt={comment.user.name}
-                            />
-                            <AvatarFallback className="bg-gradient-primary text-white text-xs">
-                              {comment.user.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </AvatarFallback>
-                          </Avatar>
+                        <div className="flex items-start space-x-3 pl-1">
+                          {comment.created_by_user_photo ? (
+                            <div className="w-12 h-12 pl-2 relative rounded-full overflow-hidden ring-2 ring-primary/30 flex-shrink-0">
+                              <ImageComponent
+                                media_id={comment.created_by_user_photo}
+                                alt={`Profile photo of the user ${comment?.created_by_user_name}`}
+                                className="object-cover rounded-full"
+                              />
+                            </div>
+                          ) : (
+                            components.NoImageProfile
+                          )}
                           <div className="flex-1 min-w-0">
                             <div className="bg-muted/50 rounded-lg p-3">
                               <div className="flex items-center space-x-2 mb-1">
                                 <span className="font-medium text-sm">
-                                  {comment.user.name}
+                                  {comment.created_by_user_name}
                                 </span>
                                 <span className="text-xs text-muted-foreground">
-                                  {comment.timestamp}
+                                  <DateAndHour date={comment.timestamp} />
                                 </span>
                               </div>
-                              <p className="text-sm">{comment.content}</p>
+                              <p className="text-sm">{comment.comment}</p>
                             </div>
                             <div className="flex items-center space-x-4 mt-2 ml-3">
                               <Button
@@ -326,7 +415,7 @@ export const PostModal = ({ open, onOpenChange, post }: PostModalProps) => {
                                 className="text-xs text-muted-foreground hover:text-red-500 p-0 h-auto"
                               >
                                 {icons.Heart}
-                                {comment.likes}
+                                {comment.quantity_likes}
                               </Button>
                               {buttons.answer}
                             </div>
@@ -334,36 +423,33 @@ export const PostModal = ({ open, onOpenChange, post }: PostModalProps) => {
                         </div>
 
                         {/* Replies */}
-                        {comment.replies && (
+                        {comment.answers && (
                           <div className="ml-11 space-y-2">
-                            {comment.replies.map((reply) => (
+                            {comment.answers.results.map((reply) => (
                               <div
                                 key={reply.id}
                                 className="flex items-start space-x-3"
                               >
-                                <Avatar className="w-7 h-7">
-                                  <AvatarImage
-                                    src={reply.user.avatar}
-                                    alt={reply.user.name}
+                                {reply.created_by_user_photo ? (
+                                  <ImageComponent
+                                    media_id={reply.created_by_user_photo}
+                                    alt={`Profile photo of the user ${reply?.created_by_user_name}`}
                                   />
-                                  <AvatarFallback className="bg-gradient-secondary text-white text-xs">
-                                    {reply.user.name
-                                      .split(" ")
-                                      .map((n) => n[0])
-                                      .join("")}
-                                  </AvatarFallback>
-                                </Avatar>
+                                ) : (
+                                  components.NoImageProfile
+                                )}
+
                                 <div className="flex-1 min-w-0">
                                   <div className="bg-muted/30 rounded-lg p-2">
                                     <div className="flex items-center space-x-2 mb-1">
                                       <span className="font-medium text-xs">
-                                        {reply.user.name}
+                                        {reply.created_by_user_name}
                                       </span>
                                       <span className="text-xs text-muted-foreground">
-                                        {reply.timestamp}
+                                        <DateAndHour date={reply.timestamp} />
                                       </span>
                                     </div>
-                                    <p className="text-xs">{reply.content}</p>
+                                    <p className="text-xs">{reply.comment}</p>
                                   </div>
                                   <div className="flex items-center space-x-4 mt-1 ml-2">
                                     <Button
@@ -372,7 +458,7 @@ export const PostModal = ({ open, onOpenChange, post }: PostModalProps) => {
                                       className="text-xs text-muted-foreground hover:text-red-500 p-0 h-auto"
                                     >
                                       {icons.Heart}
-                                      {reply.likes}
+                                      {reply.quantity_likes}
                                     </Button>
                                   </div>
                                 </div>
@@ -384,12 +470,14 @@ export const PostModal = ({ open, onOpenChange, post }: PostModalProps) => {
                     ))}
                   </div>
                 ) : (
-                  buttons.comment
+                  <div className="items-center justify-center text-center space-y-4 p-4">
+                    {buttons.comment}
+                  </div>
                 )}
               </ScrollArea>
 
               {/* Comment Input */}
-              <div className="p-4 border-t border-border/50">
+              <div className="p-4 border-t border-border/50 sticky bg-background/100 bottom-0 w-full">
                 <div className="flex space-x-3">
                   <Input
                     value={newComment}

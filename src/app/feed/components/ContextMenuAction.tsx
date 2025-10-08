@@ -24,16 +24,6 @@ function ContextMenuAction({
         <AlertDialogHeader>
           {titles.confirm}
           <AlertDialogDescription>
-            {/* {alertAction === "delete" &&
-              "Tem certeza que deseja deletar este post?"}
-            {alertAction === "pin" &&
-              "Tem certeza que deseja fixar este post no seu perfil?"}
-            {alertAction === "block" &&
-              "Tem certeza que deseja bloquear este usuário?"}
-            {alertAction === "remove" &&
-              "Tem certeza que deseja remover este post do seu feed?"}
-            {alertAction === "mute" &&
-              "Tem certeza que deseja silenciar este usuário?"} */}
             {getAlertActionMessage(alertAction)}
           </AlertDialogDescription>
         </AlertDialogHeader>

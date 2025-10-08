@@ -72,7 +72,7 @@ export const QuickMessagesFooter = () => {
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: 100, opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="fixed bottom-0 left-20 right-0 z-40 bg-background/90 backdrop-blur-xl border-t border-border/50 p-4"
+      className="fixed bottom-0 left-20 right-0 z-40 bg-background/90 backdrop-blur-xl border-t border-border/50 p-4 mt-[120px]"
     >
       <div className="max-w-7xl mx-auto flex items-center justify-center">
         {/* Title */}

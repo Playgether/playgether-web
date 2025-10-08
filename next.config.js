@@ -1,5 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: "/ws/:path*",
+        destination: "http://192.168.18.8:8000/ws/:path*", // backend WS
+      },
+      {
+        source: "/api/:path*",
+        destination: "http://192.168.18.8:8000/api/:path*", // backend REST
+      },
+    ];
+  },
   experimental: {},
   images: {
     domains: [
@@ -15,20 +27,8 @@ const nextConfig = {
     ],
   },
 
-  async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: "https://americas.api.riotgames.com/:path*",
-      },
-    ];
-  },
   env: {
     baseUrl: process.env.LOCAL_API_URL,
-  },
-  i18n: {
-    locales: ["en-US", "fr", "nl-NL", "pt-BR"],
-    defaultLocale: "pt-BR",
   },
 };
 

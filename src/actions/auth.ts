@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { api } from "@/services/api";
 import jwt_decode from "jwt-decode";
 
+// app/actions/authActions.ts
 export async function loginAction(formData: FormData) {
   const user = {
     username: formData.get("username"),
@@ -12,37 +13,35 @@ export async function loginAction(formData: FormData) {
 
   try {
     const response = await api.post("/api/token/", user);
-
-    // Decodifica o token de acesso para obter as informações do usuário
     const decodedAccessToken = jwt_decode(response.data.access);
 
-    // Salva o token de acesso em um cookie
-    (await cookies()).set("accessToken", response.data.access, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      // maxAge: 3600, // 1 hora
-    });
+    const cookiesInstance = await cookies();
+    const isProduction = process.env.NODE_ENV === "production";
 
-    // Salva o token de refresh em um cookie
-    (await cookies()).set("refreshToken", response.data.refresh, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 604800, // 7 dias
-    });
+    const cookieOptions = isProduction
+      ? {
+          httpOnly: true,
+          secure: true,
+          sameSite: "lax" as const,
+        }
+      : {
+          httpOnly: true,
+          secure: false, // false em dev
+          sameSite: "lax" as const,
+        };
 
-    // Salva o user_id em um cookie (extraído do token decodificado)
-    (await cookies()).set("user_id", decodedAccessToken.user_id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      // maxAge: 3600, // 1 hora
+    cookiesInstance.set("accessToken", response.data.access, cookieOptions);
+    cookiesInstance.set("refreshToken", response.data.refresh, {
+      ...cookieOptions,
+      maxAge: 604800,
     });
+    cookiesInstance.set("user_id", decodedAccessToken.user_id, cookieOptions);
 
     return { error: null };
   } catch (error) {
     if (error.response && error.response.status === 401) {
       return { error: "wrong_password" };
     }
-
-    return { error: error };
+    return { error: error.message || "Erro desconhecido" };
   }
 }

@@ -1,7 +1,4 @@
-import { getComments } from "@/services/getComments";
-import { useCommentsContext } from "../../../../../../context/CommentsContext";
 import VirtualizedComments from "../VirtualizedComments/VirtualizedComments";
-
 
 export interface Props {
   params?: { username: string };
@@ -23,7 +20,6 @@ export interface CommentSectionLogicInterface {
  * para o backend."
  */
 
-
 // const CommentSectionFetchData = async ({
 //   postId,
 // }: CommentSectionLogicInterface) => {
@@ -34,7 +30,7 @@ export interface CommentSectionLogicInterface {
 
 // export default CommentSectionFetchData;
 
-export default async function CommentSectionFetchData({postId}) {
+export default async function CommentSectionFetchData({ postId }) {
   // const response = await getComments(postId);
   // console.log(response)
   // await fetchData(postId);

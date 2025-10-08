@@ -1,7 +1,7 @@
 import { api } from "@/services/api";
 import { cookies } from "next/headers";
 
-export async function getFeed(pageParam: string | null = null) {
+export async function getFeedServer(pageParam: string | null = null) {
   const accessToken = (await cookies()).get("accessToken")?.value;
   try {
     const response = await api.get(`/api/v1/feed/`, {

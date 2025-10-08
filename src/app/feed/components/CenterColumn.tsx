@@ -1,15 +1,26 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import React from "react";
-import { FeedPost } from "./FeedPost";
+import React, { useCallback } from "react";
 import { useFeedContext } from "../context/FeedContext";
+import { Virtuoso } from "react-virtuoso";
+import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 
-export default function CenterColumn() {
-  const { handleRepost, handlePostUpdate, handleCreatePostModal, posts } =
-    useFeedContext();
+export default function CenterColumn({ FeedPost }: { FeedPost: JSX.Element }) {
+  const {
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    handleCreatePostModal,
+    posts,
+  } = useFeedContext();
+  const loadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
   return (
-    <div className="col-span-6 space-y-6">
+    <div className="col-span-6 space-y-6 relative">
       {/* Create Post Button */}
       <div className="mb-6">
         <Button
@@ -20,18 +31,26 @@ export default function CenterColumn() {
           Compartilhe algo conosco
         </Button>
       </div>
-
-      {posts.map((post, index) => (
-        <div key={post.id} style={{ animationDelay: `${index * 200}ms` }}>
-          <FeedPost
-            post={post}
-            onPostUpdate={(updatedPost) =>
-              handlePostUpdate(updatedPost, post.id)
-            }
-            onRepost={handleRepost}
-          />
-        </div>
-      ))}
+      <div className="flex flex-col gap-[70px] relative">
+        <Virtuoso
+          useWindowScroll
+          style={{ height: "100%" }}
+          increaseViewportBy={200}
+          overscan={3}
+          data={posts}
+          endReached={loadMore}
+          itemContent={(index, post) => (
+            <div key={post.id} style={{ animationDelay: `${index * 200}ms` }}>
+              {React.cloneElement(FeedPost, { post })}
+            </div>
+          )}
+        />
+        {isFetchingNextPage && (
+          <div className="h-fit w-full z-40 mt-[30px]">
+            <LoadingComponent text="Carregando novos posts" showText={true} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

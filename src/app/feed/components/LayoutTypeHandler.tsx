@@ -6,17 +6,16 @@ import { useFeedContext } from "../context/FeedContext";
 import { Button } from "@/components/ui/button";
 
 export default function LayoutTypeHandler({
-  FeedPost,
   CenterColumn,
 }: {
-  FeedPost: JSX.Element;
   CenterColumn: JSX.Element;
 }) {
   const isMobile = useIsMobile();
   const { Feed } = useFeedServerContext();
   const icons = Feed.ServerFeedPage.icons;
   const components = Feed.ServerFeedPage.components;
-  const { handleCreatePostModal, posts } = useFeedContext();
+  const { handleCreatePostModal } = useFeedContext();
+
   return (
     <>
       {isMobile ? (
@@ -32,16 +31,10 @@ export default function LayoutTypeHandler({
               Compartilhe algo conosco
             </Button>
           </div>
-
-          {posts.map((post, index) => (
-            <div key={post.id} style={{ animationDelay: `${index * 200}ms` }}>
-              {React.cloneElement(FeedPost, { post: post })}
-            </div>
-          ))}
         </div>
       ) : (
         /* Desktop Layout - Full Grid */
-        <div className="grid grid-cols-12 gap-8">
+        <div className="grid grid-cols-12 gap-8 pb-10">
           {/* Left Column - User Profile & Friends */}
           {components.LeftColumn}
 

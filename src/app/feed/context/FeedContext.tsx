@@ -1,9 +1,18 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+} from "react";
 import { PostProps } from "../types/PostProps";
 import { FeedContextType } from "./FeedContextType";
 import { ResponseFeed } from "../types/ResponseFeed";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useAuthContext } from "@/context/AuthContext";
+import { getFeedClient } from "../services/getFeedClient";
 
 // Criando o contexto
 const FeedContext = createContext<FeedContextType | undefined>(undefined);
@@ -27,6 +36,28 @@ export const FeedProvider = ({
 }) => {
   const [posts, setPosts] = useState<PostProps[]>(response.data);
   const [createPostOpen, setCreatePostOpen] = useState(false);
+  const { user } = useAuthContext();
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteQuery({
+      queryKey: ["feed-posts"],
+      queryFn: ({ pageParam }) => getFeedClient(pageParam),
+      getNextPageParam: (lastPage) => {
+        if (lastPage?.next_page) {
+          const url = new URL(lastPage.next_page);
+          return url.searchParams.get("cursor");
+        }
+        return null;
+      },
+      enabled: !!user,
+      initialPageParam: null,
+    });
+
+  useEffect(() => {
+    if (data?.pages) {
+      const merged = data.pages.flatMap((page) => page.data ?? []);
+      setPosts(merged);
+    }
+  }, [data]);
 
   const handleCreatePostModal = (argument: boolean) => {
     setCreatePostOpen(argument);
@@ -98,6 +129,9 @@ export const FeedProvider = ({
         createPostOpen,
         handleCreatePostModal,
         handleLike,
+        isFetchingNextPage,
+        hasNextPage,
+        fetchNextPage,
       }}
     >
       {children}
