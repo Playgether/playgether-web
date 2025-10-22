@@ -1,11 +1,11 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { Heart } from "lucide-react";
 import React from "react";
 import { useFeedServerContext } from "../context/FeedServerContext";
 import { useFeedContext } from "../context/FeedContext";
 import { PostProps } from "../types/PostProps";
+import { LikeContentType } from "@/components/content_types/LikeContentType";
+import { PostPropertiers } from "@/components/layouts/components/PostsPropertiersQuantity";
 
 export default function PostActions({
   post,
@@ -17,9 +17,12 @@ export default function PostActions({
   const { Feed } = useFeedServerContext();
   const icons = Feed.ServerFeedPost.icons;
   const { handleLike } = useFeedContext();
+  const onClickLike = () => {
+    handleLike(post.id);
+  };
   return (
     <>
-      <Button
+      {/* <Button
         variant="ghost"
         size="sm"
         onClick={() => handleLike(post.id)}
@@ -34,26 +37,19 @@ export default function PostActions({
           className={cn("w-5 h-5", post.user_already_like && "fill-current")}
         />
         <span className="font-medium">{post.quantity_likes}</span>
-      </Button>
-
-      <Button
-        variant="ghost"
-        size="sm"
-        className="flex items-center space-x-2 text-muted-foreground hover:text-neon-blue transition-colors"
-      >
-        {icons.MessageCircle}
-        <span className="font-medium">{post.quantity_comment}</span>
-      </Button>
-
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => handleShareModal(true)}
-        className="flex items-center space-x-2 text-muted-foreground hover:text-neon-green transition-colors"
-      >
-        {icons.Share2}
-        <span className="font-medium">{post.quantity_reposts}</span>
-      </Button>
+      </Button> */}
+      <PostPropertiers.Root className="">
+        <PostPropertiers.Like
+          quantity_likes={post.quantity_likes}
+          user_already_like={post.user_already_like}
+          object_id={post.id}
+          content_type={LikeContentType.post}
+          onAddLike={onClickLike}
+          onDeleteLike={onClickLike}
+        />
+        <PostPropertiers.Comment quantity_comment={post.quantity_comment} />
+        <PostPropertiers.Share quantity_reposts={post.quantity_reposts} />
+      </PostPropertiers.Root>
     </>
   );
 }

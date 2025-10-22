@@ -1,4 +1,6 @@
-import { use, useState } from "react";
+"use client";
+
+import { useCallback, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,168 +14,38 @@ import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
 import VideoComponent from "@/components/layouts/VideoComponent/VideoComponent";
 import { useRouter } from "next/navigation";
 import { useCommentsContext } from "@/context/CommentsContext";
+import { Virtuoso } from "react-virtuoso";
+import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
+import { PostPropertiers } from "@/components/layouts/components/PostsPropertiersQuantity";
+import { LikeContentType } from "@/components/content_types/LikeContentType";
+import { useFeedContext } from "../context/FeedContext";
 
 interface PostModalProps {
   post: PostProps;
 }
 
-interface Comment {
-  id: string;
-  user: {
-    name: string;
-    username: string;
-    avatar: string;
-  };
-  content: string;
-  timestamp: string;
-  likes: number;
-  replies?: Comment[];
-}
-
-const mockComments: Comment[] = [
-  {
-    id: "1",
-    user: {
-      name: "Sophia Andrade",
-      username: "sophia.andrade",
-      avatar: "/src/assets/avatar-sophia.jpg",
-    },
-    content: "Excelente post! Concordo totalmente com sua análise.",
-    timestamp: "há 2 horas",
-    likes: 12,
-    replies: [
-      {
-        id: "1-1",
-        user: {
-          name: "Aline Moreira",
-          username: "aline.moreira",
-          avatar: "/src/assets/avatar-aline.jpg",
-        },
-        content: "Também achei interessante!",
-        timestamp: "há 1 hora",
-        likes: 3,
-      },
-    ],
-  },
-  {
-    id: "2",
-    user: {
-      name: "Mia Santos",
-      username: "mia.santos",
-      avatar: "/src/assets/avatar-mia.jpg",
-    },
-    content: "Muito bom! Estou esperando ansiosamente pela próxima temporada.",
-    timestamp: "há 3 horas",
-    likes: 8,
-  },
-  {
-    id: "2",
-    user: {
-      name: "Mia Santos",
-      username: "mia.santos",
-      avatar: "/src/assets/avatar-mia.jpg",
-    },
-    content: "Muito bom! Estou esperando ansiosamente pela próxima temporada.",
-    timestamp: "há 3 horas",
-    likes: 8,
-  },
-  {
-    id: "2",
-    user: {
-      name: "Mia Santos",
-      username: "mia.santos",
-      avatar: "/src/assets/avatar-mia.jpg",
-    },
-    content: "Muito bom! Estou esperando ansiosamente pela próxima temporada.",
-    timestamp: "há 3 horas",
-    likes: 8,
-  },
-  {
-    id: "2",
-    user: {
-      name: "Mia Santos",
-      username: "mia.santos",
-      avatar: "/src/assets/avatar-mia.jpg",
-    },
-    content: "Muito bom! Estou esperando ansiosamente pela próxima temporada.",
-    timestamp: "há 3 horas",
-    likes: 8,
-  },
-  {
-    id: "2",
-    user: {
-      name: "Mia Santos",
-      username: "mia.santos",
-      avatar: "/src/assets/avatar-mia.jpg",
-    },
-    content: "Muito bom! Estou esperando ansiosamente pela próxima temporada.",
-    timestamp: "há 3 horas",
-    likes: 8,
-  },
-  {
-    id: "2",
-    user: {
-      name: "Mia Santos",
-      username: "mia.santos",
-      avatar: "/src/assets/avatar-mia.jpg",
-    },
-    content: "Muito bom! Estou esperando ansiosamente pela próxima temporada.",
-    timestamp: "há 3 horas",
-    likes: 8,
-  },
-  {
-    id: "2",
-    user: {
-      name: "Mia Santos",
-      username: "mia.santos",
-      avatar: "/src/assets/avatar-mia.jpg",
-    },
-    content: "Muito bom! Estou esperando ansiosamente pela próxima temporada.",
-    timestamp: "há 3 horas",
-    likes: 8,
-  },
-  {
-    id: "2",
-    user: {
-      name: "Mia Santos",
-      username: "mia.santos",
-      avatar: "/src/assets/avatar-mia.jpg",
-    },
-    content: "Muito bom! Estou esperando ansiosamente pela próxima temporada.",
-    timestamp: "há 3 horas",
-    likes: 8,
-  },
-
-  {
-    id: "2",
-    user: {
-      name: "Mia Santos",
-      username: "mia.santos",
-      avatar: "/src/assets/avatar-mia.jpg",
-    },
-    content: "Muito bom! Estou esperando ansiosamente pela próxima temporada.",
-    timestamp: "há 3 horas",
-    likes: 8,
-  },
-];
-
 export const PostModal = ({ post }: PostModalProps) => {
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  // showReplies boolean -> track opened replies per comment id
+  const [openReplies, setOpenReplies] = useState<Set<number>>(new Set());
+  // loading state per comment id while fetching its answers
+  const [loadingReplies, setLoadingReplies] = useState<Set<number>>(new Set());
   const [showFullText, setShowFullText] = useState(true);
   const [newComment, setNewComment] = useState("");
-  const [isLiked, setIsLiked] = useState(post.user_already_like);
-  const [likeCount, setLikeCount] = useState(post.likes);
-  const { comments } = useCommentsContext();
+  const { handleLike } = useFeedContext();
+  const {
+    comments,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+    openAnswers,
+  } = useCommentsContext();
   const { Feed } = useFeedServerContext();
   const icons = Feed.ServerPostModal.icons;
   const texts = Feed.ServerPostModal.text;
   const buttons = Feed.ServerPostModal.buttons;
   const components = Feed.ServerFeedPost.components;
   const router = useRouter();
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1));
-  };
 
   const handleSubmitComment = () => {
     if (newComment.trim()) {
@@ -181,6 +53,10 @@ export const PostModal = ({ post }: PostModalProps) => {
       setNewComment("");
     }
   };
+
+  const onClickLike = useCallback(() => {
+    handleLike(post.id);
+  }, [handleLike, post.id]);
 
   const nextMedia = () => {
     if (post.medias && currentMediaIndex < post.medias.length - 1) {
@@ -194,17 +70,54 @@ export const PostModal = ({ post }: PostModalProps) => {
     }
   };
 
+  const loadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
   const hasMedia = post.medias && post.medias.length > 0;
+
+  // helpers for reply open/loading state
+  const isRepliesOpen = (id: number) => openReplies.has(id);
+  const isRepliesLoading = (id: number) => loadingReplies.has(id);
+
+  const toggleReplies = async (commentId: number) => {
+    if (!isRepliesOpen(commentId)) {
+      // open: set loading, fetch answers, then mark opened
+      setLoadingReplies((prev) => {
+        const next = new Set(prev);
+        next.add(commentId);
+        return next;
+      });
+      try {
+        await openAnswers(commentId);
+        setOpenReplies((prev) => {
+          const next = new Set(prev);
+          next.add(commentId);
+          return next;
+        });
+      } finally {
+        setLoadingReplies((prev) => {
+          const next = new Set(prev);
+          next.delete(commentId);
+          return next;
+        });
+      }
+    } else {
+      // close
+      setOpenReplies((prev) => {
+        const next = new Set(prev);
+        next.delete(commentId);
+        return next;
+      });
+    }
+  };
 
   return (
     <Dialog defaultOpen onOpenChange={() => router.back()}>
       <DialogContent
         className="max-w-[70vw] w-full h-[95vh] p-0 bg-background/95 backdrop-blur-xl border border-primary/20 overflow-hidden"
-        // style={{
-        //   maxHeight: "calc(100vh - 164px)",
-        //   // top: "64px",
-        //   // marginBottom: "100px",
-        // }}
         aria-describedby={undefined}
       >
         <VisuallyHidden>
@@ -335,149 +248,185 @@ export const PostModal = ({ post }: PostModalProps) => {
               )}
 
               {/* Post Actions */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-6">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleLike}
-                    className={`${
-                      isLiked ? "text-red-500" : "text-muted-foreground"
-                    } hover:text-red-500 p-2`}
-                  >
-                    <Heart
-                      className={`w-5 h-5 mr-2 ${
-                        isLiked ? "fill-current" : ""
-                      }`}
-                    />
-                    {post.quantity_likes}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-muted-foreground hover:text-primary p-2"
-                  >
-                    {icons.MessageCircle}
-                    {post.quantity_comment}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-muted-foreground hover:text-primary p-2"
-                  >
-                    {icons.Share2}
-                    {post.quantity_reposts}
-                  </Button>
-                </div>
+              <PostPropertiers.Root className="">
+                <PostPropertiers.Like
+                  quantity_likes={post.quantity_likes}
+                  user_already_like={post.user_already_like}
+                  object_id={post.id}
+                  content_type={LikeContentType.post}
+                  onAddLike={onClickLike}
+                  onDeleteLike={onClickLike}
+                />
+                <PostPropertiers.Comment
+                  quantity_comment={post.quantity_comment}
+                />
+                <PostPropertiers.Share
+                  quantity_reposts={post.quantity_reposts}
+                />
                 <span className="text-sm text-muted-foreground">
                   <DateAndHour date={post.timestamp} />
                 </span>
-              </div>
+              </PostPropertiers.Root>
             </div>
 
             {/* Comments Section */}
             <div className="flex-1 flex flex-col relative">
               {texts.comments}
 
-              <ScrollArea className=" px-4 flex-1 flex flex-col">
-                {comments.data.length > 0 ? (
-                  <div className="space-y-4 pb-4">
-                    {comments.data.map((comment) => (
-                      <div key={comment.id} className="space-y-2">
-                        <div className="flex items-start space-x-3 pl-1">
-                          {comment.created_by_user_photo ? (
-                            <div className="w-12 h-12 pl-2 relative rounded-full overflow-hidden ring-2 ring-primary/30 flex-shrink-0">
-                              <ImageComponent
-                                media_id={comment.created_by_user_photo}
-                                alt={`Profile photo of the user ${comment?.created_by_user_name}`}
-                                className="object-cover rounded-full"
-                              />
-                            </div>
-                          ) : (
-                            components.NoImageProfile
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="bg-muted/50 rounded-lg p-3">
-                              <div className="flex items-center space-x-2 mb-1">
-                                <span className="font-medium text-sm">
-                                  {comment.created_by_user_name}
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                  <DateAndHour date={comment.timestamp} />
-                                </span>
+              {comments.data.length > 0 ? (
+                <Virtuoso
+                  increaseViewportBy={200}
+                  data={comments.data}
+                  endReached={loadMore}
+                  components={{
+                    Scroller: ScrollArea, // Usa seu ScrollArea como container principal
+                  }}
+                  overscan={3}
+                  itemContent={(index, comment) => (
+                    <div className=" px-4 flex-1 flex flex-col">
+                      <div className="space-y-4 pb-4">
+                        <div key={comment.id} className="space-y-2">
+                          <div className="flex items-start space-x-3 pl-1">
+                            {comment.created_by_user_photo ? (
+                              <div className="w-12 h-12 pl-2 relative rounded-full overflow-hidden ring-2 ring-primary/30 flex-shrink-0">
+                                <ImageComponent
+                                  media_id={comment.created_by_user_photo}
+                                  alt={`Profile photo of the user ${comment?.created_by_user_name}`}
+                                  className="object-cover rounded-full"
+                                />
                               </div>
-                              <p className="text-sm">{comment.comment}</p>
-                            </div>
-                            <div className="flex items-center space-x-4 mt-2 ml-3">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-xs text-muted-foreground hover:text-red-500 p-0 h-auto"
-                              >
-                                {icons.Heart}
-                                {comment.quantity_likes}
-                              </Button>
-                              {buttons.answer}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Replies */}
-                        {comment.answers && (
-                          <div className="ml-11 space-y-2">
-                            {comment.answers.results.map((reply) => (
-                              <div
-                                key={reply.id}
-                                className="flex items-start space-x-3"
-                              >
-                                {reply.created_by_user_photo ? (
-                                  <ImageComponent
-                                    media_id={reply.created_by_user_photo}
-                                    alt={`Profile photo of the user ${reply?.created_by_user_name}`}
-                                  />
-                                ) : (
-                                  components.NoImageProfile
-                                )}
-
-                                <div className="flex-1 min-w-0">
-                                  <div className="bg-muted/30 rounded-lg p-2">
-                                    <div className="flex items-center space-x-2 mb-1">
-                                      <span className="font-medium text-xs">
-                                        {reply.created_by_user_name}
-                                      </span>
-                                      <span className="text-xs text-muted-foreground">
-                                        <DateAndHour date={reply.timestamp} />
-                                      </span>
-                                    </div>
-                                    <p className="text-xs">{reply.comment}</p>
+                            ) : (
+                              components.NoImageProfile
+                            )}
+                            <div className="flex flex-col w-full">
+                              <div className="flex-1 min-w-0 bg-background/50">
+                                <div className="bg-muted/50 rounded-lg p-3 w-fit">
+                                  <div className="flex items-center space-x-2 mb-1">
+                                    <span className="font-medium text-sm">
+                                      {comment.created_by_user_name}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                      <DateAndHour date={comment.timestamp} />
+                                    </span>
                                   </div>
-                                  <div className="flex items-center space-x-4 mt-1 ml-2">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="text-xs text-muted-foreground hover:text-red-500 p-0 h-auto"
-                                    >
-                                      {icons.Heart}
-                                      {reply.quantity_likes}
-                                    </Button>
-                                  </div>
+                                  <p className="text-sm">{comment.comment}</p>
+                                </div>
+                                <div className="flex items-center space-x-4 mt-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-xs text-muted-foreground hover:text-red-500 p-2 h-auto"
+                                  >
+                                    {icons.Heart}
+                                    {comment.quantity_likes}
+                                  </Button>
+                                  {buttons.answer}
                                 </div>
                               </div>
-                            ))}
+
+                              {comment.quantity_replies > 0 && (
+                                <div className="flex mt-1 text-xs text-muted-foreground cursor-pointer ml-2">
+                                  {icons.ArrowRight}
+                                  {!isRepliesOpen(comment.id) ? (
+                                    <p
+                                      onClick={() => {
+                                        toggleReplies(comment.id);
+                                      }}
+                                    >
+                                      Ver Respostas ({comment.quantity_replies})
+                                    </p>
+                                  ) : (
+                                    <p
+                                      onClick={() => {
+                                        toggleReplies(comment.id);
+                                      }}
+                                    >
+                                      Ocultar Respostas
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        )}
+
+                          {/* Loading indicator for this comment (shows under the link, only for the clicked comment) */}
+                          {isRepliesLoading(comment.id) && (
+                            <div className="ml-11 mt-2">
+                              <LoadingComponent
+                                text="Carregando respostas"
+                                showText={true}
+                              />
+                            </div>
+                          )}
+
+                          {/* Replies (render only when that comment is opened) */}
+                          {isRepliesOpen(comment.id) && comment.answers && (
+                            <div className="ml-11 space-y-2 pt-5">
+                              {comment.answers.results.map((reply) => (
+                                <div
+                                  key={reply.id}
+                                  className="flex items-start space-x-3"
+                                >
+                                  {reply.created_by_user_photo ? (
+                                    <ImageComponent
+                                      media_id={reply.created_by_user_photo}
+                                      alt={`Profile photo of the user ${reply?.created_by_user_name}`}
+                                    />
+                                  ) : (
+                                    components.NoImageReplieProfile
+                                  )}
+
+                                  <div className="flex-1 min-w-0">
+                                    <div className="bg-muted/30 rounded-lg p-2">
+                                      <div className="flex items-center space-x-2 mb-1">
+                                        <span className="font-medium text-xs">
+                                          {reply.created_by_user_name}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">
+                                          <DateAndHour date={reply.timestamp} />
+                                        </span>
+                                      </div>
+                                      <p className="text-sm">{reply.comment}</p>
+                                    </div>
+                                    <div className="flex items-center space-x-4 mt-1 ml-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-xs text-muted-foreground hover:text-red-500 p-0 h-auto"
+                                      >
+                                        {icons.Heart}
+                                        {reply.quantity_likes}
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                              <div className="text-sm text-center text-muted-foreground cursor-pointer">
+                                <p>Carregar Mais</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="items-center justify-center text-center space-y-4 p-4">
-                    {buttons.comment}
-                  </div>
-                )}
-              </ScrollArea>
+                    </div>
+                  )}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-center space-y-4 p-4">
+                  {buttons.comment}
+                </div>
+              )}
+              {isFetchingNextPage && (
+                <div className="w-full p-2 bg-opacity-40 text-white text-center z-10">
+                  <LoadingComponent
+                    text="Carregando novos comentários"
+                    showText={true}
+                  />
+                </div>
+              )}
 
               {/* Comment Input */}
-              <div className="p-4 border-t border-border/50 sticky bg-background/100 bottom-0 w-full">
+              <div className="p-4 border-t border-border/50 sticky bg-background/100 flex-1 bottom-0 w-full">
                 <div className="flex space-x-3">
                   <Input
                     value={newComment}

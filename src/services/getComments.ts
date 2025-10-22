@@ -1,7 +1,3 @@
-import { cookies } from "next/headers";
-import { api } from "./api";
-import { TokenData } from "./updateTokenRequest";
-
 export interface PostCommentsApiReturn {
   next: string;
   previous: string;
@@ -21,6 +17,7 @@ export interface PostsCommentsProps {
   content_type: string;
   user: number;
   edited: boolean;
+  quantity_replies: number;
 }
 
 export interface PostCommentsOfCommentsProps {
@@ -39,7 +36,10 @@ export interface PostCommentsOfCommentsProps {
   edited: boolean;
 }
 
-export async function getComments(id: number, pageParam: string | null = null) {
+export async function getCommentsClient(
+  id: number,
+  pageParam: string | null = null
+) {
   try {
     const response = await fetch(
       `/api/comments/${id}?cursor=${pageParam || ""}`

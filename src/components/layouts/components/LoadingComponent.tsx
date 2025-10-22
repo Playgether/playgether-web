@@ -13,7 +13,7 @@ export const LoadingComponent = ({
   ...rest
 }: LoadingProps) => {
   return (
-    <div className="flex flex-wrap LoadingComponent-wrapper h-full w-full items-center justify-center overflow-hidden gap-2">
+    <div className="flex flex-wrap h-full w-full items-center justify-center overflow-hidden gap-2">
       {showText && <p>{text}</p>}
       <CgSpinner className={twMerge("animate-spin h-8 w-8", rest.className)} />
     </div>

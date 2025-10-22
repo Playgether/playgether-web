@@ -6,7 +6,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
 } from "@/components/ui/dropdown-menu";
-import { PostModal } from "./PostModal";
 import { useFeedServerContext } from "../context/FeedServerContext";
 import RepostFlag from "./RepostFlag";
 import ContextMenuOwn from "./ContextMenuOwn";
@@ -23,7 +22,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export const FeedPost = ({ post }: { post?: PostProps }) => {
-  const [modalOpen, setModalOpen] = useState(false);
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertAction, setAlertAction] = useState<string>("");
   const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -188,10 +186,6 @@ export const FeedPost = ({ post }: { post?: PostProps }) => {
         handleShareModal={handleShareModal}
         shareModalOpen={shareModalOpen}
       />
-
-      {/* {modalOpen && (
-        <PostModal open={modalOpen} onOpenChange={setModalOpen} post={post} />
-      )} */}
       <ContextMenuAction
         alertAction={alertAction}
         alertOpen={alertOpen}

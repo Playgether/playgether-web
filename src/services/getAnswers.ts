@@ -1,35 +1,16 @@
-import { api } from "./api";
-import { PostCommentsApiReturn } from "./getComments";
-import { TokenData } from "./updateTokenRequest";
-
-export const getAnswers = async (
-  authTokens: TokenData | undefined | null,
-  commentId: number | undefined,
-  pageParam: string | null = null
-) => {
+export async function getAnswers(id: number, pageParam: string | null = null) {
   try {
-    const response = await api.get<PostCommentsApiReturn>(
-      `/api/v1/comments/${commentId}/answers/`,
-      {
-        headers: {
-          Authorization: "Bearer " + String(authTokens?.access),
-        },
-        params: {
-          cursor: pageParam,
-        },
-      }
+    const response = await fetch(
+      `/api/replies/${id}?cursor=${pageParam || ""}`
     );
-    return {
-      data: response.data.results,
-      next_page: response.data.next,
-      previous_page: response.data.previous,
-    };
+    if (!response.ok) throw new Error("Request failed");
+    return await response.json();
   } catch (error) {
-    console.log(error);
+    console.error("Error fetching comments:", error);
     return {
       data: [],
       next_page: null,
       previous_page: null,
     };
   }
-};
+}

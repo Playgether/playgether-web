@@ -1,15 +1,22 @@
-import { api } from "./api";
-import { TokenData } from "./updateTokenRequest";
+import { LikeProps } from "./postLike";
 
+export const deleteLike = async (object_id: number) => {
+  try {
+    const response = await fetch(`/api/likes/?object_id=${object_id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
-export const deleteLike = async (authTokens : TokenData | null | undefined, object_id: number) => {
-    try{
-        const response = await api.delete(`/api/v1/posts/${object_id}/likes/`, {
-            headers: {
-                'Authorization':'Bearer ' + String(authTokens?.access)
-            }})
-        response.status
-    } catch (error) {
-        console.log(error)
+    if (!response.ok) {
+      throw new Error(`Erro ${response.status}: ${response.statusText}`);
     }
-}
+
+    const result = await response.json();
+    return result; // ✅ Retorna o resultado da API
+  } catch (error) {
+    console.error("Erro no postLike:", error);
+    throw error; // ✅ Re-lança o erro para tratamento no componente
+  }
+};

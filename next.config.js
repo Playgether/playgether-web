@@ -7,8 +7,8 @@ const nextConfig = {
         destination: "http://192.168.18.8:8000/ws/:path*", // backend WS
       },
       {
-        source: "/api/:path*",
-        destination: "http://192.168.18.8:8000/api/:path*", // backend REST
+        source: "/api/v1/:path*",
+        destination: "http://192.168.18.8:8000/api/v1/:path*",
       },
     ];
   },

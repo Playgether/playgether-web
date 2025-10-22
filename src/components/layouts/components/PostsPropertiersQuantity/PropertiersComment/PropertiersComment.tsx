@@ -1,7 +1,10 @@
-import { FaComment } from "react-icons/fa";
-import { twJoin } from "tailwind-merge";
+import { Button } from "@/components/ui/button";
+import { MessageCircle } from "lucide-react";
+import { ButtonHTMLAttributes } from "react";
+import { twMerge, twJoin } from "tailwind-merge";
 
-interface PropertiersCommentProps {
+interface PropertiersCommentProps
+  extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Esta propriedade recebe a quantidade de reposts de um determinado post (ou qualquer outra coisa que esteja referenciado como um comentário por exemplo) */
   quantity_comment: number;
   /** Como o nome já sugere, esta propriedade recebe a estilização do ícone do Repost */
@@ -15,6 +18,7 @@ interface PropertiersCommentProps {
 const PropertiersComment = ({
   quantity_comment,
   iconClassName,
+  ...rest
 }: PropertiersCommentProps) => {
   function formatNumber(number: number) {
     if (number >= 1000000) {
@@ -37,12 +41,17 @@ const PropertiersComment = ({
   }
 
   return (
-    <div className="flex flex-row justify-center items-center space-x-2 PropertiersComment-wrapper">
-      <FaComment className={twJoin(iconClassName)} />
-      <p className="PropertiersComment-number">
-        {formatNumber(quantity_comment)}
-      </p>
-    </div>
+    <Button
+      variant="ghost"
+      size="sm"
+      className={twJoin(
+        "text-muted-foreground hover:text-primary p-2",
+        rest.className
+      )}
+    >
+      <MessageCircle className={twMerge("w-5 h-5 mr-2", iconClassName)} />
+      {formatNumber(quantity_comment)}
+    </Button>
   );
 };
 

@@ -29,6 +29,7 @@ import {
   AlertDialogCancel,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { MdOutlineSubdirectoryArrowRight } from "react-icons/md";
 
 export const FeedServerComponents = {
   ContextMenuAction: {
@@ -48,6 +49,7 @@ export const FeedServerComponents = {
       Heart: <Heart className="w-3 h-3 mr-1" />,
       Send: <Send className="w-4 h-4" />,
       ChevronRight: <ChevronRight className="w-6 h-6" />,
+      ArrowRight: <MdOutlineSubdirectoryArrowRight className="w-4 h-4 mr-2 " />,
     },
     text: {
       verified: (
@@ -66,7 +68,7 @@ export const FeedServerComponents = {
         <Button
           variant="ghost"
           size="sm"
-          className="text-xs text-muted-foreground hover:text-primary p-0 h-auto"
+          className="text-xs text-muted-foreground hover:text-primary p-2 h-auto"
         >
           Responder
         </Button>
@@ -105,6 +107,7 @@ export const FeedServerComponents = {
       VerifiedProfile: <VerifiedProfile />,
       MoreOptions: <MoreOptions />,
       NoImageProfile: <NoImageProfile />,
+      NoImageReplieProfile: <NoImageProfile className="h-10 w-10" />,
       MoreMediasParagraph: <MoreMediasParagraph />,
     },
   },

@@ -1,9 +1,12 @@
 "use client";
 
-import { AiOutlineRetweet } from "react-icons/ai";
-import { twJoin } from "tailwind-merge";
+import { Button } from "@/components/ui/button";
+import { Share2 } from "lucide-react";
+import { ButtonHTMLAttributes } from "react";
+import { twJoin, twMerge } from "tailwind-merge";
 
-interface PropertiersShareProps {
+interface PropertiersShareProps
+  extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Esta propriedade recebe a quantidade de commentários de um determinado post (ou qualquer outra coisa que esteja referenciado como um comentário por exemplo) */
   quantity_reposts: number;
   /** Como o nome já sugere, esta propriedade recebe a estilização do ícone do Comentário */
@@ -17,6 +20,7 @@ interface PropertiersShareProps {
 const PropertiersShare = ({
   quantity_reposts,
   iconClassName,
+  ...rest
 }: PropertiersShareProps) => {
   function formatNumber(number: number) {
     if (number >= 1000000) {
@@ -39,12 +43,17 @@ const PropertiersShare = ({
   }
 
   return (
-    <div className="flex flex-row justify-center items-center space-x-2 PropertiersShare-wrapper">
-      <AiOutlineRetweet className={twJoin(iconClassName)} />
-      <p className="PropertiersShare-number">
-        {formatNumber(quantity_reposts)}
-      </p>
-    </div>
+    <Button
+      variant="ghost"
+      size="sm"
+      className={twJoin(
+        "text-muted-foreground hover:text-primary p-2",
+        rest.className
+      )}
+    >
+      <Share2 className={twMerge("w-5 h-5 mr-2", iconClassName)} />
+      {formatNumber(quantity_reposts)}
+    </Button>
   );
 };
 
