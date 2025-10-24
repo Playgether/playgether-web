@@ -19,6 +19,7 @@ import { LoadingComponent } from "@/components/layouts/components/LoadingCompone
 import { PostPropertiers } from "@/components/layouts/components/PostsPropertiersQuantity";
 import { LikeContentType } from "@/components/content_types/LikeContentType";
 import { useFeedContext } from "../context/FeedContext";
+import { ShareModal } from "./ShareModal";
 
 interface PostModalProps {
   post: PostProps;
@@ -33,6 +34,7 @@ export const PostModal = ({ post }: PostModalProps) => {
   const [showFullText, setShowFullText] = useState(true);
   const [newComment, setNewComment] = useState("");
   const { handleLike } = useFeedContext();
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const {
     comments,
     hasNextPage,
@@ -46,6 +48,10 @@ export const PostModal = ({ post }: PostModalProps) => {
   const buttons = Feed.ServerPostModal.buttons;
   const components = Feed.ServerFeedPost.components;
   const router = useRouter();
+
+  const handleShareModal = useCallback((action?: boolean) => {
+    action ? setShareModalOpen(action) : setShareModalOpen((prev) => !prev);
+  }, []);
 
   const handleSubmitComment = () => {
     if (newComment.trim()) {
@@ -262,6 +268,7 @@ export const PostModal = ({ post }: PostModalProps) => {
                 />
                 <PostPropertiers.Share
                   quantity_reposts={post.quantity_reposts}
+                  onClickShare={handleShareModal}
                 />
                 <span className="text-sm text-muted-foreground">
                   <DateAndHour date={post.timestamp} />
@@ -449,6 +456,11 @@ export const PostModal = ({ post }: PostModalProps) => {
             </div>
           </div>
         </div>
+        <ShareModal
+          post={post}
+          handleShareModal={handleShareModal}
+          shareModalOpen={shareModalOpen}
+        />
       </DialogContent>
     </Dialog>
   );

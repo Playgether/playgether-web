@@ -12,7 +12,7 @@ export default function PostActions({
   handleShareModal,
 }: {
   post: PostProps;
-  handleShareModal: (action: boolean) => void;
+  handleShareModal: () => void;
 }) {
   const { Feed } = useFeedServerContext();
   const icons = Feed.ServerFeedPost.icons;
@@ -48,7 +48,10 @@ export default function PostActions({
           onDeleteLike={onClickLike}
         />
         <PostPropertiers.Comment quantity_comment={post.quantity_comment} />
-        <PostPropertiers.Share quantity_reposts={post.quantity_reposts} />
+        <PostPropertiers.Share
+          quantity_reposts={post.quantity_reposts}
+          onClickShare={() => handleShareModal()}
+        />
       </PostPropertiers.Root>
     </>
   );

@@ -29,8 +29,8 @@ export const FeedPost = ({ post }: { post?: PostProps }) => {
   const components = Feed.ServerFeedPost.components;
   const router = useRouter();
 
-  const handleShareModal = useCallback((action: boolean) => {
-    setShareModalOpen(action);
+  const handleShareModal = useCallback((action?: boolean) => {
+    action ? setShareModalOpen(action) : setShareModalOpen((prev) => !prev);
   }, []);
 
   const handleContextAction = (action: string) => {

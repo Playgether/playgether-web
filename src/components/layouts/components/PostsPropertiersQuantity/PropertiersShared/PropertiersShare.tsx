@@ -11,6 +11,7 @@ interface PropertiersShareProps
   quantity_reposts: number;
   /** Como o nome já sugere, esta propriedade recebe a estilização do ícone do Comentário */
   iconClassName?: string;
+  onClickShare: () => void;
 }
 
 /** Este componente é responsável por gerar o ícone de comentário e suas propriedades, ele faz parte de um padrão aplicado a esta aplicação chamado "Composite",
@@ -20,6 +21,7 @@ interface PropertiersShareProps
 const PropertiersShare = ({
   quantity_reposts,
   iconClassName,
+  onClickShare,
   ...rest
 }: PropertiersShareProps) => {
   function formatNumber(number: number) {
@@ -42,6 +44,11 @@ const PropertiersShare = ({
     }
   }
 
+  const onClickButton = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onClickShare();
+  };
   return (
     <Button
       variant="ghost"
@@ -50,6 +57,7 @@ const PropertiersShare = ({
         "text-muted-foreground hover:text-primary p-2",
         rest.className
       )}
+      onClick={(event) => onClickButton(event)}
     >
       <Share2 className={twMerge("w-5 h-5 mr-2", iconClassName)} />
       {formatNumber(quantity_reposts)}
