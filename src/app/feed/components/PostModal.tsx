@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Heart } from "lucide-react";
 import { useFeedServerContext } from "../context/FeedServerContext";
 import { PostProps } from "../types/PostProps";
 import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
@@ -20,6 +19,7 @@ import { PostPropertiers } from "@/components/layouts/components/PostsPropertier
 import { LikeContentType } from "@/components/content_types/LikeContentType";
 import { useFeedContext } from "../context/FeedContext";
 import { ShareModal } from "./ShareModal";
+import { postComment } from "@/services/postComment";
 
 interface PostModalProps {
   post: PostProps;
@@ -35,12 +35,14 @@ export const PostModal = ({ post }: PostModalProps) => {
   const [newComment, setNewComment] = useState("");
   const { handleLike } = useFeedContext();
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const {
     comments,
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
     openAnswers,
+    addNewComment,
   } = useCommentsContext();
   const { Feed } = useFeedServerContext();
   const icons = Feed.ServerPostModal.icons;
@@ -117,6 +119,26 @@ export const PostModal = ({ post }: PostModalProps) => {
         next.delete(commentId);
         return next;
       });
+    }
+  };
+
+  const handleComment = async () => {
+    if (!newComment.trim()) return; // evita comentários vazios
+    setIsSubmittingComment(true);
+    const newCommentData = {
+      comment: newComment,
+      object_id: post.id,
+      content_type: "post",
+    };
+
+    try {
+      const createdComment = await postComment(newCommentData);
+      addNewComment(createdComment);
+      setNewComment(""); // limpa input
+    } catch (error) {
+      console.error("Falha ao enviar comentário:", error);
+      // opcional: mostrar toast
+      // toast.error(error instanceof Error ? error.message : "Erro ao enviar comentário");
     }
   };
 
@@ -433,7 +455,7 @@ export const PostModal = ({ post }: PostModalProps) => {
               )}
 
               {/* Comment Input */}
-              <div className="p-4 border-t border-border/50 sticky bg-background/100 flex-1 bottom-0 w-full">
+              {/* <div className="p-4 border-t border-border/50 sticky bg-background/100 flex-1 bottom-0 w-full">
                 <div className="flex space-x-3">
                   <Input
                     value={newComment}
@@ -452,7 +474,35 @@ export const PostModal = ({ post }: PostModalProps) => {
                     {icons.Send}
                   </Button>
                 </div>
-              </div>
+              </div> */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault(); // evita reload da página
+                  handleComment();
+                }}
+                className="p-4 border-t border-border/50 sticky bg-background/100 flex-1 bottom-0 w-full"
+              >
+                <div className="flex space-x-3">
+                  <Input
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Adicione um comentário..."
+                    className="flex-1 bg-muted/20 border-border/50"
+                  />
+                  <Button
+                    type="submit"
+                    size="icon"
+                    disabled={isSubmittingComment}
+                    className={`bg-gradient-primary hover:shadow-glow-primary/30 ${
+                      isSubmittingComment || newComment === ""
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }`}
+                  >
+                    {isSubmittingComment ? "..." : icons.Send}
+                  </Button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

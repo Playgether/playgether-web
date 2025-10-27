@@ -10,7 +10,7 @@ export async function GET(
   const accessToken = (await cookies()).get("accessToken")?.value;
   const { searchParams } = new URL(request.url);
   const cursor = searchParams.get("cursor");
-  const { id } = params;
+  const { id } = await params;
 
   try {
     const response = await api.get(`/api/v1/posts/${id}/comments/`, {
