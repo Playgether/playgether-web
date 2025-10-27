@@ -17,7 +17,7 @@ import { useAuthContext } from "@/context/AuthContext";
 
 interface FormLoginImplementationProps {
   handleSubmit: UseFormHandleSubmit<any | undefined>;
-  wrongPassword: string | null;
+  wrongPassword?: string | null;
   register: void | any;
   errors: FieldErrors<any>;
   Submiting: any;
@@ -71,7 +71,13 @@ export const FormLoginImplementation = ({
     redirect("/feed");
   };
   return (
-    <form action={clientAction}>
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+        await clientAction(formData);
+      }}
+    >
       <CustomToaster />
       {unauthorized && (
         <WrongPasswordComponent

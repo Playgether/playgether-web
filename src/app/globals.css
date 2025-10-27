@@ -33,6 +33,16 @@ All colors MUST be HSL.
     --neon-blue: 199 100% 50%;
     --neon-purple: 262 100% 50%;
     --neon-pink: 320 100% 50%;
+    --neon-iron: 20 30% 26%;
+    --neon-bronze: 30 45% 46%;
+    --neon-silver: 225 10% 75%;
+    --neon-gold: 46 65% 52%;
+    --neon-platinum: 178 58% 41%;
+    --neon-emerald: 155 100% 30%;
+    --neon-diamond: 200 100% 64%;
+    --neon-master: 270 100% 50%;
+    --neon-grandmaster: 0 65% 54%;
+    --neon-challenger: 51 100% 50%;
 
     /* Status colors */
     --status-online: 120 90% 45%;
@@ -585,6 +595,76 @@ All colors MUST be HSL.
     text-shadow: 0 0 10px hsl(var(--neon-purple) / 0.5);
   }
 
+  .text-neon-iron {
+    /* color: #6e6e6e; */
+    /* text-shadow: 0 0 10px #6e6e6e; */
+    color: hsl(var(--neon-iron));
+    text-shadow: 0 0 10px hsl(var(--neon-iron) / 0.5);
+  }
+
+  .text-neon-bronze {
+  /* color: #cd7f32;
+  text-shadow: 0 0 10px #cd7f3280; */
+    color: hsl(var(--neon-bronze));
+    text-shadow: 0 0 10px hsl(var(--neon-bronze) / 0.5);
+  }
+
+  .text-neon-silver {
+    /* color: #b4b4b4;
+    text-shadow: 0 0 10px #b4b4b480; */
+    color: hsl(var(--neon-silver));
+    text-shadow: 0 0 10px hsl(var(--neon-silver) / 0.5);
+  }
+
+  .text-neon-gold {
+    /* color: #ffd700;
+    text-shadow: 0 0 10px #ffd70080; */
+    color: hsl(var(--neon-gold));
+    text-shadow: 0 0 10px hsl(var(--neon-gold) / 0.5);
+  }
+
+  .text-neon-platinum {
+    /* color: #00b8a9;
+    text-shadow: 0 0 10px #00b8a980; */
+    color: hsl(var(--neon-platinum));
+    text-shadow: 0 0 10px hsl(var(--neon-platinum) / 0.5);
+  }
+
+  .text-neon-emerald {
+    /* color: #50c878;
+    text-shadow: 0 0 10px #50c87880; */
+    color: hsl(var(--neon-emerald));
+    text-shadow: 0 0 10px hsl(var(--neon-emerald) / 0.5);
+  }
+
+  .text-neon-diamond {
+    /* color: #4ee1ff;
+    text-shadow: 0 0 10px #4ee1ff80; */
+    color: hsl(var(--neon-diamond));
+    text-shadow: 0 0 10px hsl(var(--neon-diamond) / 0.5);
+  }
+
+  .text-neon-master {
+    /* color: #c700ff;
+    text-shadow: 0 0 10px #c700ff80; */
+    color: hsl(var(--neon-master));
+    text-shadow: 0 0 10px hsl(var(--neon-master) / 0.5);
+  }
+
+  .text-neon-grandmaster {
+    /* color: #ff2a2a;
+    text-shadow: 0 0 10px #ff2a2a80; */
+    color: hsl(var(--neon-grandmaster));
+    text-shadow: 0 0 10px hsl(var(--neon-grandmaster) / 0.5);
+  }
+
+  .text-neon-challenger {
+    /* color: #ffe600;
+    text-shadow: 0 0 10px #ffe60080; */
+    color: hsl(var(--neon-challenger));
+    text-shadow: 0 0 10px hsl(var(--neon-challenger) / 0.5);
+  }
+
   /* Status indicators */
   .status-online {
     background: hsl(var(--status-online));
@@ -724,3 +804,11 @@ All colors MUST be HSL.
 .animate-message-fade-in {
   animation: message-fade-in 0.5s ease-in-out forwards;
 }
+
+/* --shadow-neon: 0 0 20px hsl(195 100% 50% / 0.3), 0 0 40px hsl(195 100% 50% / 0.1);
+--shadow-card: 0 8px 32px hsl(240 10% 3% / 0.4);
+--shadow-glow-primary: 0 0 30px hsl(195 100% 50% / 0.4); */
+/* --primary: 195 100% 50%; bg-primary/20 */
+/* --primary-glow: 195 100% 70%; */
+/* --primary: 195 100% 55%;
+--primary-glow: 195 100% 75%; */
