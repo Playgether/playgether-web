@@ -1,8 +1,5 @@
-import { HTMLAttributes } from "react";
+import { ImageProps } from "next/legacy/image";
 
-export interface ImageComponentProps extends HTMLAttributes<HTMLDivElement> {
+export interface ImageComponentProps extends Omit<ImageProps, "src"> {
   media_id: string;
-  width?: number;
-  objectFit?: string;
-  layout?: string;
 }

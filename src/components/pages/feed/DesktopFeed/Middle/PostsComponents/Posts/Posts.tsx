@@ -11,10 +11,10 @@ import { VideoLoadingFallback } from "./VideoLoadingFallBack";
 import { CldImage, CldVideoPlayer } from "next-cloudinary";
 import "next-cloudinary/dist/cld-video-player.css";
 import Image from "next/legacy/image";
-import { getCloudinaryUrl } from "@/functions/getCloudinaryUrl";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
-import { getCloudinaryVideoUrl } from "@/functions/getCloudinaryVideo";
-import { PostMedias } from "@/types/PostMediaProps";
+import { getCloudinaryVideoUrl } from "@/app/utils/getCloudinaryVideo";
+import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
+import { PostMedias } from "@/app/feed/types/PostMediaProps";
 
 export interface PostsProps extends HTMLAttributes<HTMLDivElement> {
   /** Esta prop recebe uma lista de objetos do tipo (PostMedias) localizado no service getFeed, em resumo, uma lista de arquivos de medias de algum post. */
@@ -120,7 +120,7 @@ const Posts = ({
             >
               {item.media_type === "image" ? (
                 <div
-                  // className= {twMerge("relative w-full flex items-center justify-center h-full", rest.className )} 
+                  // className= {twMerge("relative w-full flex items-center justify-center h-full", rest.className )}
                   className={`fixed rounded h-full w-full flex items-center justify-center`}
                   style={{ maxHeight: `${postHeight}px` }}
                   onClick={onClick}
@@ -147,7 +147,7 @@ const Posts = ({
                     }}
                   /> */}
                   <Image
-                    src={getCloudinaryUrl(postWidth, item.media_file)}
+                    src={getCloudinaryUrl(item.media_file)}
                     // media_id={item.media_file}
                     height={postHeight}
                     width={postWidth}
@@ -165,13 +165,13 @@ const Posts = ({
                       onClick={(e) => e.stopPropagation()}
                       className="rounded items-center justify-center swiper-no-swiping flex w-full h-screen relative overflow-hidden"
                     >
-                        <video
-                          controls
-                          src={getCloudinaryVideoUrl(postWidth, item.media_file)}
-                          onLoad={() => setFileType("video")}
-                          className="object-fill"
-                        ></video>
-                        {/* <CldVideoPlayer
+                      <video
+                        controls
+                        src={getCloudinaryVideoUrl(item.media_file)}
+                        onLoad={() => setFileType("video")}
+                        className="object-fill"
+                      ></video>
+                      {/* <CldVideoPlayer
                         id={`video-${item.id}-${index}`}
                         key={`video-${item.id}-${index}`}
                         src={item.media_file}

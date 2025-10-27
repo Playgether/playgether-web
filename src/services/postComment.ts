@@ -1,26 +1,34 @@
-import { api } from "./api";
-import { TokenData } from "./updateTokenRequest";
-
 export interface commentProps {
   comment: string;
-  user: number | undefined;
   content_type: string;
   object_id: number;
 }
 
-export const postComment = async (
-  data: commentProps,
-  authTokens: TokenData | null | undefined
-) => {
+export const postComment = async (data: commentProps) => {
   try {
-    const response = await api.post("/api/v1/comments/", data, {
+    const response = await fetch("/api/comments", {
+      method: "POST",
       headers: {
-        Authorization: "Bearer " + String(authTokens?.access),
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify(data),
     });
-    return response;
+
+    const contentType = response.headers.get("content-type");
+    const isJson = contentType?.includes("application/json");
+    const responseData = isJson ? await response.json() : null;
+
+    if (!response.ok) {
+      const errorMessage =
+        responseData?.detail ||
+        responseData?.message ||
+        `Erro ${response.status}: ${response.statusText}`;
+      throw new Error(errorMessage);
+    }
+
+    return responseData;
   } catch (error) {
-    console.error(error);
-    return error;
+    console.error("Erro ao postar comentário:", error);
+    throw error;
   }
 };

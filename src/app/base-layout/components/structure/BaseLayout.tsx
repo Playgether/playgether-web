@@ -14,7 +14,7 @@ export default function BaseLayout({
 }) {
   return (
     <BaseLayoutProvider>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background w-screen pr-4">
         <IsMobileWrapper
           gamerSidebar={<GamerSidebar />}
           button={

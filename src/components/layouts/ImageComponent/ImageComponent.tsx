@@ -1,21 +1,22 @@
 import Image from "next/legacy/image";
-import { getCloudinaryUrl } from "@/functions/getCloudinaryUrl";
 import { twJoin } from "tailwind-merge";
 import { ImageComponentProps } from "@/types/ImageComponentProps";
+import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
 
 function ImageComponent({
   media_id,
-  width = 1280,
   objectFit = "cover",
   layout = "fill",
+  alt = "Image",
   ...rest
 }: ImageComponentProps) {
   return (
     <Image
-      src={getCloudinaryUrl(width, media_id)}
-      objectFit="cover"
-      layout="fill"
+      src={getCloudinaryUrl(media_id)}
+      objectFit={objectFit}
+      layout={layout}
       className={twJoin(rest.className)}
+      alt={alt}
     />
   );
 }

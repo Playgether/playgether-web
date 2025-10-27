@@ -1,213 +1,228 @@
 "use client";
-import {
+
+import React, {
   ReactNode,
   createContext,
   useContext,
   useEffect,
   useState,
 } from "react";
-import { PostsCommentsProps, getComments } from "../services/getComments";
-import { commentProps } from "../services/postComment";
 import {
-  FetchNextPageOptions,
+  useInfiniteQuery,
   InfiniteData,
   InfiniteQueryObserverResult,
-  useInfiniteQuery,
+  FetchNextPageOptions,
 } from "@tanstack/react-query";
-import {} from "./AuthContext";
+import { useAuthContext } from "@/context/AuthContext";
+import { PostsCommentsProps, getCommentsClient } from "@/services/getComments";
 import { getAnswers } from "@/services/getAnswers";
 
 export interface ApiResponseComments {
   data: PostsCommentsProps[];
+  next_page?: string | null;
+  previous_page?: string | null;
 }
 
 type CommentsContextProps = {
-  fetchNextAnswers?: (comment: PostsCommentsProps) => void;
-  initializeComments: (postId: number) => void;
   comments: ApiResponseComments;
   addNewComment: (newComment: PostsCommentsProps) => void;
-  openAnswers: (commentId: number, pageParam?: string) => void;
-  editComment: (updatedComment: PostsCommentsProps) => void;
-  deleteCommentContext: (Comment: commentProps) => void;
-  deleteAnswerContext: (comment_id: number, answer_id: number) => void;
   addAnswerComment: (
     objectId: number,
     answerComment: PostsCommentsProps
   ) => void;
+  editComment: (updatedComment: PostsCommentsProps) => void;
+  deleteCommentContext: (comment: PostsCommentsProps) => void;
+  openAnswers: (commentId: number, pageParam?: string) => Promise<void>;
   editAnswerComment: (
     comment_id: number,
     answer_id: number,
     answerComment: PostsCommentsProps
   ) => void;
-  fetchNextPage: (options?: FetchNextPageOptions | undefined) => Promise<
+  deleteAnswerContext: (comment_id: number, answer_id: number) => void;
+  fetchNextPage: (
+    options?: FetchNextPageOptions
+  ) => Promise<
     InfiniteQueryObserverResult<
-      InfiniteData<
-        {
-          data: any;
-          next_page: any;
-        },
-        unknown
-      >,
+      InfiniteData<{ data: PostsCommentsProps[]; next_page: string | null }>,
       Error
     >
-  >;
+  > | null;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
+  fetchNextAnswers: (comment: PostsCommentsProps) => Promise<void>;
+  isFecthingNextAnswers: boolean;
 };
 
-export const CommentsContext = createContext<CommentsContextProps>(
-  {} as CommentsContextProps
+const CommentsContext = createContext<CommentsContextProps | undefined>(
+  undefined
 );
 
-export function CommentsContextProvider({ children }: { children: ReactNode }) {
-  const [comments, setComments] = useState<ApiResponseComments>({ data: [] });
-  const [postId, setPostId] = useState<number>(0);
-  // const { authTokens } = ();
+export function CommentsContextProvider({
+  children,
+  response,
+  postId,
+}: {
+  children: ReactNode;
+  response: ApiResponseComments;
+  postId: number;
+}) {
+  const [comments, setComments] = useState<ApiResponseComments>(response);
+  const { authTokens } = useAuthContext();
+  const [isFecthingNextAnswers, setIsFecthingNextAnswers] = useState(false);
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useInfiniteQuery({
-      queryKey: ["feed-comments", postId],
-      queryFn: async ({ pageParam }) =>
-        await getComments(postId, pageParam),
-      getNextPageParam: (lastPage) => {
-        if (lastPage?.next_page) {
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage = false,
+    isFetchingNextPage = false,
+  } = useInfiniteQuery<ApiResponseComments>({
+    queryKey: ["comments", postId],
+    queryFn: ({ pageParam }) => getCommentsClient(postId, pageParam),
+    getNextPageParam: (lastPage) => {
+      if (lastPage?.next_page) {
+        try {
           const url = new URL(lastPage.next_page);
           return url.searchParams.get("cursor");
+        } catch {
+          return null;
         }
-        return null;
-      },
-      enabled: !!postId,
-      initialPageParam: null,
-    });
+      }
+      return null;
+    },
+    enabled: false, // 🚫 nunca faz fetch automático
+    retry: false, // 🚫 nunca tenta novamente se falhar
+    initialPageParam: null, // obrigatório
+    initialData: {
+      pageParams: [null],
+      pages: [response],
+    },
+  });
 
-  const fetchNextAnswers = async (comment: PostsCommentsProps) => {
-    const cursor = comment.answers.next
-      ? new URL(comment.answers.next).searchParams.get("cursor")
-      : null;
-    const response = await getAnswers(authTokens, comment.id, cursor);
-    setComments((prevComments) => {
-      const commentsList = prevComments.data.map((c) => {
-        if (c.id === comment.id) {
-          const newComment = {
-            ...c,
-            answers: {
-              results: [...(c.answers?.results || []), ...response.data],
-              next: response.next_page,
-              previous: response.previous_page,
-            },
-          };
-          return newComment;
-        }
-        return c;
-      });
-      return {
-        data: commentsList,
-      };
-    });
-  };
+  // Atualiza o estado local quando novas páginas são carregadas manualmente
+  useEffect(() => {
+    if (data) {
+      const merged = data.pages.flatMap((p) => p.data);
 
-  const openAnswers = async (commentId, pageParam = "") => {
-    const comment = comments.data.find((c) => c.id === commentId);
+      setComments((prev) => {
+        // mantém os dados locais (respostas carregadas, etc)
+        const existingMap = new Map(prev.data.map((c) => [c.id, c]));
 
-    if (
-      comment &&
-      (!comment.answers || comment.answers.results.length === 0) &&
-      comment.quantity_comment > 0
-    ) {
-      const response = await getAnswers(authTokens, commentId, pageParam);
-
-      setComments((prevComments) => {
-        const commentsList = prevComments.data.map((c) => {
-          if (c.id === commentId) {
-            c.answers = {
-              previous: response.previous_page || "",
-              next: response.next_page || "",
-              results: response.data,
-            };
+        for (const comment of merged) {
+          // Se já existe no local, preserva campos mutados (answers, etc)
+          const existing = existingMap.get(comment.id);
+          if (existing?.answers) {
+            comment.answers = existing.answers;
           }
-          return c;
-        });
+          existingMap.set(comment.id, { ...existing, ...comment });
+        }
 
         return {
-          data: commentsList,
+          data: Array.from(existingMap.values()),
+          next_page: data.pages.at(-1)?.next_page ?? null,
         };
       });
     }
+  }, [data]);
+
+  // ===================== FUNÇÕES ===================== //
+
+  const fetchNextAnswers = async (comment: PostsCommentsProps) => {
+    const cursor = comment.answers?.next
+      ? new URL(comment.answers.next).searchParams.get("cursor")
+      : null;
+
+    console.log("cursor", cursor);
+    const res = await getAnswers(comment.id, cursor);
+    setComments((prev) => ({
+      data: prev.data.map((c) =>
+        c.id === comment.id
+          ? {
+              ...c,
+              answers: {
+                previous: res.previous_page || "",
+                next: res.next_page || "",
+                results: [...(c.answers?.results || []), ...res.data],
+              },
+            }
+          : c
+      ),
+    }));
   };
 
-  const initializeComments = (id: number) => {
-    setPostId(id);
+  const openAnswers = async (commentId: number, pageParam = "") => {
+    setIsFecthingNextAnswers(true);
+    const comment = comments.data.find((c) => c.id === commentId);
+    if (
+      comment &&
+      (!comment.answers || (comment.answers.results ?? []).length === 0) &&
+      comment.quantity_comment > 0
+    ) {
+      const res = await getAnswers(commentId, pageParam);
+      setComments((prev) => ({
+        data: prev.data.map((c) =>
+          c.id === commentId
+            ? {
+                ...c,
+                answers: {
+                  previous: res.previous_page || "",
+                  next: res.next_page || "",
+                  results: res.data,
+                },
+              }
+            : c
+        ),
+      }));
+    }
+    setIsFecthingNextAnswers(false);
   };
 
   const addNewComment = (newComment: PostsCommentsProps) => {
-    const newCommentEdited = {
-      ...newComment,
-      answers: {
-        next_page: "",
-        previous_page: "",
-        results: [],
-      },
-    };
-    setComments((prevState) => {
-      return {
-        ...prevState,
-        data: [newCommentEdited, ...prevState.data],
-      };
-    });
+    setComments((prev) => ({
+      ...prev,
+      data: [
+        {
+          ...newComment,
+          answers: { next_page: "", previous_page: "", results: [] } as any,
+        },
+        ...prev.data,
+      ],
+    }));
   };
 
   const addAnswerComment = (
     objectId: number,
     answerComment: PostsCommentsProps
   ) => {
-    setComments((prevComments) => {
-      const commentsList = prevComments.data.map((comment) => {
-        if (comment.id === objectId) {
-          const newComment = {
-            ...comment,
-            quantity_comment: comment.quantity_comment + 1,
-            answers: {
-              ...comment.answers,
-              results: [answerComment, ...comment.answers.results],
-            },
-          };
-          return newComment;
-        }
-        return comment;
-      });
-      return {
-        data: commentsList,
-      };
-    });
+    setComments((prev) => ({
+      data: prev.data.map((c) =>
+        c.id === objectId
+          ? {
+              ...c,
+              quantity_comment: (c.quantity_comment || 0) + 1,
+              answers: {
+                ...c.answers,
+                results: [answerComment, ...(c.answers?.results || [])],
+              },
+            }
+          : c
+      ),
+    }));
   };
 
   const editComment = (updatedComment: PostsCommentsProps) => {
-    setComments((prevComments) => {
-      const updatedComments = [...prevComments.data];
-      const commentIndex = updatedComments.findIndex(
-        (comment) => comment.id === updatedComment.id
-      );
-
-      if (commentIndex !== -1) {
-        updatedComments[commentIndex].comment = updatedComment.comment;
-      }
-
-      return { data: updatedComments };
-    });
+    setComments((prev) => ({
+      data: prev.data.map((c) =>
+        c.id === updatedComment.id
+          ? { ...c, comment: updatedComment.comment }
+          : c
+      ),
+    }));
   };
 
   const deleteCommentContext = (deleteComment: PostsCommentsProps) => {
-    setComments((prevComments) => {
-      const deleteComments = [...prevComments.data];
-      const commentIndex = deleteComments.findIndex(
-        (comment) => comment.id === deleteComment.id
-      );
-
-      if (commentIndex !== -1) {
-        deleteComments.splice(commentIndex, 1);
-      }
-      return { data: deleteComments };
-    });
+    setComments((prev) => ({
+      data: prev.data.filter((c) => c.id !== deleteComment.id),
+    }));
   };
 
   const editAnswerComment = (
@@ -215,76 +230,68 @@ export function CommentsContextProvider({ children }: { children: ReactNode }) {
     answer_id: number,
     answerComment: PostsCommentsProps
   ) => {
-    setComments((prevComments) => {
-      const commentsList = [...prevComments.data];
-      const commentIndex = commentsList.findIndex(
-        (comment) => comment.id === comment_id
-      );
-
-      if (commentIndex !== -1) {
-        const answersComment = commentsList[commentIndex].answers.results;
-        const answerIndex = answersComment.findIndex(
-          (answer) => answer.id === answer_id
-        );
-
-        if (answerIndex !== -1) {
-          answersComment[answerIndex] = answerComment;
-        }
-      }
-      return { data: commentsList };
-    });
+    setComments((prev) => ({
+      data: prev.data.map((c) =>
+        c.id === comment_id
+          ? {
+              ...c,
+              answers: {
+                ...(c.answers || {}),
+                results: (c.answers?.results || []).map((a) =>
+                  a.id === answer_id ? answerComment : a
+                ),
+              },
+            }
+          : c
+      ),
+    }));
   };
 
   const deleteAnswerContext = (comment_id: number, answer_id: number) => {
-    setComments((prevComments) => {
-      const listComments = [...prevComments.data];
-      const commentIndex = listComments.findIndex(
-        (comment) => comment.id === comment_id
-      );
-
-      if (commentIndex !== -1) {
-        const listAnswers = listComments[commentIndex].answers.results;
-        const answerIndex = listAnswers.findIndex(
-          (answer) => answer.id === answer_id
-        );
-        if (answerIndex !== -1) {
-          listAnswers.splice(answerIndex, 1);
-          listComments[commentIndex].quantity_comment =
-            listComments[commentIndex].quantity_comment - 1;
-        }
-      }
-      return { data: listComments };
-    });
-  };
-  useEffect(() => {
-    setComments((prevComments) => ({
-      data:
-        data?.pages?.flatMap((page) =>
-          page.data.map((item) => ({
-            ...item,
-            answers: { next_page: "", previous_page: "", results: [] },
-          }))
-        ) || [],
-      next_page: data?.pages?.[data.pages.length - 1]?.next_page || null,
+    setComments((prev) => ({
+      data: prev.data.map((c) =>
+        c.id === comment_id
+          ? {
+              ...c,
+              quantity_comment: (c.quantity_comment || 1) - 1,
+              answers: {
+                ...(c.answers || {}),
+                results: (c.answers?.results || []).filter(
+                  (a) => a.id !== answer_id
+                ),
+              },
+            }
+          : c
+      ),
     }));
-  }, [data]);
+  };
+
+  const fetchNextPageOrNull =
+    fetchNextPage ??
+    (async () =>
+      null as unknown as InfiniteQueryObserverResult<
+        InfiniteData<{ data: PostsCommentsProps[]; next_page: string | null }>,
+        Error
+      >);
+
+  // ===================== PROVIDER ===================== //
 
   return (
     <CommentsContext.Provider
       value={{
-        comments: comments,
-        addAnswerComment,
-        deleteCommentContext,
-        editComment,
-        openAnswers,
+        comments,
         addNewComment,
-        initializeComments,
+        addAnswerComment,
+        editComment,
+        deleteCommentContext,
+        openAnswers,
         editAnswerComment,
         deleteAnswerContext,
-        fetchNextPage,
-        isFetchingNextPage,
+        fetchNextPage: fetchNextPageOrNull,
         hasNextPage,
+        isFetchingNextPage,
         fetchNextAnswers,
+        isFecthingNextAnswers,
       }}
     >
       {children}
@@ -292,9 +299,11 @@ export function CommentsContextProvider({ children }: { children: ReactNode }) {
   );
 }
 
-const useCommentsContext = () => {
-  const context = useContext(CommentsContext);
-  return context;
-};
-
-export { useCommentsContext };
+export function useCommentsContext() {
+  const ctx = useContext(CommentsContext);
+  if (!ctx)
+    throw new Error(
+      "useCommentsContext must be used within CommentsContextProvider"
+    );
+  return ctx;
+}

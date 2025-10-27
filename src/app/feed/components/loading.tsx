@@ -1,5 +1,5 @@
 import { PiMaskHappyThin } from "react-icons/pi";
-import { LoadingComponent } from "../../components/layouts/components/LoadingComponent";
+import { LoadingComponent } from "../../../components/layouts/components/LoadingComponent";
 
 export default function LoadingFeed() {
   return (
