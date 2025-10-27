@@ -1,7 +1,6 @@
 import "./globals.css";
 import { AppProvider } from "../context";
 import { cn } from "@/lib/utils";
-import { ThemeInit } from "./base-layout/components/structure/ThemeInit";
 
 export const metadata = {
   description: "Create by gamers for gamers",
