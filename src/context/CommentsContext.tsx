@@ -3,6 +3,7 @@
 import React, {
   ReactNode,
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -13,7 +14,6 @@ import {
   InfiniteQueryObserverResult,
   FetchNextPageOptions,
 } from "@tanstack/react-query";
-import { useAuthContext } from "@/context/AuthContext";
 import { PostsCommentsProps, getCommentsClient } from "@/services/getComments";
 import { getAnswers } from "@/services/getAnswers";
 
@@ -31,7 +31,7 @@ type CommentsContextProps = {
     answerComment: PostsCommentsProps
   ) => void;
   editComment: (updatedComment: PostsCommentsProps) => void;
-  deleteCommentContext: (comment: PostsCommentsProps) => void;
+  deleteCommentContext: (comment: number) => void;
   openAnswers: (commentId: number, pageParam?: string) => Promise<void>;
   editAnswerComment: (
     comment_id: number,
@@ -39,6 +39,7 @@ type CommentsContextProps = {
     answerComment: PostsCommentsProps
   ) => void;
   deleteAnswerContext: (comment_id: number, answer_id: number) => void;
+  handleLikeComment: (id: number) => void;
   fetchNextPage: (
     options?: FetchNextPageOptions
   ) => Promise<
@@ -67,7 +68,6 @@ export function CommentsContextProvider({
   postId: number;
 }) {
   const [comments, setComments] = useState<ApiResponseComments>(response);
-  const { authTokens } = useAuthContext();
   const [isFecthingNextAnswers, setIsFecthingNextAnswers] = useState(false);
 
   const {
@@ -125,6 +125,25 @@ export function CommentsContextProvider({
   }, [data]);
 
   // ===================== FUNÇÕES ===================== //
+
+  const handleLikeComment = (postId: number) => {
+    setComments((prev) => ({
+      ...prev,
+      data: prev.data.map((p) => {
+        if (p.id !== postId) return p;
+
+        const newUserAlreadyLike = !p.user_already_like;
+
+        return {
+          ...p,
+          user_already_like: newUserAlreadyLike,
+          quantity_likes: newUserAlreadyLike
+            ? p.quantity_likes + 1
+            : Math.max(0, p.quantity_likes - 1), // impede ficar negativo
+        };
+      }),
+    }));
+  };
 
   const fetchNextAnswers = async (comment: PostsCommentsProps) => {
     const cursor = comment.answers?.next
@@ -219,9 +238,9 @@ export function CommentsContextProvider({
     }));
   };
 
-  const deleteCommentContext = (deleteComment: PostsCommentsProps) => {
+  const deleteCommentContext = (idComment: number) => {
     setComments((prev) => ({
-      data: prev.data.filter((c) => c.id !== deleteComment.id),
+      data: prev.data.filter((c) => c.id !== idComment),
     }));
   };
 
@@ -287,6 +306,7 @@ export function CommentsContextProvider({
         openAnswers,
         editAnswerComment,
         deleteAnswerContext,
+        handleLikeComment,
         fetchNextPage: fetchNextPageOrNull,
         hasNextPage,
         isFetchingNextPage,

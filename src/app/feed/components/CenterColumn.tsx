@@ -5,8 +5,9 @@ import React, { useCallback } from "react";
 import { useFeedContext } from "../context/FeedContext";
 import { Virtuoso } from "react-virtuoso";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
+import { FeedPost } from "./FeedPost";
 
-export default function CenterColumn({ FeedPost }: { FeedPost: JSX.Element }) {
+export default function CenterColumn() {
   const {
     hasNextPage,
     isFetchingNextPage,
@@ -41,7 +42,9 @@ export default function CenterColumn({ FeedPost }: { FeedPost: JSX.Element }) {
           endReached={loadMore}
           itemContent={(index, post) => (
             <div key={post.id} style={{ animationDelay: `${index * 200}ms` }}>
-              {React.cloneElement(FeedPost, { post })}
+              {/* {React.cloneElement(FeedPost, { post })} */}
+              {/* <FeedPost initialPostId={post.id} /> */}
+              <FeedPost post={post} />
             </div>
           )}
         />

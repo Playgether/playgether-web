@@ -25,6 +25,7 @@ import MediaSelectedButtonsImage from "../components/MediaSelectedButtonsImage";
 import MediaSelectedButtonsVideo from "../components/MediaSelectedButtonsVideo";
 import { Button } from "@/components/ui/button";
 import ButtonCommentPostModal from "../components/ButtonCommentPostModal";
+import { FaEdit, FaTrash } from "react-icons/fa";
 import {
   AlertDialogCancel,
   AlertDialogTitle,
@@ -50,6 +51,12 @@ export const FeedServerComponents = {
       Send: <Send className="w-4 h-4" />,
       ChevronRight: <ChevronRight className="w-6 h-6" />,
       ArrowRight: <MdOutlineSubdirectoryArrowRight className="w-4 h-4 mr-2 " />,
+      FaEdit: (
+        <FaEdit className="w-4 h-4 cursor-pointer rounded hover:text-primary" />
+      ),
+      FaTrash: (
+        <FaTrash className="w-3 h-4 cursor-pointer rounded hover:text-primary" />
+      ),
     },
     text: {
       verified: (

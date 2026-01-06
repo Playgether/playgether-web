@@ -14,20 +14,22 @@ import ContextMenuAction from "./ContextMenuAction";
 import PostText from "./PostText";
 import PostActions from "./PostActions";
 import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
-import { PostProps } from "../types/PostProps";
 import { ShareModal } from "./ShareModal";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
 import VideoComponent from "@/components/layouts/VideoComponent/VideoComponent";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useFeedContext } from "../context/FeedContext";
 
-export const FeedPost = ({ post }: { post?: PostProps }) => {
+export const FeedPost = ({ post }) => {
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertAction, setAlertAction] = useState<string>("");
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const { Feed } = useFeedServerContext();
   const components = Feed.ServerFeedPost.components;
   const router = useRouter();
+  const { getPostById } = useFeedContext();
+  // const post = getPostById(initialPostId);
 
   const handleShareModal = useCallback((action?: boolean) => {
     action ? setShareModalOpen(action) : setShareModalOpen((prev) => !prev);

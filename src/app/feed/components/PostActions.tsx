@@ -22,26 +22,10 @@ export default function PostActions({
   };
   return (
     <>
-      {/* <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => handleLike(post.id)}
-        className={cn(
-          "flex items-center space-x-2 transition-all duration-300",
-          post.user_already_like
-            ? "text-red-500 hover:text-red-600 animate-heart-burst"
-            : "text-muted-foreground hover:text-red-500"
-        )}
-      >
-        <Heart
-          className={cn("w-5 h-5", post.user_already_like && "fill-current")}
-        />
-        <span className="font-medium">{post.quantity_likes}</span>
-      </Button> */}
       <PostPropertiers.Root className="">
         <PostPropertiers.Like
-          quantity_likes={post.quantity_likes}
-          user_already_like={post.user_already_like}
+          quantitylikesNumber={post.quantity_likes}
+          clicked={post.user_already_like}
           object_id={post.id}
           content_type={LikeContentType.post}
           onAddLike={onClickLike}

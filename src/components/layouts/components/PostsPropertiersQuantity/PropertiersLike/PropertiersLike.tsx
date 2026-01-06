@@ -9,9 +9,9 @@ import { deleteLike } from "../../../../../services/deleteLike";
 
 export interface PropertiersLikeProps
   extends ButtonHTMLAttributes<HTMLButtonElement> {
-  quantity_likes: number;
+  quantitylikesNumber: number;
   iconClassName?: string;
-  user_already_like: boolean;
+  clicked: boolean;
   content_type: string;
   object_id: number;
   onAddLike?: () => void;
@@ -19,52 +19,37 @@ export interface PropertiersLikeProps
 }
 
 const PropertiersLike = ({
-  quantity_likes,
+  quantitylikesNumber,
   iconClassName,
-  user_already_like,
+  clicked,
   content_type,
   object_id,
   onAddLike,
   onDeleteLike,
   ...rest
 }: PropertiersLikeProps) => {
-  const [onClicked, setOnClicked] = useState(user_already_like);
-  const [quantitylikesNumber, setQuantityLikesNumber] =
-    useState(quantity_likes);
-
   const onClickLike = async () => {
     const data = {
       content_type,
       object_id,
     };
 
-    // Otimista UI update
-    setOnClicked(true);
-    setQuantityLikesNumber((prev) => prev + 1);
-
     try {
-      await postLike(data);
       onAddLike?.();
+      await postLike(data);
     } catch (error) {
+      onDeleteLike?.();
       console.error("Erro ao curtir:", error);
-
-      setOnClicked(false);
-      setQuantityLikesNumber((prev) => prev - 1);
     }
   };
 
   const onClickDeleteLike = async () => {
-    setOnClicked(false);
-    setQuantityLikesNumber((prev) => prev - 1);
-
     try {
-      await deleteLike(object_id);
       onDeleteLike?.();
+      await deleteLike(object_id, content_type);
     } catch (error) {
+      onAddLike?.();
       console.error("Erro ao curtir:", error);
-
-      setOnClicked(false);
-      setQuantityLikesNumber((prev) => prev - 1);
     }
   };
 
@@ -93,7 +78,7 @@ const PropertiersLike = ({
     e.preventDefault();
     e.stopPropagation();
 
-    if (onClicked || user_already_like) onClickDeleteLike();
+    if (clicked) onClickDeleteLike();
     else onClickLike();
   };
 
@@ -105,15 +90,15 @@ const PropertiersLike = ({
         size="sm"
         onClick={handleLike}
         className={twJoin(
-          onClicked ? "text-red-500" : "text-muted-foreground",
-          "hover:text-red-500 p-2 hover:bg-accent/50 space-x-2",
+          clicked ? "text-red-500" : "text-muted-foreground",
+          "hover:text-red-500 p-2 hover:bg-accent/50 space-x-1",
           rest.className
         )}
       >
         <Heart
           className={twMerge(
             "w-5 h-5",
-            onClicked ? "fill-current" : "",
+            clicked ? "fill-current" : "",
             iconClassName
           )}
         />

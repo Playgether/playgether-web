@@ -18,6 +18,7 @@ export interface PostsCommentsProps {
   user: number;
   edited: boolean;
   quantity_replies: number;
+  user_username: string;
 }
 
 export interface PostCommentsOfCommentsProps {

@@ -79,7 +79,27 @@ export const FeedProvider = ({
     });
   }, []);
 
-  const handleLike = useCallback((postId: number) => {
+  const getPostById = (postId: number) => {
+    return posts.find((p) => p.id === postId);
+  };
+
+  const increaseCommentCount = (postId: number) => {
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId ? { ...p, quantity_comment: p.quantity_comment + 1 } : p
+      )
+    );
+  };
+
+  const decreaseCommentCount = (postId: number) => {
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId ? { ...p, quantity_comment: p.quantity_comment - 1 } : p
+      )
+    );
+  };
+
+  const handleLike = (postId: number) => {
     setPosts((prev) =>
       prev.map((p) =>
         p.id === postId
@@ -93,7 +113,7 @@ export const FeedProvider = ({
           : p
       )
     );
-  }, []);
+  };
 
   const handlePostUpdate = useCallback(
     (updatedPost: PostProps | null, postId: number) => {
@@ -132,6 +152,9 @@ export const FeedProvider = ({
         isFetchingNextPage,
         hasNextPage,
         fetchNextPage,
+        getPostById,
+        increaseCommentCount,
+        decreaseCommentCount,
       }}
     >
       {children}

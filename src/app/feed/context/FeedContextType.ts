@@ -12,6 +12,7 @@ export interface FeedContextType {
   handleRepost: (postId: number, repost: PostProps) => void;
   handlePostUpdate: (updatedPost: PostProps | null, postId: number) => void;
   handleCreatePostModal: (argument: boolean) => void;
+  getPostById: (postId: number) => PostProps | undefined;
   handleLike: (postId: number) => void;
   fetchNextPage: (options?: FetchNextPageOptions | undefined) => Promise<
     InfiniteQueryObserverResult<
@@ -27,4 +28,6 @@ export interface FeedContextType {
   >;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
+  increaseCommentCount: (postId: number) => void;
+  decreaseCommentCount: (postId: number) => void;
 }

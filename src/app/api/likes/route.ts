@@ -27,6 +27,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const objectId = searchParams.get("object_id");
+    const contentType = searchParams.get("content_type");
 
     if (!objectId) {
       return NextResponse.json(
@@ -35,11 +36,14 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const response = await api.delete(`/api/v1/likes/post/${objectId}/`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    const response = await api.delete(
+      `/api/v1/likes/${contentType}/${objectId}/`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
 
     return NextResponse.json({ status: response.status });
   } catch (error) {

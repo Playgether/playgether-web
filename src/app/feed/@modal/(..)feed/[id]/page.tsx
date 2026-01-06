@@ -7,6 +7,7 @@ export default async function page({ params }) {
   const { id } = await params;
   const postId = Number(id);
   const response = await getCommentsServer(postId);
+  console.log("SERVER COMMENTS", response);
   return (
     <CommentsContextProvider response={response} postId={postId}>
       <ClientPostModal postId={postId} />

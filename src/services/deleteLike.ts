@@ -1,13 +1,14 @@
-import { LikeProps } from "./postLike";
-
-export const deleteLike = async (object_id: number) => {
+export const deleteLike = async (object_id: number, content_type: string) => {
   try {
-    const response = await fetch(`/api/likes/?object_id=${object_id}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    const response = await fetch(
+      `/api/likes/?content_type=${content_type}&object_id=${object_id}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`Erro ${response.status}: ${response.statusText}`);

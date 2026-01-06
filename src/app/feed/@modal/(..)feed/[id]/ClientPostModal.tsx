@@ -9,7 +9,7 @@ function ClientPostModal({ postId }: { postId?: number }) {
   const post = Number.isNaN(postIdNum)
     ? undefined
     : posts.find((p) => p.id === postIdNum);
-  return post && <PostModal post={post} />;
+  return post && <PostModal postId={post.id} />;
 }
 
 export default ClientPostModal;
