@@ -60,6 +60,7 @@ export const PostModal = ({ postId }: { postId: number }) => {
     handleLikeComment,
     deleteCommentContext,
     deleteAnswerContext,
+    editComment,
   } = useCommentsContext();
   const { Feed } = useFeedServerContext();
   const icons = Feed.ServerPostModal.icons;
@@ -122,10 +123,10 @@ export const PostModal = ({ postId }: { postId: number }) => {
       const response = await updateCommentAction({
         object_id: postId,
         comment: editingContent,
-        content_type: CommentContentType.comment,
+        content_type: CommentContentType.post,
         comment_id: commentId,
       });
-      console.log("Comentário atualizado:", response);
+      editComment(response);
       // Atualiza o front: pode ser via queryClient ou manual
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       setEditingCommentId(null);
