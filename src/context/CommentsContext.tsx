@@ -40,6 +40,7 @@ type CommentsContextProps = {
   ) => void;
   deleteAnswerContext: (comment_id: number, answer_id: number) => void;
   handleLikeComment: (id: number) => void;
+  handleLikeAny: (id: number, parentId?: number) => void;
   fetchNextPage: (
     options?: FetchNextPageOptions
   ) => Promise<
@@ -126,24 +127,49 @@ export function CommentsContextProvider({
 
   // ===================== FUNÇÕES ===================== //
 
-  const handleLikeComment = (postId: number) => {
+  // Like otimista para comentário OU reply
+  const handleLikeAny = (id: number, parentId?: number) => {
     setComments((prev) => ({
       ...prev,
-      data: prev.data.map((p) => {
-        if (p.id !== postId) return p;
-
-        const newUserAlreadyLike = !p.user_already_like;
-
-        return {
-          ...p,
-          user_already_like: newUserAlreadyLike,
-          quantity_likes: newUserAlreadyLike
-            ? p.quantity_likes + 1
-            : Math.max(0, p.quantity_likes - 1), // impede ficar negativo
-        };
+      data: prev.data.map((comment) => {
+        // Se for comentário principal
+        if (!parentId && comment.id === id) {
+          const newUserAlreadyLike = !comment.user_already_like;
+          return {
+            ...comment,
+            user_already_like: newUserAlreadyLike,
+            quantity_likes: newUserAlreadyLike
+              ? comment.quantity_likes + 1
+              : Math.max(0, comment.quantity_likes - 1),
+          };
+        }
+        // Se for reply
+        if (parentId && comment.id === parentId && comment.answers?.results) {
+          return {
+            ...comment,
+            answers: {
+              ...comment.answers,
+              results: comment.answers.results.map((reply) => {
+                if (reply.id !== id) return reply;
+                const newUserAlreadyLike = !reply.user_already_like;
+                return {
+                  ...reply,
+                  user_already_like: newUserAlreadyLike,
+                  quantity_likes: newUserAlreadyLike
+                    ? reply.quantity_likes + 1
+                    : Math.max(0, reply.quantity_likes - 1),
+                };
+              }),
+            },
+          };
+        }
+        return comment;
       }),
     }));
   };
+
+  // Mantém função antiga para compatibilidade
+  const handleLikeComment = (postId: number) => handleLikeAny(postId);
 
   const fetchNextAnswers = async (comment: PostsCommentsProps) => {
     const cursor = comment.answers?.next
@@ -307,6 +333,7 @@ export function CommentsContextProvider({
         editAnswerComment,
         deleteAnswerContext,
         handleLikeComment,
+        handleLikeAny,
         fetchNextPage: fetchNextPageOrNull,
         hasNextPage,
         isFetchingNextPage,

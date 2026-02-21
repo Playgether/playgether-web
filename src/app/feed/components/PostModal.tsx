@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,6 +58,7 @@ export const PostModal = ({ postId }: { postId: number }) => {
     openAnswers,
     addNewComment,
     handleLikeComment,
+    handleLikeAny,
     deleteCommentContext,
     deleteAnswerContext,
     editComment,
@@ -106,10 +107,22 @@ export const PostModal = ({ postId }: { postId: number }) => {
     action ? setShareModalOpen(action) : setShareModalOpen((prev) => !prev);
   };
 
+  // Like para comentário raiz
   const onClickLikeComment = (commentId: number) => {
-    handleLikeComment(commentId);
+    handleLikeAny(commentId);
     queryClient.invalidateQueries({ queryKey: ["comments", postId] });
   };
+
+  // Like para reply
+  const onClickLikeReply = (replyId: number, parentId: number) => {
+    handleLikeAny(replyId, parentId);
+    queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+  };
+
+  // Refetch automático ao abrir o modal
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+  }, [postId, queryClient]);
 
   const handleEditComment = (comment: any) => {
     setEditingCommentId(comment.id);
@@ -213,6 +226,7 @@ export const PostModal = ({ postId }: { postId: number }) => {
       addNewComment(createdComment);
       increaseCommentCount(post.id);
       setNewComment(""); // limpa input
+      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       setIsSubmittingComment(false);
     } catch (error) {
       decreaseCommentCount(post.id);
@@ -468,18 +482,12 @@ export const PostModal = ({ postId }: { postId: number }) => {
                                 <div className="flex items-center space-x-2 mt-2">
                                   <PostPropertiers.Root className="">
                                     <PostPropertiers.Like
-                                      quantitylikesNumber={
-                                        comment.quantity_likes
-                                      }
+                                      quantitylikesNumber={comment.quantity_likes}
                                       clicked={comment.user_already_like}
                                       object_id={comment.id}
                                       content_type={LikeContentType.comment}
-                                      onAddLike={() =>
-                                        onClickLikeComment(comment.id)
-                                      }
-                                      onDeleteLike={() =>
-                                        onClickLikeComment(comment.id)
-                                      }
+                                      onAddLike={() => onClickLikeComment(comment.id)}
+                                      onDeleteLike={() => onClickLikeComment(comment.id)}
                                     />
                                   </PostPropertiers.Root>
 
@@ -591,14 +599,14 @@ export const PostModal = ({ postId }: { postId: number }) => {
                                       <p className="text-sm">{reply.comment}</p>
                                     </div>
                                     <div className="flex items-center space-x-4 mt-1 ml-2">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="text-xs text-muted-foreground hover:text-red-500 p-0 h-auto"
-                                      >
-                                        {icons.Heart}
-                                        {reply.quantity_likes}
-                                      </Button>
+                                      <PostPropertiers.Like
+                                        quantitylikesNumber={reply.quantity_likes}
+                                        clicked={reply.user_already_like}
+                                        object_id={reply.id}
+                                        content_type={LikeContentType.comment}
+                                        onAddLike={() => onClickLikeReply(reply.id, comment.id)}
+                                        onDeleteLike={() => onClickLikeReply(reply.id, comment.id)}
+                                      />
                                     </div>
                                   </div>
                                 </div>
