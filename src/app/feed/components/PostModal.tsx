@@ -25,6 +25,8 @@ import { deleteCommentAction } from "@/actions/deleteComment";
 import { PostsCommentsProps } from "@/services/getComments";
 import { useQueryClient } from "@tanstack/react-query";
 import { Textarea } from "@/components/ui/textarea";
+import { updateCommentAction } from "@/actions/updateComment";
+import { CommentContentType } from "@/components/content_types/CommentContentType";
 
 export const PostModal = ({ postId }: { postId: number }) => {
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
@@ -68,10 +70,11 @@ export const PostModal = ({ postId }: { postId: number }) => {
   const queryClient = useQueryClient();
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editingContent, setEditingContent] = useState("");
+  const [isUpdatingComment, setIsUpdatingComment] = useState(false);
 
   const handleDeleteCommentModal = (
     action?: boolean,
-    comment?: PostsCommentsProps
+    comment?: PostsCommentsProps,
   ) => {
     if (comment) {
       setSelectedComment(comment);
@@ -112,6 +115,29 @@ export const PostModal = ({ postId }: { postId: number }) => {
     setEditingContent(comment.comment);
   };
 
+  const handleUpdateComment = async (commentId: number) => {
+    if (!editingContent.trim()) return;
+    setIsUpdatingComment(true);
+    try {
+      const response = await updateCommentAction({
+        object_id: postId,
+        comment: editingContent,
+        content_type: CommentContentType.comment,
+        comment_id: commentId,
+      });
+      console.log("Comentário atualizado:", response);
+      // Atualiza o front: pode ser via queryClient ou manual
+      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+      setEditingCommentId(null);
+      setEditingContent("");
+    } catch (error) {
+      // Pode mostrar erro
+      console.error("Erro ao atualizar comentário:", error);
+    } finally {
+      setIsUpdatingComment(false);
+    }
+  };
+
   const onClickLike = () => {
     handleLike(postId);
   };
@@ -135,8 +161,6 @@ export const PostModal = ({ postId }: { postId: number }) => {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const hasMedia = post.medias && post.medias.length > 0;
-
-  console.log(user);
 
   // helpers for reply open/loading state
   const isRepliesOpen = (id: number) => openReplies.has(id);
@@ -411,17 +435,25 @@ export const PostModal = ({ postId }: { postId: number }) => {
                                     <div className="flex gap-2 mt-2">
                                       <Button
                                         size="sm"
-                                        onClick={() => {
-                                          // onUpdateComment(comment.id, editingContent);
-                                          setEditingCommentId(null);
-                                        }}
+                                        disabled={isUpdatingComment}
+                                        onClick={() =>
+                                          handleUpdateComment(comment.id)
+                                        }
                                       >
-                                        Salvar
+                                        {isUpdatingComment ? (
+                                          <span className="flex items-center gap-1">
+                                            <span className="animate-spin h-4 w-4 border-2 border-t-transparent border-primary rounded-full"></span>
+                                            Salvando...
+                                          </span>
+                                        ) : (
+                                          "Salvar"
+                                        )}
                                       </Button>
 
                                       <Button
                                         size="sm"
                                         variant="ghost"
+                                        disabled={isUpdatingComment}
                                         onClick={() => {
                                           setEditingCommentId(null);
                                           setEditingContent("");

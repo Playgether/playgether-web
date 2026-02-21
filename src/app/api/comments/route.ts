@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     console.error("Error while posting the comment:", error);
     return NextResponse.json(
       { error: "Error while posting the comment" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
