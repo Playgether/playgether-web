@@ -28,21 +28,22 @@ type CommentsContextProps = {
   addNewComment: (newComment: PostsCommentsProps) => void;
   addAnswerComment: (
     objectId: number,
-    answerComment: PostsCommentsProps
+    answerComment: PostsCommentsProps,
   ) => void;
   editComment: (updatedComment: PostsCommentsProps) => void;
   deleteCommentContext: (comment: number) => void;
   openAnswers: (commentId: number, pageParam?: string) => Promise<void>;
+  decreaseRepliesCount: (comment: number) => void;
   editAnswerComment: (
     comment_id: number,
     answer_id: number,
-    answerComment: PostsCommentsProps
+    answerComment: PostsCommentsProps,
   ) => void;
   deleteAnswerContext: (comment_id: number, answer_id: number) => void;
   handleLikeComment: (id: number) => void;
   handleLikeAny: (id: number, parentId?: number) => void;
   fetchNextPage: (
-    options?: FetchNextPageOptions
+    options?: FetchNextPageOptions,
   ) => Promise<
     InfiniteQueryObserverResult<
       InfiniteData<{ data: PostsCommentsProps[]; next_page: string | null }>,
@@ -56,7 +57,7 @@ type CommentsContextProps = {
 };
 
 const CommentsContext = createContext<CommentsContextProps | undefined>(
-  undefined
+  undefined,
 );
 
 export function CommentsContextProvider({
@@ -172,28 +173,39 @@ export function CommentsContextProvider({
   const handleLikeComment = (postId: number) => handleLikeAny(postId);
 
   const fetchNextAnswers = async (comment: PostsCommentsProps) => {
-    const cursor = comment.answers?.next
-      ? new URL(comment.answers.next).searchParams.get("cursor")
-      : null;
+    setIsFecthingNextAnswers(true);
+    try {
+      const cursor = comment.answers?.next
+        ? new URL(comment.answers.next).searchParams.get("cursor")
+        : null;
 
-    console.log("cursor", cursor);
-    const res = await getAnswers(comment.id, cursor);
-    setComments((prev) => ({
-      data: prev.data.map((c) =>
-        c.id === comment.id
-          ? {
-              ...c,
-              answers: {
-                previous: res.previous_page || "",
-                next: res.next_page || "",
-                results: [...(c.answers?.results || []), ...res.data],
-              },
-            }
-          : c
-      ),
-    }));
+      if (!cursor) {
+        setIsFecthingNextAnswers(false);
+        return;
+      }
+
+      const res = await getAnswers(comment.id, cursor);
+
+      setComments((prev) => ({
+        data: prev.data.map((c) =>
+          c.id === comment.id
+            ? {
+                ...c,
+                answers: {
+                  previous: res.previous_page || "",
+                  next: res.next_page || "",
+                  results: [...(c.answers?.results || []), ...res.data],
+                },
+              }
+            : c,
+        ),
+      }));
+    } catch (error) {
+      console.error("Erro ao carregar mais respostas:", error);
+    } finally {
+      setIsFecthingNextAnswers(false);
+    }
   };
-
   const openAnswers = async (commentId: number, pageParam = "") => {
     setIsFecthingNextAnswers(true);
     const comment = comments.data.find((c) => c.id === commentId);
@@ -214,11 +226,21 @@ export function CommentsContextProvider({
                   results: res.data,
                 },
               }
-            : c
+            : c,
         ),
       }));
     }
     setIsFecthingNextAnswers(false);
+  };
+
+  const decreaseRepliesCount = (commentId: number) => {
+    setComments((prev) => ({
+      data: prev.data.map((c) =>
+        c.id === commentId
+          ? { ...c, quantity_replies: (c.quantity_replies || 1) - 1 }
+          : c,
+      ),
+    }));
   };
 
   const addNewComment = (newComment: PostsCommentsProps) => {
@@ -236,7 +258,7 @@ export function CommentsContextProvider({
 
   const addAnswerComment = (
     objectId: number,
-    answerComment: PostsCommentsProps
+    answerComment: PostsCommentsProps,
   ) => {
     setComments((prev) => ({
       data: prev.data.map((c) =>
@@ -249,7 +271,7 @@ export function CommentsContextProvider({
                 results: [answerComment, ...(c.answers?.results || [])],
               },
             }
-          : c
+          : c,
       ),
     }));
   };
@@ -259,7 +281,7 @@ export function CommentsContextProvider({
       data: prev.data.map((c) =>
         c.id === updatedComment.id
           ? { ...c, comment: updatedComment.comment }
-          : c
+          : c,
       ),
     }));
   };
@@ -273,7 +295,7 @@ export function CommentsContextProvider({
   const editAnswerComment = (
     comment_id: number,
     answer_id: number,
-    answerComment: PostsCommentsProps
+    answerComment: PostsCommentsProps,
   ) => {
     setComments((prev) => ({
       data: prev.data.map((c) =>
@@ -283,11 +305,11 @@ export function CommentsContextProvider({
               answers: {
                 ...(c.answers || {}),
                 results: (c.answers?.results || []).map((a) =>
-                  a.id === answer_id ? answerComment : a
+                  a.id === answer_id ? answerComment : a,
                 ),
               },
             }
-          : c
+          : c,
       ),
     }));
   };
@@ -302,11 +324,11 @@ export function CommentsContextProvider({
               answers: {
                 ...(c.answers || {}),
                 results: (c.answers?.results || []).filter(
-                  (a) => a.id !== answer_id
+                  (a) => a.id !== answer_id,
                 ),
               },
             }
-          : c
+          : c,
       ),
     }));
   };
@@ -339,6 +361,7 @@ export function CommentsContextProvider({
         isFetchingNextPage,
         fetchNextAnswers,
         isFecthingNextAnswers,
+        decreaseRepliesCount,
       }}
     >
       {children}
@@ -350,7 +373,7 @@ export function useCommentsContext() {
   const ctx = useContext(CommentsContext);
   if (!ctx)
     throw new Error(
-      "useCommentsContext must be used within CommentsContextProvider"
+      "useCommentsContext must be used within CommentsContextProvider",
     );
   return ctx;
 }

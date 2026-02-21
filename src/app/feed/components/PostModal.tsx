@@ -30,25 +30,32 @@ import { CommentContentType } from "@/components/content_types/CommentContentTyp
 
 export const PostModal = ({ postId }: { postId: number }) => {
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
-  // showReplies boolean -> track opened replies per comment id
   const [openReplies, setOpenReplies] = useState<Set<number>>(new Set());
-  // loading state per comment id while fetching its answers
   const [loadingReplies, setLoadingReplies] = useState<Set<number>>(new Set());
   const [showFullText, setShowFullText] = useState(true);
   const [newComment, setNewComment] = useState("");
-  const {
-    handleLike,
-    getPostById,
-    increaseCommentCount,
-    decreaseCommentCount,
-  } = useFeedContext();
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [deleteCommentModalOpen, setDeleteCommentModalOpen] = useState(false);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isDeletingComment, setIsDeletingComment] = useState(false);
   const [selectedComment, setSelectedComment] =
     useState<PostsCommentsProps | null>(null);
-  const post = getPostById(postId);
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  const [editingContent, setEditingContent] = useState("");
+  const [isUpdatingComment, setIsUpdatingComment] = useState(false);
+  const [selectedCommentParentId, setSelectedCommentParentId] = useState<
+    number | null
+  >(null);
+  const [loadingMoreReplies, setLoadingMoreReplies] = useState<Set<number>>(
+    new Set(),
+  );
+
+  const {
+    handleLike,
+    getPostById,
+    increaseCommentCount,
+    decreaseCommentCount,
+  } = useFeedContext();
   const { user } = useAuthContext();
   const {
     comments,
@@ -57,11 +64,13 @@ export const PostModal = ({ postId }: { postId: number }) => {
     isFetchingNextPage,
     openAnswers,
     addNewComment,
-    handleLikeComment,
     handleLikeAny,
     deleteCommentContext,
     deleteAnswerContext,
+    editAnswerComment,
     editComment,
+    fetchNextAnswers,
+    decreaseRepliesCount,
   } = useCommentsContext();
   const { Feed } = useFeedServerContext();
   const icons = Feed.ServerPostModal.icons;
@@ -70,36 +79,124 @@ export const PostModal = ({ postId }: { postId: number }) => {
   const components = Feed.ServerFeedPost.components;
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
-  const [editingContent, setEditingContent] = useState("");
-  const [isUpdatingComment, setIsUpdatingComment] = useState(false);
+
+  const post = getPostById(postId);
+
+  if (!post) return null;
 
   const handleDeleteCommentModal = (
     action?: boolean,
     comment?: PostsCommentsProps,
+    parentId?: number,
   ) => {
     if (comment) {
       setSelectedComment(comment);
+      setSelectedCommentParentId(parentId || null);
     }
     setDeleteCommentModalOpen(action ?? !deleteCommentModalOpen);
   };
 
   const handleConfirmDeleteComment = async () => {
-    if (selectedComment) {
+    if (selectedComment && post) {
       try {
         setIsDeletingComment(true);
         await deleteCommentAction(selectedComment.id);
         decreaseCommentCount(post.id);
         setDeleteCommentModalOpen(false);
+
+        if (selectedCommentParentId) {
+          // Primeiro atualiza o contexto
+          deleteAnswerContext(selectedCommentParentId, selectedComment.id);
+          decreaseRepliesCount(selectedCommentParentId);
+
+          // Verifica se após diminuir, o contador chegou a zero
+          const parentComment = comments.data.find(
+            (c) => c.id === selectedCommentParentId,
+          );
+
+          // Se era a última resposta, fecha a seção de respostas
+          if (parentComment && parentComment.quantity_replies === 0) {
+            setOpenReplies((prev) => {
+              const next = new Set(prev);
+              next.delete(selectedCommentParentId);
+              return next;
+            });
+          }
+
+          // Invalida o cache MAS atualiza otimisticamente primeiro
+          queryClient.setQueryData(["comments", postId], (oldData: any) => {
+            if (!oldData) return oldData;
+
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page: any) => ({
+                ...page,
+                data: page.data.map((comment: any) => {
+                  if (comment.id === selectedCommentParentId) {
+                    return {
+                      ...comment,
+                      quantity_replies: Math.max(
+                        0,
+                        (comment.quantity_replies || 1) - 1,
+                      ),
+                      answers: comment.answers
+                        ? {
+                            ...comment.answers,
+                            results: comment.answers.results.filter(
+                              (reply: any) => reply.id !== selectedComment.id,
+                            ),
+                            count: Math.max(
+                              0,
+                              (comment.answers.count || 1) - 1,
+                            ),
+                          }
+                        : comment.answers,
+                    };
+                  }
+                  return comment;
+                }),
+              })),
+            };
+          });
+
+          // Agora invalida para garantir sincronização futura
+          queryClient.invalidateQueries({
+            queryKey: ["comments", postId],
+            refetchType: "active", // Só refetch se a query estiver ativa
+          });
+        } else {
+          deleteCommentContext(selectedComment.id);
+          queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+        }
+
         setSelectedComment(null);
-        deleteCommentContext(selectedComment.id);
+        setSelectedCommentParentId(null);
         setIsDeletingComment(false);
       } catch (error) {
         console.error("Erro ao deletar comentário:", error);
         setDeleteCommentModalOpen(false);
         setSelectedComment(null);
+        setSelectedCommentParentId(null);
         setIsDeletingComment(false);
       }
+    }
+  };
+
+  const handleLoadMoreReplies = async (commentId: number) => {
+    setLoadingMoreReplies((prev) => {
+      const next = new Set(prev);
+      next.add(commentId);
+      return next;
+    });
+
+    try {
+      await fetchNextAnswers(comments.data.find((c) => c.id === commentId)!);
+    } finally {
+      setLoadingMoreReplies((prev) => {
+        const next = new Set(prev);
+        next.delete(commentId);
+        return next;
+      });
     }
   };
 
@@ -107,19 +204,16 @@ export const PostModal = ({ postId }: { postId: number }) => {
     action ? setShareModalOpen(action) : setShareModalOpen((prev) => !prev);
   };
 
-  // Like para comentário raiz
   const onClickLikeComment = (commentId: number) => {
     handleLikeAny(commentId);
     queryClient.invalidateQueries({ queryKey: ["comments", postId] });
   };
 
-  // Like para reply
   const onClickLikeReply = (replyId: number, parentId: number) => {
     handleLikeAny(replyId, parentId);
     queryClient.invalidateQueries({ queryKey: ["comments", postId] });
   };
 
-  // Refetch automático ao abrir o modal
   useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ["comments", postId] });
   }, [postId, queryClient]);
@@ -129,23 +223,31 @@ export const PostModal = ({ postId }: { postId: number }) => {
     setEditingContent(comment.comment);
   };
 
-  const handleUpdateComment = async (commentId: number) => {
+  const handleUpdateComment = async (
+    commentId: number,
+    content_type: string,
+    comment: string,
+    object_id: number,
+    isReplie: boolean,
+  ) => {
     if (!editingContent.trim()) return;
     setIsUpdatingComment(true);
     try {
       const response = await updateCommentAction({
-        object_id: postId,
-        comment: editingContent,
-        content_type: CommentContentType.post,
+        object_id: object_id,
+        comment: comment,
+        content_type: content_type,
         comment_id: commentId,
       });
-      editComment(response);
-      // Atualiza o front: pode ser via queryClient ou manual
+      if (isReplie) {
+        editAnswerComment(object_id, commentId, response);
+      } else {
+        editComment(response);
+      }
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       setEditingCommentId(null);
       setEditingContent("");
     } catch (error) {
-      // Pode mostrar erro
       console.error("Erro ao atualizar comentário:", error);
     } finally {
       setIsUpdatingComment(false);
@@ -157,7 +259,7 @@ export const PostModal = ({ postId }: { postId: number }) => {
   };
 
   const nextMedia = () => {
-    if (post.medias && currentMediaIndex < post.medias.length - 1) {
+    if (post && post.medias && currentMediaIndex < post.medias.length - 1) {
       setCurrentMediaIndex(currentMediaIndex + 1);
     }
   };
@@ -174,15 +276,14 @@ export const PostModal = ({ postId }: { postId: number }) => {
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const hasMedia = post.medias && post.medias.length > 0;
+  const hasMedia = post && post.medias && post.medias.length > 0;
 
-  // helpers for reply open/loading state
   const isRepliesOpen = (id: number) => openReplies.has(id);
   const isRepliesLoading = (id: number) => loadingReplies.has(id);
+  const isLoadingMoreReplies = (id: number) => loadingMoreReplies.has(id);
 
   const toggleReplies = async (commentId: number) => {
     if (!isRepliesOpen(commentId)) {
-      // open: set loading, fetch answers, then mark opened
       setLoadingReplies((prev) => {
         const next = new Set(prev);
         next.add(commentId);
@@ -203,7 +304,6 @@ export const PostModal = ({ postId }: { postId: number }) => {
         });
       }
     } else {
-      // close
       setOpenReplies((prev) => {
         const next = new Set(prev);
         next.delete(commentId);
@@ -213,7 +313,7 @@ export const PostModal = ({ postId }: { postId: number }) => {
   };
 
   const handleComment = async () => {
-    if (!newComment.trim()) return; // evita comentários vazios
+    if (!newComment.trim() || !post) return;
     setIsSubmittingComment(true);
     const newCommentData = {
       comment: newComment,
@@ -225,15 +325,13 @@ export const PostModal = ({ postId }: { postId: number }) => {
       const createdComment = await postComment(newCommentData);
       addNewComment(createdComment);
       increaseCommentCount(post.id);
-      setNewComment(""); // limpa input
+      setNewComment("");
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       setIsSubmittingComment(false);
     } catch (error) {
       decreaseCommentCount(post.id);
       console.error("Falha ao enviar comentário:", error);
       setIsSubmittingComment(false);
-      // opcional: mostrar toast
-      // toast.error(error instanceof Error ? error.message : "Erro ao enviar comentário");
     }
   };
 
@@ -247,16 +345,16 @@ export const PostModal = ({ postId }: { postId: number }) => {
           <DialogTitle></DialogTitle>
         </VisuallyHidden>
         <div className="flex min-h-0 w-full flex-col sm:flex-row">
-          {/* Media Section (if exists) */}
+          {/* Media Section */}
           {hasMedia && (
             <div
               className={`${
                 hasMedia ? "sm:w-[55%] 2xl:w-[65%] w-full" : "w-full"
               } bg-black/50 flex items-center justify-center relative h-full`}
             >
-              {post.medias![currentMediaIndex].media_type === "image" ? (
+              {post.medias[currentMediaIndex].media_type === "image" ? (
                 <ImageComponent
-                  media_id={post.medias![currentMediaIndex].media_file}
+                  media_id={post.medias[currentMediaIndex].media_file || ""}
                   alt="Post media"
                   objectFit="contain"
                   className="w-full transition-transform duration-300"
@@ -264,14 +362,14 @@ export const PostModal = ({ postId }: { postId: number }) => {
               ) : (
                 <div className="relative h-full">
                   <VideoComponent
-                    media_id={post.medias![currentMediaIndex].media_file}
+                    media_id={post.medias[currentMediaIndex].media_file || ""}
                     className="max-h-full max-w-full h-full w-full object-cover"
                   />
                 </div>
               )}
 
               {/* Media Navigation */}
-              {post.medias!.length > 1 && (
+              {post?.medias && post.medias.length > 1 && (
                 <>
                   {currentMediaIndex > 0 && (
                     <Button
@@ -283,7 +381,7 @@ export const PostModal = ({ postId }: { postId: number }) => {
                       {icons.ChevronLeft}
                     </Button>
                   )}
-                  {currentMediaIndex < post.medias!.length - 1 && (
+                  {currentMediaIndex < post.medias.length - 1 && (
                     <Button
                       variant="ghost"
                       size="icon"
@@ -296,7 +394,7 @@ export const PostModal = ({ postId }: { postId: number }) => {
 
                   {/* Media indicators */}
                   <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                    {post.medias!.map((_, index) => (
+                    {post.medias.map((_, index) => (
                       <div
                         key={index}
                         className={`w-2 h-2 rounded-full ${
@@ -320,7 +418,7 @@ export const PostModal = ({ postId }: { postId: number }) => {
                 <div className="w-12 h-12 relative rounded-full overflow-hidden ring-2 ring-primary/30">
                   {post.profile_photo ? (
                     <ImageComponent
-                      media_id={post.profile_photo}
+                      media_id={post.profile_photo || ""}
                       className="object-cover rounded-full h-10 w-10"
                     />
                   ) : (
@@ -343,7 +441,7 @@ export const PostModal = ({ postId }: { postId: number }) => {
                 <div className="mb-2">
                   {showFullText ? (
                     <div className="space-y-3">
-                      <p className="text-foreground leading-relaxed">
+                      <p className="text-foreground leading-relaxed whitespace-pre-wrap">
                         {post.comment}
                       </p>
                       <Button
@@ -403,11 +501,11 @@ export const PostModal = ({ postId }: { postId: number }) => {
                   data={comments.data}
                   endReached={loadMore}
                   components={{
-                    Scroller: ScrollArea, // Usa seu ScrollArea como container principal
+                    Scroller: ScrollArea,
                   }}
                   overscan={3}
                   itemContent={(index, comment) => (
-                    <div className=" px-4 flex-1 flex flex-col">
+                    <div className="px-4 flex-1 flex flex-col">
                       <div className="space-y-4 pb-4">
                         <div key={comment.id} className="space-y-2">
                           <div className="flex items-start space-x-3 pl-1">
@@ -422,146 +520,180 @@ export const PostModal = ({ postId }: { postId: number }) => {
                             ) : (
                               components.NoImageProfile
                             )}
-                            <div className="flex flex-col w-full">
-                              <div className="flex-1 min-w-0 bg-background/50">
-                                <div className="bg-muted/50 rounded-lg p-3 w-full">
-                                  <div className="flex items-center space-x-2 mb-1">
-                                    <span className="font-medium text-sm">
-                                      {comment.created_by_user_name}
-                                    </span>
-                                    <span className="text-xs text-muted-foreground">
-                                      <DateAndHour date={comment.timestamp} />
-                                    </span>
-                                  </div>
-                                  {/* <p className="text-sm">{comment.comment}</p> */}
-                                  {editingCommentId === comment.id ? (
-                                    <Textarea
-                                      value={editingContent}
-                                      onChange={(e) =>
-                                        setEditingContent(e.target.value)
+
+                            {/* Container principal do comentário */}
+                            <div className="flex-1 min-w-0">
+                              {/* Cabeçalho do comentário com nome, data e ações */}
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center space-x-2">
+                                  <span className="font-medium text-sm">
+                                    {comment.created_by_user_name}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    <DateAndHour date={comment.timestamp} />
+                                  </span>
+                                </div>
+
+                                {/* Ícones de ação para comentário raiz - sempre visíveis */}
+                                {comment.user_username === user?.username && (
+                                  <div className="flex items-center space-x-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 text-muted-foreground hover:text-primary"
+                                      onClick={() => handleEditComment(comment)}
+                                      title="Editar comentário"
+                                    >
+                                      {icons.FaEdit}
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                      onClick={() =>
+                                        handleDeleteCommentModal(
+                                          true,
+                                          {
+                                            id: comment.id,
+                                            comment: comment.comment,
+                                            created_by_user_name:
+                                              comment.created_by_user_name,
+                                            user_username:
+                                              comment.user_username,
+                                            object_id: comment.object_id,
+                                            content_type: comment.content_type,
+                                            quantity_likes:
+                                              comment.quantity_likes,
+                                            answers: comment.answers,
+                                            timestamp: comment.timestamp,
+                                            user_already_like:
+                                              comment.user_already_like,
+                                            created_by_user_photo:
+                                              comment.created_by_user_photo,
+                                            edited: comment.edited,
+                                            quantity_comment:
+                                              comment.quantity_comment,
+                                            user: comment.user,
+                                            quantity_replies:
+                                              comment.quantity_replies,
+                                          },
+                                          undefined,
+                                        )
                                       }
-                                      className="min-h-[80px] text-sm mt-2 bg-background border-border/50 w-full"
-                                      autoFocus
-                                    />
-                                  ) : (
-                                    <p className="text-sm">{comment.comment}</p>
-                                  )}
-                                  {editingCommentId === comment.id && (
-                                    <div className="flex gap-2 mt-2">
-                                      <Button
-                                        size="sm"
-                                        disabled={isUpdatingComment}
-                                        onClick={() =>
-                                          handleUpdateComment(comment.id)
-                                        }
-                                      >
-                                        {isUpdatingComment ? (
-                                          <span className="flex items-center gap-1">
-                                            <span className="animate-spin h-4 w-4 border-2 border-t-transparent border-primary rounded-full"></span>
-                                            Salvando...
-                                          </span>
-                                        ) : (
-                                          "Salvar"
-                                        )}
-                                      </Button>
-
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        disabled={isUpdatingComment}
-                                        onClick={() => {
-                                          setEditingCommentId(null);
-                                          setEditingContent("");
-                                        }}
-                                      >
-                                        Cancelar
-                                      </Button>
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="flex items-center space-x-2 mt-2">
-                                  <PostPropertiers.Root className="">
-                                    <PostPropertiers.Like
-                                      quantitylikesNumber={comment.quantity_likes}
-                                      clicked={comment.user_already_like}
-                                      object_id={comment.id}
-                                      content_type={LikeContentType.comment}
-                                      onAddLike={() => onClickLikeComment(comment.id)}
-                                      onDeleteLike={() => onClickLikeComment(comment.id)}
-                                    />
-                                  </PostPropertiers.Root>
-
-                                  {buttons.answer}
-                                </div>
+                                      title="Excluir comentário"
+                                    >
+                                      {icons.FaTrash}
+                                    </Button>
+                                  </div>
+                                )}
                               </div>
 
-                              {comment.quantity_replies > 0 && (
-                                <div className="flex mt-1 text-xs text-muted-foreground cursor-pointer ml-2">
-                                  {icons.ArrowRight}
-                                  {!isRepliesOpen(comment.id) ? (
-                                    <p
+                              {/* Conteúdo do comentário */}
+                              <div className="bg-muted/50 rounded-lg p-3 w-full">
+                                {editingCommentId === comment.id ? (
+                                  <Textarea
+                                    value={editingContent}
+                                    onChange={(e) =>
+                                      setEditingContent(e.target.value)
+                                    }
+                                    className="min-h-[80px] text-sm bg-background border-border/50 w-full"
+                                    autoFocus
+                                  />
+                                ) : (
+                                  <p className="text-sm whitespace-pre-wrap">
+                                    {comment.comment}
+                                  </p>
+                                )}
+
+                                {editingCommentId === comment.id && (
+                                  <div className="flex gap-2 mt-2">
+                                    <Button
+                                      size="sm"
+                                      disabled={isUpdatingComment}
+                                      onClick={() =>
+                                        handleUpdateComment(
+                                          comment.id,
+                                          CommentContentType.post,
+                                          editingContent,
+                                          postId,
+                                          false,
+                                        )
+                                      }
+                                    >
+                                      {isUpdatingComment ? (
+                                        <span className="flex items-center gap-1">
+                                          <span className="animate-spin h-4 w-4 border-2 border-t-transparent border-primary rounded-full"></span>
+                                          Salvando...
+                                        </span>
+                                      ) : (
+                                        "Salvar"
+                                      )}
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      disabled={isUpdatingComment}
                                       onClick={() => {
-                                        toggleReplies(comment.id);
+                                        setEditingCommentId(null);
+                                        setEditingContent("");
                                       }}
                                     >
-                                      Ver Respostas ({comment.quantity_replies})
-                                    </p>
-                                  ) : (
-                                    <p
-                                      onClick={() => {
-                                        toggleReplies(comment.id);
-                                      }}
-                                    >
-                                      Ocultar Respostas
-                                    </p>
-                                  )}
-                                </div>
-                              )}
+                                      Cancelar
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Ações do comentário (like, responder) */}
+                              <div className="flex items-center space-x-2 mt-2">
+                                <PostPropertiers.Root className="">
+                                  <PostPropertiers.Like
+                                    quantitylikesNumber={comment.quantity_likes}
+                                    clicked={comment.user_already_like}
+                                    object_id={comment.id}
+                                    content_type={LikeContentType.comment}
+                                    onAddLike={() =>
+                                      onClickLikeComment(comment.id)
+                                    }
+                                    onDeleteLike={() =>
+                                      onClickLikeComment(comment.id)
+                                    }
+                                  />
+                                </PostPropertiers.Root>
+                                {buttons.answer}
+                              </div>
                             </div>
-                            {comment.user_username === user?.username && (
-                              <div className="flex">
-                                <p
-                                  className="p-2 hover:bg-accent/50 rounded cursor-pointer text-muted-foreground hover:text-primary"
-                                  onClick={() => handleEditComment(comment)}
-                                >
-                                  {icons.FaEdit}
-                                </p>
-                                <p
-                                  className="p-2 hover:bg-accent/50 rounded cursor-pointer text-muted-foreground hover:text-primary"
-                                  onClick={() =>
-                                    handleDeleteCommentModal(true, {
-                                      id: comment.id,
-                                      comment: comment.comment,
-                                      created_by_user_name:
-                                        comment.created_by_user_name,
-                                      user_username: comment.user_username,
-                                      object_id: comment.object_id,
-                                      content_type: comment.content_type,
-                                      quantity_likes: comment.quantity_likes,
-                                      answers: comment.answers,
-                                      timestamp: comment.timestamp,
-                                      user_already_like:
-                                        comment.user_already_like,
-                                      created_by_user_photo:
-                                        comment.created_by_user_photo,
-                                      edited: comment.edited,
-                                      quantity_comment:
-                                        comment.quantity_comment,
-                                      user: comment.user,
-                                      quantity_replies:
-                                        comment.quantity_replies,
-                                    })
-                                  }
-                                >
-                                  {icons.FaTrash}
-                                </p>
-                              </div>
-                            )}
                           </div>
 
-                          {/* Loading indicator for this comment (shows under the link, only for the clicked comment) */}
+                          {/* Botão Ver Respostas */}
+                          {comment.quantity_replies > 0 && (
+                            <div className="flex mt-1 text-xs text-muted-foreground cursor-pointer ml-14">
+                              {icons.ArrowRight}
+                              {!isRepliesOpen(comment.id) ? (
+                                <p
+                                  onClick={() => {
+                                    toggleReplies(comment.id);
+                                  }}
+                                  className="hover:text-primary transition-colors"
+                                >
+                                  Ver Respostas ({comment.quantity_replies})
+                                </p>
+                              ) : (
+                                <p
+                                  onClick={() => {
+                                    toggleReplies(comment.id);
+                                  }}
+                                  className="hover:text-primary transition-colors"
+                                >
+                                  Ocultar Respostas
+                                </p>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Loading indicator for this comment */}
                           {isRepliesLoading(comment.id) && (
-                            <div className="ml-11 mt-2">
+                            <div className="ml-14 mt-2">
                               <LoadingComponent
                                 text="Carregando respostas"
                                 showText={true}
@@ -569,53 +701,209 @@ export const PostModal = ({ postId }: { postId: number }) => {
                             </div>
                           )}
 
-                          {/* Replies (render only when that comment is opened) */}
-                          {isRepliesOpen(comment.id) && comment.answers && (
-                            <div className="ml-11 space-y-2 pt-5">
-                              {comment.answers.results.map((reply) => (
-                                <div
-                                  key={reply.id}
-                                  className="flex items-start space-x-3"
-                                >
-                                  {reply.created_by_user_photo ? (
-                                    <ImageComponent
-                                      media_id={reply.created_by_user_photo}
-                                      alt={`Profile photo of the user ${reply?.created_by_user_name}`}
-                                    />
-                                  ) : (
-                                    components.NoImageReplieProfile
-                                  )}
-
-                                  <div className="flex-1 min-w-0">
-                                    <div className="bg-muted/30 rounded-lg p-2">
-                                      <div className="flex items-center space-x-2 mb-1">
-                                        <span className="font-medium text-xs">
-                                          {reply.created_by_user_name}
-                                        </span>
-                                        <span className="text-xs text-muted-foreground">
-                                          <DateAndHour date={reply.timestamp} />
-                                        </span>
+                          {/* Replies */}
+                          {isRepliesOpen(comment.id) &&
+                            comment.answers &&
+                            comment.answers.results.length > 0 && (
+                              <div className="ml-14 space-y-3 pt-2">
+                                {comment.answers.results.map((reply) => (
+                                  <div
+                                    key={reply.id}
+                                    className="flex items-start space-x-3"
+                                  >
+                                    {reply.created_by_user_photo ? (
+                                      <div className="w-8 h-8 flex-shrink-0 rounded-full overflow-hidden ring-2 ring-primary/20">
+                                        <ImageComponent
+                                          media_id={reply.created_by_user_photo}
+                                          alt={`Profile photo of the user ${reply?.created_by_user_name}`}
+                                          className="object-cover w-full h-full"
+                                        />
                                       </div>
-                                      <p className="text-sm">{reply.comment}</p>
-                                    </div>
-                                    <div className="flex items-center space-x-4 mt-1 ml-2">
-                                      <PostPropertiers.Like
-                                        quantitylikesNumber={reply.quantity_likes}
-                                        clicked={reply.user_already_like}
-                                        object_id={reply.id}
-                                        content_type={LikeContentType.comment}
-                                        onAddLike={() => onClickLikeReply(reply.id, comment.id)}
-                                        onDeleteLike={() => onClickLikeReply(reply.id, comment.id)}
-                                      />
+                                    ) : (
+                                      <div className="w-8 h-8 flex-shrink-0">
+                                        {components.NoImageReplieProfile}
+                                      </div>
+                                    )}
+
+                                    <div className="flex-1 min-w-0">
+                                      {/* Cabeçalho da reply com nome, data e ações */}
+                                      <div className="flex items-center justify-between mb-1">
+                                        <div className="flex items-center space-x-2">
+                                          <span className="font-medium text-xs">
+                                            {reply.created_by_user_name}
+                                          </span>
+                                          <span className="text-xs text-muted-foreground">
+                                            <DateAndHour
+                                              date={reply.timestamp}
+                                            />
+                                          </span>
+                                        </div>
+
+                                        {/* Ícones de ação para reply - sempre visíveis */}
+                                        {reply.user_username ===
+                                          user?.username && (
+                                          <div className="flex items-center space-x-1">
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-6 w-6 text-muted-foreground hover:text-primary"
+                                              onClick={() =>
+                                                handleEditComment(reply)
+                                              }
+                                              title="Editar resposta"
+                                            >
+                                              {icons.FaEdit}
+                                            </Button>
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                                              onClick={() =>
+                                                handleDeleteCommentModal(
+                                                  true,
+                                                  {
+                                                    id: reply.id,
+                                                    comment: reply.comment,
+                                                    created_by_user_name:
+                                                      reply.created_by_user_name,
+                                                    user_username:
+                                                      reply.user_username,
+                                                    object_id: reply.object_id,
+                                                    content_type:
+                                                      reply.content_type,
+                                                    quantity_likes:
+                                                      reply.quantity_likes,
+                                                    answers: reply.answers,
+                                                    timestamp: reply.timestamp,
+                                                    user_already_like:
+                                                      reply.user_already_like,
+                                                    created_by_user_photo:
+                                                      reply.created_by_user_photo,
+                                                    edited: reply.edited,
+                                                    quantity_comment:
+                                                      reply.quantity_comment,
+                                                    user: reply.user,
+                                                    quantity_replies:
+                                                      reply.quantity_replies,
+                                                  },
+                                                  comment.id,
+                                                )
+                                              }
+                                              title="Excluir resposta"
+                                            >
+                                              {icons.FaTrash}
+                                            </Button>
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {/* Conteúdo da reply */}
+                                      <div className="bg-muted/30 rounded-lg p-3">
+                                        {editingCommentId === reply.id ? (
+                                          <Textarea
+                                            value={editingContent}
+                                            onChange={(e) =>
+                                              setEditingContent(e.target.value)
+                                            }
+                                            className="min-h-[60px] text-sm bg-background border-border/50 w-full"
+                                            autoFocus
+                                          />
+                                        ) : (
+                                          <p className="text-sm break-words whitespace-pre-wrap">
+                                            {reply.comment}
+                                          </p>
+                                        )}
+
+                                        {editingCommentId === reply.id && (
+                                          <div className="flex gap-2 mt-2">
+                                            <Button
+                                              size="sm"
+                                              disabled={isUpdatingComment}
+                                              onClick={() =>
+                                                handleUpdateComment(
+                                                  reply.id,
+                                                  CommentContentType.comment,
+                                                  editingContent,
+                                                  comment.id,
+                                                  true,
+                                                )
+                                              }
+                                            >
+                                              {isUpdatingComment ? (
+                                                <span className="flex items-center gap-1">
+                                                  <span className="animate-spin h-4 w-4 border-2 border-t-transparent border-primary rounded-full"></span>
+                                                  Salvando...
+                                                </span>
+                                              ) : (
+                                                "Salvar"
+                                              )}
+                                            </Button>
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              disabled={isUpdatingComment}
+                                              onClick={() => {
+                                                setEditingCommentId(null);
+                                                setEditingContent("");
+                                              }}
+                                            >
+                                              Cancelar
+                                            </Button>
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {/* Like da reply */}
+                                      <div className="flex items-center space-x-4 mt-1 ml-2">
+                                        <PostPropertiers.Like
+                                          quantitylikesNumber={
+                                            reply.quantity_likes
+                                          }
+                                          clicked={reply.user_already_like}
+                                          object_id={reply.id}
+                                          content_type={LikeContentType.comment}
+                                          onAddLike={() =>
+                                            onClickLikeReply(
+                                              reply.id,
+                                              comment.id,
+                                            )
+                                          }
+                                          onDeleteLike={() =>
+                                            onClickLikeReply(
+                                              reply.id,
+                                              comment.id,
+                                            )
+                                          }
+                                        />
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              ))}
-                              <div className="text-sm text-center text-muted-foreground cursor-pointer">
-                                <p>Carregar Mais</p>
+                                ))}
+
+                                {/* Botão Carregar Mais Respostas */}
+                                {comment.answers.next && (
+                                  <div className="text-sm text-center mt-2">
+                                    {isLoadingMoreReplies(comment.id) ? (
+                                      <LoadingComponent
+                                        text="Carregando mais respostas..."
+                                        showText={true}
+                                      />
+                                    ) : (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() =>
+                                          handleLoadMoreReplies(comment.id)
+                                        }
+                                        className="text-muted-foreground hover:text-primary"
+                                      >
+                                        Carregar mais respostas
+                                      </Button>
+                                    )}
+                                  </div>
+                                )}
                               </div>
-                            </div>
-                          )}
+                            )}
                         </div>
                       </div>
                     </div>
@@ -626,6 +914,7 @@ export const PostModal = ({ postId }: { postId: number }) => {
                   {buttons.comment}
                 </div>
               )}
+
               {isFetchingNextPage && (
                 <div className="w-full p-2 bg-opacity-40 text-white text-center z-10">
                   <LoadingComponent
@@ -636,29 +925,9 @@ export const PostModal = ({ postId }: { postId: number }) => {
               )}
 
               {/* Comment Input */}
-              {/* <div className="p-4 border-t border-border/50 sticky bg-background/100 flex-1 bottom-0 w-full">
-                <div className="flex space-x-3">
-                  <Input
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Adicione um comentário..."
-                    className="flex-1 bg-muted/20 border-border/50"
-                    onKeyPress={(e) =>
-                      e.key === "Enter" && handleSubmitComment()
-                    }
-                  />
-                  <Button
-                    size="icon"
-                    className="bg-gradient-primary hover:shadow-glow-primary/30"
-                    onClick={handleSubmitComment}
-                  >
-                    {icons.Send}
-                  </Button>
-                </div>
-              </div> */}
               <form
                 onSubmit={(e) => {
-                  e.preventDefault(); // evita reload da página
+                  e.preventDefault();
                   handleComment();
                 }}
                 className="p-4 border-t border-border/50 sticky bg-background/100 flex-1 bottom-0 w-full"
@@ -687,20 +956,25 @@ export const PostModal = ({ postId }: { postId: number }) => {
             </div>
           </div>
         </div>
+
         <ShareModal
           post={post}
           handleShareModal={handleShareModal}
           shareModalOpen={shareModalOpen}
         />
+
         {selectedComment && (
           <DeleteCommentModal
             open={deleteCommentModalOpen}
             onOpenChange={(open) => {
               setDeleteCommentModalOpen(open);
-              if (!open) setSelectedComment(null); // Limpe ao fechar
+              if (!open) {
+                setSelectedComment(null);
+                setSelectedCommentParentId(null);
+              }
             }}
             onConfirm={handleConfirmDeleteComment}
-            comment={selectedComment}
+            comment={selectedComment as PostsCommentsProps}
             isDeleting={isDeletingComment}
           />
         )}
