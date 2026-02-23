@@ -328,7 +328,7 @@ export const CreatePostModal = () => {
                   )}
                 </CldUploadWidget>
 
-                <CldUploadWidget
+                {/* <CldUploadWidget
                   key={`video-${widgetKey}`}
                   signatureEndpoint="/api/signed-posts"
                   options={{
@@ -372,10 +372,10 @@ export const CreatePostModal = () => {
                       }}
                       disabled={uploadedFiles.length >= 5}
                     >
-                      {/* <Video className="w-5 h-5" /> */}
+                      <Video className="w-5 h-5" /> 
                     </Button>
                   )}
-                </CldUploadWidget>
+                </CldUploadWidget> */}
               </div>
 
               <Button
