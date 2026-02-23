@@ -265,7 +265,7 @@ export function CommentsContextProvider({
         c.id === objectId
           ? {
               ...c,
-              quantity_comment: (c.quantity_comment || 0) + 1,
+              quantity_replies: (c.quantity_replies || 0) + 1,
               answers: {
                 ...c.answers,
                 results: [answerComment, ...(c.answers?.results || [])],
@@ -302,6 +302,7 @@ export function CommentsContextProvider({
         c.id === comment_id
           ? {
               ...c,
+              quantity_replies: Math.max(0, (c.quantity_replies || 1) - 1),
               answers: {
                 ...(c.answers || {}),
                 results: (c.answers?.results || []).map((a) =>

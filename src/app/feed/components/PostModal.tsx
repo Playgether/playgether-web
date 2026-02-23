@@ -102,6 +102,15 @@ export const PostModal = ({ postId }: { postId: number }) => {
     setDeleteCommentModalOpen(action ?? !deleteCommentModalOpen);
   };
 
+  const handleCloseModal = () => {
+    // Limpa estados locais
+    setEditingCommentId(null);
+    setReplyingToCommentId(null);
+    setReplyContent("");
+    setNewComment("");
+    router.back();
+  };
+
   const handleConfirmDeleteComment = async () => {
     if (selectedComment && post) {
       try {
@@ -111,64 +120,17 @@ export const PostModal = ({ postId }: { postId: number }) => {
         setDeleteCommentModalOpen(false);
 
         if (selectedCommentParentId) {
-          // Primeiro atualiza o contexto
+          // Deixa apenas o contexto gerenciar
           deleteAnswerContext(selectedCommentParentId, selectedComment.id);
           decreaseRepliesCount(selectedCommentParentId);
 
-          // Verifica se após diminuir, o contador chegou a zero
-          const parentComment = comments.data.find(
-            (c) => c.id === selectedCommentParentId,
-          );
+          // Não faça setQueryData manual
+          // queryClient.setQueryData(...) ← REMOVA ISSO
 
-          // Se era a última resposta, fecha a seção de respostas
-          if (parentComment && parentComment.quantity_replies === 0) {
-            setOpenReplies((prev) => {
-              const next = new Set(prev);
-              next.delete(selectedCommentParentId);
-              return next;
-            });
-          }
-
-          // Invalida o cache MAS atualiza otimisticamente primeiro
-          queryClient.setQueryData(["comments", postId], (oldData: any) => {
-            if (!oldData) return oldData;
-
-            return {
-              ...oldData,
-              pages: oldData.pages.map((page: any) => ({
-                ...page,
-                data: page.data.map((comment: any) => {
-                  if (comment.id === selectedCommentParentId) {
-                    return {
-                      ...comment,
-                      quantity_replies: Math.max(
-                        0,
-                        (comment.quantity_replies || 1) - 1,
-                      ),
-                      answers: comment.answers
-                        ? {
-                            ...comment.answers,
-                            results: comment.answers.results.filter(
-                              (reply: any) => reply.id !== selectedComment.id,
-                            ),
-                            count: Math.max(
-                              0,
-                              (comment.answers.count || 1) - 1,
-                            ),
-                          }
-                        : comment.answers,
-                    };
-                  }
-                  return comment;
-                }),
-              })),
-            };
-          });
-
-          // Agora invalida para garantir sincronização futura
+          // Apenas invalide se realmente necessário
           queryClient.invalidateQueries({
             queryKey: ["comments", postId],
-            refetchType: "active", // Só refetch se a query estiver ativa
+            refetchType: "inactive", // Só refetch se não estiver ativa
           });
         } else {
           decreaseCommentCount(post.id);
@@ -222,7 +184,10 @@ export const PostModal = ({ postId }: { postId: number }) => {
   };
 
   useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+    queryClient.invalidateQueries({
+      queryKey: ["comments", postId],
+      refetchType: "inactive",
+    });
   }, [postId, queryClient]);
 
   const handleEditComment = (comment: any) => {
@@ -540,7 +505,7 @@ export const PostModal = ({ postId }: { postId: number }) => {
                   }}
                   overscan={3}
                   itemContent={(index, comment) => (
-                    <div className="px-4 flex-1 flex flex-col">
+                    <div className="px-4 flex-1 flex flex-col" key={comment.id}>
                       <div className="space-y-4 pb-4">
                         <div key={comment.id} className="space-y-2">
                           <div className="flex items-start space-x-3 pl-1">
