@@ -49,6 +49,11 @@ export const PostModal = ({ postId }: { postId: number }) => {
   const [loadingMoreReplies, setLoadingMoreReplies] = useState<Set<number>>(
     new Set(),
   );
+  const [replyingToCommentId, setReplyingToCommentId] = useState<number | null>(
+    null,
+  );
+  const [replyContent, setReplyContent] = useState("");
+  const [isSubmittingReply, setIsSubmittingReply] = useState(false);
 
   const {
     handleLike,
@@ -71,6 +76,7 @@ export const PostModal = ({ postId }: { postId: number }) => {
     editComment,
     fetchNextAnswers,
     decreaseRepliesCount,
+    addAnswerComment,
   } = useCommentsContext();
   const { Feed } = useFeedServerContext();
   const icons = Feed.ServerPostModal.icons;
@@ -101,7 +107,7 @@ export const PostModal = ({ postId }: { postId: number }) => {
       try {
         setIsDeletingComment(true);
         await deleteCommentAction(selectedComment.id);
-        decreaseCommentCount(post.id);
+
         setDeleteCommentModalOpen(false);
 
         if (selectedCommentParentId) {
@@ -165,6 +171,7 @@ export const PostModal = ({ postId }: { postId: number }) => {
             refetchType: "active", // Só refetch se a query estiver ativa
           });
         } else {
+          decreaseCommentCount(post.id);
           deleteCommentContext(selectedComment.id);
           queryClient.invalidateQueries({ queryKey: ["comments", postId] });
         }
@@ -251,6 +258,34 @@ export const PostModal = ({ postId }: { postId: number }) => {
       console.error("Erro ao atualizar comentário:", error);
     } finally {
       setIsUpdatingComment(false);
+    }
+  };
+
+  const handleReply = async (commentId: number) => {
+    if (!replyContent.trim() || !post) return;
+    setIsSubmittingReply(true);
+
+    const replyData = {
+      comment: replyContent,
+      object_id: commentId,
+      content_type: CommentContentType.comment,
+    };
+
+    try {
+      const createdReply = await postComment(replyData);
+      addAnswerComment(commentId, createdReply);
+      setReplyContent("");
+      setReplyingToCommentId(null);
+      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+
+      // Abre automaticamente as respostas se estiverem fechadas
+      if (!isRepliesOpen(commentId)) {
+        toggleReplies(commentId);
+      }
+    } catch (error) {
+      console.error("Falha ao enviar resposta:", error);
+    } finally {
+      setIsSubmittingReply(false);
     }
   };
 
@@ -660,8 +695,64 @@ export const PostModal = ({ postId }: { postId: number }) => {
                                     }
                                   />
                                 </PostPropertiers.Root>
-                                {buttons.answer}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    setReplyingToCommentId(comment.id)
+                                  }
+                                  className="text-muted-foreground hover:text-primary"
+                                >
+                                  {buttons.answer}
+                                </Button>
                               </div>
+
+                              {/* Input de resposta */}
+                              {replyingToCommentId === comment.id && (
+                                <form
+                                  onSubmit={(e) => {
+                                    e.preventDefault();
+                                    handleReply(comment.id);
+                                  }}
+                                  className="mt-3 space-y-2"
+                                >
+                                  <Textarea // ALTERADO: de Input para Textarea
+                                    value={replyContent}
+                                    onChange={(e) =>
+                                      setReplyContent(e.target.value)
+                                    }
+                                    placeholder="Escreva uma resposta..."
+                                    className="min-h-[80px] text-sm bg-muted/20 border-border/50 w-full"
+                                    autoFocus
+                                  />
+                                  <div className="flex gap-2 justify-end">
+                                    <Button
+                                      type="submit"
+                                      size="sm"
+                                      disabled={
+                                        isSubmittingReply ||
+                                        !replyContent.trim()
+                                      } // ALTERADO: desabilitado até ter conteúdo
+                                    >
+                                      {isSubmittingReply
+                                        ? "Enviando..."
+                                        : "Responder"}
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="ghost"
+                                      disabled={isSubmittingReply}
+                                      onClick={() => {
+                                        setReplyingToCommentId(null);
+                                        setReplyContent("");
+                                      }}
+                                    >
+                                      Cancelar
+                                    </Button>
+                                  </div>
+                                </form>
+                              )}
                             </div>
                           </div>
 

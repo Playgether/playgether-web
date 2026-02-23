@@ -320,7 +320,6 @@ export function CommentsContextProvider({
         c.id === comment_id
           ? {
               ...c,
-              quantity_comment: (c.quantity_comment || 1) - 1,
               answers: {
                 ...(c.answers || {}),
                 results: (c.answers?.results || []).filter(
