@@ -672,7 +672,7 @@ export const PostModal = ({ postId }: { postId: number }) => {
                                 </Button>
                               </div>
 
-                              {/* Input de resposta */}
+                              {/* Input de resposta - MANTIDO COMO ESTAVA */}
                               {replyingToCommentId === comment.id && (
                                 <form
                                   onSubmit={(e) => {
@@ -681,7 +681,7 @@ export const PostModal = ({ postId }: { postId: number }) => {
                                   }}
                                   className="mt-3 space-y-2"
                                 >
-                                  <Textarea // ALTERADO: de Input para Textarea
+                                  <Textarea
                                     value={replyContent}
                                     onChange={(e) =>
                                       setReplyContent(e.target.value)
@@ -697,7 +697,7 @@ export const PostModal = ({ postId }: { postId: number }) => {
                                       disabled={
                                         isSubmittingReply ||
                                         !replyContent.trim()
-                                      } // ALTERADO: desabilitado até ter conteúdo
+                                      }
                                     >
                                       {isSubmittingReply
                                         ? "Enviando..."
@@ -980,33 +980,41 @@ export const PostModal = ({ postId }: { postId: number }) => {
                 </div>
               )}
 
-              {/* Comment Input */}
+              {/* Comment Input - MODIFICADO: botão dentro do textarea com texto "Enviar" */}
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   handleComment();
                 }}
-                className="p-4 border-t border-border/50 sticky bg-background/100 flex-1 bottom-0 w-full"
+                className="p-4 border-t border-border/50 sticky bg-background/100 bottom-0 w-full"
               >
-                <div className="flex space-x-3">
-                  <Input
+                <div className="relative">
+                  <Textarea
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder="Adicione um comentário..."
-                    className="flex-1 bg-muted/20 border-border/50"
+                    className="flex-1 bg-muted/20 border-border/50 w-full pr-24 resize-none"
+                    rows={1}
                   />
-                  <Button
-                    type="submit"
-                    size="icon"
-                    disabled={isSubmittingComment}
-                    className={`bg-gradient-primary hover:shadow-glow-primary/30 ${
-                      isSubmittingComment || newComment === ""
-                        ? "opacity-50 cursor-not-allowed"
-                        : ""
-                    }`}
-                  >
-                    {isSubmittingComment ? "..." : icons.Send}
-                  </Button>
+                  {newComment.trim() && (
+                    <Button
+                      type="submit"
+                      disabled={isSubmittingComment}
+                      className="absolute bottom-2 right-2 bg-gradient-primary hover:shadow-glow-primary/30 px-3 py-1 h-8"
+                    >
+                      {isSubmittingComment ? (
+                        <span className="flex items-center gap-1">
+                          <span className="animate-spin h-4 w-4 border-2 border-t-transparent border-primary rounded-full" />
+                          Enviando...
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1">
+                          {icons.Send}
+                          Enviar
+                        </span>
+                      )}
+                    </Button>
+                  )}
                 </div>
               </form>
             </div>
