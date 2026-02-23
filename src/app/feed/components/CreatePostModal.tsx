@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -37,10 +37,16 @@ export const CreatePostModal = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [widgetKey, setWidgetKey] = useState(0);
   const [isWidgetOpen, setIsWidgetOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const { handlePostCreated, handleCreatePostModal, createPostOpen } =
     useFeedContext();
   const { user } = useAuthContext();
+
+  // Sincronizar o estado local com o contexto
+  useEffect(() => {
+    setModalOpen(createPostOpen);
+  }, [createPostOpen]);
 
   const getCurrentDate = () => {
     const date = new Date();
@@ -137,8 +143,8 @@ export const CreatePostModal = () => {
   };
 
   const handleCloseModal = async (open: boolean) => {
-    // Não fechar o modal se o widget do Cloudinary estiver aberto
-    if (!open && isWidgetOpen) {
+    // Se o widget estiver aberto, não permite fechar o modal
+    if (isWidgetOpen) {
       return;
     }
 
@@ -159,19 +165,43 @@ export const CreatePostModal = () => {
       setIsSubmitting(false);
     }
 
+    setModalOpen(open);
     handleCreatePostModal(open);
+  };
+
+  // Manipuladores específicos para o Cloudinary Widget
+  const handleWidgetOpen = () => {
+    setIsWidgetOpen(true);
+    // Pequeno atraso para garantir que o widget abra corretamente
+    setTimeout(() => {
+      document.body.style.pointerEvents = "auto";
+    }, 100);
+  };
+
+  const handleWidgetClose = () => {
+    setIsWidgetOpen(false);
   };
 
   return (
     <>
       <CustomToaster />
 
-      <Dialog
-        open={createPostOpen}
-        onOpenChange={handleCloseModal}
-        modal={!isWidgetOpen}
-      >
-        <DialogContent className="max-w-2xl bg-background/95 backdrop-blur-xl border border-border/50">
+      <Dialog open={modalOpen} onOpenChange={handleCloseModal}>
+        <DialogContent
+          className="max-w-2xl bg-background/95 backdrop-blur-xl border border-border/50"
+          // Previne que o modal feche quando o widget estiver aberto
+          onInteractOutside={(e) => {
+            if (isWidgetOpen) {
+              e.preventDefault();
+            }
+          }}
+          // Permite interagir com o widget
+          onPointerDownOutside={(e) => {
+            if (isWidgetOpen) {
+              e.preventDefault();
+            }
+          }}
+        >
           <DialogHeader>
             <DialogTitle className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
               Criar Post
@@ -270,8 +300,8 @@ export const CreatePostModal = () => {
                   }}
                   onSuccess={handleUploadSuccess}
                   onError={handleUploadError}
-                  onOpen={() => setIsWidgetOpen(true)}
-                  onClose={() => setIsWidgetOpen(false)}
+                  onOpen={handleWidgetOpen}
+                  onClose={handleWidgetClose}
                 >
                   {({ open }) => (
                     <Button
@@ -288,6 +318,7 @@ export const CreatePostModal = () => {
                           });
                           return;
                         }
+                        // Abre o widget diretamente
                         open();
                       }}
                       disabled={uploadedFiles.length >= 5}
@@ -318,8 +349,8 @@ export const CreatePostModal = () => {
                   }}
                   onSuccess={handleUploadSuccess}
                   onError={handleUploadError}
-                  onOpen={() => setIsWidgetOpen(true)}
-                  onClose={() => setIsWidgetOpen(false)}
+                  onOpen={handleWidgetOpen}
+                  onClose={handleWidgetClose}
                 >
                   {({ open }) => (
                     <Button
@@ -336,11 +367,12 @@ export const CreatePostModal = () => {
                           });
                           return;
                         }
+                        // Abre o widget diretamente
                         open();
                       }}
                       disabled={uploadedFiles.length >= 5}
                     >
-                      <Video className="w-5 h-5" />
+                      {/* <Video className="w-5 h-5" /> */}
                     </Button>
                   )}
                 </CldUploadWidget>
