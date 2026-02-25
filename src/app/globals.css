@@ -96,6 +96,10 @@ All colors MUST be HSL.
     --glow-neon: 0 0 30px hsl(var(--neon-blue) / 0.4);
     --shadow-light: 0 4px 20px hsl(var(--primary-start) / 0.15);
     --shadow-dark: 0 4px 20px hsl(var(--primary-start) / 0.4);
+    /* Additional shadows used by gamer-canvas UI (kept additive) */
+    --shadow-glow: 0 0 30px hsl(var(--neon-blue) / 0.3);
+    --shadow-neon: 0 0 20px hsl(var(--neon-purple) / 0.5);
+    --shadow-card: 0 4px 20px hsl(210 40% 8% / 0.1);
 
     /* Quick Messages Priority Effects */
     --priority-low: hsl(214 32% 91%);
@@ -169,6 +173,10 @@ All colors MUST be HSL.
     --glow-neon: 0 0 40px hsl(var(--neon-blue) / 0.6);
     --shadow-light: 0 2px 20px hsl(var(--primary-start) / 0.4);
     --shadow-dark: 0 2px 15px hsl(var(--primary-start) / 0.6);
+    /* Additional shadows used by gamer-canvas UI (kept additive) */
+    --shadow-glow: 0 0 40px hsl(var(--neon-blue) / 0.4);
+    --shadow-neon: 0 0 25px hsl(var(--neon-purple) / 0.6);
+    --shadow-card: 0 4px 25px hsl(220 13% 5% / 0.4);
 
     /* Sidebar for dark mode */
     --sidebar-background: var(--gradient-primary);
@@ -812,3 +820,55 @@ All colors MUST be HSL.
 /* --primary-glow: 195 100% 70%; */
 /* --primary: 195 100% 55%;
 --primary-glow: 195 100% 75%; */
+
+@layer components {
+  /* Custom scrollbar (used by gamer-canvas references) */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 3px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary));
+    border-radius: 3px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.8);
+  }
+}
+
+@layer utilities {
+  /* Small utility set from gamer-canvas (kept additive) */
+  .neon-glow {
+    filter: drop-shadow(0 0 10px currentColor);
+  }
+
+  .hover-lift {
+    transition: transform 0.2s ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+  }
+
+  .gradient-text {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .backdrop-blur-glass {
+    backdrop-filter: blur(8px);
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .dark .backdrop-blur-glass {
+    background: rgba(0, 0, 0, 0.2);
+  }
+}

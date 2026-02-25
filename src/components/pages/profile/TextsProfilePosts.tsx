@@ -94,11 +94,11 @@ export const TextsProfilePosts = () => {
   };
 
   return (
-    <div className="grid grid-cols-2 w-full gap-8 p-4 2xl:mb-[160px] animate-menuProfileFadeIn relative">
+    <div className="grid grid-cols-1 md:grid-cols-2 w-full gap-4 animate-menuProfileFadeIn relative">
       {objPosts.map((obj, index) => (
         <div
           key={index}
-          className={`TextsProfilePosts-wrapper cursor-pointer rounded-lg shadow-md shadow-[var(--shadow-color)] border relative ${
+          className={`cursor-pointer rounded-xl border border-border/50 bg-card/30 shadow-card hover:shadow-glow transition-all duration-200 relative ${
             hoveredIndex === index ? "hovered" : ""
           }`}
           onMouseOver={() => handleMouseOver(index)}
@@ -107,7 +107,7 @@ export const TextsProfilePosts = () => {
           <TextLimitComponent
             text={text}
             maxCharacters={200}
-            className="p-3 z-40 font-light"
+            className="p-4 z-40 font-light text-sm text-card-foreground"
             textFinal={" ...expandir"}
           />
           {hoveredIndex === index && (

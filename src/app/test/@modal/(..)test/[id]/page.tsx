@@ -1,10 +1,12 @@
-import { myObjects } from "@/app/test/page";
+import { myObjects } from "@/app/test/myObjects";
 import React from "react";
 
-// CORREÇÃO: Remova o "await" do params
-export default async function Page({ params }: { params: { id: string } }) {
-  // params já é async, então acesse diretamente
-  const { id } = params;
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
   const objSelected = myObjects.find((obj) => obj.id === id);
   console.log("Modal Page");
 

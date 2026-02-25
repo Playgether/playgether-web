@@ -1,12 +1,11 @@
 // app/profile/page.tsx
-import BaseLayout from "@/components/layouts/BaseLayout";
-import Page from "@/components/pages/profile/Page";
-import ProfileBaseInformation from "@/components/pages/profile/ProfileBaseInformations";
+import BaseLayout from "@/app/base-layout/components/structure/BaseLayout";
 import { Metadata } from "next";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 import NotFoundPages from "@/components/elements/NotFound/NotFoundPages";
 import { getProfileByUsername } from "@/services/getProfileByUsername";
+import GamesCanvasProfile from "@/components/pages/profile/GamesCanvasProfile";
 
 export const metadata: Metadata = {
   title: "Playgether - Profile",
@@ -46,9 +45,7 @@ export default async function PageProfile() {
   return (
     <BaseLayout>
       {profile ? (
-      <Page>
-        <ProfileBaseInformation profile={profile} />
-      </Page>
+        <GamesCanvasProfile profile={profile} />
       ):(
         <NotFoundPages message="Perfil não encontrado" />
       )}

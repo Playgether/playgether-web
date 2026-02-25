@@ -2,11 +2,15 @@ import React from 'react'
 import BaseLayout from '../base-layout/components/structure/BaseLayout'
 import DuoSteps from './components/DuoStep';
 
-export default function Duo({ searchParams }: { searchParams?: { step?: string } }) {
-
+export default async function Duo({
+  searchParams,
+}: {
+  searchParams?: Promise<{ step?: string }>;
+}) {
+  const resolvedSearchParams = await searchParams;
   return (
     <BaseLayout>
-        <DuoSteps initialStep={searchParams?.step || "profile"} />
+        <DuoSteps initialStep={resolvedSearchParams?.step || "profile"} />
     </BaseLayout>
   )
 }

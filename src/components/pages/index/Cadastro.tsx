@@ -24,7 +24,7 @@ const Cadastro = ({ onClickX, onClickAqui }) => {
           ✕
         </button>
 
-        <div className="flex flex-col items-center pt-8 pb-6 bg-foreground/5">
+        <div className="flex flex-col items-center pt-8 pb-6 ">
           <div className="flex items-center -space-x-2 mb-4">
             <div className="w-12 h-12 rounded-full bg-secondary" />
             <div className="w-12 h-12 rounded-full bg-neon-blue" />

@@ -11,23 +11,27 @@ export const Bio = ({
   profile: getProfileByUsernameProps | null;
 }) => {
   return (
-    <div className="w-full h-full animate-menuProfileFadeIn Bio-wrapper">
-      <div className="w-full h-[40vh] rounded-lg my-4 overflow-auto">
-        <div className=" p-4 text-justify font-extralight h-full">
+    <div className="w-full animate-menuProfileFadeIn space-y-6">
+      <div className="space-y-3">
+        <h3 className="text-lg font-semibold text-card-foreground">Sobre mim</h3>
+        <div className="rounded-xl border border-border/50 bg-card/30 p-4">
           {profile?.bio ? (
-            <p>{profile.bio}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+              {profile.bio}
+            </p>
           ) : (
-            <div className="h-full w-full flex justify-center items-center">
+            <div className="py-10 text-center text-muted-foreground">
               Este perfil não possui uma bio
             </div>
           )}
         </div>
       </div>
-      <div className="flex w-full h-[300px] gap-4 justify-center items-center">
-        <div className="relative w-[450px] h-full Bio-conquists rounded-lg overflow-y-auto shadow shadow-[var(--shadow-color)] border">
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="rounded-xl border border-border/50 bg-card/30 overflow-hidden shadow-card">
           <BioConquists />
         </div>
-        <div className="h-full w-[450px] Bio-performance rounded-lg overflow-y-auto shadow shadow-[var(--shadow-color)] border">
+        <div className="rounded-xl border border-border/50 bg-card/30 overflow-hidden shadow-card">
           <BioPerformance profile={profile} />
         </div>
       </div>

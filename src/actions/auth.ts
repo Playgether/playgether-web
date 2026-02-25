@@ -13,7 +13,9 @@ export async function loginAction(formData: FormData) {
 
   try {
     const response = await api.post("/api/token/", user);
-    const decodedAccessToken = jwt_decode(response.data.access);
+    const decodedAccessToken = jwt_decode<{ user_id: string | number }>(
+      response.data.access
+    );
 
     const cookiesInstance = await cookies();
     const isProduction = process.env.NODE_ENV === "production";
@@ -35,10 +37,10 @@ export async function loginAction(formData: FormData) {
       ...cookieOptions,
       maxAge: 604800,
     });
-    cookiesInstance.set("user_id", decodedAccessToken.user_id, cookieOptions);
+    cookiesInstance.set("user_id", String(decodedAccessToken.user_id), cookieOptions);
 
     return { error: null };
-  } catch (error) {
+  } catch (error: any) {
     if (error.response && error.response.status === 401) {
       return { error: "wrong_password" };
     }

@@ -1,7 +1,6 @@
 import NotFoundPages from "@/components/elements/NotFound/NotFoundPages";
-import BaseLayout from "@/components/layouts/BaseLayout";
-import Page from "@/components/pages/profile/Page";
-import ProfileBaseInformation from "@/components/pages/profile/ProfileBaseInformations";
+import BaseLayout from "@/app/base-layout/components/structure/BaseLayout";
+import GamesCanvasProfile from "@/components/pages/profile/GamesCanvasProfile";
 import { getProfileByUsername } from "@/services/getProfileByUsername";
 import { Metadata } from "next";
 
@@ -20,9 +19,7 @@ export default async function Profile({ params }) {
   return (
     <BaseLayout>
     {profile ? (
-      <Page>
-        <ProfileBaseInformation profile={profile} />
-      </Page>
+      <GamesCanvasProfile profile={profile} />
     ) : (
       <NotFoundPages message="Perfil não encontrado" />
     ) }

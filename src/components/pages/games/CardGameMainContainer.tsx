@@ -9,8 +9,11 @@ export const CardGameMainContainer: FC<CardGameMainContainerProps> = ({
 }) => {
   return (
     <>
-      <section className="text-center pt-20 font-extrabold CardGameMainContainer-wrapper text-2xl">
-        <h1>Conecte seus jogos</h1>
+      <section className="text-center font-bold text-xl text-card-foreground">
+        <h1 className="gradient-text">Conecte seus jogos</h1>
+        <p className="text-sm text-muted-foreground font-normal mt-1">
+          Selecione um jogo para conectar e exibir informações no seu perfil.
+        </p>
       </section>
 
       {children}

@@ -19,15 +19,19 @@ export const RightProfile = ({
   const [content, setContent] = useState("bio");
 
   return (
-    <div className="w-full rounded-t-lg h-full overflow-hidden min-h-[90vh] pb-[30px]">
+    <div className="w-full min-h-[90vh]">
       <MenuProfile setContent={setContent} content={content} />
-      {content === "bio" && <Bio profile={profile} />}
-      {content === "medias" && <Medias />}
-      {content === "textos" && <TextsProfilePosts />}
-      {content === "estatisticas" && <Statistics />}
-      {content === "conquistas" && <Conquists />}
-      {content === "marcos" && <Moments />}
-      {content === "jogos" && <Game />}
+      <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
+        <div className="p-6">
+          {content === "bio" && <Bio profile={profile} />}
+          {content === "medias" && <Medias />}
+          {content === "textos" && <TextsProfilePosts />}
+          {content === "estatisticas" && <Statistics />}
+          {content === "conquistas" && <Conquists />}
+          {content === "marcos" && <Moments />}
+          {content === "jogos" && <Game />}
+        </div>
+      </div>
     </div>
   );
 };

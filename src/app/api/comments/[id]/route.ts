@@ -5,12 +5,12 @@ import { cookies } from "next/headers";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   const accessToken = (await cookies()).get("accessToken")?.value;
   const { searchParams } = new URL(request.url);
   const cursor = searchParams.get("cursor");
-  const { id } = await params;
+  const { id } = await context.params;
 
   try {
     const response = await api.get(`/api/v1/posts/${id}/comments/`, {

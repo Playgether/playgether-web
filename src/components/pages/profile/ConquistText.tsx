@@ -1,3 +1,5 @@
+import React from "react";
+
 export const ConquistText = ({
   text,
   title,
@@ -10,23 +12,24 @@ export const ConquistText = ({
   date: string;
 }) => {
   return (
-    <div className="w-full flex h-fit">
-      <div className="relative h-full">
-        <div className="Conquists-circle h-4 w-4 rounded-full z-50 mt-2 -ml-2 absolute"></div>
-      </div>
+    <div className="w-full rounded-xl border border-border/50 bg-card/30 p-4 hover:shadow-glow transition-all duration-200">
+      <div className="flex items-start gap-4">
+        <div className="w-12 h-12 rounded-lg bg-gradient-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
+          {Icon ? <div className="scale-75">{Icon}</div> : <span>🏆</span>}
+        </div>
 
-      <div className="w-full pl-4 space-y-2">
-        <p className="text-xl font-semibold">{title}</p>
-        <p className="font-thin bg-opacity-20 flex justify-start items-center w-1/6 Conquists-date">
-          {date}
-        </p>
-        <div className="flex justify-between">
-          <div className="relative font-thin Conquists-text text-md whitespace-pre-wrap">
-            <p>{text}</p>
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex items-start justify-between gap-3">
+            <h4 className="font-semibold text-card-foreground">{title}</h4>
+            <span className="text-xs text-muted-foreground px-2 py-1 rounded border border-border/50 bg-muted/30 whitespace-nowrap">
+              {date}
+            </span>
           </div>
+          <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+            {text}
+          </p>
         </div>
       </div>
-      {Icon ? <div className="pr-4">{Icon}</div> : null}
     </div>
   );
 };

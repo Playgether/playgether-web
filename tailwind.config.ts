@@ -154,7 +154,11 @@ export default {
 			boxShadow: {
 				'glow-primary': 'var(--glow-primary)',
 				'glow-secondary': 'var(--glow-secondary)',
-				'glow-neon': 'var(--glow-neon)'
+				'glow-neon': 'var(--glow-neon)',
+				/* Extra shadow names used by gamer-canvas visual refs */
+				'glow': 'var(--shadow-glow)',
+				'neon': 'var(--shadow-neon)',
+				'card': 'var(--shadow-card)'
 			}
 		}
 	},
