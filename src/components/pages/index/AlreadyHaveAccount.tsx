@@ -4,14 +4,16 @@ interface AlreadyHaveAccountProps {
 
 const AlreadyHaveAccount = ({ onClickAqui }: AlreadyHaveAccountProps) => {
   return (
-    <div className="nb-4">
-      <p className="AlreadyHaveAccount-p">
-        Já possui uma conta?{" "}
-        <a href="#" onClick={onClickAqui} className="AlreadyHaveAccount-a">
-          Entre aqui.
-        </a>
-      </p>
-    </div>
+    <p className="text-center text-muted-foreground text-sm">
+      Já possui uma conta?{" "}
+      <button
+        type="button"
+        onClick={onClickAqui}
+        className="text-neon-blue hover:underline font-medium"
+      >
+        Entre aqui.
+      </button>
+    </p>
   );
 };
 

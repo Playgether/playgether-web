@@ -7,33 +7,43 @@ import Login from "./Login";
 import Normal from "./Normal";
 import useActiveButton from './UseActiveButton';
 import HeaderIndex from "./HeaderIndex";
+import Footer from "./Footer";
 
 const ContentSection = () => {
     const { getActiveButton, handleButtonClick } = useActiveButton();
+    const active = getActiveButton();
     return (
-        <>
-           <HeaderIndex onClickLogo={() => handleButtonClick('normal')} onClickSobre={() => handleButtonClick('sobre')}/>
-           {getActiveButton() === 'sobre' && (
+        <div className="relative z-10 min-h-screen">
+          <HeaderIndex
+            onClickLogo={() => handleButtonClick("normal")}
+            onClickSobre={() => handleButtonClick("sobre")}
+          />
 
-                <Sobre onClickVoltar={() => handleButtonClick('normal')}/>
-            )}  
-            {getActiveButton() === 'normal' && (
+          <Normal
+            onClickLogar={() => handleButtonClick("login")}
+            onClickCadastrar={() => handleButtonClick("cadastro")}
+          />
 
-                <Normal onClickLogar={() => handleButtonClick('login')} onClickCadastrar={() => handleButtonClick ('cadastro')} />
-            )}
+          <Footer />
 
-            {getActiveButton() === 'cadastro' && (
+          {active === "sobre" && (
+            <Sobre onClickVoltar={() => handleButtonClick("normal")} />
+          )}
 
-                <Cadastro onClickX={() => handleButtonClick('normal')} onClickAqui={() => handleButtonClick('login')}/>
+          {active === "cadastro" && (
+            <Cadastro
+              onClickX={() => handleButtonClick("normal")}
+              onClickAqui={() => handleButtonClick("login")}
+            />
+          )}
 
-            )}
-
-            {getActiveButton() === 'login' && (
-
-                <Login onClickX={() => handleButtonClick('normal')} onClickAqui={() => handleButtonClick('cadastro')}/>
-
-            )}
-        </>
+          {active === "login" && (
+            <Login
+              onClickX={() => handleButtonClick("normal")}
+              onClickAqui={() => handleButtonClick("cadastro")}
+            />
+          )}
+        </div>
     );
 };
 

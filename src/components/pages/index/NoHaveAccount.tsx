@@ -4,14 +4,16 @@ interface NoHaveAccount {
 
 const NoHaveAccount = ({ onClickAqui }) => {
   return (
-    <div className="nb-4">
-      <p className="AlreadyHaveAccount-p">
-        Não possui uma conta?{" "}
-        <a href="#" onClick={onClickAqui} className="AlreadyHaveAccount-a">
-          Registre-se aqui.
-        </a>
-      </p>
-    </div>
+    <p className="text-center text-muted-foreground text-sm">
+      Não possui uma conta?{" "}
+      <button
+        type="button"
+        onClick={onClickAqui}
+        className="text-neon-blue hover:underline font-medium"
+      >
+        Registre-se aqui.
+      </button>
+    </p>
   );
 };
 

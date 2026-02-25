@@ -1,6 +1,7 @@
 import "./globals.css";
 import { AppProvider } from "../context";
 import { cn } from "@/lib/utils";
+import { ThemeProvider } from "next-themes";
 
 export const metadata = {
   description: "Create by gamers for gamers",
@@ -12,15 +13,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className="w-fit h-fit max-w-[100vw] overflow-x-hidden">
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className="min-h-full max-w-[100vw] overflow-x-hidden"
+    >
       <body
         className={cn(
-          "text-zinc-50 max-w-[100vw] w-fit h-fit font-poppins"
+          "min-h-screen max-w-[100vw] font-poppins bg-background text-foreground antialiased"
         )}
       >
-        <AppProvider>
-          <main className="max-w-[100vw] w-fit h-fit">{children}</main>
-        </AppProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <AppProvider>
+            <main className="max-w-[100vw] min-h-screen">{children}</main>
+          </AppProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

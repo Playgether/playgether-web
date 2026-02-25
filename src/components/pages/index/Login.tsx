@@ -1,7 +1,5 @@
 import React from "react";
-import ButtonClose from "../../elements/ButtonClose/ButtonClose";
 import FormLogin from "./FormLogin";
-import Image from "next/legacy/image";
 
 interface LoginProps {
   onClickX: () => void;
@@ -10,18 +8,37 @@ interface LoginProps {
 
 const Login = ({ onClickX, onClickAqui }: LoginProps) => {
   return (
-    <div className="h-screen flex flex-col justify-center bg-opacity-30 absolute w-screen">
-      <div className="Cadastro-wrapper mx-auto max-w-md py-8 px-10 shadow rounded-lg overflow-auto">
-        <div className="mb-4 flex flex-col justify-between text-center">
-          <ButtonClose onClick={onClickX}>X</ButtonClose>
-          <Image
-            src={"/index/logoWhiteBackground.png"}
-            width={400}
-            height={400}
-            alt={"Logo com Background"}
-          />
+    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4 animate-fade-up">
+      <div
+        className="absolute inset-0 bg-background/60 backdrop-blur-sm"
+        onClick={onClickX}
+      />
+
+      <div className="relative w-full max-w-md rounded-2xl overflow-hidden border border-foreground/10 bg-background shadow-glow-primary">
+        <button
+          type="button"
+          onClick={onClickX}
+          className="w-full py-3 text-primary-foreground font-bold text-lg tracking-wider hover:opacity-90 transition-opacity"
+          aria-label="Fechar"
+        >
+          ✕
+        </button>
+
+        <div className="flex flex-col items-center pt-8 pb-6 bg-foreground/5">
+          <div className="flex items-center -space-x-2 mb-4">
+            <div className="w-12 h-12 rounded-full bg-secondary" />
+            <div className="w-12 h-12 rounded-full bg-neon-blue" />
+          </div>
+
+          <h2 className="text-2xl font-bold tracking-[0.2em] text-foreground">
+            <span className="text-secondary">PLAY</span>
+            <span className="text-neon-blue">GETHER</span>
+          </h2>
         </div>
-        <FormLogin onClickAqui={onClickAqui} />
+
+        <div className="p-8 space-y-5">
+          <FormLogin onClickAqui={onClickAqui} />
+        </div>
       </div>
     </div>
   );
