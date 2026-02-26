@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -38,6 +40,7 @@ import {
   Plus,
   Settings,
   Share2,
+  X,
   Star,
   Target,
   Trash2,
@@ -47,6 +50,8 @@ import {
   UserPlus,
 } from "lucide-react";
 import type { getProfileByUsernameProps } from "@/services/getProfileByUsername";
+import { ConquistText } from "./ConquistText";
+import { rarityConfig, type RarityLevel } from "./rarityConfig";
 
 const tabsData = [
   { id: "bio", label: "Bio", icon: User },
@@ -181,11 +186,22 @@ const initialMilestones = [
   },
 ];
 
-const achievements = [
+const achievements: Array<{
+  id: number;
+  title: string;
+  description: string;
+  rarity: RarityLevel;
+  icon: string;
+  game: string;
+  date: string;
+  percentage: number;
+  progression?: { current: number; next: number; path: number[] };
+  recentlyUnlocked?: boolean;
+}> = [
   {
     id: 1,
     title: "Primeiro Ace",
-    description: "Conseguiu um ace pela primeira vez",
+    description: "Conseguiu um ace pela primeira vez em partida competitiva.",
     rarity: "common",
     icon: "🎯",
     game: "Valorant",
@@ -194,8 +210,18 @@ const achievements = [
   },
   {
     id: 2,
+    title: "Primeiros Passos",
+    description: "Completou o tutorial e criou seu perfil na plataforma.",
+    rarity: "medium",
+    icon: "👣",
+    game: "Playgether",
+    date: "10 Jan 2022, 10:00",
+    percentage: 60,
+  },
+  {
+    id: 3,
     title: "Streamer Iniciante",
-    description: "Fez sua primeira stream",
+    description: "Fez sua primeira stream e acumulou 500 views.",
     rarity: "rare",
     icon: "📺",
     game: "Twitch",
@@ -203,9 +229,19 @@ const achievements = [
     percentage: 12,
   },
   {
-    id: 3,
+    id: 4,
+    title: "Sniper de Elite",
+    description: "Acertou 100 headshots consecutivos sem morrer.",
+    rarity: "ultra-rare",
+    icon: "🎯",
+    game: "CS:GO",
+    date: "08 Jul 2022, 22:45",
+    percentage: 4,
+  },
+  {
+    id: 5,
     title: "Rank Master",
-    description: "Chegou ao rank Diamond",
+    description: "Chegou ao rank Diamond pela primeira vez.",
     rarity: "epic",
     icon: "💎",
     game: "Valorant",
@@ -213,9 +249,19 @@ const achievements = [
     percentage: 3,
   },
   {
-    id: 4,
+    id: 6,
+    title: "Força da Natureza",
+    description: "Completou 72h de maratona sem nenhuma derrota no ranking global.",
+    rarity: "mythic",
+    icon: "🔥",
+    game: "Steam",
+    date: "31 Out 2023, 06:00",
+    percentage: 0.8,
+  },
+  {
+    id: 7,
     title: "Lenda Viva",
-    description: "1000 horas de jogo",
+    description: "1000 horas de jogo acumuladas. Reconhecido pela comunidade.",
     rarity: "legendary",
     icon: "👑",
     game: "Steam",
@@ -227,6 +273,17 @@ const achievements = [
       path: [10, 50, 100, 300, 500, 1000, 1500, 2000, 3000, 5000],
     },
   },
+  {
+    id: 8,
+    title: "Além das Estrelas",
+    description: "Atingiu o topo do ranking global em 3 jogos diferentes simultaneamente.",
+    rarity: "celestial",
+    icon: "🌌",
+    game: "Playgether",
+    date: "15 Fev 2024, 00:00",
+    percentage: 0.01,
+    recentlyUnlocked: true,
+  },
 ];
 
 const games = [
@@ -234,36 +291,6 @@ const games = [
   { id: "lol", name: "League of Legends", image: "/games/League of Legends.png" },
   { id: "csgo", name: "CS:GO", image: "/games/Counter Strike 2.png" },
 ];
-
-function getRarityColor(rarity: string) {
-  switch (rarity) {
-    case "common":
-      return "bg-gray-500";
-    case "rare":
-      return "bg-blue-500";
-    case "epic":
-      return "bg-purple-500";
-    case "legendary":
-      return "bg-gradient-secondary";
-    default:
-      return "bg-gray-500";
-  }
-}
-
-function getRarityHoverColor(rarity: string) {
-  switch (rarity) {
-    case "common":
-      return "hover:shadow-[0_0_20px_rgba(156,163,175,0.3)]";
-    case "rare":
-      return "hover:shadow-[0_0_20px_rgba(96,165,250,0.3)]";
-    case "epic":
-      return "hover:shadow-[0_0_20px_rgba(168,85,247,0.3)]";
-    case "legendary":
-      return "hover:shadow-[0_0_20px_rgba(251,191,36,0.3)]";
-    default:
-      return "hover:shadow-[0_0_20px_rgba(156,163,175,0.3)]";
-  }
-}
 
 function AddCommentModal({
   isOpen,
@@ -478,74 +505,156 @@ function AchievementModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  achievement: any;
+  achievement: (typeof achievements)[number] | null;
 }) {
   if (!achievement) return null;
 
+  const config = rarityConfig[achievement.rarity] ?? rarityConfig.common;
+  const showAnimatedBorder = config.hasAnimatedBorder;
+  const isLegendaryOrCelestial =
+    achievement.rarity === "legendary" || achievement.rarity === "celestial";
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => (open ? null : onClose())}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <span>{achievement.icon}</span>
-            {achievement.title}
-          </DialogTitle>
-          <DialogDescription>{achievement.description}</DialogDescription>
-        </DialogHeader>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent
+        className="max-w-md p-0 gap-0 border-0 bg-transparent shadow-none overflow-visible [&>button]:hidden"
+      >
+        {/* ── Card shell: mesmo glow, borda e background do ConquistText ───── */}
+        <motion.div
+          className="rounded-xl overflow-visible"
+          animate={{ boxShadow: config.glowExpanded }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          style={{ willChange: "box-shadow" }}
+        >
+          {/* Border container */}
+          <div
+            className="relative rounded-xl overflow-hidden"
+            style={{ padding: showAnimatedBorder ? "1.5px" : "1px" }}
+          >
+            {/* Border layer — animada ou estática */}
+            {showAnimatedBorder ? (
+              <motion.div
+                className="absolute pointer-events-none"
+                style={{
+                  inset: "-200%",
+                  width: "500%",
+                  height: "500%",
+                  background: config.borderGradient,
+                  willChange: "transform",
+                }}
+                animate={{ rotate: 360 }}
+                transition={{
+                  duration: config.borderRotationSpeed * 0.6,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+              />
+            ) : (
+              <div
+                className="absolute inset-0"
+                style={{ background: config.staticBorderColor }}
+              />
+            )}
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Raridade</span>
-            <Badge
-              variant="outline"
-              className={`${getRarityColor(achievement.rarity)} text-white border-0 text-xs`}
+            {/* Inner card — mesmo background do card ───────────────────────── */}
+            <div
+              className="relative overflow-hidden"
+              style={{
+                background: config.cardBg,
+                borderRadius: "calc(var(--radius) - 1.5px)",
+              }}
             >
-              {achievement.rarity}
-            </Badge>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Jogo</span>
-            <span className="font-medium">{achievement.game}</span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Conquistado em</span>
-            <span className="font-medium">{achievement.date}</span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">% dos jogadores</span>
-            <span className="font-medium">{achievement.percentage}%</span>
-          </div>
+              {/* Overlay radial para legendary/celestial (como no card) */}
+              {isLegendaryOrCelestial && (
+                <motion.div
+                  className="absolute inset-0 pointer-events-none"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.18 }}
+                  transition={{ duration: 0.5 }}
+                  style={{
+                    background:
+                      achievement.rarity === "celestial"
+                        ? "radial-gradient(ellipse at 50% 50%, rgba(167,139,250,0.5) 0%, rgba(59,130,246,0.3) 50%, transparent 80%)"
+                        : "radial-gradient(ellipse at 50% 50%, rgba(251,191,36,0.4) 0%, transparent 70%)",
+                  }}
+                />
+              )}
 
-          {achievement.progression ? (
-            <div className="pt-2 border-t border-border">
-              <div className="text-sm font-medium mb-2">Caminho da Conquista</div>
-              <div className="flex flex-wrap gap-2">
-                {achievement.progression.path.map((p: number) => (
-                  <Badge
-                    key={p}
-                    variant="outline"
-                    className={
-                      p <= achievement.progression.current
-                        ? "bg-gradient-primary text-white border-0"
-                        : "border-border"
-                    }
-                  >
-                    {p}h
-                  </Badge>
-                ))}
-              </div>
-              <div className="text-sm text-muted-foreground mt-2">
-                Próxima: {achievement.progression.next}h
+              {/* Content ───────────────────────────────────────────────────── */}
+              <div className="relative z-10 p-6 pt-12">
+                <DialogClose
+                  className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none z-50 p-1"
+                  aria-label="Fechar"
+                >
+                  <X className="h-4 w-4" />
+                </DialogClose>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <span>{achievement.icon}</span>
+                    {achievement.title}
+                  </DialogTitle>
+                  <DialogDescription>{achievement.description}</DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-3 mt-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Raridade</span>
+                    <Badge
+                      variant="outline"
+                      className="text-white border-0 text-xs"
+                      style={{ background: config.badgeGradient }}
+                    >
+                      {config.icon} {config.label}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Jogo</span>
+                    <span className="font-medium">{achievement.game}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Conquistado em</span>
+                    <span className="font-medium">{achievement.date}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">% dos jogadores</span>
+                    <span className="font-medium">{achievement.percentage}%</span>
+                  </div>
+
+                  {achievement.progression ? (
+                    <div className="pt-2 border-t border-border">
+                      <div className="text-sm font-medium mb-2">
+                        Caminho da Conquista
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {achievement.progression.path.map((p: number) => (
+                          <Badge
+                            key={p}
+                            variant="outline"
+                            className={
+                              p <= achievement.progression!.current
+                                ? "text-white border-0"
+                                : "border-border"
+                            }
+                            style={
+                              p <= achievement.progression!.current
+                                ? { background: config.badgeGradient }
+                                : undefined
+                            }
+                          >
+                            {p}h
+                          </Badge>
+                        ))}
+                      </div>
+                      <div className="text-sm text-muted-foreground mt-2">
+                        Próxima: {achievement.progression.next}h
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </div>
-          ) : null}
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Fechar
-          </Button>
-        </DialogFooter>
+          </div>
+        </motion.div>
       </DialogContent>
     </Dialog>
   );
@@ -1195,45 +1304,42 @@ function GamesCanvasContentTabs({ profile }: { profile: getProfileByUsernameProp
           </TabsContent>
 
           <TabsContent value="achievements" className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+              initial="hidden"
+              animate="visible"
+              variants={{
+                hidden: {},
+                visible: { transition: { staggerChildren: 0.07 } },
+              }}
+            >
               {achievements.map((achievement) => (
-                <Card
+                <motion.div
                   key={achievement.id}
-                  className={`relative overflow-hidden cursor-pointer transition-all duration-200 ${getRarityHoverColor(
-                    achievement.rarity
-                  )}`}
-                  onClick={() => {
-                    setSelectedAchievement(achievement);
-                    setIsAchievementModalOpen(true);
+                  variants={{
+                    hidden: { opacity: 0, y: 14 },
+                    visible: {
+                      opacity: 1,
+                      y: 0,
+                      transition: { duration: 0.35, ease: "easeOut" },
+                    },
                   }}
                 >
-                  <div
-                    className={`absolute top-0 right-0 w-16 h-16 ${getRarityColor(
-                      achievement.rarity
-                    )} opacity-10 transform rotate-45 translate-x-4 -translate-y-4`}
+                  <ConquistText
+                    title={achievement.title}
+                    text={achievement.description}
+                    date={achievement.date}
+                    Icon={<span className="text-xl">{achievement.icon}</span>}
+                    rarity={achievement.rarity}
+                    recentlyUnlocked={achievement.recentlyUnlocked}
+                    onCardClick={() => {
+                      setSelectedAchievement(achievement);
+                      setIsAchievementModalOpen(true);
+                    }}
                   />
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="text-2xl">{achievement.icon}</div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold">{achievement.title}</h4>
-                          <Badge
-                            variant="outline"
-                            className={`${getRarityColor(
-                              achievement.rarity
-                            )} text-white border-0 text-xs`}
-                          >
-                            {achievement.rarity}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{achievement.description}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </TabsContent>
 
           <TabsContent value="milestones" className="p-6">
