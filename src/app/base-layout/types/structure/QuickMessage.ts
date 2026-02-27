@@ -1,9 +1,11 @@
+import type { StaticImageData } from "next/image";
+
 export interface QuickMessage {
   id: string;
   user: {
     name: string;
     username?: string;
-    avatar: string;
+    avatar: string | StaticImageData;
   };
   message: string;
   timeRemaining: string;
@@ -13,3 +15,4 @@ export interface QuickMessage {
   status: "active" | "expired" | "responded";
   timestamp: string;
 }
+  

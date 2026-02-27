@@ -1,5 +1,5 @@
 import { CommentsContextProvider } from "@/context/CommentsContext";
-import { FeedProps } from "@/services/getFeed";
+import { FeedProps } from "@/types/FeedProps";
 import { useEffect } from "react";
 import PostHasMedia from "./PostHasMedia/PostHasMedia";
 import { ClosePostExpand } from "../../PostsExtend/ClosePostExpand";
@@ -21,7 +21,11 @@ export interface PostsExtendProps {
 }
 
 /** Este é o componente responsável por gerar a página extendida de um post que foi clicado no feed(Expande o post mostrando os comentários etc).  */
-const ResponsivePostsExtend = ({ onClose, resource, slideIndex }: PostsExtendProps) => {
+const ResponsivePostsExtend = ({
+  onClose,
+  resource,
+  slideIndex,
+}: PostsExtendProps) => {
   useEffect(() => {
     const disableScrollAndEvents = (e: Event) => e.stopPropagation(); // Impede propagação para o fundo
     const preventScroll = () => (document.body.style.overflow = "hidden");
@@ -52,14 +56,17 @@ const ResponsivePostsExtend = ({ onClose, resource, slideIndex }: PostsExtendPro
       >
         <div className="flex bg-white shadow-lg mt-[60px] mb-[20px] gap-[2px] max-w-[720px] max-h-[620px]">
           {resource.has_post_media ? (
-            <CommentsContextProvider>
-              <PostHasMedia
-                resource={resource}
-                slideIndex={slideIndex}
-              />
+            <CommentsContextProvider
+              response={{ data: [], next_page: null, previous_page: null }}
+              postId={resource.id}
+            >
+              <PostHasMedia resource={resource} slideIndex={slideIndex} />
             </CommentsContextProvider>
           ) : (
-            <CommentsContextProvider>
+            <CommentsContextProvider
+              response={{ data: [], next_page: null, previous_page: null }}
+              postId={resource.id}
+            >
               <PostHasNoMedia resource={resource} />
             </CommentsContextProvider>
           )}

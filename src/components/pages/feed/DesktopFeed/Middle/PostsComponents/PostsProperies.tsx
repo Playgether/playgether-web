@@ -21,8 +21,8 @@ const PostProperies = ({
         <div className="w-5/6 flex flex-row justify-between">
           <PostPropertiers.Root className="w-full flex flex-row justify-between">
             <PostPropertiers.Like
-              quantity_likes={quantity_likes}
-              user_already_like={user_already_like}
+              quantitylikesNumber={quantity_likes}
+              clicked={user_already_like}
               content_type={LikeContentType.post}
               object_id={object_id}
               iconClassName="h-4 w-4 lg:h-6 lg:w-6"
@@ -34,6 +34,7 @@ const PostProperies = ({
             <PostPropertiers.Share
               quantity_reposts={quantity_reposts}
               iconClassName="h-4 w-4 lg:h-6 lg:w-6"
+              onClickShare={() => {}}
             />
           </PostPropertiers.Root>
         </div>

@@ -9,7 +9,7 @@ function NotificationsStructure({
 }: {
   // title: string;
   // profile_photo: string;
-  actors: {};
+  actors: any[];
   children: React.ReactNode;
 }) {
   return (

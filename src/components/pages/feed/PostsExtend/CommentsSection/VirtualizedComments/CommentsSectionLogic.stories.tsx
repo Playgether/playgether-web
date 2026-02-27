@@ -1,5 +1,5 @@
 import { Meta, StoryObj } from "@storybook/react";
-import { CommentsSection } from "../CommentsSectionLogic/CommentsSectionLogic";
+import CommentsSection from "../CommentsSectionLogic/CommentsSectionLogic";
 import {
   ApiResponseComments,
   CommentsContext,
@@ -11,9 +11,9 @@ import {
 import { CommentContentType } from "../../../../../content_types/CommentContentType";
 import { AuthContext, UserProps } from "../../../../../../context/AuthContext";
 import { loginUserProps } from "../../../../../../services/loginUser";
-import { http, HttpResponse } from "msw";
+// import { http, HttpResponse } from "msw";
 
-const mockCommentsOfCommentsNoLogin: PostCommentsOfCommentsProps[] = [
+const mockCommentsOfCommentsNoLogin: PostsCommentsProps[] = [
   {
     comment: "Primeiro comentário",
     user_already_like: false,
@@ -27,7 +27,10 @@ const mockCommentsOfCommentsNoLogin: PostCommentsOfCommentsProps[] = [
     timestamp: new Date("2024-05-29T10:30:00Z"),
     object_id: 2,
     user: 3,
-    comments_of_comments: [],
+    answers: { next: "", previous: "", results: [] },
+    edited: false,
+    quantity_replies: 0,
+    user_username: "david_matthew",
   },
   {
     comment:
@@ -43,11 +46,14 @@ const mockCommentsOfCommentsNoLogin: PostCommentsOfCommentsProps[] = [
     timestamp: new Date("2024-05-29T10:30:00Z"),
     object_id: 1,
     user: 2,
-    comments_of_comments: [],
+    answers: { next: "", previous: "", results: [] },
+    edited: false,
+    quantity_replies: 0,
+    user_username: "mia_jensen",
   },
 ];
 
-const mockAnswers: PostCommentsOfCommentsProps[] = [
+const mockAnswers: PostsCommentsProps[] = [
   {
     comment: "Comentário de um comentário",
     user_already_like: false,
@@ -61,7 +67,10 @@ const mockAnswers: PostCommentsOfCommentsProps[] = [
     timestamp: new Date("2024-05-29T10:30:00Z"),
     object_id: 2,
     user: 1,
-    comments_of_comments: [],
+    answers: { next: "", previous: "", results: [] },
+    edited: false,
+    quantity_replies: 0,
+    user_username: "david_matthew",
   },
   {
     comment:
@@ -77,11 +86,14 @@ const mockAnswers: PostCommentsOfCommentsProps[] = [
     timestamp: new Date("2024-05-29T10:30:00Z"),
     object_id: 1,
     user: 2,
-    comments_of_comments: [],
+    answers: { next: "", previous: "", results: [] },
+    edited: false,
+    quantity_replies: 0,
+    user_username: "mia_jensen",
   },
 ];
 
-const mockCommentsWithAnswers: PostCommentsOfCommentsProps[] = [
+const mockCommentsWithAnswers: PostsCommentsProps[] = [
   {
     comment: "Primeiro Comentário",
     user_already_like: false,
@@ -95,7 +107,10 @@ const mockCommentsWithAnswers: PostCommentsOfCommentsProps[] = [
     timestamp: new Date("2024-05-29T10:30:00Z"),
     object_id: 2,
     user: 1,
-    comments_of_comments: mockAnswers,
+    answers: { next: "", previous: "", results: mockAnswers },
+    edited: false,
+    quantity_replies: mockAnswers.length,
+    user_username: "david_matthew",
   },
   {
     comment:
@@ -111,11 +126,14 @@ const mockCommentsWithAnswers: PostCommentsOfCommentsProps[] = [
     timestamp: new Date("2024-05-29T10:30:00Z"),
     object_id: 1,
     user: 2,
-    comments_of_comments: [],
+    answers: { next: "", previous: "", results: [] },
+    edited: false,
+    quantity_replies: 0,
+    user_username: "mia_jensen",
   },
 ];
 
-const mockCommentsLogin: PostCommentsOfCommentsProps[] = [
+const mockCommentsLogin: PostsCommentsProps[] = [
   {
     comment: "Primeiro Comentário",
     user_already_like: false,
@@ -129,7 +147,10 @@ const mockCommentsLogin: PostCommentsOfCommentsProps[] = [
     timestamp: new Date("2024-05-29T10:30:00Z"),
     object_id: 2,
     user: 1,
-    comments_of_comments: [],
+    answers: { next: "", previous: "", results: [] },
+    edited: false,
+    quantity_replies: 0,
+    user_username: "david_matthew",
   },
   {
     comment:
@@ -145,7 +166,10 @@ const mockCommentsLogin: PostCommentsOfCommentsProps[] = [
     timestamp: new Date("2024-05-29T10:30:00Z"),
     object_id: 1,
     user: 2,
-    comments_of_comments: [],
+    answers: { next: "", previous: "", results: [] },
+    edited: false,
+    quantity_replies: 0,
+    user_username: "mia_jensen",
   },
 ];
 
@@ -154,15 +178,13 @@ const CommentsContextMockWithAnswers = ({ children }) => {
     data: mockCommentsWithAnswers,
   };
 
-  const fetchComments = () => {};
-
-  const deleteCommentContext = (deleteComment: PostsCommentsProps) => {};
+  const deleteCommentContext = (deleteComment: number) => {};
 
   const editComment = (updatedComment: PostsCommentsProps) => {};
 
   const addAnswerComment = (
     objectId: number,
-    answerComment: PostCommentsOfCommentsProps
+    answerComment: PostsCommentsProps,
   ) => {};
 
   const addNewComment = (newComment: PostsCommentsProps) => {
@@ -171,14 +193,26 @@ const CommentsContextMockWithAnswers = ({ children }) => {
 
   return (
     <CommentsContext.Provider
-      value={{
-        comments: mockComments,
-        addAnswerComment: addAnswerComment,
-        addNewComment: addNewComment,
-        deleteCommentContext: deleteCommentContext,
-        editComment: editComment,
-        fetchComments: fetchComments,
-      }}
+      value={
+        {
+          comments: mockComments,
+          addAnswerComment: addAnswerComment,
+          addNewComment: addNewComment,
+          deleteCommentContext: deleteCommentContext,
+          editComment: editComment,
+          openAnswers: async () => {},
+          decreaseRepliesCount: () => {},
+          editAnswerComment: () => {},
+          deleteAnswerContext: () => {},
+          handleLikeComment: () => {},
+          handleLikeAny: () => {},
+          fetchNextPage: async () => null,
+          hasNextPage: false,
+          isFetchingNextPage: false,
+          fetchNextAnswers: async () => {},
+          isFecthingNextAnswers: false,
+        } as any
+      }
     >
       {children}
     </CommentsContext.Provider>
@@ -190,29 +224,39 @@ const CommentsContextMockNoLogin = ({ children }) => {
     data: mockCommentsOfCommentsNoLogin,
   };
 
-  const fetchComments = () => {};
-
-  const deleteCommentContext = (deleteComment: PostsCommentsProps) => {};
+  const deleteCommentContext = (deleteComment: number) => {};
 
   const editComment = (updatedComment: PostsCommentsProps) => {};
 
   const addAnswerComment = (
     objectId: number,
-    answerComment: PostCommentsOfCommentsProps
+    answerComment: PostsCommentsProps,
   ) => {};
 
   const addNewComment = (newComment: PostsCommentsProps) => {};
 
   return (
     <CommentsContext.Provider
-      value={{
-        comments: mockComments,
-        addAnswerComment: addAnswerComment,
-        addNewComment: addNewComment,
-        deleteCommentContext: deleteCommentContext,
-        editComment: editComment,
-        fetchComments: fetchComments,
-      }}
+      value={
+        {
+          comments: mockComments,
+          addAnswerComment: addAnswerComment,
+          addNewComment: addNewComment,
+          deleteCommentContext: deleteCommentContext,
+          editComment: editComment,
+          openAnswers: async () => {},
+          decreaseRepliesCount: () => {},
+          editAnswerComment: () => {},
+          deleteAnswerContext: () => {},
+          handleLikeComment: () => {},
+          handleLikeAny: () => {},
+          fetchNextPage: async () => null,
+          hasNextPage: false,
+          isFetchingNextPage: false,
+          fetchNextAnswers: async () => {},
+          isFecthingNextAnswers: false,
+        } as any
+      }
     >
       {children}
     </CommentsContext.Provider>
@@ -224,15 +268,13 @@ const CommentsContextMockLogin = ({ children }) => {
     data: mockCommentsLogin,
   };
 
-  const fetchComments = () => {};
-
-  const deleteCommentContext = (deleteComment: PostsCommentsProps) => {};
+  const deleteCommentContext = (deleteComment: number) => {};
 
   const editComment = (updatedComment: PostsCommentsProps) => {};
 
   const addAnswerComment = (
     objectId: number,
-    answerComment: PostCommentsOfCommentsProps
+    answerComment: PostsCommentsProps,
   ) => {};
 
   const addNewComment = (newComment: PostsCommentsProps) => {
@@ -241,14 +283,26 @@ const CommentsContextMockLogin = ({ children }) => {
 
   return (
     <CommentsContext.Provider
-      value={{
-        comments: mockComments,
-        addAnswerComment: addAnswerComment,
-        addNewComment: addNewComment,
-        deleteCommentContext: deleteCommentContext,
-        editComment: editComment,
-        fetchComments: fetchComments,
-      }}
+      value={
+        {
+          comments: mockComments,
+          addAnswerComment: addAnswerComment,
+          addNewComment: addNewComment,
+          deleteCommentContext: deleteCommentContext,
+          editComment: editComment,
+          openAnswers: async () => {},
+          decreaseRepliesCount: () => {},
+          editAnswerComment: () => {},
+          deleteAnswerContext: () => {},
+          handleLikeComment: () => {},
+          handleLikeAny: () => {},
+          fetchNextPage: async () => null,
+          hasNextPage: false,
+          isFetchingNextPage: false,
+          fetchNextAnswers: async () => {},
+          isFecthingNextAnswers: false,
+        } as any
+      }
     >
       {children}
     </CommentsContext.Provider>
@@ -263,12 +317,6 @@ const UserContextMock = ({ children }) => {
     username: "henry_johnson",
   };
 
-  const login = (mockLoginUserProps: loginUserProps) => {
-    return new Promise<void>((resolve) => {
-      resolve();
-    });
-  };
-
   const logout = () => {
     return;
   };
@@ -277,11 +325,9 @@ const UserContextMock = ({ children }) => {
     <AuthContext.Provider
       value={{
         user: mockUser,
-        login: login,
         logout: logout,
-        wrongPassword: null,
-        authTokens: null,
         isLoggedOut: false,
+        setIsLoggedOut: () => {},
       }}
     >
       {children}
@@ -293,16 +339,16 @@ const meta: Meta<typeof CommentsSection> = {
   component: CommentsSection,
   parameters: {
     layout: "centered",
-    msw: {
-      handlers: [
-        http.post("http://192.168.18.5:8000/api/v1/comments/", () => {
-          return HttpResponse.json({
-            firstName: "Neil",
-            lastName: "Maverick",
-          });
-        }),
-      ],
-    },
+    // msw: {
+    //   handlers: [
+    //     http.post("http://192.168.18.5:8000/api/v1/comments/", () => {
+    //       return HttpResponse.json({
+    //         firstName: "Neil",
+    //         lastName: "Maverick",
+    //       });
+    //     }),
+    //   ],
+    // },
   },
   tags: ["autodocs"],
 };
@@ -313,16 +359,16 @@ type Story = StoryObj<typeof CommentsSection>;
 
 export const SuccessBehavior = {
   parameters: {
-    msw: {
-      handlers: [
-        http.post("http://192.168.18.5:8000/api/v1/comments/", () => {
-          return HttpResponse.json({
-            firstName: "Neil",
-            lastName: "Maverick",
-          });
-        }),
-      ],
-    },
+    // msw: {
+    //   handlers: [
+    //     http.post("http://192.168.18.5:8000/api/v1/comments/", () => {
+    //       return HttpResponse.json({
+    //         firstName: "Neil",
+    //         lastName: "Maverick",
+    //       });
+    //     }),
+    //   ],
+    // },
   },
 };
 

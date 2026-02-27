@@ -43,7 +43,7 @@ export const QuickMessagesHistoryModal = ({
                 <div className="flex items-start space-x-4">
                   <Avatar className="w-12 h-12 ring-2 ring-primary/30">
                     <AvatarImage
-                      src={message.user.avatar}
+                      src={typeof message.user.avatar === 'string' ? message.user.avatar : message.user.avatar.src}
                       alt={message.user.name}
                     />
                     <AvatarFallback className="bg-gradient-primary text-white">

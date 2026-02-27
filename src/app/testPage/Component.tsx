@@ -10,13 +10,15 @@ function Component({ chatroom, token }) {
     {
       share: false,
       shouldReconnect: () => true,
-    }
+    },
   );
 
   const { user } = useAuthContext();
   const [newMessage, setNewMessage] = useState("");
-  const [realTimeMessages, setRealTimeMessages] = useState([]);
-  const messagesDiv = useRef(null);
+  const [realTimeMessages, setRealTimeMessages] = useState<
+    { author: string; body: string }[]
+  >([]);
+  const messagesDiv = useRef<HTMLDivElement>(null);
 
   // Função para rolar automaticamente até o final das mensagens
   const scrollToBottom = () => {
@@ -35,8 +37,8 @@ function Component({ chatroom, token }) {
       "body" in lastJsonMessage
     ) {
       const message = {
-        author: lastJsonMessage.author,
-        body: lastJsonMessage.body,
+        author: String(lastJsonMessage.author),
+        body: String(lastJsonMessage.body),
       };
       setRealTimeMessages((prevMessages) => [...prevMessages, message]);
     }

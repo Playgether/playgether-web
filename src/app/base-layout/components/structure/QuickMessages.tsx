@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Megaphone } from "lucide-react";
+import { StaticImageData } from "next/image";
 
 // Import avatars
 import avatarSophia from "@/assets/avatar-sophia.jpg";
@@ -10,7 +11,7 @@ interface QuickMessage {
   id: string;
   user: {
     name: string;
-    avatar: string;
+    avatar: StaticImageData | string;
   };
   message: string;
   timeRemaining: string;
@@ -18,32 +19,32 @@ interface QuickMessage {
 
 const quickMessages: QuickMessage[] = [
   {
-    id: '1',
+    id: "1",
     user: {
-      name: 'Sophia Andrade',
-      avatar: avatarSophia
+      name: "Sophia Andrade",
+      avatar: avatarSophia,
     },
-    message: 'Nova mensagem (10 segundos)',
-    timeRemaining: '0.0s'
+    message: "Nova mensagem (10 segundos)",
+    timeRemaining: "0.0s",
   },
   {
-    id: '2',
+    id: "2",
     user: {
-      name: 'Sophia Andrade',
-      avatar: avatarSophia
+      name: "Sophia Andrade",
+      avatar: avatarSophia,
     },
-    message: 'Quinta mensagem (10 segundos)',
-    timeRemaining: '0.0s'
+    message: "Quinta mensagem (10 segundos)",
+    timeRemaining: "0.0s",
   },
   {
-    id: '3',
+    id: "3",
     user: {
-      name: 'Aline Moreira',
-      avatar: avatarAline
+      name: "Aline Moreira",
+      avatar: avatarAline,
     },
-    message: 'Quarta mensagem (10 segundos)',
-    timeRemaining: '0.0s'
-  }
+    message: "Quarta mensagem (10 segundos)",
+    timeRemaining: "0.0s",
+  },
 ];
 
 export const QuickMessages = () => {
@@ -57,21 +58,24 @@ export const QuickMessages = () => {
           <span>Mensagens Rápidas</span>
         </CardTitle>
       </CardHeader>
-      
+
       <CardContent className="space-y-3">
         {quickMessages.map((message, index) => (
-          <div 
+          <div
             key={message.id}
             className="flex items-center space-x-3 p-3 rounded-xl bg-gradient-to-r from-primary-start/10 to-primary-end/10 border border-primary/20 hover:shadow-glow-primary/20 transition-all duration-300 cursor-pointer group animate-slide-up"
             style={{ animationDelay: `${index * 100}ms` }}
           >
             <Avatar className="w-10 h-10 ring-2 ring-primary/30">
-              <AvatarImage src={message.user.avatar} alt={message.user.name} />
+              <AvatarImage src={typeof message.user.avatar === 'string' ? message.user.avatar : message.user.avatar.src} alt={message.user.name} />
               <AvatarFallback className="bg-gradient-primary text-white text-sm">
-                {message.user.name.split(' ').map(n => n[0]).join('')}
+                {message.user.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")}
               </AvatarFallback>
             </Avatar>
-            
+
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-1">
                 <span className="font-medium text-sm text-primary group-hover:text-primary/80 transition-colors">
@@ -81,9 +85,7 @@ export const QuickMessages = () => {
                   Tempo restante: {message.timeRemaining}
                 </span>
               </div>
-              <p className="text-sm text-foreground">
-                {message.message}
-              </p>
+              <p className="text-sm text-foreground">{message.message}</p>
             </div>
           </div>
         ))}

@@ -11,7 +11,7 @@ type ProfileLolContextProps = {
 };
 
 const ProfileLolContext = createContext<ProfileLolContextProps>(
-  {} as ProfileLolContextProps
+  {} as ProfileLolContextProps,
 );
 
 const ProfileLolContextProvider = ({
@@ -25,7 +25,7 @@ const ProfileLolContextProvider = ({
   >();
 
   async function fetchProfile() {
-    const response = await getProfileLol(authTokens, user?.user_id);
+    const response = await getProfileLol(undefined, user?.user_id);
     setProfile(response.data);
   }
 

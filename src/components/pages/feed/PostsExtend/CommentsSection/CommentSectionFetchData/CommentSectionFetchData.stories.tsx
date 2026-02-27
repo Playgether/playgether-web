@@ -4,7 +4,7 @@ import CommentSectionLogic, {
 } from "./CommentSectionFetchData";
 import {
   ApiResponseComments,
-  CommentsContext,
+  // CommentsContext,
 } from "../../../../../../context/CommentsContext";
 import {
   PostCommentsOfCommentsProps,
@@ -13,7 +13,7 @@ import {
 import { CommentContentType } from "../../../../../content_types/CommentContentType";
 import { AuthContext, UserProps } from "../../../../../../context/AuthContext";
 import { loginUserProps } from "../../../../../../services/loginUser";
-import { CommentsSection } from "../CommentsSectionLogic/CommentsSectionLogic";
+import CommentsSection from "../CommentsSectionLogic/CommentsSectionLogic";
 
 const meta: Meta<typeof CommentSectionLogic> = {
   component: CommentSectionLogic,
@@ -39,7 +39,10 @@ const mockCommentsLogin: PostsCommentsProps[] = [
     timestamp: new Date("2024-05-29T10:30:00Z"),
     object_id: 2,
     user: 1,
-    comments_of_comments: [],
+    answers: { next: "", previous: "", results: [] },
+    edited: false,
+    quantity_replies: 0,
+    user_username: "david_matthew",
   },
   {
     comment:
@@ -55,11 +58,14 @@ const mockCommentsLogin: PostsCommentsProps[] = [
     timestamp: new Date("2024-05-29T10:30:00Z"),
     object_id: 1,
     user: 2,
-    comments_of_comments: [],
+    answers: { next: "", previous: "", results: [] },
+    edited: false,
+    quantity_replies: 0,
+    user_username: "mia_jensen",
   },
 ];
 
-const UserContextMock = ({ children }) => {
+const UserContextMockForTestStory = ({ children }) => {
   const mockUser: UserProps = {
     first_name: "Henry",
     last_name: "Johnson",
@@ -81,11 +87,9 @@ const UserContextMock = ({ children }) => {
     <AuthContext.Provider
       value={{
         user: mockUser,
-        login: login,
         logout: logout,
-        wrongPassword: null,
-        authTokens: null,
         isLoggedOut: false,
+        setIsLoggedOut: () => {},
       }}
     >
       {children}
@@ -93,53 +97,55 @@ const UserContextMock = ({ children }) => {
   );
 };
 
-const CommentsContextMockLogin = ({ children }) => {
-  const mockComments: ApiResponseComments = {
-    data: mockCommentsLogin,
-  };
+// const CommentsContextMockLogin = ({ children }) => {
+//   const mockComments: ApiResponseComments = {
+//     data: mockCommentsLogin,
+//   };
 
-  const fetchComments = () => {};
+//   const fetchComments = () => {};
 
-  const deleteCommentContext = (deleteComment: PostsCommentsProps) => {};
+//   const deleteCommentContext = (deleteComment: PostsCommentsProps) => {};
 
-  const editComment = (updatedComment: PostsCommentsProps) => {};
+//   const editComment = (updatedComment: PostsCommentsProps) => {};
 
-  const addAnswerComment = (
-    objectId: number,
-    answerComment: PostCommentsOfCommentsProps
-  ) => {};
+//   const addAnswerComment = (
+//     objectId: number,
+//     answerComment: PostCommentsOfCommentsProps,
+//   ) => {};
 
-  const addNewComment = (newComment: PostsCommentsProps) => {
-    mockCommentsLogin;
-  };
+//   const addNewComment = (newComment: PostsCommentsProps) => {
+//     mockCommentsLogin;
+//   };
 
-  return (
-    <CommentsContext.Provider
-      value={{
-        comments: mockComments,
-        addAnswerComment: addAnswerComment,
-        addNewComment: addNewComment,
-        deleteCommentContext: deleteCommentContext,
-        editComment: editComment,
-        fetchComments: fetchComments,
-      }}
-    >
-      {children}
-    </CommentsContext.Provider>
-  );
-};
+//   return (
+//     <CommentsContext.Provider
+//       value={{
+//         comments: mockComments,
+//         addAnswerComment: addAnswerComment,
+//         addNewComment: addNewComment,
+//         deleteCommentContext: deleteCommentContext,
+//         editComment: editComment,
+//         fetchComments: fetchComments,
+//       }}
+//     >
+//       {children}
+//     </CommentsContext.Provider>
+//   );
+// };
 
 type Story = StoryObj<CommentSectionLogicInterface>;
 
 export const Primary: Story = {
-  render: CommentsSection,
-  args: {},
+  // render: CommentsSection,
+  args: {
+    postId: 1,
+  },
   decorators: [
     (Story, args) => {
       return (
-        <CommentsContextMockLogin>
-          <UserContextMock>{Story()}</UserContextMock>
-        </CommentsContextMockLogin>
+        // <CommentsContextMockLogin>
+        <UserContextMockForTestStory>{Story()}</UserContextMockForTestStory>
+        // </CommentsContextMockLogin>
       );
     },
   ],

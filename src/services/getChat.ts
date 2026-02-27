@@ -6,7 +6,7 @@ export const getChat = async ({ id }: { id: number }) => {
   try {
     const response = await api.get(`/api/v1/chatroom/${id}/`, {
       headers: {
-        Authorization: "Bearer " + String(accessToken?.access),
+        Authorization: "Bearer " + String(accessToken),
       },
     });
     return response;

@@ -515,8 +515,9 @@ export const ExpandedModal = ({ open, onOpenChange, post }: ExpandedModalProps) 
         open={shareModalOpen}
         onOpenChange={setShareModalOpen}
         post={post}
-        onRepost={() => console.log('Repost')}
-      />
+        onRepost={() => console.log('Repost')} handleShareModal={function (action: boolean): void {
+          throw new Error("Function not implemented.");
+        } } shareModalOpen={false}      />
     </>
   );
 };

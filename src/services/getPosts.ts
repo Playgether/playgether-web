@@ -1,4 +1,3 @@
-import { headers } from "next/dist/client/components/headers";
 import { api } from "./api";
 import { error } from "console";
 

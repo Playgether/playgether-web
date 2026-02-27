@@ -43,7 +43,10 @@ export default function ChatHeader({
     <div className="p-4 border-b border-border/50 bg-muted/20">
       <div className="flex items-center space-x-3">
         <Avatar className="w-10 h-10">
-          <AvatarImage src={avatar} alt={name} />
+          <AvatarImage
+            src={typeof avatar === "string" ? avatar : avatar.src}
+            alt={name}
+          />
           <AvatarFallback className="bg-gradient-primary text-white">
             {initials}
           </AvatarFallback>

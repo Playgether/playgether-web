@@ -34,7 +34,7 @@ function Conversations({
                       fallbackAvatar
                     ) : (
                       <AvatarImage
-                        src={conversation.avatar}
+                        src={typeof conversation.avatar === 'string' ? conversation.avatar : conversation.avatar.src}
                         alt={conversation.name}
                       />
                     )}

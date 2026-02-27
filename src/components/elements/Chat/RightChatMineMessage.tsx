@@ -7,7 +7,7 @@ function RightChatMineMessage({
   hour,
 }: {
   message: string;
-  hour: Date;
+  hour: string | Date;
 }) {
   return (
     <div className="flex flex-row-reverse items-end mb-4" data-mine="true">
@@ -16,7 +16,7 @@ function RightChatMineMessage({
           <p>{message}</p>
         </div>
         <p className="text-xs RightChatMineMessage-hours mt-1 text-right">
-          <DateAndHour date={hour} />
+          {typeof hour === "string" ? hour : <DateAndHour date={hour} />}
         </p>
       </div>
     </div>

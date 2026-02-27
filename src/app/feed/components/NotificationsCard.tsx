@@ -2,12 +2,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bell, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { StaticImageData } from "next/image";
 
 interface Notification {
   id: string;
   users: {
     name: string;
-    avatar: string;
+    avatar: string | StaticImageData;
   }[];
   action: string;
   content?: string;

@@ -96,7 +96,7 @@ const Posts = ({
     <div
       className={twMerge(
         "relative w-full flex items-center justify-center h-full",
-        rest.className
+        rest.className,
       )}
     >
       {media && media.length > 0 ? (
@@ -151,7 +151,7 @@ const Posts = ({
                     // media_id={item.media_file}
                     height={postHeight}
                     width={postWidth}
-                    objectFit={objectFit}
+                    objectFit={objectFit as any}
                     layout="fill"
                   />
                 </div>

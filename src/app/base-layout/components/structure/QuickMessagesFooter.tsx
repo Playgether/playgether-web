@@ -60,7 +60,20 @@ export const QuickMessagesFooter = () => {
         <QuickMessageModal
           open={messageModalOpen}
           onOpenChange={setMessageModalOpen}
-          message={selectedMessage}
+          message={
+            selectedMessage
+              ? {
+                  ...selectedMessage,
+                  user: {
+                    ...selectedMessage.user,
+                    avatar:
+                      typeof selectedMessage.user.avatar === "string"
+                        ? selectedMessage.user.avatar
+                        : selectedMessage.user.avatar.src,
+                  },
+                }
+              : undefined
+          }
         />
       </motion.div>
     );
@@ -114,7 +127,11 @@ export const QuickMessagesFooter = () => {
                 >
                   <Avatar className="w-10 h-10 ring-2 ring-primary/30 flex-shrink-0">
                     <AvatarImage
-                      src={message.user.avatar}
+                      src={
+                        typeof message.user.avatar === "string"
+                          ? message.user.avatar
+                          : message.user.avatar.src
+                      }
                       alt={message.user.name}
                     />
                   </Avatar>
@@ -182,7 +199,20 @@ export const QuickMessagesFooter = () => {
       <QuickMessageModal
         open={messageModalOpen}
         onOpenChange={setMessageModalOpen}
-        message={selectedMessage}
+        message={
+          selectedMessage
+            ? {
+                ...selectedMessage,
+                user: {
+                  ...selectedMessage.user,
+                  avatar:
+                    typeof selectedMessage.user.avatar === "string"
+                      ? selectedMessage.user.avatar
+                      : selectedMessage.user.avatar.src,
+                },
+              }
+            : undefined
+        }
       />
     </motion.div>
   );

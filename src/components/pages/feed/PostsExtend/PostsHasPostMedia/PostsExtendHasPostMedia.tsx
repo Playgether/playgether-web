@@ -22,7 +22,11 @@ export interface PostsExtendHasPostMediaProps {
  * no uso do componente, ele não é em coluna e sim em linha, ou seja, a parte de comentários deveria ficar para o lado direito >> e não embaixo. Além disso, as medias também
  * não estão aparecendo porque o Storybook não está exibindo o componente de medias por alguma razão...
  */
-const PostsExtendHasPostMedia = ({children}:{children:React.ReactNode}) => {
+const PostsExtendHasPostMedia = ({
+  children,
+}: {
+  children?: React.ReactNode;
+}) => {
   const { resourceObject, slideIndex } = useMiddleFeedContext();
   const [isExtended, setIsExtended] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);

@@ -10,7 +10,7 @@ export type Resource = {
   /** Esta propriedade recebe uma string, que deve ser a url da foto de perfil. */
   link_photo?: string;
   /** Esta propriedade recebe o username (string) para ser criado um link para seu perfil */
-  username: string;
+  username?: string;
 };
 
 /**
@@ -23,22 +23,21 @@ const ProfileImagePost = ({
   username,
   ...rest
 }: Resource & DivProps) => {
+  const profileHref = username ? `/profile/${username}` : "#";
+
   return (
     <div
       className={twJoin(
         " ProfilePhotoLink-wrapper rounded-full",
-        rest.className
+        rest.className,
       )}
     >
       {typeof link_photo !== "string" || link_photo === "" ? (
-        <Link
-          href={`/profile/${username}`}
-          className="h-full w-full underline "
-        >
+        <Link href={profileHref} className="h-full w-full underline ">
           <CgProfile className="h-full w-full" />
         </Link>
       ) : (
-        <Link href={`/profile/${username}`} className="h-full w-full underline">
+        <Link href={profileHref} className="h-full w-full underline">
           <Image
             src={link_photo}
             objectFit="cover"

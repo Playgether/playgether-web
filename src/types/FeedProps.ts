@@ -1,6 +1,6 @@
-import { PostLikes } from "./PostLikesProps";
-import { PostMedias } from "./PostMediaProps";
-import { PostReposts } from "./PostRepostsProps";
+import { PostLikes } from "@/app/feed/types/PostLikesProps";
+import { PostMedias } from "@/app/feed/types/PostMediaProps";
+import { PostReposts } from "@/app/feed/types/PostRepostsProps";
 
 export interface FeedProps {
   created_by_user: number;

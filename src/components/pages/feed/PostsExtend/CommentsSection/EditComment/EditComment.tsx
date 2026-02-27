@@ -43,61 +43,61 @@ const EditComment = ({
 
   return (
     <>
-      {Comment.user === user?.user_id ? (
-        <div className=" w-full -mr-5 h-auto">
-          <EditCommentItens
-            onClickEdit={() => {
-              setShouldShowModal(false);
-              handleEditClick(!isEditing);
-            }}
-            onClickDelete={() => {
-              setShouldShowModal(!shouldShowModal);
-              handleEditClick(false);
-            }}
-            className={twJoin(rest.className)}
-          />
-          <ControlledModal
-            shouldShow={shouldShowModal}
-            onRequestClose={() => setShouldShowModal(false)}
-          >
-            <div className=" flex flex-col justify-center items-center gap-6 pt-2 EditComments-wrapper">
-              <RiDeleteBin6Line className="h-12 w-12 text-red-400 mt-2" />
-              <div className="flex flex-col text-center gap-3">
-                <p className="text-lg font-medium">
-                  Você tem certeza que deseja excluir este comentário ?
-                </p>
-                <TextLimitComponent
-                  text={`${Comment.comment}`}
-                  maxCharacters={60}
-                />
-              </div>
-              <div className="flex justify-center gap-3 pb-4">
-                <ButtonClose
-                  className="h-8 w-20 cursor-pointer "
-                  onClick={async () => {
-                    try {
-                      await deleteComment(authTokens, Comment.id);
-                      deleteCommentContext(Comment);
-                      subtractCommentQuantity(post_id);
-                      setIsEditing(false);
-                    } catch (error) {
-                      console.log(error);
-                    }
-                  }}
-                >
-                  Excluir
-                </ButtonClose>
-                <DefaultButton
-                  className="h-8 w-20 Comments-cancel-button"
-                  onClick={() => setShouldShowModal(false)}
-                >
-                  Cancelar
-                </DefaultButton>
-              </div>
+      {/* {Comment.user === user?.user_id ? ( */}
+      <div className=" w-full -mr-5 h-auto">
+        <EditCommentItens
+          onClickEdit={() => {
+            setShouldShowModal(false);
+            handleEditClick(!isEditing);
+          }}
+          onClickDelete={() => {
+            setShouldShowModal(!shouldShowModal);
+            handleEditClick(false);
+          }}
+          className={twJoin(rest.className)}
+        />
+        <ControlledModal
+          shouldShow={shouldShowModal}
+          onRequestClose={() => setShouldShowModal(false)}
+        >
+          <div className=" flex flex-col justify-center items-center gap-6 pt-2 EditComments-wrapper">
+            <RiDeleteBin6Line className="h-12 w-12 text-red-400 mt-2" />
+            <div className="flex flex-col text-center gap-3">
+              <p className="text-lg font-medium">
+                Você tem certeza que deseja excluir este comentário ?
+              </p>
+              <TextLimitComponent
+                text={`${Comment.comment}`}
+                maxCharacters={60}
+              />
             </div>
-          </ControlledModal>
-        </div>
-      ) : null}
+            <div className="flex justify-center gap-3 pb-4">
+              <ButtonClose
+                className="h-8 w-20 cursor-pointer "
+                onClick={async () => {
+                  // try {
+                  //   await deleteComment(authTokens, Comment.id);
+                  //   deleteCommentContext(Comment);
+                  //   subtractCommentQuantity(post_id);
+                  //   setIsEditing(false);
+                  // } catch (error) {
+                  //   console.log(error);
+                  // }
+                }}
+              >
+                Excluir
+              </ButtonClose>
+              <DefaultButton
+                className="h-8 w-20 Comments-cancel-button"
+                onClick={() => setShouldShowModal(false)}
+              >
+                Cancelar
+              </DefaultButton>
+            </div>
+          </div>
+        </ControlledModal>
+      </div>
+      {/* ) : null} */}
     </>
   );
 };

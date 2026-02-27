@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { StaticImageData } from "next/image";
 
 // Import avatars
 import avatarMia from "@/assets/avatar-mia.jpg";
@@ -14,7 +15,7 @@ import avatarAline from "@/assets/avatar-aline.jpg";
 interface Friend {
   id: string;
   name: string;
-  avatar: string;
+  avatar: StaticImageData | string;
   status: "online" | "away" | "offline";
   game?: string;
 }
@@ -108,8 +109,8 @@ export const OnlineFriends = () => {
           >
             <div className="relative">
               <Avatar className="w-10 h-10">
-                <AvatarImage src={friend.avatar} alt={friend.name} />
-                <AvatarFallback className="bg-gradient-primary text-white text-sm">
+                  <AvatarImage src={typeof friend.avatar === 'string' ? friend.avatar : friend.avatar.src} alt={friend.name} />
+                  <AvatarFallback className="bg-gradient-primary text-white text-sm">
                   {friend.name
                     .split(" ")
                     .map((n) => n[0])
@@ -119,7 +120,7 @@ export const OnlineFriends = () => {
               <div
                 className={cn(
                   "absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-background",
-                  getStatusClass(friend.status)
+                  getStatusClass(friend.status),
                 )}
               />
             </div>

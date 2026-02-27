@@ -18,7 +18,7 @@ export interface FormCommentProps {
   /** Este é um objeto que também vem a biblioteca zod, seu intuito é exibir erros (caso haja algum) em cada campo do formulário, assim, é possível exibí-los para o usuário */
   errors: FieldErrors<any>;
   /** Esta prop deve receber uma função propriamente dita para onde o formulário será enviado */
-  Submiting: any;
+  Submiting?: any;
 }
 
 /** Este componente é responsável por implementar o formulário de envio de comentários */

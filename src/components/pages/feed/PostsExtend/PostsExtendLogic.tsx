@@ -10,17 +10,20 @@ import { useParams } from "next/navigation";
 function PostsExtendLogic() {
   const { resourceObject } = useMiddleFeedContext();
   const params = useParams();
-  const postId = params?.postId;
-  
+  const postId = Number(params?.postId) || 0;
+
   if (!resourceObject) {
     return null;
   }
 
   return (
-    <CommentsContextProvider>
+    <CommentsContextProvider
+      response={{ data: [], next_page: null, previous_page: null }}
+      postId={postId}
+    >
       {resourceObject.has_post_media ? (
         <PostsExtendHasPostMedia>
-          <CommentSectionFetchData postId={postId}/>
+          <CommentSectionFetchData postId={postId} />
         </PostsExtendHasPostMedia>
       ) : (
         <PostsExtendHasNoPostMedia />

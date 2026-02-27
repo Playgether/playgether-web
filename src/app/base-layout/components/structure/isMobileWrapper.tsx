@@ -3,9 +3,14 @@
 import { useIsMobile } from "@/context/MobileContext";
 import React, { useState } from "react";
 
+type ButtonProps = {
+  onClick?: (e: React.MouseEvent) => void;
+  [key: string]: any;
+};
+
 type Props = {
   gamerSidebar: React.ReactNode;
-  button: React.ReactNode;
+  button: React.ReactElement<ButtonProps>;
 };
 
 function IsMobileWrapper({ gamerSidebar, button }: Props) {
@@ -15,25 +20,20 @@ function IsMobileWrapper({ gamerSidebar, button }: Props) {
   const closeSidebar = () => setSidebarOpen(false);
   const openSidebar = () => setSidebarOpen(true);
 
-  // Merge openSidebar with button's onClick
-  const mergedButton =
-    isMobile && React.isValidElement(button)
-      ? React.cloneElement(button, {
-          onClick: (e: React.MouseEvent) => {
-            if (button.props.onClick) button.props.onClick(e);
-            openSidebar();
-          },
-        })
-      : button;
+  const mergedButton = isMobile
+    ? React.cloneElement(button, {
+        onClick: (e: React.MouseEvent) => {
+          button.props.onClick?.(e);
+          openSidebar();
+        },
+      })
+    : button;
 
   return (
     <>
       {isMobile && mergedButton}
-
-      {/* Desktop Sidebar */}
       {!isMobile && gamerSidebar}
 
-      {/* Mobile Sidebar Overlay */}
       {isMobile && sidebarOpen && (
         <>
           <div

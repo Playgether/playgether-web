@@ -1,5 +1,6 @@
-import { api } from "./api";
-import { TokenData } from "./updateTokenRequest";
+import { api } from "@/services/api"
+import { TokenData } from "@/services/updateTokenRequest"
+
 
 export interface LikeProps {
     user: number | undefined,

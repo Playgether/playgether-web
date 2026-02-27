@@ -14,7 +14,7 @@ export default async function TestPage() {
 }
 
 export const ComponentTest2 = () => {
-    const [comments, setComments] = useState()
+    const [comments, setComments] = useState<{ title?: string; body?: string } | undefined>()
 
     
     // const fetchPosts = async () => {

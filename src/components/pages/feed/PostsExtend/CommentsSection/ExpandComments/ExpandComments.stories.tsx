@@ -1,7 +1,7 @@
 import { Meta, StoryObj } from "@storybook/react";
 import { ExpandedComments } from "./ExpandComments";
 import { ExpandedCommentsProps } from "./ExpandComments";
-import { PostCommentsOfCommentsProps } from "../../../../../../services/getComments";
+import { PostsCommentsProps } from "../../../../../../services/getComments";
 import { CommentContentType } from "../../../../../content_types/CommentContentType";
 
 const meta: Meta<typeof ExpandedComments> = {
@@ -14,7 +14,7 @@ const meta: Meta<typeof ExpandedComments> = {
 
 export default meta;
 
-const mockCommentsOfComments: PostCommentsOfCommentsProps[] = [
+const mockCommentsOfComments: PostsCommentsProps[] = [
   {
     comment: "Comment of a comment test 1",
     user_already_like: false,
@@ -28,7 +28,10 @@ const mockCommentsOfComments: PostCommentsOfCommentsProps[] = [
     timestamp: new Date("2024-05-29T10:30:00Z"),
     object_id: 2,
     user: 1,
-    comments_of_comments: [],
+    answers: { next: "", previous: "", results: [] },
+    edited: false,
+    quantity_replies: 0,
+    user_username: "david_matthew",
   },
   {
     comment:
@@ -44,7 +47,10 @@ const mockCommentsOfComments: PostCommentsOfCommentsProps[] = [
     timestamp: new Date("2024-05-29T10:30:00Z"),
     object_id: 1,
     user: 1,
-    comments_of_comments: [],
+    answers: { next: "", previous: "", results: [] },
+    edited: false,
+    quantity_replies: 0,
+    user_username: "mia_jensen",
   },
 ];
 
@@ -53,7 +59,7 @@ const CommentOfCommentComponent = (args) => {
     <div>
       {mockCommentsOfComments.map((comment) => (
         <div key={comment.id}>
-          <ExpandedComments comment_of_comment={comment} key={comment.id} />
+          <ExpandedComments answer={comment} comment_id={1} key={comment.id} />
         </div>
       ))}
     </div>

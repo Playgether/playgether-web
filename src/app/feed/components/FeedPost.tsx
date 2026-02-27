@@ -42,7 +42,7 @@ export const FeedPost = ({ post }) => {
 
   const confirmAction = () => {
     // All actions remove the post from feed
-    onPostUpdate?.(null);
+    window.history.back();
     setAlertOpen(false);
   };
 

@@ -11,6 +11,9 @@ import avatarRaymond from "@/assets/avatar-raymond.jpg";
 import { useFeedServerContext } from "../context/FeedServerContext";
 
 interface ShareModalProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onRepost?: () => void;
   post: any;
   handleShareModal: (action: boolean) => void;
   shareModalOpen: boolean;
@@ -23,6 +26,9 @@ const currentUser = {
 };
 
 export const ShareModal = ({
+  open,
+  onOpenChange,
+  onRepost,
   post,
   handleShareModal,
   shareModalOpen,
@@ -62,12 +68,23 @@ export const ShareModal = ({
     setContent("");
     setSelectedMedia([]);
     handleShareModal(true);
+    if (onRepost) {
+      onRepost();
+    }
+    if (onOpenChange) {
+      onOpenChange(false);
+    }
   };
 
   return (
     <Dialog
-      open={shareModalOpen}
-      onOpenChange={(open) => handleShareModal(open)}
+      open={open}
+      onOpenChange={(open) => {
+        handleShareModal(open);
+        if (onOpenChange) {
+          onOpenChange(open);
+        }
+      }}
     >
       <DialogContent className="max-w-2xl bg-background/95 backdrop-blur-xl border border-border/50">
         {components.ShareModalHeader}

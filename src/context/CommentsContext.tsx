@@ -41,14 +41,7 @@ type CommentsContextProps = {
   deleteAnswerContext: (comment_id: number, answer_id: number) => void;
   handleLikeComment: (id: number) => void;
   handleLikeAny: (id: number, parentId?: number) => void;
-  fetchNextPage: (
-    options?: FetchNextPageOptions,
-  ) => Promise<
-    InfiniteQueryObserverResult<
-      InfiniteData<{ data: PostsCommentsProps[]; next_page: string | null }>,
-      Error
-    >
-  > | null;
+  fetchNextPage: (options?: FetchNextPageOptions) => Promise<any> | null;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   fetchNextAnswers: (comment: PostsCommentsProps) => Promise<void>;
@@ -58,6 +51,8 @@ type CommentsContextProps = {
 const CommentsContext = createContext<CommentsContextProps | undefined>(
   undefined,
 );
+
+export { CommentsContext };
 
 export function CommentsContextProvider({
   children,
@@ -78,7 +73,8 @@ export function CommentsContextProvider({
     isFetchingNextPage = false,
   } = useInfiniteQuery<ApiResponseComments>({
     queryKey: ["comments", postId],
-    queryFn: ({ pageParam }) => getCommentsClient(postId, pageParam),
+    queryFn: ({ pageParam }) =>
+      getCommentsClient(postId, pageParam as string | null | undefined),
     getNextPageParam: (lastPage) => {
       if (lastPage?.next_page) {
         try {

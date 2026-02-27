@@ -32,26 +32,25 @@ export const AnswerComment = ({ object_id }: FormCommentProps) => {
   const { addAnswerComment } = useCommentsContext();
 
   const Submiting = async (data: dataProps) => {
-    const newData = {
-      content_type: CommentContentType.comment,
-      object_id: object_id,
-      user: user?.user_id,
-      ...data,
-    };
-
-    const response = await SubmitingForm(() =>
-      postComment(newData, authTokens)
-    );
-    if (response.status === 201) {
-      addAnswerComment(object_id, response.data);
-      reset({ comment: "" });
-    } else {
-      CustomToast.error(CustomToastErrorMessages.defaultTitle, {
-        description: CustomToastErrorMessages.commentErrorMessage,
-        duration: CustomToastProps.defaultDuration,
-      });
-      console.error("Algo deu errado", response);
-    }
+    // const newData = {
+    //   content_type: CommentContentType.comment,
+    //   object_id: object_id,
+    //   user: user?.user_id,
+    //   ...data,
+    // };
+    // const response = await SubmitingForm(() =>
+    //   postComment(newData, authTokens)
+    // );
+    // if (response.status === 201) {
+    //   addAnswerComment(object_id, response.data);
+    //   reset({ comment: "" });
+    // } else {
+    //   CustomToast.error(CustomToastErrorMessages.defaultTitle, {
+    //     description: CustomToastErrorMessages.commentErrorMessage,
+    //     duration: CustomToastProps.defaultDuration,
+    //   });
+    //   console.error("Algo deu errado", response);
+    // }
   };
 
   return (

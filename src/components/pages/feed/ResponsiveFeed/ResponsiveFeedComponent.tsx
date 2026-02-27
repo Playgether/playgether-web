@@ -1,15 +1,15 @@
 "use client";
 
 import PostText from "../../../layouts/PostText/PostText";
-import { NameAndUsernameResponsive } from "./PostsComponents/NameAndUsername";
+// import { NameAndUsernameResponsive } from "./PostsComponents/NameAndUsername";
 import { CiShare1 } from "react-icons/ci";
 import PostProperies from "../DesktopFeed/Middle/PostsComponents/PostsProperies";
 import { useFeedContext } from "../../../../context/FeedContext";
 import React, { useState } from "react";
 import Posts from "../DesktopFeed/Middle/PostsComponents/Posts/Posts";
-import { FeedProps } from "../../../../services/getFeed";
+import { FeedProps } from "../../../../types/FeedProps";
 import TogglePostComponentLogic from "../CommonComponents/TogglePostComponentLogic";
-import { TogglePostComponent } from "../CommonComponents/TogglePostComponent";
+import { TogglePostComponent } from "../CommonComponents/togglePostComponent";
 
 const resource = {
   comment: "Test Comment",
@@ -36,10 +36,10 @@ export const ResponsiveFeedComponent = () => {
         feed.map((post) => (
           <React.Fragment key={post.id}>
             <div className="flex justify-between items-center bg-white-200">
-              <NameAndUsernameResponsive
+              {/* <NameAndUsernameResponsive
                 username={post.created_by_user_name}
                 profile_photo={post.created_by_user_photo}
-              />
+              /> */}
               <CiShare1 className="h-8 w-8 text-orange-500 mr-4" />
             </div>
             <div className="pt-4 flex justify-between pb-2 bg-white-200">

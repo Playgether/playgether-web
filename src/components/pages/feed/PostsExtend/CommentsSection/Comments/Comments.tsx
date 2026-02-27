@@ -38,12 +38,12 @@ export const Comments = ({ item, post_id }: CommentsProps) => {
   };
 
   const Submiting = async (data: commentPatchProps) => {
-    const updatedData = { ...data, edited: true };
+    // const updatedData = { ...data, edited: true };
 
-    const response = await SubmitingForm(() =>
-      patchComment(updatedData, authTokens, item.id)
-    );
-    editComment(response.data);
+    // const response = await SubmitingForm(() =>
+    //   patchComment(updatedData, authTokens, item.id)
+    // );
+    // editComment(response.data);
 
     setIsEditing(false);
   };

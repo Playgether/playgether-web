@@ -35,7 +35,7 @@ const FeedContext = createContext<FeedContextProps>({} as FeedContextProps);
 
 const FeedContextProvider = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuthContext();
-  const [feed, setFeed] = useState<FeedProps[] | []>();
+  const [feed, setFeed] = useState<FeedProps[] | undefined>();
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteQuery({

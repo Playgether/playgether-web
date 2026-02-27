@@ -47,7 +47,7 @@ export const ExpandedComments = ({
   const Submiting = async (data: commentPatchProps) => {
     const updatedData = { ...data, edited: true };
     const response = await SubmitingForm(() =>
-      patchComment(updatedData, authTokens, answer.id)
+      patchComment(updatedData, "" as any, answer.id),
     );
     editComment(response.data);
     editAnswerComment(comment_id, answer.id, response.data);

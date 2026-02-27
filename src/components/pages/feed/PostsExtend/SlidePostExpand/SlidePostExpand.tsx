@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { PostMedias } from "../../../../../services/getFeed";
+import { PostMedias } from "../../../../../app/feed/types/PostMediaProps";
 import Posts from "../../DesktopFeed/Middle/PostsComponents/Posts/Posts";
 import { VideoLoadingFallback } from "../../DesktopFeed/Middle/PostsComponents/Posts/VideoLoadingFallBack";
 

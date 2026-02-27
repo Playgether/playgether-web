@@ -4,7 +4,11 @@ import { twJoin } from "tailwind-merge";
 
 export interface ErrosInputProps extends HTMLAttributes<HTMLDivElement> {
   /** Esta prop recebe a field de um formulário e o seu erro, e então cria o erro naquela field */
-  field: { message: string } | undefined;
+  field:
+    | FieldError
+    | Merge<FieldError, FieldErrorsImpl<any>>
+    | undefined
+    | { message: string };
 }
 
 /** Este componente recebe erros de formulários e adiciona na tela, exemplo: campo obrigatório, senha incorreta, etc ... */

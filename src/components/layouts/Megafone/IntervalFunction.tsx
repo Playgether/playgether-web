@@ -170,9 +170,18 @@ export const GlobalMessages = [
   // },
 ];
 
+type Message = {
+  id: number;
+  username: string;
+  message: string;
+  volume: string;
+  time: number;
+  showed: boolean;
+};
+
 export const IntervalFunctionComponent = () => {
-  const [visibleMessages, setVisibleMessages] = useState([]);
-  const [timers, setTimers] = useState([]); // Estado para rastrear os tempos restantes
+  const [visibleMessages, setVisibleMessages] = useState<Message[]>([]);
+  const [timers, setTimers] = useState<number[]>([]); // Estado para rastrear os tempos restantes
 
   useEffect(() => {
     const initialMessages = GlobalMessages.slice(0, 3).map((msg) => ({
@@ -187,13 +196,13 @@ export const IntervalFunctionComponent = () => {
     setTimers(initialMessages.map((msg) => msg.time));
 
     const timeouts = initialMessages.map((message, index) =>
-      setTimeout(() => handleReplaceMessage(index), message.time)
+      setTimeout(() => handleReplaceMessage(index), message.time),
     );
 
     // Configura um intervalo para atualizar os tempos restantes
     const interval = setInterval(() => {
       setTimers((prevTimers) =>
-        prevTimers.map((time, index) => (time > 0 ? time - 100 : 0))
+        prevTimers.map((time, index) => (time > 0 ? time - 100 : 0)),
       );
     }, 100);
 

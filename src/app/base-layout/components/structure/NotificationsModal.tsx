@@ -95,7 +95,7 @@ export const NotificationsModal = ({
                 {notification.user ? (
                   <Avatar className="w-10 h-10 ring-2 ring-primary/30">
                     <AvatarImage
-                      src={notification.user.avatar}
+                      src={notification.user.avatar.src}
                       alt={notification.user.name}
                     />
                     <AvatarFallback className="bg-gradient-primary text-white text-sm">
