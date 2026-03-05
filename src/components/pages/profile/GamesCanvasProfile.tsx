@@ -26,11 +26,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 import {
-  BarChart3,
-  Calendar,
   Clock,
   Edit,
-  Eye,
   FileText,
   Gamepad2,
   Heart,
@@ -39,18 +36,19 @@ import {
   MoreVertical,
   Plus,
   Settings,
-  Share2,
   X,
-  Star,
   Target,
   Trash2,
   TrendingUp,
   Trophy,
   User,
   UserPlus,
+  Gamepad2Icon,
+  ChartNoAxesColumn,
 } from "lucide-react";
 import type { getProfileByUsernameProps } from "@/services/getProfileByUsername";
 import { ConquistText } from "./ConquistText";
+import { ProfileGameStatsSection } from "./ProfileGameStatsSection";
 import { rarityConfig, type RarityLevel } from "./rarityConfig";
 
 const tabsData = [
@@ -251,7 +249,8 @@ const achievements: Array<{
   {
     id: 6,
     title: "Força da Natureza",
-    description: "Completou 72h de maratona sem nenhuma derrota no ranking global.",
+    description:
+      "Completou 72h de maratona sem nenhuma derrota no ranking global.",
     rarity: "mythic",
     icon: "🔥",
     game: "Steam",
@@ -276,7 +275,8 @@ const achievements: Array<{
   {
     id: 8,
     title: "Além das Estrelas",
-    description: "Atingiu o topo do ranking global em 3 jogos diferentes simultaneamente.",
+    description:
+      "Atingiu o topo do ranking global em 3 jogos diferentes simultaneamente.",
     rarity: "celestial",
     icon: "🌌",
     game: "Playgether",
@@ -288,7 +288,11 @@ const achievements: Array<{
 
 const games = [
   { id: "valorant", name: "Valorant", image: "/games/Valorant.png" },
-  { id: "lol", name: "League of Legends", image: "/games/League of Legends.png" },
+  {
+    id: "lol",
+    name: "League of Legends",
+    image: "/games/League of Legends.png",
+  },
   { id: "csgo", name: "CS:GO", image: "/games/Counter Strike 2.png" },
 ];
 
@@ -308,7 +312,9 @@ function AddCommentModal({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Adicionar Comentário</DialogTitle>
-          <DialogDescription>Escreva um comentário para o perfil.</DialogDescription>
+          <DialogDescription>
+            Escreva um comentário para o perfil.
+          </DialogDescription>
         </DialogHeader>
         <Textarea
           value={value}
@@ -352,7 +358,9 @@ function EditCommentModal({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Editar Comentário</DialogTitle>
-          <DialogDescription>Atualize o conteúdo do comentário.</DialogDescription>
+          <DialogDescription>
+            Atualize o conteúdo do comentário.
+          </DialogDescription>
         </DialogHeader>
         <Textarea value={value} onChange={(e) => setValue(e.target.value)} />
         <DialogFooter>
@@ -463,17 +471,29 @@ function MilestoneModal({
     <Dialog open={isOpen} onOpenChange={(open) => (open ? null : onClose())}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{mode === "add" ? "Adicionar Marco" : "Editar Marco"}</DialogTitle>
-          <DialogDescription>Preencha as informações do marco.</DialogDescription>
+          <DialogTitle>
+            {mode === "add" ? "Adicionar Marco" : "Editar Marco"}
+          </DialogTitle>
+          <DialogDescription>
+            Preencha as informações do marco.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título" />
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Título"
+          />
           <Textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Descrição"
           />
-          <Input value={date} onChange={(e) => setDate(e.target.value)} placeholder="Data" />
+          <Input
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            placeholder="Data"
+          />
           <Input
             value={image}
             onChange={(e) => setImage(e.target.value)}
@@ -516,9 +536,7 @@ function AchievementModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent
-        className="max-w-md p-0 gap-0 border-0 bg-transparent shadow-none overflow-visible [&>button]:hidden"
-      >
+      <DialogContent className="max-w-md p-0 gap-0 border-0 bg-transparent shadow-none overflow-visible [&>button]:hidden">
         {/* ── Card shell: mesmo glow, borda e background do ConquistText ───── */}
         <motion.div
           className="rounded-xl overflow-visible"
@@ -593,7 +611,9 @@ function AchievementModal({
                     <span>{achievement.icon}</span>
                     {achievement.title}
                   </DialogTitle>
-                  <DialogDescription>{achievement.description}</DialogDescription>
+                  <DialogDescription>
+                    {achievement.description}
+                  </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-3 mt-4">
@@ -612,12 +632,18 @@ function AchievementModal({
                     <span className="font-medium">{achievement.game}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Conquistado em</span>
+                    <span className="text-muted-foreground">
+                      Conquistado em
+                    </span>
                     <span className="font-medium">{achievement.date}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">% dos jogadores</span>
-                    <span className="font-medium">{achievement.percentage}%</span>
+                    <span className="text-muted-foreground">
+                      % dos jogadores
+                    </span>
+                    <span className="font-medium">
+                      {achievement.percentage}%
+                    </span>
                   </div>
 
                   {achievement.progression ? (
@@ -660,10 +686,14 @@ function AchievementModal({
   );
 }
 
-function GamesCanvasUserProfile({ profile }: { profile: getProfileByUsernameProps | null }) {
+function GamesCanvasUserProfile({
+  profile,
+}: {
+  profile: getProfileByUsernameProps | null;
+}) {
   const [isFollowing, setIsFollowing] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
-  const [likes, setLikes] = useState(profile?.quantity_likes ?? 234);
+  const [likes, setLikes] = useState(profile?.quantity_likes ?? 0);
   const userRating = 4.6;
 
   const followersCount =
@@ -671,30 +701,45 @@ function GamesCanvasUserProfile({ profile }: { profile: getProfileByUsernameProp
       ? profile.followed_by.length
       : 0) ?? 0;
   const followingCount =
-    (profile?.follows && Array.isArray(profile.follows) ? profile.follows.length : 0) ??
-    0;
+    (profile?.follows && Array.isArray(profile.follows)
+      ? profile.follows.length
+      : 0) ?? 0;
 
   const userStats = useMemo(
     () => [
-      { label: "Seguidores", value: followersCount.toLocaleString(), color: "text-neon-blue" },
-      { label: "Seguindo", value: followingCount.toLocaleString(), color: "text-neon-purple" },
+      {
+        label: "Seguidores",
+        value: followersCount.toLocaleString(),
+        color: "text-card-foreground",
+      },
+      {
+        label: "Seguindo",
+        value: followingCount.toLocaleString(),
+        color: "text-card-foreground",
+      },
       {
         label: "Posts",
-        value: (profile?.quantity_comment ?? 0).toLocaleString(),
-        color: "text-neon-green",
+        value: (profile?.quantity_posts ?? 0).toLocaleString(),
+        color: "text-card-foreground",
       },
       {
         label: "Nível",
         value: (profile?.gamer_nivel ?? 0).toLocaleString(),
-        color: "text-neon-pink",
+        color: "text-card-foreground",
       },
     ],
-    [followersCount, followingCount, profile?.quantity_comment, profile?.gamer_nivel]
+    [
+      followersCount,
+      followingCount,
+      profile?.quantity_comment,
+      profile?.gamer_nivel,
+    ],
   );
 
   const getRatingColor = (rating: number) => {
     if (rating <= 2) return "text-red-500 bg-red-500/10 border-red-500/20";
-    if (rating <= 3.5) return "text-yellow-500 bg-yellow-500/10 border-yellow-500/20";
+    if (rating <= 3.5)
+      return "text-yellow-500 bg-yellow-500/10 border-yellow-500/20";
     return "text-green-500 bg-green-500/10 border-green-500/20";
   };
 
@@ -760,18 +805,20 @@ function GamesCanvasUserProfile({ profile }: { profile: getProfileByUsernameProp
                   </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  @{(profile?.name || "user").toLowerCase().replace(/\s+/g, "")}
+                  @
+                  {(profile?.username || "user")
+                    .toLowerCase()
+                    .replace(/\s+/g, "")}
                 </p>
-                <p className="text-sm text-card-foreground leading-relaxed">
-                  {profile?.bio ||
-                    "Gamer profissional especializado em FPS e MOBA. Streamer nas horas vagas 🎮✨"}
+                <p className="text-sm text-card-foreground leading-relaxed whitespace-pre-wrap pt-4">
+                  {profile?.bio || "Você não possui uma bio."}
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3 py-4">
                 {userStats.map((stat, index) => (
                   <div key={index} className="text-center space-y-1">
-                    <div className={`text-lg font-bold ${stat.color}`}>{stat.value}</div>
+                    <div className={`text-lg  ${stat.color}`}>{stat.value}</div>
                     <div className="text-xs text-muted-foreground uppercase tracking-wide">
                       {stat.label}
                     </div>
@@ -805,17 +852,19 @@ function GamesCanvasUserProfile({ profile }: { profile: getProfileByUsernameProp
                     } transition-all duration-200`}
                     onClick={handleLike}
                   >
-                    <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
+                    <Heart
+                      className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`}
+                    />
                     <span className="ml-1 text-xs">{likes}</span>
                   </Button>
 
-                  <Button
+                  {/* <Button
                     variant="outline"
                     size="icon"
                     className="border-border hover:shadow-[0_0_10px_rgba(0,0,0,0.5)] transition-all duration-200"
                   >
                     <Share2 className="h-4 w-4" />
-                  </Button>
+                  </Button> */}
                 </div>
               </div>
             </div>
@@ -827,18 +876,22 @@ function GamesCanvasUserProfile({ profile }: { profile: getProfileByUsernameProp
                 <div className="text-sm font-semibold text-neon-blue">
                   {profile?.performance || "85%"}
                 </div>
-                <div className="text-xs text-muted-foreground">Taxa Vitória</div>
+                {/* <div className="text-xs text-muted-foreground">
+                  Taxa Vitória
+                </div> */}
               </div>
-              <div className="flex-1 border-x border-border/50">
+              {/* <div className="flex-1 border-x border-border/50">
                 <div className="text-sm font-semibold text-neon-purple">
                   {(profile?.matches_played ?? 1247).toLocaleString()}
                 </div>
                 <div className="text-xs text-muted-foreground">Partidas</div>
               </div>
               <div className="flex-1">
-                <div className="text-sm font-semibold text-neon-green">Diamond</div>
+                <div className="text-sm font-semibold text-neon-green">
+                  Diamond
+                </div>
                 <div className="text-xs text-muted-foreground">Rank Atual</div>
-              </div>
+              </div> */}
             </div>
           </div>
         </CardContent>
@@ -847,10 +900,13 @@ function GamesCanvasUserProfile({ profile }: { profile: getProfileByUsernameProp
   );
 }
 
-function GamesCanvasContentTabs({ profile }: { profile: getProfileByUsernameProps | null }) {
+function GamesCanvasContentTabs({
+  profile,
+}: {
+  profile: getProfileByUsernameProps | null;
+}) {
   const [activeTab, setActiveTab] = useState("bio");
   const [selectedGame, setSelectedGame] = useState("");
-  const [statsTab, setStatsTab] = useState("overview");
   const [comments, setComments] = useState(initialComments);
   const [milestones, setMilestones] = useState(initialMilestones);
   const [selectedAchievement, setSelectedAchievement] = useState<any>(null);
@@ -859,13 +915,16 @@ function GamesCanvasContentTabs({ profile }: { profile: getProfileByUsernameProp
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState({ url: "", title: "" });
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<{ type: string; data: any } | null>(
-    null
-  );
+  const [confirmAction, setConfirmAction] = useState<{
+    type: string;
+    data: any;
+  } | null>(null);
   const [editingComment, setEditingComment] = useState<any>(null);
   const [isEditCommentModalOpen, setIsEditCommentModalOpen] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState<any>(null);
-  const [milestoneModalMode, setMilestoneModalMode] = useState<"add" | "edit">("add");
+  const [milestoneModalMode, setMilestoneModalMode] = useState<"add" | "edit">(
+    "add",
+  );
   const [userHasCommented, setUserHasCommented] = useState(false);
   const [isAddCommentModalOpen, setIsAddCommentModalOpen] = useState(false);
 
@@ -887,8 +946,10 @@ function GamesCanvasContentTabs({ profile }: { profile: getProfileByUsernameProp
   const handleEditComment = (commentId: number, newContent: string) => {
     setComments((prev) =>
       prev.map((comment) =>
-        comment.id === commentId ? { ...comment, content: newContent, edited: true } : comment
-      )
+        comment.id === commentId
+          ? { ...comment, content: newContent, edited: true }
+          : comment,
+      ),
     );
   };
 
@@ -910,13 +971,17 @@ function GamesCanvasContentTabs({ profile }: { profile: getProfileByUsernameProp
   const handleEditMilestone = (milestoneId: number, updatedMilestone: any) => {
     setMilestones((prev) =>
       prev.map((milestone) =>
-        milestone.id === milestoneId ? { ...milestone, ...updatedMilestone } : milestone
-      )
+        milestone.id === milestoneId
+          ? { ...milestone, ...updatedMilestone }
+          : milestone,
+      ),
     );
   };
 
   const handleDeleteMilestone = (milestoneId: number) => {
-    setMilestones((prev) => prev.filter((milestone) => milestone.id !== milestoneId));
+    setMilestones((prev) =>
+      prev.filter((milestone) => milestone.id !== milestoneId),
+    );
   };
 
   const openConfirmModal = (type: string, data: any) => {
@@ -964,15 +1029,14 @@ function GamesCanvasContentTabs({ profile }: { profile: getProfileByUsernameProp
           <TabsContent value="bio" className="p-6 space-y-4">
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Sobre mim</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                {profile?.bio ||
-                  "Gamer apaixonado por FPS e MOBA com mais de 5 anos de experiência competitiva. Especialista em Valorant e League of Legends, atualmente no rank Diamond em ambos os jogos."}
+              <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                {profile?.bio || "Você não possui uma bio	."}
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
                 <div className="space-y-4">
                   <h4 className="font-semibold text-lg flex items-center gap-2">
-                    <span className="text-neon-blue">🎮</span>
+                    <Gamepad2Icon className="h-6 w-6 text-card-foreground" />
                     Jogos Principais
                   </h4>
                   <div className="grid grid-cols-1 gap-3">
@@ -983,8 +1047,12 @@ function GamesCanvasContentTabs({ profile }: { profile: getProfileByUsernameProp
                         className="w-8 h-8 rounded object-cover"
                       />
                       <div>
-                        <div className="font-medium text-card-foreground">Valorant</div>
-                        <div className="text-sm text-muted-foreground">Rank: Diamond 2</div>
+                        <div className="font-medium text-card-foreground">
+                          Valorant
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Rank: Diamond 2
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 bg-gradient-secondary/10 rounded-lg border border-secondary/20">
@@ -997,7 +1065,9 @@ function GamesCanvasContentTabs({ profile }: { profile: getProfileByUsernameProp
                         <div className="font-medium text-card-foreground">
                           League of Legends
                         </div>
-                        <div className="text-sm text-muted-foreground">Rank: Platinum 1</div>
+                        <div className="text-sm text-muted-foreground">
+                          Rank: Platinum 1
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 bg-gradient-primary/10 rounded-lg border border-primary/20">
@@ -1007,8 +1077,12 @@ function GamesCanvasContentTabs({ profile }: { profile: getProfileByUsernameProp
                         className="w-8 h-8 rounded object-cover"
                       />
                       <div>
-                        <div className="font-medium text-card-foreground">CS:GO</div>
-                        <div className="text-sm text-muted-foreground">Rank: Global Elite</div>
+                        <div className="font-medium text-card-foreground">
+                          CS:GO
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Rank: Global Elite
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1016,31 +1090,41 @@ function GamesCanvasContentTabs({ profile }: { profile: getProfileByUsernameProp
 
                 <div className="space-y-4">
                   <h4 className="font-semibold text-lg flex items-center gap-2">
-                    <span className="text-neon-green">📊</span>
+                    <ChartNoAxesColumn className="h-6 w-6 text-card-foreground" />
                     Estatísticas Rápidas
                   </h4>
                   <div className="grid grid-cols-1 gap-3">
                     <div className="flex items-center justify-between p-3 bg-card/50 rounded-lg border border-border">
-                      <span className="text-muted-foreground">Tempo de jogo</span>
-                      <span className="font-semibold text-neon-blue">
+                      <span className="text-muted-foreground">
+                        Tempo de jogo
+                      </span>
+                      <span className="font-semibold text-card-foreground">
                         {(profile?.hours_played ?? 2340).toLocaleString()}h
                       </span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-card/50 rounded-lg border border-border">
-                      <span className="text-muted-foreground">Primeira partida</span>
-                      <span className="font-semibold text-neon-purple">Jan 2019</span>
+                      <span className="text-muted-foreground">
+                        Conta criada em
+                      </span>
+                      <span className="font-semibold text-card-foreground">
+                        Jan 2019
+                      </span>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-card/50 rounded-lg border border-border">
-                      <span className="text-muted-foreground">Streamer desde</span>
-                      <span className="font-semibold text-neon-pink">Mai 2022</span>
-                    </div>
+                    {/* <div className="flex items-center justify-between p-3 bg-card/50 rounded-lg border border-border">
+                      <span className="text-muted-foreground">
+                        Streamer desde
+                      </span>
+                      <span className="font-semibold text-card-foreground">
+                        Mai 2022
+                      </span>
+                    </div> */}
                   </div>
                 </div>
               </div>
 
               <div className="pt-8 border-t border-border">
                 <h4 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                  <MessageCircle className="h-5 w-5 text-neon-blue" />
+                  <MessageCircle className="h-5 w-5 text-card-foreground" />
                   Comentários
                 </h4>
                 <div className="space-y-4">
@@ -1066,13 +1150,21 @@ function GamesCanvasContentTabs({ profile }: { profile: getProfileByUsernameProp
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-sm">{comment.author}</span>
-                          <span className="text-xs text-muted-foreground">{comment.time}</span>
+                          <span className="font-medium text-sm">
+                            {comment.author}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {comment.time}
+                          </span>
                           {comment.edited && (
-                            <span className="text-xs text-muted-foreground">(editado)</span>
+                            <span className="text-xs text-muted-foreground">
+                              (editado)
+                            </span>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground">{comment.content}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {comment.content}
+                        </p>
                       </div>
                       {comment.author === "Você" && (
                         <DropdownMenu>
@@ -1093,7 +1185,9 @@ function GamesCanvasContentTabs({ profile }: { profile: getProfileByUsernameProp
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               className="text-red-500 focus:text-red-500"
-                              onClick={() => openConfirmModal("deleteComment", comment)}
+                              onClick={() =>
+                                openConfirmModal("deleteComment", comment)
+                              }
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
                               Excluir
@@ -1155,75 +1249,16 @@ function GamesCanvasContentTabs({ profile }: { profile: getProfileByUsernameProp
                     </h2>
                   </div>
 
-                  <Tabs value={statsTab} onValueChange={setStatsTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 bg-card border border-border">
-                      <TabsTrigger
-                        value="overview"
-                        className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white"
-                      >
-                        Overview
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="matches"
-                        className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white"
-                      >
-                        Partidas
-                      </TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="overview" className="space-y-6 mt-6">
-                      <div className="flex items-center justify-center h-64">
-                        <div className="text-center space-y-4">
-                          <div className="text-6xl">🚧</div>
-                          <h3 className="text-2xl font-bold text-card-foreground">
-                            Em breve
-                          </h3>
-                          <p className="text-muted-foreground">
-                            As estatísticas detalhadas serão implementadas em breve.
-                          </p>
-                        </div>
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="matches" className="space-y-4 mt-6">
-                      <Card>
-                        <CardContent className="p-6">
-                          <h3 className="text-lg font-semibold mb-4">Partidas Recentes</h3>
-                          <div className="space-y-3">
-                            {[
-                              { map: "Ascent", result: "V", score: "13-7", kda: "18/12/6", date: "2h atrás" },
-                              { map: "Bind", result: "D", score: "11-13", kda: "15/14/4", date: "1d atrás" },
-                            ].map((match, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center justify-between p-3 bg-card/30 rounded-lg border border-border/50"
-                              >
-                                <div className="flex items-center gap-4">
-                                  <div
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                                      match.result === "V"
-                                        ? "bg-green-500/20 text-green-400"
-                                        : "bg-red-500/20 text-red-400"
-                                    }`}
-                                  >
-                                    {match.result}
-                                  </div>
-                                  <div>
-                                    <div className="font-medium">{match.map}</div>
-                                    <div className="text-sm text-muted-foreground">{match.kda}</div>
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <div className="font-medium">{match.score}</div>
-                                  <div className="text-xs text-muted-foreground">{match.date}</div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </TabsContent>
-                  </Tabs>
+                  <ProfileGameStatsSection
+                    selectedGame={
+                      selectedGame === "valorant"
+                        ? "valorant"
+                        : selectedGame === "lol"
+                          ? "lol"
+                          : "csgo"
+                    }
+                    profile={profile}
+                  />
                 </div>
               )}
             </div>
@@ -1276,7 +1311,10 @@ function GamesCanvasContentTabs({ profile }: { profile: getProfileByUsernameProp
 
           <TabsContent value="posts" className="p-6 space-y-4">
             {mockPosts.map((post) => (
-              <Card key={post.id} className="hover:shadow-card transition-shadow duration-200">
+              <Card
+                key={post.id}
+                className="hover:shadow-card transition-shadow duration-200"
+              >
                 <CardContent className="p-4">
                   <div className="space-y-3">
                     <div className="flex items-start justify-between">
@@ -1286,13 +1324,23 @@ function GamesCanvasContentTabs({ profile }: { profile: getProfileByUsernameProp
                         {post.date}
                       </span>
                     </div>
-                    <p className="text-muted-foreground text-sm leading-relaxed">{post.content}</p>
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      {post.content}
+                    </p>
                     <div className="flex items-center gap-4 pt-2 border-t border-border">
-                      <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-2 text-muted-foreground"
+                      >
                         <Heart className="h-4 w-4" />
                         {post.likes}
                       </Button>
-                      <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-2 text-muted-foreground"
+                      >
                         <MessageCircle className="h-4 w-4" />
                         {post.comments}
                       </Button>
@@ -1361,14 +1409,20 @@ function GamesCanvasContentTabs({ profile }: { profile: getProfileByUsernameProp
 
               <div className="space-y-4">
                 {milestones.map((milestone) => (
-                  <Card key={milestone.id} className="hover:shadow-card transition-all duration-200">
+                  <Card
+                    key={milestone.id}
+                    className="hover:shadow-card transition-all duration-200"
+                  >
                     <CardContent className="p-6">
                       <div className="flex gap-4">
                         {milestone.image && (
                           <div
                             className="w-16 h-16 bg-gradient-primary/10 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer hover:scale-105 transition-transform duration-200"
                             onClick={() => {
-                              setSelectedImage({ url: milestone.image!, title: milestone.title });
+                              setSelectedImage({
+                                url: milestone.image!,
+                                title: milestone.title,
+                              });
                               setIsImageModalOpen(true);
                             }}
                           >
@@ -1405,7 +1459,12 @@ function GamesCanvasContentTabs({ profile }: { profile: getProfileByUsernameProp
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     className="text-red-500 focus:text-red-500"
-                                    onClick={() => openConfirmModal("deleteMilestone", milestone)}
+                                    onClick={() =>
+                                      openConfirmModal(
+                                        "deleteMilestone",
+                                        milestone,
+                                      )
+                                    }
                                   >
                                     <Trash2 className="h-4 w-4 mr-2" />
                                     Excluir
@@ -1428,11 +1487,16 @@ function GamesCanvasContentTabs({ profile }: { profile: getProfileByUsernameProp
 
           <TabsContent value="games" className="p-6">
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold mb-6">Biblioteca de Jogos</h3>
+              <h3 className="text-lg font-semibold mb-6">
+                Biblioteca de Jogos
+              </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {games.map((game) => (
-                  <Card key={game.id} className="hover:shadow-card transition-all duration-200">
+                  <Card
+                    key={game.id}
+                    className="hover:shadow-card transition-all duration-200"
+                  >
                     <CardContent className="p-6">
                       <div className="flex items-center gap-4 mb-4">
                         <img
@@ -1449,7 +1513,9 @@ function GamesCanvasContentTabs({ profile }: { profile: getProfileByUsernameProp
                               <div>ID: #BR1-2023</div>
                             </div>
                           ) : (
-                            <div className="text-sm text-muted-foreground">❌ Não conectado</div>
+                            <div className="text-sm text-muted-foreground">
+                              ❌ Não conectado
+                            </div>
                           )}
                         </div>
                       </div>
@@ -1457,12 +1523,20 @@ function GamesCanvasContentTabs({ profile }: { profile: getProfileByUsernameProp
                       {game.id === "valorant" ? (
                         <div className="grid grid-cols-2 gap-3 text-center">
                           <div className="p-2 bg-card/50 rounded">
-                            <div className="font-semibold text-neon-blue">Diamond 2</div>
-                            <div className="text-xs text-muted-foreground">Rank Atual</div>
+                            <div className="font-semibold text-neon-blue">
+                              Diamond 2
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Rank Atual
+                            </div>
                           </div>
                           <div className="p-2 bg-card/50 rounded">
-                            <div className="font-semibold text-neon-green">1,247</div>
-                            <div className="text-xs text-muted-foreground">RR</div>
+                            <div className="font-semibold text-neon-green">
+                              1,247
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              RR
+                            </div>
                           </div>
                         </div>
                       ) : (
@@ -1535,14 +1609,18 @@ function GamesCanvasContentTabs({ profile }: { profile: getProfileByUsernameProp
                   ? "Tem certeza que deseja adicionar este marco?"
                   : ""
         }
-        confirmText={confirmAction?.type?.includes("delete") ? "Excluir" : "Adicionar"}
+        confirmText={
+          confirmAction?.type?.includes("delete") ? "Excluir" : "Adicionar"
+        }
         destructive={confirmAction?.type?.includes("delete")}
       />
 
       <EditCommentModal
         isOpen={isEditCommentModalOpen}
         onClose={() => setIsEditCommentModalOpen(false)}
-        onSubmit={(newContent) => handleEditComment(editingComment.id, newContent)}
+        onSubmit={(newContent) =>
+          handleEditComment(editingComment.id, newContent)
+        }
         initialComment={editingComment?.content || ""}
       />
 
@@ -1578,4 +1656,3 @@ export default function GamesCanvasProfile({
     </div>
   );
 }
-

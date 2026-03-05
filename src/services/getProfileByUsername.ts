@@ -15,10 +15,10 @@ export interface getProfileByUsernameProps {
   follows: [];
   followed_by: [];
   name: string;
+  username: string;
+  quantity_posts: number;
 }
-export const getProfileByUsername = async (
-  username: string
-) => {
+export const getProfileByUsername = async (username: string) => {
   const accessToken = (await cookies()).get("accessToken")?.value;
   try {
     const response = await api.get<getProfileByUsernameProps>(
@@ -27,7 +27,7 @@ export const getProfileByUsername = async (
         headers: {
           Authorization: "Bearer " + String(accessToken),
         },
-      }
+      },
     );
     return response;
   } catch (error) {

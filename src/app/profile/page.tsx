@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description: "See your and your friends informations",
 };
 
-const secret = new TextEncoder().encode(process.env.JWT_SECRET); 
+const secret = new TextEncoder().encode(process.env.JWT_SECRET);
 
 export default async function PageProfile() {
   const cookieStore = await cookies();
@@ -42,11 +42,12 @@ export default async function PageProfile() {
   const username = payload.username;
   const response = await getProfileByUsername(username);
   const profile = response.data[0];
+  console.log(profile);
   return (
     <BaseLayout>
       {profile ? (
         <GamesCanvasProfile profile={profile} />
-      ):(
+      ) : (
         <NotFoundPages message="Perfil não encontrado" />
       )}
     </BaseLayout>
