@@ -4,12 +4,13 @@ import { api } from "./api";
 
 export const getCommentsServer = async (
   postId: number | undefined,
-  pageParam: string | null = null
+  pageParam: string | null = null,
+  type: "posts" | "comments" | "profiles" | "reposts" = "posts",
 ) => {
   const accessToken = (await cookies()).get("accessToken")?.value;
   try {
     const response = await api.get<PostCommentsApiReturn>(
-      `/api/v1/posts/${postId}/comments/`,
+      `/api/v1/${type}/${postId}/comments/`,
       {
         headers: {
           Authorization: "Bearer " + String(accessToken),
@@ -17,7 +18,7 @@ export const getCommentsServer = async (
         params: {
           cursor: pageParam,
         },
-      }
+      },
     );
     return {
       data: response.data.results,

@@ -6,6 +6,7 @@ import { jwtVerify } from "jose";
 import NotFoundPages from "@/components/elements/NotFound/NotFoundPages";
 import { getProfileByUsername } from "@/services/getProfileByUsername";
 import GamesCanvasProfile from "@/components/pages/profile/GamesCanvasProfile";
+import { getCommentsServer } from "@/services/getCommentsServer";
 
 export const metadata: Metadata = {
   title: "Playgether - Profile",
@@ -40,9 +41,15 @@ export default async function PageProfile() {
   }
 
   const username = payload.username;
-  const response = await getProfileByUsername(username);
-  const profile = response.data[0];
-  console.log(profile);
+
+  const [profileResponse, commentsResponse] = await Promise.all([
+    getProfileByUsername(username), // GET /api/v1/profiles/username/
+    getCommentsServer(username, null, "profiles"), // GET /api/v1/profiles/username/comments/
+  ]);
+
+  const profile = profileResponse.data?.[0] || profileResponse.data;
+
+  console.log("Comments for profile (paginated):", commentsResponse);
   return (
     <BaseLayout>
       {profile ? (

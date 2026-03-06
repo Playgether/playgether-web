@@ -1,12 +1,7 @@
 import { useState } from "react";
-import {
-  PostCommentsOfCommentsProps,
-  PostsCommentsProps,
-} from "../../../../../../services/getComments";
+import { PostsCommentsProps } from "../../../../../../services/getComments";
 import ProfileAndUsername from "../../../../../layouts/components/ProfileAndUsername";
-import PostPropertiersPostsExpand from "../../../DesktopFeed/Middle/PostsComponents/PostPropertiers/PostPropertiers";
 import PostPropertiersAnswer from "../../../DesktopFeed/Middle/PostsComponents/PostPropertiers/PostPropertiersAnswer";
-import EditComment from "../EditComment/EditComment";
 import {} from "../../../../../../context/AuthContext";
 import { useCommentFormSchema } from "../../../../../layouts/Forms/CommentFormSchema";
 import { UseFormState } from "../../../../../layouts/ConstFormStateLayout";
