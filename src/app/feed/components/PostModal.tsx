@@ -768,11 +768,11 @@ export const PostModal = ({ postId }: { postId: number }) => {
                                     className="flex items-start space-x-3"
                                   >
                                     {reply.created_by_user_photo ? (
-                                      <div className="w-8 h-8 flex-shrink-0 rounded-full overflow-hidden ring-2 ring-primary/20">
+                                      <div className="w-12 h-12 pl-2 relative rounded-full overflow-hidden ring-2 ring-primary/30 flex-shrink-0">
                                         <ImageComponent
                                           media_id={reply.created_by_user_photo}
                                           alt={`Profile photo of the user ${reply?.created_by_user_name}`}
-                                          className="object-cover w-full h-full"
+                                          className="object-cover rounded-full"
                                         />
                                       </div>
                                     ) : (
