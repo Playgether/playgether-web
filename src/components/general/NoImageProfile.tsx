@@ -1,19 +1,24 @@
 import { User } from "lucide-react";
 import React from "react";
-import { twMerge } from "tailwind-merge";
+import { twMerge, twJoin } from "tailwind-merge";
+
+interface NoImageProfileProps extends React.HTMLAttributes<HTMLDivElement> {
+  iconClassName?: string;
+}
 
 export default function NoImageProfile({
+  iconClassName,
   ...rest
-}: React.HTMLAttributes<HTMLDivElement>) {
+}: NoImageProfileProps) {
   return (
     <div className="relative">
       <div
         className={twMerge(
-          "w-12 h-12 bg-gradient-secondary rounded-full flex items-center justify-center",
-          rest.className
+          "w-12 h-12 bg-muted-foreground rounded-full flex items-center justify-center",
+          rest.className,
         )}
       >
-        <User className="w-6 h-6 text-white" />
+        <User className={twJoin("", iconClassName)} />
       </div>
     </div>
   );

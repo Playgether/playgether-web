@@ -48,12 +48,16 @@ export default async function PageProfile() {
   ]);
 
   const profile = profileResponse.data?.[0] || profileResponse.data;
+  const initialComments = commentsResponse;
 
   console.log("Comments for profile (paginated):", commentsResponse);
   return (
     <BaseLayout>
       {profile ? (
-        <GamesCanvasProfile profile={profile} />
+        <GamesCanvasProfile
+          profile={profile}
+          initialComments={initialComments}
+        />
       ) : (
         <NotFoundPages message="Perfil não encontrado" />
       )}
