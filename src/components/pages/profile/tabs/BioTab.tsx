@@ -15,29 +15,40 @@ import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
 import { games } from "../constants";
 import NoImageProfile from "@/components/general/NoImageProfile";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
+import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 
 interface BioTabProps {
   profile: getProfileByUsernameProps | null;
   comments: ApiResponseComments["data"];
   userHasCommented: boolean;
+  isOwner: boolean;
+  nextPage: string | null;
+  isLoadingMore: boolean;
   onAddCommentClick: () => void;
   onEditComment: (commentId: number, newContent: string) => void;
   onDeleteComment: (commentId: number) => void;
+  onLoadMore: () => void;
   openConfirmModal: (type: string, data: any) => void;
   setEditingComment: (comment: any) => void;
   setIsEditCommentModalOpen: (open: boolean) => void;
+  currentUserUsername?: string | null;
 }
 
 export function BioTab({
   profile,
   comments,
   userHasCommented,
+  isOwner,
+  nextPage,
+  isLoadingMore,
   onAddCommentClick,
   onEditComment,
   onDeleteComment,
+  onLoadMore,
   openConfirmModal,
   setEditingComment,
   setIsEditCommentModalOpen,
+  currentUserUsername,
 }: BioTabProps) {
   return (
     <div className="space-y-4">
@@ -125,7 +136,7 @@ export function BioTab({
           Comentários
         </h4>
         <div className="space-y-4">
-          {!userHasCommented && (
+          {!isOwner && !userHasCommented && (
             <div className="flex justify-center">
               <Button
                 variant="outline"
@@ -176,7 +187,7 @@ export function BioTab({
                       </span>
                     </div>
                     {comment.edited && (
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-muted-foreground mt-1">
                         (editado)
                       </span>
                     )}
@@ -185,15 +196,21 @@ export function BioTab({
                     {comment.comment ?? comment.content}
                   </p>
                 </div>
-                {comment.author === "Você" && (
+                {(comment.author === "Você" ||
+                  comment.user_username === currentUserUsername) && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="cursor-pointer"
+                      >
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
                       <DropdownMenuItem
+                        className="cursor-pointer"
                         onClick={() => {
                           setEditingComment(comment);
                           setIsEditCommentModalOpen(true);
@@ -203,7 +220,7 @@ export function BioTab({
                         Editar
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        className="text-red-500 focus:text-red-500"
+                        className="text-red-500 focus:text-red-500 cursor-pointer"
                         onClick={() =>
                           openConfirmModal("deleteComment", comment)
                         }
@@ -221,6 +238,25 @@ export function BioTab({
               <p className="text-muted-foreground">
                 Nenhum comentário encontrado
               </p>
+            </div>
+          )}
+          {nextPage && (
+            <div className="flex justify-center pt-4">
+              <Button
+                variant="outline"
+                onClick={onLoadMore}
+                disabled={isLoadingMore}
+                className="hover:shadow-card transition-shadow duration-200"
+              >
+                {isLoadingMore ? (
+                  <span className="flex items-center gap-2">
+                    <LoadingComponent showText={false} className="h-4 w-4" />
+                    Carregando...
+                  </span>
+                ) : (
+                  "Carregar mais"
+                )}
+              </Button>
             </div>
           )}
         </div>

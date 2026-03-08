@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,19 +11,28 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 
 export function EditCommentModal({
   isOpen,
   onClose,
   onSubmit,
   initialComment,
+  isSubmitting,
 }: {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (newContent: string) => void;
   initialComment: string;
+  isSubmitting?: boolean;
 }) {
   const [value, setValue] = useState(initialComment);
+
+  useEffect(() => {
+    if (isOpen) {
+      setValue(initialComment);
+    }
+  }, [initialComment, isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => (open ? null : onClose())}>
@@ -36,16 +45,21 @@ export function EditCommentModal({
         </DialogHeader>
         <Textarea value={value} onChange={(e) => setValue(e.target.value)} />
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancelar
           </Button>
           <Button
-            onClick={() => {
-              onSubmit(value);
-              onClose();
-            }}
+            onClick={() => onSubmit(value)}
+            disabled={isSubmitting}
           >
-            Salvar
+            {isSubmitting ? (
+              <span className="flex items-center gap-2">
+                <LoadingComponent showText={false} className="h-4 w-4" />
+                Salvando...
+              </span>
+            ) : (
+              "Salvar"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

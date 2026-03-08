@@ -7,16 +7,32 @@ import { NotificationWrapper } from "./NotificationWrapper";
 import EmptyData from "@/components/elements/EmptyDataComponent/EmptyData";
 import useWebSocket from "react-use-websocket";
 
-function NotificationBody({ notificationsParent, user_id, token }) {
+const WS_URL =
+  process.env.NEXT_PUBLIC_WS_URL || "ws://192.168.18.8:8000";
+
+function NotificationBody({ notificationsParent }: { notificationsParent: any[] }) {
   const [notifications, setNotifications] = useState(notificationsParent);
-  
-  const { lastJsonMessage } = useWebSocket(
-    `ws://192.168.18.8:8000/ws/notifications/?token=${token}`,
-    {
-      share: false,
-      shouldReconnect: () => true,
-    }
-  );
+  const [wsUrl, setWsUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/notifications-ws-token", { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : { token: null }))
+      .then((data) => {
+        if (!cancelled && data?.token) {
+          setWsUrl(`${WS_URL}/ws/notifications/?token=${data.token}`);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const { lastJsonMessage } = useWebSocket(wsUrl ?? "ws://localhost", {
+    share: false,
+    shouldReconnect: () => !!wsUrl,
+  });
 
   useEffect(() => {
     if (

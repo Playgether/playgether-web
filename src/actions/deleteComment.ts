@@ -12,5 +12,6 @@ export const deleteCommentAction = async (id: number) => {
     });
   } catch (error) {
     console.log(error);
+    throw error;
   }
 };

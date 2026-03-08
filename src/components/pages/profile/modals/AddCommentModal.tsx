@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,17 +11,24 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 
 export function AddCommentModal({
   isOpen,
   onClose,
   onSubmit,
+  isSubmitting,
 }: {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (comment: string) => void;
+  isSubmitting?: boolean;
 }) {
   const [value, setValue] = useState("");
+
+  useEffect(() => {
+    if (!isOpen) setValue("");
+  }, [isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => (open ? null : onClose())}>
@@ -38,17 +45,21 @@ export function AddCommentModal({
           placeholder="Seu comentário..."
         />
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancelar
           </Button>
           <Button
-            onClick={() => {
-              onSubmit(value);
-              setValue("");
-              onClose();
-            }}
+            onClick={() => onSubmit(value)}
+            disabled={isSubmitting || !value.trim()}
           >
-            Enviar
+            {isSubmitting ? (
+              <span className="flex items-center gap-2">
+                <LoadingComponent showText={false} className="h-4 w-4" />
+                Salvando...
+              </span>
+            ) : (
+              "Enviar"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -17,6 +17,8 @@ export interface getProfileByUsernameProps {
   name: string;
   username: string;
   quantity_posts: number;
+  user_already_like?: boolean;
+  user_already_follow?: boolean;
 }
 export const getProfileByUsername = async (username: string) => {
   const accessToken = (await cookies()).get("accessToken")?.value;

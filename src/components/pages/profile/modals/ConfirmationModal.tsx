@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 
 export function ConfirmationModal({
   isOpen,
@@ -18,6 +19,7 @@ export function ConfirmationModal({
   description,
   confirmText,
   destructive,
+  isConfirming,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -26,6 +28,7 @@ export function ConfirmationModal({
   description: string;
   confirmText: string;
   destructive?: boolean;
+  isConfirming?: boolean;
 }) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => (open ? null : onClose())}>
@@ -35,17 +38,22 @@ export function ConfirmationModal({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isConfirming}>
             Cancelar
           </Button>
           <Button
             variant={destructive ? "destructive" : "default"}
-            onClick={() => {
-              onConfirm();
-              onClose();
-            }}
+            onClick={() => onConfirm()}
+            disabled={isConfirming}
           >
-            {confirmText}
+            {isConfirming ? (
+              <span className="flex items-center gap-2">
+                <LoadingComponent showText={false} className="h-4 w-4" />
+                Excluindo...
+              </span>
+            ) : (
+              confirmText
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

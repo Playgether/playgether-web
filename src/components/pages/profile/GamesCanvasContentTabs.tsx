@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { getProfileByUsernameProps } from "@/services/getProfileByUsername";
 import { ApiResponseComments } from "@/context/CommentsContext";
@@ -19,6 +19,14 @@ import { ImageModal } from "./modals/ImageModal";
 import { MilestoneModal } from "./modals/MilestoneModal";
 import { AchievementModal } from "./modals/AchievementModal";
 import type { AchievementType } from "./modals/AchievementModal";
+import { useAuthContext } from "@/context/AuthContext";
+import { postComment } from "@/services/postComment";
+import { updateCommentAction } from "@/actions/updateComment";
+import { deleteCommentAction } from "@/actions/deleteComment";
+import { CommentContentType } from "@/components/content_types/CommentContentType";
+import { getProfileCommentsClient } from "@/services/getProfileComments";
+import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
+import { CustomToastProps } from "@/error/custom-toaster/enum";
 
 interface GamesCanvasContentTabsProps {
   profile: getProfileByUsernameProps | null;
@@ -29,9 +37,16 @@ export function GamesCanvasContentTabs({
   profile,
   initialComments,
 }: GamesCanvasContentTabsProps) {
+  const { user } = useAuthContext();
+  const isOwner = !!user && !!profile && user.username === profile.username;
+
   const [activeTab, setActiveTab] = useState("bio");
   const [selectedGame, setSelectedGame] = useState("");
-  const [comments, setComments] = useState(initialComments.data);
+  const [comments, setComments] = useState<any[]>(initialComments.data ?? []);
+  const [nextPage, setNextPage] = useState<string | null>(
+    initialComments.next_page ?? null
+  );
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [milestones, setMilestones] = useState(initialMilestones);
   const [selectedAchievement, setSelectedAchievement] =
     useState<AchievementType | null>(null);
@@ -46,44 +61,154 @@ export function GamesCanvasContentTabs({
   } | null>(null);
   const [editingComment, setEditingComment] = useState<any>(null);
   const [isEditCommentModalOpen, setIsEditCommentModalOpen] = useState(false);
+  const [isEditCommentSubmitting, setIsEditCommentSubmitting] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState<any>(null);
   const [milestoneModalMode, setMilestoneModalMode] = useState<"add" | "edit">(
     "add",
   );
   const [userHasCommented, setUserHasCommented] = useState(false);
-  const [isAddCommentModalOpen, setIsAddCommentModalOpen] = useState(false);
 
-  const handleAddComment = (comment: string) => {
-    if (!userHasCommented) {
-      const newComment = {
-        id: Date.now(),
+  useEffect(() => {
+    if (!user) {
+      setUserHasCommented(false);
+      return;
+    }
+    const hasComment = comments.some(
+      (c: any) => c.user_username === user.username
+    );
+    setUserHasCommented(hasComment);
+  }, [user?.username, comments]);
+  const [isAddCommentModalOpen, setIsAddCommentModalOpen] = useState(false);
+  const [isAddCommentSubmitting, setIsAddCommentSubmitting] = useState(false);
+  const [isDeletingComment, setIsDeletingComment] = useState(false);
+
+  const loadMoreComments = useCallback(async () => {
+    if (!profile || !nextPage || isLoadingMore) return;
+    setIsLoadingMore(true);
+    try {
+      let cursor: string | null = null;
+      try {
+        const url = nextPage.startsWith("http")
+          ? nextPage
+          : `http://dummy${nextPage.startsWith("?") ? "/" : "/"}${nextPage}`;
+        cursor = new URL(url).searchParams.get("cursor");
+      } catch {
+        cursor = null;
+      }
+      const res = await getProfileCommentsClient(
+        profile.username ?? profile.id,
+        cursor
+      );
+      setComments((prev) => [...prev, ...(res.data ?? [])]);
+      setNextPage(res.next_page ?? null);
+    } catch (err) {
+      CustomToast.error("Erro ao carregar comentários", {
+        duration: CustomToastProps.defaultDuration,
+      });
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [profile, nextPage, isLoadingMore]);
+
+  const handleAddComment = async (comment: string) => {
+    if (!profile || !comment.trim() || isAddCommentSubmitting) return;
+    setIsAddCommentSubmitting(true);
+    const optimisticId = `opt-${Date.now()}`;
+    const optimisticComment = {
+      id: optimisticId,
+      author: "Você",
+      content: comment.trim(),
+      user_username: user?.username,
+      comment: comment.trim(),
+      timestamp: new Date().toISOString(),
+      is_optimistic: true,
+    };
+    setComments((prev) => [optimisticComment as any, ...prev]);
+    setUserHasCommented(true);
+    setIsAddCommentModalOpen(false);
+    try {
+      const created = await postComment({
+        comment: comment.trim(),
+        object_id: profile.id,
+        content_type: CommentContentType.profile,
+      });
+      const mapped = {
+        ...created,
         author: "Você",
-        avatar: "EU",
-        content: comment,
-        time: "agora",
-        edited: false,
-      } as any;
-      setComments((prev) => [newComment, ...prev]);
-      setUserHasCommented(true);
+        content: created.comment,
+        user_username: user?.username,
+      };
+      setComments((prev) =>
+        prev.map((c: any) =>
+          c.id === optimisticId ? mapped : c
+        )
+      );
+      CustomToast.success("Comentário adicionado!", {
+        duration: CustomToastProps.defaultDuration,
+      });
+    } catch (err: any) {
+      setComments((prev) => prev.filter((c: any) => c.id !== optimisticId));
+      setUserHasCommented(false);
+      CustomToast.error("Erro ao adicionar comentário", {
+        description: (err as any)?.message ?? "Tente novamente.",
+        duration: CustomToastProps.defaultDuration,
+      });
+    } finally {
+      setIsAddCommentSubmitting(false);
     }
   };
 
-  const handleEditComment = (commentId: number, newContent: string) => {
-    setComments((prev) =>
-      prev.map((comment: any) =>
-        comment.id === commentId
-          ? { ...comment, content: newContent, edited: true }
-          : comment,
-      ),
-    );
+  const handleEditComment = async (commentId: number, newContent: string) => {
+    if (!profile || !newContent.trim() || isEditCommentSubmitting) return;
+    setIsEditCommentSubmitting(true);
+    try {
+      const response = await updateCommentAction({
+        comment_id: commentId,
+        comment: newContent.trim(),
+        object_id: profile.id,
+        content_type: CommentContentType.profile,
+      });
+      setComments((prev) =>
+        prev.map((c: any) =>
+          c.id === commentId ? { ...c, comment: newContent.trim(), edited: true, ...response } : c
+        )
+      );
+      setIsEditCommentModalOpen(false);
+      setEditingComment(null);
+      CustomToast.success("Comentário atualizado!", {
+        duration: CustomToastProps.defaultDuration,
+      });
+    } catch (err: any) {
+      CustomToast.error("Erro ao atualizar comentário", {
+        description: err?.message ?? "Tente novamente.",
+        duration: CustomToastProps.defaultDuration,
+      });
+    } finally {
+      setIsEditCommentSubmitting(false);
+    }
   };
 
-  const handleDeleteComment = (commentId: number) => {
-    setComments((prev) =>
-      prev.filter((comment: any) => comment.id !== commentId),
+  const handleDeleteComment = async (commentId: number) => {
+    const wasUserComment = comments.some(
+      (c: any) => c.id === commentId && c.user_username === user?.username
     );
-    if ((comments as any[]).find((c) => c.id === commentId)?.author === "Você") {
-      setUserHasCommented(false);
+    setIsDeletingComment(true);
+    try {
+      await deleteCommentAction(commentId);
+      setComments((prev) => prev.filter((c: any) => c.id !== commentId));
+      setConfirmModalOpen(false);
+      setConfirmAction(null);
+      if (wasUserComment) setUserHasCommented(false);
+      CustomToast.success("Comentário excluído!", {
+        duration: CustomToastProps.defaultDuration,
+      });
+    } catch (err: any) {
+      CustomToast.error("Erro ao excluir comentário", {
+        description: (err as any)?.message ?? "Tente novamente.",
+        duration: CustomToastProps.defaultDuration,
+      });
+    } finally {
+      setIsDeletingComment(false);
     }
   };
 
@@ -116,6 +241,11 @@ export function GamesCanvasContentTabs({
     setIsConfirmModalOpen(true);
   };
 
+  const setConfirmModalOpen = (open: boolean) => {
+    setIsConfirmModalOpen(open);
+    if (!open) setConfirmAction(null);
+  };
+
   const handleConfirmAction = () => {
     if (!confirmAction) return;
 
@@ -125,175 +255,189 @@ export function GamesCanvasContentTabs({
         break;
       case "deleteMilestone":
         handleDeleteMilestone(confirmAction.data.id);
-        break;
-      case "addComment":
-        handleAddComment(confirmAction.data.comment);
+        setConfirmModalOpen(false);
+        setConfirmAction(null);
         break;
       case "addMilestone":
         handleAddMilestone(confirmAction.data.milestone);
+        setConfirmModalOpen(false);
+        setConfirmAction(null);
+        break;
+      default:
         break;
     }
-    setConfirmAction(null);
   };
 
   return (
-    <div className="flex-1">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="flex flex-wrap justify-center lg:justify-start gap-1 bg-card border border-border p-1 mb-6 h-auto overflow-visible">
-          {tabsData.map((tab) => (
-            <TabsTrigger
-              key={tab.id}
-              value={tab.id}
-              className="flex flex-col items-center gap-1 p-3 min-w-[80px] h-auto data-[state=active]:bg-gradient-primary data-[state=active]:text-white data-[state=active]:shadow-neon transition-all duration-200"
-            >
-              <tab.icon className="h-4 w-4 flex-shrink-0" />
-              <span className="text-xs whitespace-nowrap">{tab.label}</span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
+    <>
+      <CustomToaster />
+      <div className="flex-1">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="flex flex-wrap justify-center lg:justify-start gap-1 bg-card border border-border p-1 mb-6 h-auto overflow-visible">
+            {tabsData.map((tab) => (
+              <TabsTrigger
+                key={tab.id}
+                value={tab.id}
+                className="flex flex-col items-center gap-1 p-3 min-w-[80px] h-auto data-[state=active]:bg-gradient-primary data-[state=active]:text-white data-[state=active]:shadow-neon transition-all duration-200"
+              >
+                <tab.icon className="h-4 w-4 flex-shrink-0" />
+                <span className="text-xs whitespace-nowrap">{tab.label}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
-        <div className="bg-card rounded-lg border border-border shadow-card">
-          <TabsContent value="bio" className="p-6 space-y-4">
-            <BioTab
-              profile={profile}
-              comments={comments}
-              userHasCommented={userHasCommented}
-              onAddCommentClick={() => setIsAddCommentModalOpen(true)}
-              onEditComment={handleEditComment}
-              onDeleteComment={handleDeleteComment}
-              openConfirmModal={openConfirmModal}
-              setEditingComment={setEditingComment}
-              setIsEditCommentModalOpen={setIsEditCommentModalOpen}
-            />
-          </TabsContent>
+          <div className="bg-card rounded-lg border border-border shadow-card">
+            <TabsContent value="bio" className="p-6 space-y-4">
+              <BioTab
+                profile={profile}
+                comments={comments}
+                userHasCommented={userHasCommented}
+                isOwner={isOwner}
+                nextPage={nextPage}
+                isLoadingMore={isLoadingMore}
+                onAddCommentClick={() => setIsAddCommentModalOpen(true)}
+                onEditComment={handleEditComment}
+                onDeleteComment={handleDeleteComment}
+                onLoadMore={loadMoreComments}
+                openConfirmModal={openConfirmModal}
+                setEditingComment={setEditingComment}
+                setIsEditCommentModalOpen={setIsEditCommentModalOpen}
+                currentUserUsername={user?.username}
+              />
+            </TabsContent>
 
-          <TabsContent value="game-stats" className="p-6">
-            <GameStatsTab
-              profile={profile}
-              selectedGame={selectedGame}
-              setSelectedGame={setSelectedGame}
-            />
-          </TabsContent>
+            <TabsContent value="game-stats" className="p-6">
+              <GameStatsTab
+                profile={profile}
+                selectedGame={selectedGame}
+                setSelectedGame={setSelectedGame}
+              />
+            </TabsContent>
 
-          <TabsContent value="media" className="p-6">
-            <MediaTab />
-          </TabsContent>
+            <TabsContent value="media" className="p-6">
+              <MediaTab />
+            </TabsContent>
 
-          <TabsContent value="posts" className="p-6 space-y-4">
-            <PostsTab />
-          </TabsContent>
+            <TabsContent value="posts" className="p-6 space-y-4">
+              <PostsTab />
+            </TabsContent>
 
-          <TabsContent value="achievements" className="p-6">
-            <AchievementsTab
-              onAchievementClick={(achievement) => {
-                setSelectedAchievement(achievement);
-                setIsAchievementModalOpen(true);
-              }}
-            />
-          </TabsContent>
+            <TabsContent value="achievements" className="p-6">
+              <AchievementsTab
+                onAchievementClick={(achievement) => {
+                  setSelectedAchievement(achievement);
+                  setIsAchievementModalOpen(true);
+                }}
+              />
+            </TabsContent>
 
-          <TabsContent value="milestones" className="p-6">
-            <MilestonesTab
-              milestones={milestones}
-              onAddMilestone={() => {
-                setMilestoneModalMode("add");
-                setEditingMilestone(null);
-                setIsMilestoneModalOpen(true);
-              }}
-              onEditMilestone={(milestone) => {
-                setEditingMilestone(milestone);
-                setMilestoneModalMode("edit");
-                setIsMilestoneModalOpen(true);
-              }}
-              onDeleteMilestone={(milestone) =>
-                openConfirmModal("deleteMilestone", milestone)
-              }
-              onImageClick={(url, title) => {
-                setSelectedImage({ url, title });
-                setIsImageModalOpen(true);
-              }}
-            />
-          </TabsContent>
+            <TabsContent value="milestones" className="p-6">
+              <MilestonesTab
+                milestones={milestones}
+                onAddMilestone={() => {
+                  setMilestoneModalMode("add");
+                  setEditingMilestone(null);
+                  setIsMilestoneModalOpen(true);
+                }}
+                onEditMilestone={(milestone) => {
+                  setEditingMilestone(milestone);
+                  setMilestoneModalMode("edit");
+                  setIsMilestoneModalOpen(true);
+                }}
+                onDeleteMilestone={(milestone) =>
+                  openConfirmModal("deleteMilestone", milestone)
+                }
+                onImageClick={(url, title) => {
+                  setSelectedImage({ url, title });
+                  setIsImageModalOpen(true);
+                }}
+              />
+            </TabsContent>
 
-          <TabsContent value="games" className="p-6">
-            <GamesLibraryTab />
-          </TabsContent>
-        </div>
-      </Tabs>
+            <TabsContent value="games" className="p-6">
+              <GamesLibraryTab />
+            </TabsContent>
+          </div>
+        </Tabs>
 
-      <AchievementModal
-        isOpen={isAchievementModalOpen}
-        onClose={() => setIsAchievementModalOpen(false)}
-        achievement={selectedAchievement}
-      />
+        <AchievementModal
+          isOpen={isAchievementModalOpen}
+          onClose={() => setIsAchievementModalOpen(false)}
+          achievement={selectedAchievement}
+        />
 
-      <MilestoneModal
-        isOpen={isMilestoneModalOpen}
-        onClose={() => setIsMilestoneModalOpen(false)}
-        onSubmit={(milestone) => {
-          if (milestoneModalMode === "add") {
-            openConfirmModal("addMilestone", { milestone });
-          } else {
-            handleEditMilestone(editingMilestone!.id, milestone);
+        <MilestoneModal
+          isOpen={isMilestoneModalOpen}
+          onClose={() => setIsMilestoneModalOpen(false)}
+          onSubmit={(milestone) => {
+            if (milestoneModalMode === "add") {
+              openConfirmModal("addMilestone", { milestone });
+            } else {
+              handleEditMilestone(editingMilestone!.id, milestone);
+            }
+          }}
+          milestone={editingMilestone}
+          mode={milestoneModalMode}
+        />
+
+        <ImageModal
+          isOpen={isImageModalOpen}
+          onClose={() => setIsImageModalOpen(false)}
+          imageUrl={selectedImage.url}
+          title={selectedImage.title}
+        />
+
+        <ConfirmationModal
+          isOpen={isConfirmModalOpen}
+          onClose={() => setConfirmModalOpen(false)}
+          onConfirm={handleConfirmAction}
+          isConfirming={
+            confirmAction?.type === "deleteComment" && isDeletingComment
           }
-        }}
-        milestone={editingMilestone}
-        mode={milestoneModalMode}
-      />
-
-      <ImageModal
-        isOpen={isImageModalOpen}
-        onClose={() => setIsImageModalOpen(false)}
-        imageUrl={selectedImage.url}
-        title={selectedImage.title}
-      />
-
-      <ConfirmationModal
-        isOpen={isConfirmModalOpen}
-        onClose={() => setIsConfirmModalOpen(false)}
-        onConfirm={handleConfirmAction}
-        title={
-          confirmAction?.type === "deleteComment"
-            ? "Excluir Comentário"
-            : confirmAction?.type === "deleteMilestone"
-              ? "Excluir Marco"
-              : confirmAction?.type === "addComment"
-                ? "Adicionar Comentário"
+          title={
+            confirmAction?.type === "deleteComment"
+              ? "Excluir Comentário"
+              : confirmAction?.type === "deleteMilestone"
+                ? "Excluir Marco"
                 : confirmAction?.type === "addMilestone"
                   ? "Adicionar Marco"
                   : ""
-        }
-        description={
-          confirmAction?.type === "deleteComment"
-            ? "Tem certeza que deseja excluir este comentário? Esta ação não pode ser desfeita."
-            : confirmAction?.type === "deleteMilestone"
-              ? "Tem certeza que deseja excluir este marco? Esta ação não pode ser desfeita."
-              : confirmAction?.type === "addComment"
-                ? "Tem certeza que deseja adicionar este comentário?"
+          }
+          description={
+            confirmAction?.type === "deleteComment"
+              ? "Tem certeza que deseja excluir este comentário? Esta ação não pode ser desfeita."
+              : confirmAction?.type === "deleteMilestone"
+                ? "Tem certeza que deseja excluir este marco? Esta ação não pode ser desfeita."
                 : confirmAction?.type === "addMilestone"
                   ? "Tem certeza que deseja adicionar este marco?"
                   : ""
-        }
-        confirmText={
-          confirmAction?.type?.includes("delete") ? "Excluir" : "Adicionar"
-        }
-        destructive={confirmAction?.type?.includes("delete")}
-      />
+          }
+          confirmText={
+            confirmAction?.type?.includes("delete") ? "Excluir" : "Adicionar"
+          }
+          destructive={confirmAction?.type?.includes("delete")}
+        />
 
-      <EditCommentModal
-        isOpen={isEditCommentModalOpen}
-        onClose={() => setIsEditCommentModalOpen(false)}
-        onSubmit={(newContent) =>
-          handleEditComment(editingComment?.id, newContent)
-        }
-        initialComment={editingComment?.content ?? editingComment?.comment ?? ""}
-      />
+        <EditCommentModal
+          isOpen={isEditCommentModalOpen}
+          onClose={() => {
+            setIsEditCommentModalOpen(false);
+            setEditingComment(null);
+          }}
+          onSubmit={(newContent) =>
+            editingComment && handleEditComment(editingComment.id, newContent)
+          }
+          initialComment={editingComment?.content ?? editingComment?.comment ?? ""}
+          isSubmitting={isEditCommentSubmitting}
+        />
 
-      <AddCommentModal
-        isOpen={isAddCommentModalOpen}
-        onClose={() => setIsAddCommentModalOpen(false)}
-        onSubmit={(comment) => openConfirmModal("addComment", { comment })}
-      />
-    </div>
+        <AddCommentModal
+          isOpen={isAddCommentModalOpen}
+          onClose={() => setIsAddCommentModalOpen(false)}
+          onSubmit={handleAddComment}
+          isSubmitting={isAddCommentSubmitting}
+        />
+      </div>
+    </>
   );
 }
