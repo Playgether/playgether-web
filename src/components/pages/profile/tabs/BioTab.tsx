@@ -54,7 +54,7 @@ export function BioTab({
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Sobre mim</h3>
       <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-        {profile?.bio || "Você não possui uma bio."}
+        {profile?.bio}
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">

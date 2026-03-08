@@ -28,7 +28,9 @@ export function GamesCanvasUserProfile({
   const { user } = useAuthContext();
   const isOwner = !!user && !!profile && user.username === profile.username;
 
-  const [isFollowing, setIsFollowing] = useState(profile?.user_already_follow ?? false);
+  const [isFollowing, setIsFollowing] = useState(
+    profile?.user_already_follow ?? false,
+  );
   const [isLiked, setIsLiked] = useState(profile?.user_already_like ?? false);
   const [likes, setLikes] = useState(profile?.quantity_likes ?? 0);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -39,14 +41,18 @@ export function GamesCanvasUserProfile({
       setIsLiked(profile.user_already_like ?? false);
       setLikes(profile.quantity_likes ?? 0);
     }
-  }, [profile?.user_already_follow, profile?.user_already_like, profile?.quantity_likes]);
+  }, [
+    profile?.user_already_follow,
+    profile?.user_already_like,
+    profile?.quantity_likes,
+  ]);
 
   const userRating = 4.5;
 
   const [followersCount, setFollowersCount] = useState<number>(() =>
     profile?.followed_by && Array.isArray(profile.followed_by)
       ? profile.followed_by.length
-      : 0
+      : 0,
   );
 
   useEffect(() => {
@@ -87,7 +93,7 @@ export function GamesCanvasUserProfile({
       followingCount,
       profile?.quantity_posts,
       profile?.gamer_nivel,
-    ]
+    ],
   );
 
   const getRatingColor = (rating: number) => {
@@ -217,14 +223,16 @@ export function GamesCanvasUserProfile({
                       .replace(/\s+/g, "")}
                   </p>
                   <p className="text-sm text-card-foreground leading-relaxed whitespace-pre-wrap pt-4">
-                    {profile?.bio || "Você não possui uma bio."}
+                    {profile?.bio}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 py-4">
                   {userStats.map((stat, index) => (
                     <div key={index} className="text-center space-y-1">
-                      <div className={`text-lg transition-all duration-300 ${stat.color}`}>
+                      <div
+                        className={`text-lg transition-all duration-300 ${stat.color}`}
+                      >
                         {stat.value}
                       </div>
                       <div className="text-xs text-muted-foreground uppercase tracking-wide">
