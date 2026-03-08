@@ -23,6 +23,20 @@ const nextConfig = {
         protocol: "https",
         hostname: "res.cloudinary.com",
       },
+
+      // backend (Django / Railway)
+      {
+        protocol: "https",
+        hostname: "playgether-api-production.up.railway.app",
+      },
+
+      // frontend (Vercel preview / prod)
+      {
+        protocol: "https",
+        hostname: "*.vercel.app",
+      },
+
+      // local dev
       {
         protocol: "http",
         hostname: "localhost",
@@ -46,10 +60,6 @@ const nextConfig = {
       {
         protocol: "http",
         hostname: "192.168.15.60",
-      },
-      {
-        protocol: "https",
-        hostname: "*.cloudinary.com",
       },
     ],
   },
