@@ -27,6 +27,7 @@ import { CommentContentType } from "@/components/content_types/CommentContentTyp
 import { getProfileCommentsClient } from "@/services/getProfileComments";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import { CustomToastProps } from "@/error/custom-toaster/enum";
+import { ProfilePostModal } from "./ProfilePostModal";
 
 interface GamesCanvasContentTabsProps {
   profile: getProfileByUsernameProps | null;
@@ -81,6 +82,7 @@ export function GamesCanvasContentTabs({
   const [isAddCommentModalOpen, setIsAddCommentModalOpen] = useState(false);
   const [isAddCommentSubmitting, setIsAddCommentSubmitting] = useState(false);
   const [isDeletingComment, setIsDeletingComment] = useState(false);
+  const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
 
   const loadMoreComments = useCallback(async () => {
     if (!profile || !nextPage || isLoadingMore) return;
@@ -315,11 +317,17 @@ export function GamesCanvasContentTabs({
             </TabsContent>
 
             <TabsContent value="media" className="p-6">
-              <MediaTab />
+              <MediaTab
+                profile={profile}
+                onPostClick={(postId) => setSelectedPostId(postId)}
+              />
             </TabsContent>
 
             <TabsContent value="posts" className="p-6 space-y-4">
-              <PostsTab />
+              <PostsTab
+                profile={profile}
+                onPostClick={(postId) => setSelectedPostId(postId)}
+              />
             </TabsContent>
 
             <TabsContent value="achievements" className="p-6">
@@ -436,6 +444,12 @@ export function GamesCanvasContentTabs({
           onClose={() => setIsAddCommentModalOpen(false)}
           onSubmit={handleAddComment}
           isSubmitting={isAddCommentSubmitting}
+        />
+
+        <ProfilePostModal
+          postId={selectedPostId}
+          open={selectedPostId !== null}
+          onClose={() => setSelectedPostId(null)}
         />
       </div>
     </>

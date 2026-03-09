@@ -2,6 +2,7 @@ export interface PatchProfilePayload {
   name?: string;
   bio?: string;
   profile_photo?: string | null;
+  profile_banner?: string | null;
 }
 
 export const patchProfile = async (pk: string | number, data: PatchProfilePayload) => {

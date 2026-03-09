@@ -28,7 +28,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { updateCommentAction } from "@/actions/updateComment";
 import { CommentContentType } from "@/components/content_types/CommentContentType";
 
-export const PostModal = ({ postId }: { postId: number }) => {
+export const PostModal = ({
+  postId,
+  onClose,
+}: {
+  postId: number;
+  onClose?: () => void;
+}) => {
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [openReplies, setOpenReplies] = useState<Set<number>>(new Set());
   const [loadingReplies, setLoadingReplies] = useState<Set<number>>(new Set());
@@ -335,8 +341,14 @@ export const PostModal = ({ postId }: { postId: number }) => {
     }
   };
 
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      onClose ? onClose() : router.back();
+    }
+  };
+
   return (
-    <Dialog defaultOpen onOpenChange={() => router.back()}>
+    <Dialog defaultOpen onOpenChange={handleOpenChange}>
       <DialogContent
         className="max-w-[70vw] w-full h-[95vh] p-0 bg-background/95 backdrop-blur-xl border border-primary/20 overflow-hidden"
         aria-describedby={undefined}

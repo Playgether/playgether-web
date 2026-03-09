@@ -5,6 +5,8 @@ import type { getProfileByUsernameProps } from "@/services/getProfileByUsername"
 import { ApiResponseComments } from "@/context/CommentsContext";
 import { GamesCanvasUserProfile } from "./GamesCanvasUserProfile";
 import { GamesCanvasContentTabs } from "./GamesCanvasContentTabs";
+import { ProfilePostsProvider } from "@/app/profile/context/ProfilePostsContext";
+import ProfileFeedServerComponentsProvider from "@/app/profile/context/ProfileFeedServerComponentsProvider";
 
 export default function GamesCanvasProfile({
   profile: initialProfile,
@@ -35,10 +37,14 @@ export default function GamesCanvasProfile({
           </div>
 
           <div className="lg:col-span-3 order-2 lg:order-2">
-            <GamesCanvasContentTabs
-              profile={profile}
-              initialComments={initialComments}
-            />
+            <ProfileFeedServerComponentsProvider>
+              <ProfilePostsProvider>
+                <GamesCanvasContentTabs
+                  profile={profile}
+                  initialComments={initialComments}
+                />
+              </ProfilePostsProvider>
+            </ProfileFeedServerComponentsProvider>
           </div>
         </div>
       </div>

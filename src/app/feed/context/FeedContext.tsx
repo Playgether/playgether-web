@@ -15,7 +15,7 @@ import { useAuthContext } from "@/context/AuthContext";
 import { getFeedClient } from "../services/getFeedClient";
 
 // Criando o contexto
-const FeedContext = createContext<FeedContextType | undefined>(undefined);
+export const FeedContext = createContext<FeedContextType | undefined>(undefined);
 
 // Hook de acesso
 export const useFeedContext = () => {

@@ -1,0 +1,167 @@
+"use client";
+
+import {
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  Heart,
+  MessageCircle,
+  Play,
+  Plus,
+  Send,
+  Share2,
+  UserX,
+  VolumeX,
+} from "lucide-react";
+import { FeedServerProvider } from "@/app/feed/context/FeedServerContext";
+import VerifiedProfile from "@/components/elements/VerifiedProfile";
+import MoreOptions from "@/app/feed/components/MoreOptions";
+import ContextualMenu from "@/app/feed/components/ContextualMenu";
+import NoImageProfile from "@/components/general/NoImageProfile";
+import MoreMediasParagraph from "@/app/feed/components/MoreMediasParagraph";
+import ShareModalHeader from "@/app/feed/components/ShareModalHeader";
+import MediaSelectedButtonsImage from "@/app/feed/components/MediaSelectedButtonsImage";
+import MediaSelectedButtonsVideo from "@/app/feed/components/MediaSelectedButtonsVideo";
+import { Button } from "@/components/ui/button";
+import ButtonCommentPostModal from "@/app/feed/components/ButtonCommentPostModal";
+import { FaEdit, FaTrash } from "react-icons/fa";
+import {
+  AlertDialogCancel,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { MdOutlineSubdirectoryArrowRight } from "react-icons/md";
+
+const ProfileFeedServerComponents = {
+  ContextMenuAction: {
+    titles: {
+      confirm: <AlertDialogTitle>Confirmar ação</AlertDialogTitle>,
+      cancel: <AlertDialogCancel>Cancelar</AlertDialogCancel>,
+    },
+  },
+  ServerPostModal: {
+    icons: {
+      Play: <Play className="w-16 h-16 text-white/80" />,
+      ChevronLeft: <ChevronLeft className="w-6 h-6" />,
+      EyeOff: <EyeOff className="w-4 h-4 mr-2" />,
+      Eye: <Eye className="w-4 h-4 mr-2" />,
+      MessageCircle: <MessageCircle className="w-5 h-5 mr-2" />,
+      Share2: <Share2 className="w-5 h-5 mr-2" />,
+      Heart: <Heart className="w-3 h-3 mr-1" />,
+      Send: <Send className="w-4 h-4" />,
+      ChevronRight: <ChevronRight className="w-6 h-6" />,
+      ArrowRight: <MdOutlineSubdirectoryArrowRight className="w-4 h-4 mr-2 " />,
+      FaEdit: (
+        <FaEdit className="w-4 h-4 cursor-pointer rounded hover:text-primary" />
+      ),
+      FaTrash: (
+        <FaTrash className="w-3 h-4 cursor-pointer rounded hover:text-primary" />
+      ),
+    },
+    text: {
+      verified: (
+        <div className="w-5 h-5 bg-gradient-primary rounded-full flex items-center justify-center">
+          <span className="text-white text-xs">✓</span>
+        </div>
+      ),
+      comments: (
+        <div className="p-4">
+          <h4 className="font-semibold mb-4">Comentários</h4>
+        </div>
+      ),
+    },
+    buttons: {
+      answer: (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs text-muted-foreground hover:text-primary p-2 h-auto"
+        >
+          Responder
+        </Button>
+      ),
+      comment: <ButtonCommentPostModal />,
+    },
+  },
+  ServerShareModal: {
+    components: {
+      ShareModalHeader: <ShareModalHeader />,
+    },
+    buttons: {
+      MediaSelectedButtonImage: <MediaSelectedButtonsImage />,
+      MediaSelectedButtonsVideo: <MediaSelectedButtonsVideo />,
+    },
+    icons: {
+      Send: <Send className="w-4 h-4 mr-2" />,
+    },
+  },
+  ServerFeedPage: {
+    icons: {
+      Plus: <Plus className="w-6 h-6 mr-3" />,
+    },
+    components: {
+      LeftColumn: <div />,
+      RightColumn: <div />,
+    },
+  },
+  ServerFeedPost: {
+    icons: {
+      Share: <Share2 className="w-4 h-4" />,
+      MessageCircle: <MessageCircle className="w-5 h-5" />,
+      Share2: <Share2 className="w-5 h-5" />,
+    },
+    components: {
+      VerifiedProfile: <VerifiedProfile />,
+      MoreOptions: <MoreOptions />,
+      NoImageProfile: <NoImageProfile />,
+      NoImageReplieProfile: <NoImageProfile className="h-10 w-10" />,
+      MoreMediasParagraph: <MoreMediasParagraph />,
+    },
+  },
+  ServerContextMenuOwn: {
+    components: {
+      Delete: (
+        <ContextualMenu
+          text="Deletar post"
+          icon={<UserX className="w-4 h-4" />}
+        />
+      ),
+      Pin: (
+        <ContextualMenu
+          text="Fixar no perfil"
+          icon={<EyeOff className="w-4 h-4" />}
+        />
+      ),
+      Block: (
+        <ContextualMenu
+          text="Bloquear usuário"
+          icon={<UserX className="w-4 h-4" />}
+        />
+      ),
+      Remove: (
+        <ContextualMenu
+          text="Remover do feed"
+          icon={<EyeOff className="w-4 h-4" />}
+        />
+      ),
+      MuteUser: (
+        <ContextualMenu
+          text="Silenciar usuário"
+          icon={<VolumeX className="w-4 h-4" />}
+        />
+      ),
+    },
+  },
+} as const;
+
+export default function ProfileFeedServerComponentsProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <FeedServerProvider components={ProfileFeedServerComponents}>
+      {children}
+    </FeedServerProvider>
+  );
+}

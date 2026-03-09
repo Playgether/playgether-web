@@ -161,12 +161,18 @@ export function GamesCanvasUserProfile({
       <CustomToaster />
       <div className="w-full max-w-sm">
         <Card className="overflow-hidden bg-card border-border shadow-card">
-          <div className="relative h-32 overflow-hidden">
-            <img
-              src={"/profile/profile1.jpg"}
-              alt="Profile Banner"
-              className="w-full h-full object-cover"
-            />
+          <div className="relative h-32 overflow-hidden bg-muted">
+            {profile?.profile_banner ? (
+              <div className="absolute inset-0">
+                <ImageComponent
+                  media_id={profile.profile_banner}
+                  className="object-cover w-full h-full"
+                  alt="Profile Banner"
+                />
+              </div>
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20" />
+            )}
             <div className="absolute inset-0 bg-gradient-primary opacity-20" />
             <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent" />
 

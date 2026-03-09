@@ -5,6 +5,7 @@ export interface getProfileByUsernameProps {
   id: number;
   bio: string;
   profile_photo: string;
+  profile_banner?: string;
   hours_played: number;
   matches_played: number;
   performance: string;

@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Edit, Loader2, Image, Trash2 } from "lucide-react";
+import { Edit, Loader2, Image, Trash2, ImagePlus } from "lucide-react";
 import { CldUploadWidget } from "next-cloudinary";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
 import NoImageProfile from "@/components/general/NoImageProfile";
@@ -47,8 +47,14 @@ export function ProfileEditModal({
   const [oldProfilePhotoPublicId, setOldProfilePhotoPublicId] = useState<
     string | null
   >(null);
+  const [newProfileBanner, setNewProfileBanner] = useState<string | null>(null);
+  const [removeBannerRequested, setRemoveBannerRequested] = useState(false);
+  const [oldProfileBannerPublicId, setOldProfileBannerPublicId] = useState<
+    string | null
+  >(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [widgetKey, setWidgetKey] = useState(0);
+  const [widgetKeyBanner, setWidgetKeyBanner] = useState(0);
   const [isWidgetOpen, setIsWidgetOpen] = useState(false);
 
   useEffect(() => {
@@ -58,6 +64,9 @@ export function ProfileEditModal({
       setNewProfilePhoto(null);
       setRemovePhotoRequested(false);
       setOldProfilePhotoPublicId(profile.profile_photo ?? null);
+      setNewProfileBanner(null);
+      setRemoveBannerRequested(false);
+      setOldProfileBannerPublicId(profile.profile_banner ?? null);
     }
   }, [profile, isOpen]);
 
@@ -162,6 +171,74 @@ export function ProfileEditModal({
     }
   };
 
+  const handleBannerUploadSuccess = async (result: any) => {
+    const publicId = result?.info?.public_id;
+    if (!publicId || !profile) return;
+    const oldBannerId = oldProfileBannerPublicId;
+    setNewProfileBanner(publicId);
+    setRemoveBannerRequested(false);
+    try {
+      await patchProfile(profile.username ?? profile.id, {
+        profile_banner: publicId,
+      });
+      if (oldBannerId) {
+        await deleteOldProfileImage(oldBannerId);
+      }
+      onProfileUpdated({ profile_banner: publicId });
+      setOldProfileBannerPublicId(publicId);
+      CustomToast.success("Banner atualizado!", {
+        duration: CustomToastProps.defaultDuration,
+      });
+    } catch (err: any) {
+      try {
+        await axios.post("/api/signed-delete-posts/", {
+          public_id: publicId,
+          resource_type: "image",
+        });
+      } catch (delErr) {
+        console.error("Erro ao remover mídia órfã:", delErr);
+      }
+      setNewProfileBanner(null);
+      CustomToast.error("Erro ao salvar banner", {
+        description: err?.message ?? "Tente novamente.",
+        duration: CustomToastProps.defaultDuration,
+      });
+    }
+  };
+
+  const handleBannerUploadError = () => {
+    CustomToast.error("Erro no upload", {
+      description: "Não foi possível enviar o banner. Tente novamente.",
+      duration: CustomToastProps.defaultDuration,
+    });
+    setWidgetKeyBanner((k) => k + 1);
+  };
+
+  const handleRemoveBanner = async () => {
+    if (!profile) return;
+    const oldBannerId = oldProfileBannerPublicId;
+    setRemoveBannerRequested(true);
+    setNewProfileBanner(null);
+    try {
+      await patchProfile(profile.username ?? profile.id, {
+        profile_banner: null,
+      });
+      if (oldBannerId) {
+        await deleteOldProfileImage(oldBannerId);
+      }
+      onProfileUpdated({ profile_banner: undefined });
+      setOldProfileBannerPublicId(null);
+      CustomToast.success("Banner removido!", {
+        duration: CustomToastProps.defaultDuration,
+      });
+    } catch (err: any) {
+      CustomToast.error("Erro ao remover banner", {
+        description: err?.message ?? "Tente novamente.",
+        duration: CustomToastProps.defaultDuration,
+      });
+      setRemoveBannerRequested(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!profile) return;
@@ -218,6 +295,12 @@ export function ProfileEditModal({
     (profile?.profile_photo || newProfilePhoto) &&
     !removePhotoRequested
   );
+  const displayBanner =
+    removeBannerRequested ? null : (newProfileBanner ?? profile?.profile_banner);
+  const hasCurrentBanner = !!(
+    (profile?.profile_banner || newProfileBanner) &&
+    !removeBannerRequested
+  );
 
   return (
     <>
@@ -234,6 +317,73 @@ export function ProfileEditModal({
 
           <div className="space-y-4">
             <div className="flex flex-col items-center gap-2">
+              <label className="text-sm font-medium w-full">Banner</label>
+              <div className="relative w-full aspect-[3/1] rounded-lg overflow-hidden ring-2 ring-primary/30 bg-muted">
+                {displayBanner ? (
+                  <ImageComponent
+                    media_id={displayBanner}
+                    className="object-cover w-full h-full"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-muted/50">
+                    <span className="text-muted-foreground text-sm">
+                      Nenhum banner
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-2 w-full justify-center">
+                <CldUploadWidget
+                  key={widgetKeyBanner}
+                  signatureEndpoint="/api/signed-profile-banner"
+                  options={{
+                    uploadPreset: PresetsCloudinary.profile_banners,
+                    multiple: false,
+                    tags: [user?.username ?? "user", "profile", "banner"],
+                    singleUploadAutoClose: true,
+                    cropping: true,
+                    croppingAspectRatio: 3,
+                    language: "pt-br",
+                    clientAllowedFormats: ["image"],
+                  }}
+                  onSuccess={handleBannerUploadSuccess}
+                  onError={handleBannerUploadError}
+                  onOpen={handleWidgetOpen}
+                  onClose={handleWidgetClose}
+                >
+                  {({ open, isLoading }) => (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={isLoading}
+                      onClick={() => {
+                        if (typeof open === "function") open();
+                      }}
+                    >
+                      <ImagePlus className="w-4 h-4 mr-2" />
+                      Alterar banner
+                    </Button>
+                  )}
+                </CldUploadWidget>
+                {hasCurrentBanner && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={handleRemoveBanner}
+                    disabled={isSubmitting}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Remover banner
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-2">
+              <label className="text-sm font-medium w-full">Foto de perfil</label>
               <div className="relative w-24 h-24 rounded-full overflow-hidden ring-2 ring-primary/30 shrink-0">
                 {displayPhoto ? (
                   <ImageComponent
@@ -247,7 +397,7 @@ export function ProfileEditModal({
                   />
                 )}
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 justify-center">
                 <CldUploadWidget
                   key={widgetKey}
                   signatureEndpoint="/api/signed-profile"
