@@ -50,6 +50,8 @@ All colors MUST be HSL.
     --status-offline: 0 0% 45%;
 
     /* UI colors */
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 40% 8%;
     --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
     --accent: 210 40% 96%;
@@ -157,6 +159,8 @@ All colors MUST be HSL.
     --status-offline: 0 0% 55%;
 
     /* UI colors for dark mode */
+    --popover: 220 13% 12%;
+    --popover-foreground: 210 40% 98%;
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
     --accent: 217 33% 17%;

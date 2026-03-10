@@ -199,7 +199,7 @@ function MediaPostCard({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="min-w-[140px]">
               <DropdownMenuItem
-                className="text-destructive focus:text-destructive focus:bg-destructive/10 hover:bg-destructive/10 cursor-pointer"
+                className="text-red-500 focus:text-red-500 focus:bg-destructive/10 hover:bg-destructive/10 cursor-pointer"
                 onClick={() => onDelete(post)}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
