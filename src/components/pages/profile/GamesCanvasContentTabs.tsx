@@ -28,6 +28,8 @@ import { getProfileCommentsClient } from "@/services/getProfileComments";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import { CustomToastProps } from "@/error/custom-toaster/enum";
 import { ProfilePostModal } from "./ProfilePostModal";
+import { useProfilePostsContext } from "@/app/profile/context/ProfilePostsContext";
+import { deletePostProfile } from "@/services/deletePostProfile";
 
 interface GamesCanvasContentTabsProps {
   profile: getProfileByUsernameProps | null;
@@ -39,6 +41,8 @@ export function GamesCanvasContentTabs({
   initialComments,
 }: GamesCanvasContentTabsProps) {
   const { user } = useAuthContext();
+  const postsContext = useProfilePostsContext()!;
+  const { removePost, getPostById } = postsContext;
   const isOwner = !!user && !!profile && user.username === profile.username;
 
   const [activeTab, setActiveTab] = useState("bio");
@@ -82,6 +86,7 @@ export function GamesCanvasContentTabs({
   const [isAddCommentModalOpen, setIsAddCommentModalOpen] = useState(false);
   const [isAddCommentSubmitting, setIsAddCommentSubmitting] = useState(false);
   const [isDeletingComment, setIsDeletingComment] = useState(false);
+  const [isDeletingPost, setIsDeletingPost] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
 
   const loadMoreComments = useCallback(async () => {
@@ -248,12 +253,37 @@ export function GamesCanvasContentTabs({
     if (!open) setConfirmAction(null);
   };
 
+  const handleDeletePost = async (postId: number) => {
+    const post = getPostById(postId);
+    setIsDeletingPost(true);
+    try {
+      await deletePostProfile(postId, post ?? null);
+      removePost(postId);
+      if (selectedPostId === postId) setSelectedPostId(null);
+      setConfirmModalOpen(false);
+      setConfirmAction(null);
+      CustomToast.success("Post excluído!", {
+        duration: CustomToastProps.defaultDuration,
+      });
+    } catch (err: any) {
+      CustomToast.error("Erro ao excluir post", {
+        description: err?.message ?? "Tente novamente.",
+        duration: CustomToastProps.defaultDuration,
+      });
+    } finally {
+      setIsDeletingPost(false);
+    }
+  };
+
   const handleConfirmAction = () => {
     if (!confirmAction) return;
 
     switch (confirmAction.type) {
       case "deleteComment":
         handleDeleteComment(confirmAction.data.id);
+        break;
+      case "deletePost":
+        handleDeletePost(confirmAction.data.post.id);
         break;
       case "deleteMilestone":
         handleDeleteMilestone(confirmAction.data.id);
@@ -319,14 +349,18 @@ export function GamesCanvasContentTabs({
             <TabsContent value="media" className="p-6">
               <MediaTab
                 profile={profile}
+                isOwner={isOwner}
                 onPostClick={(postId) => setSelectedPostId(postId)}
+                onDeletePost={(post) => openConfirmModal("deletePost", { post })}
               />
             </TabsContent>
 
             <TabsContent value="posts" className="p-6 space-y-4">
               <PostsTab
                 profile={profile}
+                isOwner={isOwner}
                 onPostClick={(postId) => setSelectedPostId(postId)}
+                onDeletePost={(post) => openConfirmModal("deletePost", { post })}
               />
             </TabsContent>
 
@@ -400,25 +434,30 @@ export function GamesCanvasContentTabs({
           onClose={() => setConfirmModalOpen(false)}
           onConfirm={handleConfirmAction}
           isConfirming={
-            confirmAction?.type === "deleteComment" && isDeletingComment
+            (confirmAction?.type === "deleteComment" && isDeletingComment) ||
+            (confirmAction?.type === "deletePost" && isDeletingPost)
           }
           title={
             confirmAction?.type === "deleteComment"
               ? "Excluir Comentário"
-              : confirmAction?.type === "deleteMilestone"
-                ? "Excluir Marco"
-                : confirmAction?.type === "addMilestone"
-                  ? "Adicionar Marco"
-                  : ""
+              : confirmAction?.type === "deletePost"
+                ? "Excluir Post"
+                : confirmAction?.type === "deleteMilestone"
+                  ? "Excluir Marco"
+                  : confirmAction?.type === "addMilestone"
+                    ? "Adicionar Marco"
+                    : ""
           }
           description={
             confirmAction?.type === "deleteComment"
               ? "Tem certeza que deseja excluir este comentário? Esta ação não pode ser desfeita."
-              : confirmAction?.type === "deleteMilestone"
-                ? "Tem certeza que deseja excluir este marco? Esta ação não pode ser desfeita."
-                : confirmAction?.type === "addMilestone"
-                  ? "Tem certeza que deseja adicionar este marco?"
-                  : ""
+              : confirmAction?.type === "deletePost"
+                ? "Tem certeza que deseja excluir este post? Esta ação não pode ser desfeita."
+                : confirmAction?.type === "deleteMilestone"
+                  ? "Tem certeza que deseja excluir este marco? Esta ação não pode ser desfeita."
+                  : confirmAction?.type === "addMilestone"
+                    ? "Tem certeza que deseja adicionar este marco?"
+                    : ""
           }
           confirmText={
             confirmAction?.type?.includes("delete") ? "Excluir" : "Adicionar"

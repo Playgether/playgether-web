@@ -9,7 +9,10 @@ import React, {
 import { PostProps } from "@/app/feed/types/PostProps";
 import { FeedContext } from "@/app/feed/context/FeedContext";
 import type { FeedContextType } from "@/app/feed/context/FeedContextType";
-import { getProfilePostsClient } from "@/services/getProfilePosts";
+import {
+  getProfilePostsClient,
+  type ProfilePostsFilters,
+} from "@/services/getProfilePosts";
 
 interface ProfilePostsContextValue extends FeedContextType {
   mediaPosts: PostProps[];
@@ -22,16 +25,33 @@ interface ProfilePostsContextValue extends FeedContextType {
   isLoadingText: boolean;
   isLoadingMoreMedia: boolean;
   isLoadingMoreText: boolean;
+  mediaSearch: string;
+  textSearch: string;
+  mediaDateFrom: string;
+  mediaDateTo: string;
+  textDateFrom: string;
+  textDateTo: string;
+  hasActiveMediaFilters: boolean;
+  hasActiveTextFilters: boolean;
   loadMediaPosts: (
     username: string,
     cursor?: string | null,
-    append?: boolean
+    append?: boolean,
+    filters?: ProfilePostsFilters
   ) => Promise<void>;
   loadTextPosts: (
     username: string,
     cursor?: string | null,
-    append?: boolean
+    append?: boolean,
+    filters?: ProfilePostsFilters
   ) => Promise<void>;
+  setMediaSearch: (v: string) => void;
+  setTextSearch: (v: string) => void;
+  setMediaDateRange: (from: string, to: string) => void;
+  setTextDateRange: (from: string, to: string) => void;
+  clearMediaFilters: () => void;
+  clearTextFilters: () => void;
+  removePost: (postId: number) => void;
 }
 
 const ProfilePostsContext = createContext<ProfilePostsContextValue | undefined>(
@@ -47,6 +67,18 @@ interface ProfilePostsProviderProps {
   children: React.ReactNode;
 }
 
+function parseCursorFromNextPage(nextPage: string | null): string | null {
+  if (!nextPage) return null;
+  try {
+    const url = nextPage.startsWith("http")
+      ? new URL(nextPage)
+      : new URL(`http://dummy${nextPage.startsWith("?") ? "/" : ""}${nextPage}`);
+    return url.searchParams.get("cursor");
+  } catch {
+    return null;
+  }
+}
+
 export function ProfilePostsProvider({ children }: ProfilePostsProviderProps) {
   const [mediaPosts, setMediaPosts] = useState<PostProps[]>([]);
   const [textPosts, setTextPosts] = useState<PostProps[]>([]);
@@ -58,27 +90,63 @@ export function ProfilePostsProvider({ children }: ProfilePostsProviderProps) {
   const [isLoadingText, setIsLoadingText] = useState(false);
   const [isLoadingMoreMedia, setIsLoadingMoreMedia] = useState(false);
   const [isLoadingMoreText, setIsLoadingMoreText] = useState(false);
+  const [mediaSearch, setMediaSearch] = useState("");
+  const [textSearch, setTextSearch] = useState("");
+  const [mediaDateFrom, setMediaDateFrom] = useState("");
+  const [mediaDateTo, setMediaDateTo] = useState("");
+  const [textDateFrom, setTextDateFrom] = useState("");
+  const [textDateTo, setTextDateTo] = useState("");
+  const [mediaCache, setMediaCache] = useState<{
+    posts: PostProps[];
+    nextPage: string | null;
+  }>({ posts: [], nextPage: null });
+  const [textCache, setTextCache] = useState<{
+    posts: PostProps[];
+    nextPage: string | null;
+  }>({ posts: [], nextPage: null });
+
+  const hasActiveMediaFilters = !!(mediaSearch.trim() || mediaDateFrom || mediaDateTo);
+  const hasActiveTextFilters = !!(textSearch.trim() || textDateFrom || textDateTo);
 
   const loadMediaPosts = useCallback(
-    async (username: string, cursor: string | null = null, append = false) => {
+    async (
+      username: string,
+      cursor: string | null = null,
+      append = false,
+      filters?: ProfilePostsFilters
+    ) => {
       const loadingSetter = append ? setIsLoadingMoreMedia : setIsLoadingMedia;
       loadingSetter(true);
+      const hasFilters = !!(
+        filters?.search?.trim() ||
+        filters?.timestampStart ||
+        filters?.timestampEnd
+      );
       try {
-        const res = await getProfilePostsClient(username, true, cursor, 6);
+        const res = await getProfilePostsClient(
+          username,
+          true,
+          cursor,
+          6,
+          filters
+        );
+        const data = res.data ?? [];
         if (append) {
-          setMediaPosts((prev) => [...prev, ...(res.data ?? [])]);
+          setMediaPosts((prev) => [...prev, ...data]);
         } else {
-          setMediaPosts(res.data ?? []);
+          setMediaPosts(data);
         }
-        if (res.next_page) {
-          try {
-            const url = new URL(res.next_page);
-            setMediaNextPage(url.searchParams.get("cursor"));
-          } catch {
-            setMediaNextPage(null);
+        const next = parseCursorFromNextPage(res.next_page ?? null);
+        setMediaNextPage(next);
+        if (!hasFilters) {
+          if (append) {
+            setMediaCache((c) => ({
+              posts: [...c.posts, ...data],
+              nextPage: next,
+            }));
+          } else {
+            setMediaCache({ posts: data, nextPage: next });
           }
-        } else {
-          setMediaNextPage(null);
         }
       } catch {
         setMediaPosts([]);
@@ -92,25 +160,44 @@ export function ProfilePostsProvider({ children }: ProfilePostsProviderProps) {
   );
 
   const loadTextPosts = useCallback(
-    async (username: string, cursor: string | null = null, append = false) => {
+    async (
+      username: string,
+      cursor: string | null = null,
+      append = false,
+      filters?: ProfilePostsFilters
+    ) => {
       const loadingSetter = append ? setIsLoadingMoreText : setIsLoadingText;
       loadingSetter(true);
+      const hasFilters = !!(
+        filters?.search?.trim() ||
+        filters?.timestampStart ||
+        filters?.timestampEnd
+      );
       try {
-        const res = await getProfilePostsClient(username, false, cursor, 10);
+        const res = await getProfilePostsClient(
+          username,
+          false,
+          cursor,
+          10,
+          filters
+        );
+        const data = res.data ?? [];
         if (append) {
-          setTextPosts((prev) => [...prev, ...(res.data ?? [])]);
+          setTextPosts((prev) => [...prev, ...data]);
         } else {
-          setTextPosts(res.data ?? []);
+          setTextPosts(data);
         }
-        if (res.next_page) {
-          try {
-            const url = new URL(res.next_page);
-            setTextNextPage(url.searchParams.get("cursor"));
-          } catch {
-            setTextNextPage(null);
+        const next = parseCursorFromNextPage(res.next_page ?? null);
+        setTextNextPage(next);
+        if (!hasFilters) {
+          if (append) {
+            setTextCache((c) => ({
+              posts: [...c.posts, ...data],
+              nextPage: next,
+            }));
+          } else {
+            setTextCache({ posts: data, nextPage: next });
           }
-        } else {
-          setTextNextPage(null);
         }
       } catch {
         setTextPosts([]);
@@ -122,6 +209,45 @@ export function ProfilePostsProvider({ children }: ProfilePostsProviderProps) {
     },
     []
   );
+
+  const setMediaDateRange = useCallback((from: string, to: string) => {
+    setMediaDateFrom(from);
+    setMediaDateTo(to);
+  }, []);
+
+  const setTextDateRange = useCallback((from: string, to: string) => {
+    setTextDateFrom(from);
+    setTextDateTo(to);
+  }, []);
+
+  const clearMediaFilters = useCallback(() => {
+    setMediaSearch("");
+    setMediaDateFrom("");
+    setMediaDateTo("");
+    setMediaPosts(mediaCache.posts);
+    setMediaNextPage(mediaCache.nextPage);
+  }, [mediaCache]);
+
+  const clearTextFilters = useCallback(() => {
+    setTextSearch("");
+    setTextDateFrom("");
+    setTextDateTo("");
+    setTextPosts(textCache.posts);
+    setTextNextPage(textCache.nextPage);
+  }, [textCache]);
+
+  const removePost = useCallback((postId: number) => {
+    setMediaPosts((prev) => prev.filter((p) => p.id !== postId));
+    setTextPosts((prev) => prev.filter((p) => p.id !== postId));
+    setMediaCache((c) => ({
+      ...c,
+      posts: c.posts.filter((p) => p.id !== postId),
+    }));
+    setTextCache((c) => ({
+      ...c,
+      posts: c.posts.filter((p) => p.id !== postId),
+    }));
+  }, []);
 
   const updatePostInLists = useCallback(
     (
@@ -199,8 +325,23 @@ export function ProfilePostsProvider({ children }: ProfilePostsProviderProps) {
     isLoadingText,
     isLoadingMoreMedia,
     isLoadingMoreText,
+    mediaSearch,
+    textSearch,
+    mediaDateFrom,
+    mediaDateTo,
+    textDateFrom,
+    textDateTo,
+    hasActiveMediaFilters,
+    hasActiveTextFilters,
     loadMediaPosts,
     loadTextPosts,
+    setMediaSearch,
+    setTextSearch,
+    setMediaDateRange,
+    setTextDateRange,
+    clearMediaFilters,
+    clearTextFilters,
+    removePost,
   };
 
   return (

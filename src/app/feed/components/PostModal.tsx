@@ -36,6 +36,7 @@ export const PostModal = ({
   onClose?: () => void;
 }) => {
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  const [isCurrentMediaLoaded, setIsCurrentMediaLoaded] = useState(false);
   const [openReplies, setOpenReplies] = useState<Set<number>>(new Set());
   const [loadingReplies, setLoadingReplies] = useState<Set<number>>(new Set());
   const [showFullText, setShowFullText] = useState(true);
@@ -188,6 +189,15 @@ export const PostModal = ({
     handleLikeAny(replyId, parentId);
     queryClient.invalidateQueries({ queryKey: ["comments", postId] });
   };
+
+  useEffect(() => {
+    setCurrentMediaIndex(0);
+    setIsCurrentMediaLoaded(false);
+  }, [postId]);
+
+  useEffect(() => {
+    setIsCurrentMediaLoaded(false);
+  }, [currentMediaIndex]);
 
   useEffect(() => {
     queryClient.invalidateQueries({
@@ -364,21 +374,35 @@ export const PostModal = ({
                 hasMedia ? "sm:w-[55%] 2xl:w-[65%] w-full" : "w-full"
               } bg-black/50 flex items-center justify-center relative h-full`}
             >
-              {post.medias[currentMediaIndex].media_type === "image" ? (
-                <ImageComponent
-                  media_id={post.medias[currentMediaIndex].media_file || ""}
-                  alt="Post media"
-                  objectFit="contain"
-                  className="w-full transition-transform duration-300"
-                />
-              ) : (
-                <div className="relative h-full">
+              <div className="relative w-full h-full flex items-center justify-center min-h-[200px]">
+                {!isCurrentMediaLoaded && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
+                    <LoadingComponent
+                      showText={false}
+                      className="h-10 w-10 text-muted-foreground"
+                    />
+                  </div>
+                )}
+                {post.medias[currentMediaIndex].media_type === "image" ? (
+                  <ImageComponent
+                    media_id={post.medias[currentMediaIndex].media_file || ""}
+                    alt="Post media"
+                    objectFit="contain"
+                    className={`w-full transition-opacity duration-300 ${
+                      isCurrentMediaLoaded ? "opacity-100" : "opacity-0"
+                    }`}
+                    onLoad={() => setIsCurrentMediaLoaded(true)}
+                  />
+                ) : (
                   <VideoComponent
                     media_id={post.medias[currentMediaIndex].media_file || ""}
-                    className="max-h-full max-w-full h-full w-full object-cover"
+                    className={`max-h-full max-w-full h-full w-full object-cover transition-opacity duration-300 ${
+                      isCurrentMediaLoaded ? "opacity-100" : "opacity-0"
+                    }`}
+                    onLoadedData={() => setIsCurrentMediaLoaded(true)}
                   />
-                </div>
-              )}
+                )}
+              </div>
 
               {/* Media Navigation */}
               {post?.medias && post.medias.length > 1 && (

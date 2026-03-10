@@ -8,6 +8,7 @@ function ImageComponent({
   objectFit = "cover",
   layout = "fill",
   alt = "Image",
+  className,
   ...rest
 }: ImageComponentProps) {
   return (
@@ -15,8 +16,9 @@ function ImageComponent({
       src={getCloudinaryUrl(media_id)}
       objectFit={objectFit}
       layout={layout}
-      className={twJoin(rest.className)}
+      className={twJoin(className)}
       alt={alt}
+      {...rest}
     />
   );
 }

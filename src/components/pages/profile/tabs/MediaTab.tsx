@@ -1,22 +1,36 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Heart, MessageCircle, Play } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Heart, MessageCircle, MoreHorizontal, Play, Trash2 } from "lucide-react";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
 import VideoComponent from "@/components/layouts/VideoComponent/VideoComponent";
-import { Button } from "@/components/ui/button";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 import type { getProfileByUsernameProps } from "@/services/getProfileByUsername";
 import type { PostProps } from "@/app/feed/types/PostProps";
 import { useProfilePostsContext } from "@/app/profile/context/ProfilePostsContext";
+import { ProfileTabSearchBar } from "./ProfileTabSearchBar";
 
 interface MediaTabProps {
   profile: getProfileByUsernameProps | null;
+  isOwner?: boolean;
   onPostClick: (postId: number) => void;
+  onDeletePost?: (post: PostProps) => void;
 }
 
-export function MediaTab({ profile, onPostClick }: MediaTabProps) {
+export function MediaTab({
+  profile,
+  isOwner = false,
+  onPostClick,
+  onDeletePost,
+}: MediaTabProps) {
   const {
     mediaPosts,
     mediaNextPage,
@@ -24,7 +38,30 @@ export function MediaTab({ profile, onPostClick }: MediaTabProps) {
     isLoadingMedia,
     isLoadingMoreMedia,
     loadMediaPosts,
+    mediaSearch,
+    setMediaSearch,
+    mediaDateFrom,
+    mediaDateTo,
+    setMediaDateRange,
+    clearMediaFilters,
+    hasActiveMediaFilters,
   } = useProfilePostsContext();
+
+  const handleMediaSearchSubmit = useCallback(
+    (filters: {
+      search: string | null;
+      timestampStart: string | null;
+      timestampEnd: string | null;
+    }) => {
+      if (!profile?.username) return;
+      loadMediaPosts(profile.username, null, false, {
+        search: filters.search ?? undefined,
+        timestampStart: filters.timestampStart ?? undefined,
+        timestampEnd: filters.timestampEnd ?? undefined,
+      });
+    },
+    [profile?.username, loadMediaPosts]
+  );
 
   useEffect(() => {
     if (profile?.username && !hasLoadedMedia) {
@@ -34,7 +71,16 @@ export function MediaTab({ profile, onPostClick }: MediaTabProps) {
 
   const handleLoadMore = () => {
     if (profile?.username && mediaNextPage && !isLoadingMoreMedia) {
-      loadMediaPosts(profile.username, mediaNextPage, true);
+      const filters = hasActiveMediaFilters
+        ? {
+            search: mediaSearch.trim() || undefined,
+            timestampStart: mediaDateFrom
+              ? `${mediaDateFrom}T00:00:00`
+              : undefined,
+            timestampEnd: mediaDateTo ? `${mediaDateTo}T23:59:59.999999` : undefined,
+          }
+        : undefined;
+      loadMediaPosts(profile.username, mediaNextPage, true, filters);
     }
   };
 
@@ -50,20 +96,46 @@ export function MediaTab({ profile, onPostClick }: MediaTabProps) {
 
   if (hasLoadedMedia && mediaPosts.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        Nenhum post com mídia encontrado.
+      <div className="space-y-6">
+        <ProfileTabSearchBar
+          search={mediaSearch}
+          onSearchChange={setMediaSearch}
+          dateFrom={mediaDateFrom}
+          dateTo={mediaDateTo}
+          onDateRangeChange={setMediaDateRange}
+          onSearchSubmit={handleMediaSearchSubmit}
+          onClear={clearMediaFilters}
+          hasActiveFilters={hasActiveMediaFilters}
+          placeholder="Buscar por palavra no texto ou legenda..."
+        />
+        <div className="text-center py-12 text-muted-foreground">
+          Nenhum post com mídia encontrado.
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      <ProfileTabSearchBar
+        search={mediaSearch}
+        onSearchChange={setMediaSearch}
+        dateFrom={mediaDateFrom}
+        dateTo={mediaDateTo}
+        onDateRangeChange={setMediaDateRange}
+        onSearchSubmit={handleMediaSearchSubmit}
+        onClear={clearMediaFilters}
+        hasActiveFilters={hasActiveMediaFilters}
+        placeholder="Buscar por palavra no texto ou legenda..."
+      />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {mediaPosts.map((post) => (
           <MediaPostCard
             key={post.id}
             post={post}
+            isOwner={isOwner}
             onClick={() => onPostClick(post.id)}
+            onDelete={onDeletePost}
           />
         ))}
       </div>
@@ -92,10 +164,14 @@ export function MediaTab({ profile, onPostClick }: MediaTabProps) {
 
 function MediaPostCard({
   post,
+  isOwner,
   onClick,
+  onDelete,
 }: {
   post: PostProps;
+  isOwner: boolean;
   onClick: () => void;
+  onDelete?: (post: PostProps) => void;
 }) {
   const firstMedia = post.medias?.[0];
   const mediaCount = post.medias?.length ?? 0;
@@ -103,9 +179,36 @@ function MediaPostCard({
 
   return (
     <Card
-      className="overflow-hidden group cursor-pointer hover:shadow-card transition-all duration-200"
+      className="overflow-hidden group cursor-pointer hover:shadow-card transition-all duration-200 relative"
       onClick={onClick}
     >
+      {isOwner && onDelete && (
+        <div
+          className="absolute top-2 left-2 z-10"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="secondary"
+                size="icon"
+                className="h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 text-white border-0"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="min-w-[140px]">
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive focus:bg-destructive/10 hover:bg-destructive/10 cursor-pointer"
+                onClick={() => onDelete(post)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Excluir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
       <div className="relative aspect-square">
         {firstMedia ? (
           isVideo ? (

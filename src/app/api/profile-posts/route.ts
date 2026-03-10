@@ -9,6 +9,9 @@ export async function GET(request: NextRequest) {
   const hasPostMedia = searchParams.get("has_post_media");
   const cursor = searchParams.get("cursor");
   const pageSize = searchParams.get("page_size");
+  const search = searchParams.get("search");
+  const timestampStart = searchParams.get("timestamp_start");
+  const timestampEnd = searchParams.get("timestamp_end");
 
   if (!username || hasPostMedia === null || hasPostMedia === undefined) {
     return NextResponse.json(
@@ -24,6 +27,9 @@ export async function GET(request: NextRequest) {
     };
     if (cursor) params.cursor = cursor;
     if (pageSize) params.page_size = pageSize;
+    if (search?.trim()) params.search = search.trim();
+    if (timestampStart) params.timestamp_start = timestampStart;
+    if (timestampEnd) params.timestamp_end = timestampEnd;
 
     const response = await api.get("/api/v1/posts/", {
       headers: {
