@@ -5,6 +5,7 @@ import React, {
   useContext,
   useState,
   useCallback,
+  useEffect,
 } from "react";
 import { PostProps } from "@/app/feed/types/PostProps";
 import { FeedContext } from "@/app/feed/context/FeedContext";
@@ -65,6 +66,8 @@ export function useProfilePostsContext() {
 
 interface ProfilePostsProviderProps {
   children: React.ReactNode;
+  profileUsername?: string | null;
+  onPostAddedToCache?: () => void;
 }
 
 function parseCursorFromNextPage(nextPage: string | null): string | null {
@@ -79,7 +82,11 @@ function parseCursorFromNextPage(nextPage: string | null): string | null {
   }
 }
 
-export function ProfilePostsProvider({ children }: ProfilePostsProviderProps) {
+export function ProfilePostsProvider({
+  children,
+  profileUsername,
+  onPostAddedToCache,
+}: ProfilePostsProviderProps) {
   const [mediaPosts, setMediaPosts] = useState<PostProps[]>([]);
   const [textPosts, setTextPosts] = useState<PostProps[]>([]);
   const [mediaNextPage, setMediaNextPage] = useState<string | null>(null);
@@ -235,6 +242,42 @@ export function ProfilePostsProvider({ children }: ProfilePostsProviderProps) {
     setTextPosts(textCache.posts);
     setTextNextPage(textCache.nextPage);
   }, [textCache]);
+
+  useEffect(() => {
+    if (!profileUsername) return;
+    const handler = (e: CustomEvent<PostProps>) => {
+      const post = e.detail;
+      if (post.username !== profileUsername) return;
+      const hasMedia = post.has_post_media && post.medias?.length > 0;
+      if (hasMedia) {
+        if (hasLoadedMedia) {
+          setMediaPosts((prev) => [post, ...prev]);
+          setMediaCache((c) => ({
+            ...c,
+            posts: [post, ...c.posts],
+          }));
+          onPostAddedToCache?.();
+        }
+      } else {
+        if (hasLoadedText) {
+          setTextPosts((prev) => [post, ...prev]);
+          setTextCache((c) => ({
+            ...c,
+            posts: [post, ...c.posts],
+          }));
+          onPostAddedToCache?.();
+        }
+      }
+    };
+    window.addEventListener("post-created", handler as EventListener);
+    return () =>
+      window.removeEventListener("post-created", handler as EventListener);
+  }, [
+    profileUsername,
+    hasLoadedMedia,
+    hasLoadedText,
+    onPostAddedToCache,
+  ]);
 
   const removePost = useCallback((postId: number) => {
     setMediaPosts((prev) => prev.filter((p) => p.id !== postId));

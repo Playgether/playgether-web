@@ -34,11 +34,13 @@ import { deletePostProfile } from "@/services/deletePostProfile";
 interface GamesCanvasContentTabsProps {
   profile: getProfileByUsernameProps | null;
   initialComments: ApiResponseComments;
+  onProfileUpdated?: (updated: Partial<getProfileByUsernameProps>) => void;
 }
 
 export function GamesCanvasContentTabs({
   profile,
   initialComments,
+  onProfileUpdated,
 }: GamesCanvasContentTabsProps) {
   const { user } = useAuthContext();
   const postsContext = useProfilePostsContext()!;
@@ -260,6 +262,9 @@ export function GamesCanvasContentTabs({
       await deletePostProfile(postId, post ?? null);
       removePost(postId);
       if (selectedPostId === postId) setSelectedPostId(null);
+      onProfileUpdated?.({
+        quantity_posts: Math.max(0, (profile?.quantity_posts ?? 1) - 1),
+      });
       setConfirmModalOpen(false);
       setConfirmAction(null);
       CustomToast.success("Post excluído!", {

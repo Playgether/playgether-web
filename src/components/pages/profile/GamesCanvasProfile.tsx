@@ -37,11 +37,20 @@ export default function GamesCanvasProfile({
           </div>
 
           <div className="lg:col-span-3 order-2 lg:order-2">
-            <ProfileFeedServerComponentsProvider>
-              <ProfilePostsProvider>
+                <ProfileFeedServerComponentsProvider>
+                <ProfilePostsProvider
+                  profileUsername={profile?.username}
+                  onPostAddedToCache={() =>
+                    handleProfileUpdated({
+                      quantity_posts:
+                        Number(profile?.quantity_posts || 0) + 1,
+                    })
+                  }
+                >
                 <GamesCanvasContentTabs
                   profile={profile}
                   initialComments={initialComments}
+                  onProfileUpdated={handleProfileUpdated}
                 />
               </ProfilePostsProvider>
             </ProfileFeedServerComponentsProvider>

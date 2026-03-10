@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Home,
   MessageCircle,
@@ -7,7 +9,10 @@ import {
   GamepadIcon,
   Trophy,
   Headphones,
+  Plus,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useCreatePostContext } from "@/context/CreatePostContext";
 import { GamerSideBarItensInterface } from "../../types/structure/GamerSideBarItensInterface";
 import GamerSidbarConversationsButtons from "./GameSideBarConversationsButton";
 
@@ -27,12 +32,27 @@ const sidebarItems: GamerSideBarItensInterface[] = [
 ];
 
 export const GamerSidebar = () => {
+  const createPostContext = useCreatePostContext();
+
   return (
     <div className="fixed left-0 top-0 h-full w-20 bg-gradient-primary z-40 flex flex-col items-center py-6 border-r border-sidebar-border">
       {/* Logo/Brand */}
       <div className="mb-8 p-3 rounded-xl bg-white/10 backdrop-blur-sm">
         <GamepadIcon className="w-8 h-8 text-white" />
       </div>
+
+      {/* Create Post Button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        type="button"
+        aria-label="Criar post"
+        title="Criar post"
+        onClick={() => createPostContext?.handleCreatePostModal(true)}
+        className="mb-4 w-14 h-14 rounded-xl text-white/80 hover:text-white hover:bg-white/20 hover:shadow-glow-neon hover:scale-105 transition-all duration-300"
+      >
+        <Plus className="w-6 h-6" />
+      </Button>
 
       {/* Navigation Items */}
       <nav className="flex-1 flex flex-col space-y-3">
