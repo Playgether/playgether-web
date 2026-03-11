@@ -61,6 +61,11 @@ const ProfilePostsContext = createContext<ProfilePostsContextValue | undefined>(
 
 export function useProfilePostsContext() {
   const context = useContext(ProfilePostsContext);
+  if (context === undefined) {
+    throw new Error(
+      "useProfilePostsContext must be used within ProfilePostsProvider"
+    );
+  }
   return context;
 }
 

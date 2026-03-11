@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { getProfileByUsernameProps } from "@/services/getProfileByUsername";
 import { ApiResponseComments } from "@/context/CommentsContext";
-import { tabsData, initialMilestones } from "./constants";
+import { tabsData } from "./constants";
 import { BioTab } from "./tabs/BioTab";
 import { GameStatsTab } from "./tabs/GameStatsTab";
 import { MediaTab } from "./tabs/MediaTab";
@@ -15,8 +15,8 @@ import { GamesLibraryTab } from "./tabs/GamesLibraryTab";
 import { AddCommentModal } from "./modals/AddCommentModal";
 import { EditCommentModal } from "./modals/EditCommentModal";
 import { ConfirmationModal } from "./modals/ConfirmationModal";
-import { ImageModal } from "./modals/ImageModal";
 import { MilestoneModal } from "./modals/MilestoneModal";
+import { MilestoneDetailModal } from "./modals/MilestoneDetailModal";
 import { AchievementModal } from "./modals/AchievementModal";
 import type { AchievementType } from "./modals/AchievementModal";
 import { useAuthContext } from "@/context/AuthContext";
@@ -30,6 +30,10 @@ import { CustomToastProps } from "@/error/custom-toaster/enum";
 import { ProfilePostModal } from "./ProfilePostModal";
 import { useProfilePostsContext } from "@/app/profile/context/ProfilePostsContext";
 import { deletePostProfile } from "@/services/deletePostProfile";
+import { getProfileMilestonesClient } from "@/services/getProfileMilestones";
+import { createMilestone, updateMilestone } from "@/actions/milestones";
+import { deleteMilestone } from "@/services/deleteMilestone";
+import { deletePostFile } from "@/services/cloudinary_requests/deletePostFile";
 
 interface GamesCanvasContentTabsProps {
   profile: getProfileByUsernameProps | null;
@@ -43,7 +47,7 @@ export function GamesCanvasContentTabs({
   onProfileUpdated,
 }: GamesCanvasContentTabsProps) {
   const { user } = useAuthContext();
-  const postsContext = useProfilePostsContext()!;
+  const postsContext = useProfilePostsContext();
   const { removePost, getPostById } = postsContext;
   const isOwner = !!user && !!profile && user.username === profile.username;
 
@@ -54,13 +58,17 @@ export function GamesCanvasContentTabs({
     initialComments.next_page ?? null
   );
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [milestones, setMilestones] = useState(initialMilestones);
+  const [milestones, setMilestones] = useState<any[]>([]);
+  const [milestonesNextPage, setMilestonesNextPage] = useState<string | null>(null);
+  const [hasLoadedMilestones, setHasLoadedMilestones] = useState(false);
+  const [isLoadingMilestones, setIsLoadingMilestones] = useState(false);
+  const [isLoadingMoreMilestones, setIsLoadingMoreMilestones] = useState(false);
   const [selectedAchievement, setSelectedAchievement] =
     useState<AchievementType | null>(null);
   const [isAchievementModalOpen, setIsAchievementModalOpen] = useState(false);
   const [isMilestoneModalOpen, setIsMilestoneModalOpen] = useState(false);
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-  const [selectedImage, setSelectedImage] = useState({ url: "", title: "" });
+  const [isMilestoneDetailModalOpen, setIsMilestoneDetailModalOpen] = useState(false);
+  const [selectedMilestone, setSelectedMilestone] = useState<any>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
     type: string;
@@ -85,10 +93,56 @@ export function GamesCanvasContentTabs({
     );
     setUserHasCommented(hasComment);
   }, [user?.username, comments]);
+
+  useEffect(() => {
+    if (!profile?.id) {
+      setMilestones([]);
+      setMilestonesNextPage(null);
+      setHasLoadedMilestones(false);
+      return;
+    }
+  }, [profile?.id]);
+
+  useEffect(() => {
+    if (activeTab === "milestones" && profile?.id && !hasLoadedMilestones) {
+      setIsLoadingMilestones(true);
+      getProfileMilestonesClient(profile.id, null, 10)
+        .then((res) => {
+          setMilestones(res.data ?? []);
+          setMilestonesNextPage(res.next_page ?? null);
+          setHasLoadedMilestones(true);
+        })
+        .finally(() => setIsLoadingMilestones(false));
+    }
+  }, [activeTab, profile?.id, hasLoadedMilestones]);
+
+  const loadMoreMilestones = useCallback(async () => {
+    if (!profile?.id || !milestonesNextPage || isLoadingMoreMilestones) return;
+    let cursor: string | null = null;
+    try {
+      const url = milestonesNextPage.startsWith("http")
+        ? milestonesNextPage
+        : `http://dummy${milestonesNextPage.startsWith("?") ? "/" : ""}${milestonesNextPage}`;
+      cursor = new URL(url).searchParams.get("cursor");
+    } catch {
+      cursor = null;
+    }
+    if (!cursor) return;
+    setIsLoadingMoreMilestones(true);
+    try {
+      const res = await getProfileMilestonesClient(profile.id, cursor, 10);
+      setMilestones((prev) => [...prev, ...(res.data ?? [])]);
+      setMilestonesNextPage(res.next_page ?? null);
+    } finally {
+      setIsLoadingMoreMilestones(false);
+    }
+  }, [profile?.id, milestonesNextPage, isLoadingMoreMilestones]);
   const [isAddCommentModalOpen, setIsAddCommentModalOpen] = useState(false);
   const [isAddCommentSubmitting, setIsAddCommentSubmitting] = useState(false);
   const [isDeletingComment, setIsDeletingComment] = useState(false);
   const [isDeletingPost, setIsDeletingPost] = useState(false);
+  const [isDeletingMilestone, setIsDeletingMilestone] = useState(false);
+  const [isMilestoneSubmitting, setIsMilestoneSubmitting] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
 
   const loadMoreComments = useCallback(async () => {
@@ -221,28 +275,80 @@ export function GamesCanvasContentTabs({
     }
   };
 
-  const handleAddMilestone = (milestone: any) => {
-    const newMilestone = {
-      id: Date.now(),
-      ...milestone,
-    };
-    setMilestones((prev) => [newMilestone, ...prev]);
+  const handleMilestoneSubmit = async (data: {
+    title: string;
+    description: string;
+    date: string;
+    medias: { media_url: string; media_type: string; public_id: string }[];
+  }) => {
+    if (!profile) return;
+    setIsMilestoneSubmitting(true);
+    try {
+      if (milestoneModalMode === "add") {
+        const res = await createMilestone(profile.id, data);
+        if (res.status === 201 && res.data) {
+          setMilestones((prev) => [res.data, ...prev]);
+          setIsMilestoneModalOpen(false);
+          CustomToast.success("Marco criado!", {
+            duration: CustomToastProps.defaultDuration,
+          });
+        } else {
+          throw new Error((res as any).error ?? "Erro ao criar marco");
+        }
+      } else if (editingMilestone) {
+        const res = await updateMilestone(editingMilestone.id, data);
+        if (res.status === 200 && res.data) {
+          setMilestones((prev) =>
+            prev.map((m) => (m.id === editingMilestone.id ? res.data : m))
+          );
+          setIsMilestoneModalOpen(false);
+          setEditingMilestone(null);
+          CustomToast.success("Marco atualizado!", {
+            duration: CustomToastProps.defaultDuration,
+          });
+        } else {
+          throw new Error((res as any).error ?? "Erro ao atualizar marco");
+        }
+      }
+    } catch (err: any) {
+      const msg =
+        typeof err?.message === "string" && !err.message.startsWith("<")
+          ? err.message
+          : "Ocorreu um erro. Tente novamente.";
+      CustomToast.error("Erro", {
+        description: msg,
+        duration: CustomToastProps.defaultDuration,
+      });
+    } finally {
+      setIsMilestoneSubmitting(false);
+    }
   };
 
-  const handleEditMilestone = (milestoneId: number, updatedMilestone: any) => {
-    setMilestones((prev) =>
-      prev.map((milestone) =>
-        milestone.id === milestoneId
-          ? { ...milestone, ...updatedMilestone }
-          : milestone,
-      ),
-    );
-  };
-
-  const handleDeleteMilestone = (milestoneId: number) => {
-    setMilestones((prev) =>
-      prev.filter((milestone) => milestone.id !== milestoneId),
-    );
+  const handleDeleteMilestone = async (milestone: any) => {
+    setIsDeletingMilestone(true);
+    try {
+      for (const m of milestone.medias ?? []) {
+        await deletePostFile(m.public_id, "", m.media_type).catch(console.error);
+      }
+      await deleteMilestone(milestone.id);
+      setMilestones((prev) => prev.filter((m) => m.id !== milestone.id));
+      setConfirmModalOpen(false);
+      setConfirmAction(null);
+      CustomToast.success("Marco excluído!", {
+        duration: CustomToastProps.defaultDuration,
+      });
+    } catch (err: any) {
+      const msg =
+        typeof err?.message === "string" && !err.message.startsWith("<")
+          ? err.message
+          : "Ocorreu um erro. Tente novamente.";
+      CustomToast.error("Erro ao excluir marco", {
+        description: msg,
+        duration: CustomToastProps.defaultDuration,
+      });
+    } finally {
+      setIsDeletingMilestone(false);
+    }
   };
 
   const openConfirmModal = (type: string, data: any) => {
@@ -291,14 +397,7 @@ export function GamesCanvasContentTabs({
         handleDeletePost(confirmAction.data.post.id);
         break;
       case "deleteMilestone":
-        handleDeleteMilestone(confirmAction.data.id);
-        setConfirmModalOpen(false);
-        setConfirmAction(null);
-        break;
-      case "addMilestone":
-        handleAddMilestone(confirmAction.data.milestone);
-        setConfirmModalOpen(false);
-        setConfirmAction(null);
+        handleDeleteMilestone(confirmAction.data);
         break;
       default:
         break;
@@ -381,6 +480,11 @@ export function GamesCanvasContentTabs({
             <TabsContent value="milestones" className="p-6">
               <MilestonesTab
                 milestones={milestones}
+                isLoading={isLoadingMilestones}
+                nextPage={milestonesNextPage}
+                isLoadingMore={isLoadingMoreMilestones}
+                onLoadMore={loadMoreMilestones}
+                isOwner={isOwner}
                 onAddMilestone={() => {
                   setMilestoneModalMode("add");
                   setEditingMilestone(null);
@@ -394,9 +498,9 @@ export function GamesCanvasContentTabs({
                 onDeleteMilestone={(milestone) =>
                   openConfirmModal("deleteMilestone", milestone)
                 }
-                onImageClick={(url, title) => {
-                  setSelectedImage({ url, title });
-                  setIsImageModalOpen(true);
+                onMilestoneClick={(milestone) => {
+                  setSelectedMilestone(milestone);
+                  setIsMilestoneDetailModalOpen(true);
                 }}
               />
             </TabsContent>
@@ -415,23 +519,24 @@ export function GamesCanvasContentTabs({
 
         <MilestoneModal
           isOpen={isMilestoneModalOpen}
-          onClose={() => setIsMilestoneModalOpen(false)}
-          onSubmit={(milestone) => {
-            if (milestoneModalMode === "add") {
-              openConfirmModal("addMilestone", { milestone });
-            } else {
-              handleEditMilestone(editingMilestone!.id, milestone);
-            }
+          onClose={() => {
+            setIsMilestoneModalOpen(false);
+            setEditingMilestone(null);
           }}
+          onSubmit={handleMilestoneSubmit}
           milestone={editingMilestone}
           mode={milestoneModalMode}
+          profileId={profile?.id ?? 0}
+          isSubmitting={isMilestoneSubmitting}
         />
 
-        <ImageModal
-          isOpen={isImageModalOpen}
-          onClose={() => setIsImageModalOpen(false)}
-          imageUrl={selectedImage.url}
-          title={selectedImage.title}
+        <MilestoneDetailModal
+          isOpen={isMilestoneDetailModalOpen}
+          onClose={() => {
+            setIsMilestoneDetailModalOpen(false);
+            setSelectedMilestone(null);
+          }}
+          milestone={selectedMilestone}
         />
 
         <ConfirmationModal
@@ -440,7 +545,8 @@ export function GamesCanvasContentTabs({
           onConfirm={handleConfirmAction}
           isConfirming={
             (confirmAction?.type === "deleteComment" && isDeletingComment) ||
-            (confirmAction?.type === "deletePost" && isDeletingPost)
+            (confirmAction?.type === "deletePost" && isDeletingPost) ||
+            (confirmAction?.type === "deleteMilestone" && isDeletingMilestone)
           }
           title={
             confirmAction?.type === "deleteComment"
@@ -449,9 +555,7 @@ export function GamesCanvasContentTabs({
                 ? "Excluir Post"
                 : confirmAction?.type === "deleteMilestone"
                   ? "Excluir Marco"
-                  : confirmAction?.type === "addMilestone"
-                    ? "Adicionar Marco"
-                    : ""
+                  : ""
           }
           description={
             confirmAction?.type === "deleteComment"
@@ -460,9 +564,7 @@ export function GamesCanvasContentTabs({
                 ? "Tem certeza que deseja excluir este post? Esta ação não pode ser desfeita."
                 : confirmAction?.type === "deleteMilestone"
                   ? "Tem certeza que deseja excluir este marco? Esta ação não pode ser desfeita."
-                  : confirmAction?.type === "addMilestone"
-                    ? "Tem certeza que deseja adicionar este marco?"
-                    : ""
+                  : ""
           }
           confirmText={
             confirmAction?.type?.includes("delete") ? "Excluir" : "Adicionar"

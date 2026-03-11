@@ -475,31 +475,28 @@ export const PostModal = ({
               {/* Post Text Toggle */}
               {post.comment && (
                 <div className="mb-2">
-                  {showFullText ? (
-                    <div className="space-y-3">
-                      <p className="text-foreground leading-relaxed whitespace-pre-wrap">
-                        {post.comment}
-                      </p>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowFullText(false)}
-                        className="text-primary hover:text-primary/80 p-0 h-auto"
-                      >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowFullText((s) => !s)}
+                    className="text-primary hover:text-primary/80 px-3 py-1.5 rounded-md hover:bg-primary/10 -ml-2 mb-2"
+                  >
+                    {showFullText ? (
+                      <>
                         {icons.EyeOff}
                         Esconder texto
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowFullText(true)}
-                      className="text-primary hover:text-primary/80 p-0 h-auto"
-                    >
-                      {icons.Eye}
-                      Ver texto completo
-                    </Button>
+                      </>
+                    ) : (
+                      <>
+                        {icons.Eye}
+                        Ver texto completo
+                      </>
+                    )}
+                  </Button>
+                  {showFullText && (
+                    <p className="text-foreground leading-relaxed whitespace-pre-wrap">
+                      {post.comment}
+                    </p>
                   )}
                 </div>
               )}

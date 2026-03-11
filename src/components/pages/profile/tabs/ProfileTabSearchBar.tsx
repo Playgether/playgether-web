@@ -15,7 +15,7 @@ interface ProfileTabSearchBarProps {
   dateTo: string;
   onDateRangeChange: (from: string, to: string) => void;
   onSearchSubmit: (filters: {
-    search: string;
+    search: string | null;
     timestampStart: string | null;
     timestampEnd: string | null;
   }) => void;

@@ -10,7 +10,7 @@ export function OpenCreatePostFromQuery() {
   const { handleCreatePostModal } = useFeedContext();
 
   useEffect(() => {
-    if (searchParams.get("openCreate") === "1") {
+    if (searchParams?.get("openCreate") === "1") {
       handleCreatePostModal(true);
       const url = new URL(window.location.href);
       url.searchParams.delete("openCreate");
