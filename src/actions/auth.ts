@@ -7,7 +7,7 @@ import jwt_decode from "jwt-decode";
 // app/actions/authActions.ts
 export async function loginAction(formData: FormData) {
   const user = {
-    username: formData.get("username"),
+    email: formData.get("email"),
     password: formData.get("password"),
   };
 
@@ -35,7 +35,7 @@ export async function loginAction(formData: FormData) {
     cookiesInstance.set("accessToken", response.data.access, cookieOptions);
     cookiesInstance.set("refreshToken", response.data.refresh, {
       ...cookieOptions,
-      maxAge: 604800,
+      maxAge: 60 * 60 * 24 * 30, // 30 dias (alinhado ao REFRESH_TOKEN_LIFETIME do backend)
     });
     cookiesInstance.set("user_id", String(decodedAccessToken.user_id), cookieOptions);
 

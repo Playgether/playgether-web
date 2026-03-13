@@ -11,6 +11,7 @@ interface FormCadastroImplementationProps {
   handleSubmit: UseFormHandleSubmit<any | undefined>;
   register: void | any;
   errors: FieldErrors<any>;
+  backendErrors?: { username?: string; email?: string; general?: string };
   Submiting: any;
   onClickAqui: () => void;
   handleAvailableUsernames: (username: string) => Promise<void>;
@@ -23,6 +24,7 @@ export const FormRegisterImplementation = ({
   handleAvailableUsernames,
   register,
   errors,
+  backendErrors = {},
   Submiting,
   onClickAqui,
   availableUsernameResult,
@@ -30,6 +32,11 @@ export const FormRegisterImplementation = ({
 }: FormCadastroImplementationProps) => {
   return (
     <form className="space-y-4" onSubmit={handleSubmit(Submiting)}>
+      {backendErrors.general && (
+        <div className="rounded-lg bg-destructive/10 border border-destructive/30 px-4 py-3 text-sm text-destructive">
+          {backendErrors.general}
+        </div>
+      )}
       <div className="grid grid-cols-6 gap-2 w-full">
         <div className="col-span-5 space-y-1">
           <InputLayout
@@ -40,7 +47,7 @@ export const FormRegisterImplementation = ({
             inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue focus:shadow-glow-neon transition-all duration-300 backdrop-blur-sm"
           />
           {availableUsernameResult}
-          <ErrosInput field={errors.username} />
+          <ErrosInput field={errors.username || (backendErrors.username && { message: backendErrors.username })} />
         </div>
         <div className="col-span-1 flex items-start">
           <button
@@ -60,7 +67,7 @@ export const FormRegisterImplementation = ({
           register={{ ...register("email") }}
           inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue focus:shadow-glow-neon transition-all duration-300 backdrop-blur-sm"
         />
-        <ErrosInput field={errors.email} />
+        <ErrosInput field={errors.email || (backendErrors.email && { message: backendErrors.email })} />
       </div>
 
       <div className="space-y-1">
@@ -68,6 +75,7 @@ export const FormRegisterImplementation = ({
           type="password"
           placeholder="Senha"
           register={{ ...register("password") }}
+          autoComplete="new-password"
           inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue focus:shadow-glow-neon transition-all duration-300 backdrop-blur-sm"
         />
         <ErrosInput field={errors.password} />
@@ -78,6 +86,7 @@ export const FormRegisterImplementation = ({
           type="password"
           placeholder="Repita a senha"
           register={{ ...register("repeatPassword") }}
+          autoComplete="new-password"
           inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue focus:shadow-glow-neon transition-all duration-300 backdrop-blur-sm"
         />
         <ErrosInput field={errors.repeatPassword} />

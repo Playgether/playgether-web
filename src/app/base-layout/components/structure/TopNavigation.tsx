@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { useAuthContext } from "@/context/AuthContext";
 
 import { ConversationsModal } from "../chat/ConversationsModal";
 import { NotificationsModal } from "./NotificationsModal";
@@ -9,6 +10,7 @@ import { SettingsModal } from "../../SettingsModal";
 import { useBaseLayoutServerContext } from "../../context/BaseLayoutServerContext";
 
 export const TopNavigation = () => {
+  const { logout } = useAuthContext();
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -90,6 +92,7 @@ export const TopNavigation = () => {
         <Button
           variant="ghost"
           size="icon"
+          onClick={() => logout()}
           className="w-11 h-11 rounded-xl hover:bg-muted/50 hover:shadow-glow-neon transition-all duration-300"
           aria-label="Log out"
           title="Log out"

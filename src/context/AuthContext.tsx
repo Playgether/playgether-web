@@ -1,9 +1,19 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 import { decodeUser } from "@/actions/decodeUser";
 import { logoutServer } from "@/actions/logout";
+import { refreshTokenServer } from "@/actions/refreshToken";
+
+const REFRESH_INTERVAL_MS = 18 * 60 * 1000; // 18 min (antes dos 20 min de expiry do access)
 
 export type UserProps = {
   username: string;
@@ -16,7 +26,7 @@ type AuthContextProps = {
   user: UserProps | null;
   logout: () => void;
   isLoggedOut: boolean;
-  setIsLoggedOut: (boolean) => void;
+  setIsLoggedOut: (value: boolean) => void;
 };
 
 const AuthContext = createContext<AuthContextProps>({} as AuthContextProps);
@@ -25,17 +35,35 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const [user, setUser] = useState<UserProps | null>(null);
   const [isLoggedOut, setIsLoggedOut] = useState(true);
+  const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const logout = useCallback(async () => {
+    if (refreshIntervalRef.current) {
+      clearInterval(refreshIntervalRef.current);
+      refreshIntervalRef.current = null;
+    }
+    setIsLoggedOut(true);
+    setUser(null);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("user");
+    }
+    await logoutServer();
+    router.push("/");
+  }, [router]);
 
   useEffect(() => {
     const fetchData = async () => {
-      const userLocalStorage = localStorage.getItem("user");
-      const user = userLocalStorage ? JSON.parse(userLocalStorage) : null;
-      if (user !== null) {
-        setUser(user);
+      const userLocalStorage =
+        typeof window !== "undefined" ? localStorage.getItem("user") : null;
+      const cachedUser = userLocalStorage ? JSON.parse(userLocalStorage) : null;
+      if (cachedUser !== null) {
+        setUser(cachedUser);
       } else {
         const user_decoded = await decodeUser();
         if (user_decoded) {
-          localStorage.setItem("user", JSON.stringify(user_decoded));
+          if (typeof window !== "undefined") {
+            localStorage.setItem("user", JSON.stringify(user_decoded));
+          }
           setUser(user_decoded);
         }
       }
@@ -43,34 +71,25 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     fetchData();
   }, [isLoggedOut]);
 
-  async function logout() {
-    setIsLoggedOut(true);
-    setUser(null);
-    localStorage.removeItem("user");
-    await logoutServer();
-    router.push("/");
-  }
+  useEffect(() => {
+    if (!user) return;
 
-  // const updateToken = async () => {
-  //   if (authTokens && authTokens.refresh) {
-  //     const response = await updateTokenRequest(authTokens);
-  //     if (response?.status === 200) {
-  //       const tokens = response.data;
-  //       const user = response?.data.access;
-  //       setAuthTokens(tokens);
-  //       setUser(jwt_decode(user));
-  //       localStorage.setItem("authTokens", JSON.stringify(tokens));
-  //     } else {
-  //       logout();
-  //     }
+    const refreshTokens = async () => {
+      const success = await refreshTokenServer();
+      if (!success) {
+        await logout();
+      }
+    };
 
-  //     if (loading) {
-  //       setLoading(false);
-  //     }
-  //   } else {
-  //     return "Token inválido ou inexistente";
-  //   }
-  // };
+    refreshIntervalRef.current = setInterval(refreshTokens, REFRESH_INTERVAL_MS);
+
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+        refreshIntervalRef.current = null;
+      }
+    };
+  }, [user, logout]);
   return (
     <AuthContext.Provider
       value={{
