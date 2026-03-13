@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { api } from "@/services/api";
+import { handleApiError } from "../utils/handleApiError";
 
 export async function POST(request: NextRequest) {
   const accessToken = (await cookies()).get("accessToken")?.value;
@@ -16,8 +17,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response.data);
   } catch (error) {
-    console.error("Erro ao enviar like:", error);
-    return NextResponse.json({ error: "Erro ao curtir" }, { status: 500 });
+    return handleApiError(error, "Erro ao curtir");
   }
 }
 
@@ -47,10 +47,6 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ status: response.status });
   } catch (error) {
-    console.error("Erro ao remover like:", error);
-    return NextResponse.json(
-      { error: "Erro ao remover curtida" },
-      { status: 500 }
-    );
+    return handleApiError(error, "Erro ao remover curtida");
   }
 }

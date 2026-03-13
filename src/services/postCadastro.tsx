@@ -6,12 +6,14 @@ export interface postCadastroProps {
   email: string;
   password: string;
   last_name: string;
+  accepted_documents: number[];
 }
 
 export type CadastroError = {
   username?: string;
   email?: string;
   general?: string;
+  accepted_documents?: string;
 };
 
 export type CadastroResult = {
@@ -25,7 +27,7 @@ export type CadastroResult = {
  * Extrai mensagens de erro do backend (DRF) para username e email duplicados.
  */
 function parseBackendErrors(error: unknown): CadastroError {
-  const err = error as { response?: { data?: Record<string, string[]> } };
+  const err = error as { response?: { data?: Record<string, unknown> } };
   const data = err?.response?.data;
   if (!data || typeof data !== "object") return {};
 
@@ -36,12 +38,24 @@ function parseBackendErrors(error: unknown): CadastroError {
   if (Array.isArray(data.email) && data.email.length > 0) {
     errors.email = "Este email já está cadastrado.";
   }
+  const accepted = data.accepted_documents;
+  if (Array.isArray(accepted) && accepted.length > 0) {
+    errors.accepted_documents = String(accepted[0]);
+  }
   return errors;
 }
 
 export const post = async (data: postCadastroProps): Promise<CadastroResult> => {
   try {
-    await api.post("/api/v1/users/", data);
+    const payload = {
+      first_name: data.first_name,
+      username: data.username,
+      email: data.email,
+      password: data.password,
+      last_name: data.last_name,
+      accepted_documents: data.accepted_documents,
+    };
+    await api.post("/api/v1/users/", payload);
     return { success: true };
   } catch (error) {
     const parsed = parseBackendErrors(error);

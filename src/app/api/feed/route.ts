@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { api } from "@/services/api";
 import { cookies } from "next/headers";
+import { handleApiError } from "../utils/handleApiError";
 
 export async function GET(request: NextRequest) {
   const accessToken = (await cookies()).get("accessToken")?.value;
@@ -22,6 +23,6 @@ export async function GET(request: NextRequest) {
       next_page: response.data.next,
     });
   } catch (error) {
-    return NextResponse.json({ error: "Error fetching feed" }, { status: 500 });
+    return handleApiError(error, "Error fetching feed");
   }
 }

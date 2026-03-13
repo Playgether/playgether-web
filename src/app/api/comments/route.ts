@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { api } from "@/services/api";
 import { cookies } from "next/headers";
+import { handleApiError } from "../utils/handleApiError";
 
 export async function POST(request: NextRequest) {
   const accessToken = (await cookies()).get("accessToken")?.value;
@@ -15,10 +16,6 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json(response.data);
   } catch (error) {
-    console.error("Error while posting the comment:", error);
-    return NextResponse.json(
-      { error: "Error while posting the comment" },
-      { status: 500 },
-    );
+    return handleApiError(error, "Error while posting the comment");
   }
 }

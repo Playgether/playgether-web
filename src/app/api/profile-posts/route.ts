@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { api } from "@/services/api";
 import { cookies } from "next/headers";
+import { handleApiError } from "../utils/handleApiError";
 
 export async function GET(request: NextRequest) {
   const accessToken = (await cookies()).get("accessToken")?.value;
@@ -44,10 +45,6 @@ export async function GET(request: NextRequest) {
       previous_page: response.data.previous ?? null,
     });
   } catch (error) {
-    console.error("Error fetching profile posts:", error);
-    return NextResponse.json(
-      { error: "Error fetching profile posts" },
-      { status: 500 }
-    );
+    return handleApiError(error, "Error fetching profile posts");
   }
 }
