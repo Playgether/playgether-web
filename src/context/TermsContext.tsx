@@ -189,9 +189,21 @@ export function TermsProvider({ children }: { children: React.ReactNode }) {
   }, [loadPending, showTermsModal]);
 
   const pathname = usePathname();
-  // Proactive check: when user is on app (not login/register), if they have pending terms, show modal
+  const PENDING_TERMS_CHECK_KEY = "playgether_terms_check_done";
+
+  // Limpa o flag na tela de login (ex: após logout) para o próximo usuário ser checado
   useEffect(() => {
+    if (pathname === "/" || pathname?.startsWith("/register")) {
+      sessionStorage.removeItem(PENDING_TERMS_CHECK_KEY);
+    }
+  }, [pathname]);
+
+  // Proactive check: 1x por sessão da aba. sessionStorage evita reexecução em toda navegação/remount.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
     if (pathname === "/" || pathname?.startsWith("/register")) return;
+    if (sessionStorage.getItem(PENDING_TERMS_CHECK_KEY)) return;
+    sessionStorage.setItem(PENDING_TERMS_CHECK_KEY, "1");
     loadPending().then((pending) => {
       if (pending.length > 0) {
         showTermsModal(true, pending);
