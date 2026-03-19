@@ -1,66 +1,309 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { games } from "../constants";
+import type { getProfileByUsernameProps } from "@/services/getProfileByUsername";
+import type { GameDetails } from "@/services/getGames";
+import { getGames } from "@/services/getGames";
+import { getSteamStatus, SteamStatusResponse } from "@/services/getSteamStatus";
+import { disconnectSteam } from "@/services/disconnectSteam";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
+import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
+import { GameHoverCardContent } from "@/components/pages/profile/components/GameHoverCardContent";
 
-export function GamesLibraryTab() {
+let gamesCache: GameDetails[] | null = null;
+let gamesPromise: Promise<GameDetails[]> | null = null;
+
+const steamStatusCacheByProfileId = new Map<
+  number,
+  SteamStatusResponse | null
+>();
+const steamStatusPromiseByProfileId = new Map<
+  number,
+  Promise<SteamStatusResponse | null>
+>();
+
+function resolveMediaUrl(value: string | null | undefined): string {
+  if (!value) return "";
+  if (value.startsWith("http")) return value;
+  if (value.startsWith("/")) return value;
+  // Caso típico: `public_id` do Cloudinary.
+  return getCloudinaryUrl(value);
+}
+
+function isSteamGame(game: GameDetails): boolean {
+  const platformSlug = (game.platform_slug ?? "").toLowerCase();
+  const acronym = (game.acronym ?? "").toLowerCase();
+
+  if (platformSlug === "steam") return true;
+
+  // Fallback para bancos antigos onde `platform` pode estar null.
+  return acronym === "csgo" || acronym === "cs2";
+}
+
+export function GamesLibraryTab({
+  profile,
+  isOwner,
+}: {
+  profile: getProfileByUsernameProps | null;
+  isOwner: boolean;
+}) {
+  const [steamStatus, setSteamStatus] = useState<SteamStatusResponse | null>(null);
+  const [steamStatusLoading, setSteamStatusLoading] = useState(false);
+  const [games, setGames] = useState<GameDetails[] | null>(null);
+  const [gamesLoading, setGamesLoading] = useState(false);
+
+  useEffect(() => {
+    if (gamesCache) {
+      setGames(gamesCache);
+      return;
+    }
+
+    if (gamesPromise) {
+      setGamesStateFromPromise(gamesPromise, setGames);
+      return;
+    }
+
+    setGamesLoading(true);
+    const p = getGames()
+      .then((data) => {
+        gamesCache = data;
+        return data;
+      })
+      .finally(() => {
+        gamesPromise = null;
+        setGamesLoading(false);
+      });
+    gamesPromise = p;
+    setGamesStateFromPromise(p, setGames);
+  }, []);
+
+  useEffect(() => {
+    if (!profile?.id) {
+      setSteamStatus(null);
+      return;
+    }
+
+    const profileId = profile.id;
+    const cached = steamStatusCacheByProfileId.get(profileId);
+    if (cached !== undefined) {
+      setSteamStatus(cached);
+      return;
+    }
+
+    const existingPromise = steamStatusPromiseByProfileId.get(profileId);
+    if (existingPromise) {
+      setSteamStateFromPromise(existingPromise, setSteamStatus);
+      return;
+    }
+
+    setSteamStatusLoading(true);
+    const p = getSteamStatus(profileId)
+      .then((data) => {
+        steamStatusCacheByProfileId.set(profileId, data);
+        return data;
+      })
+      .catch(() => {
+        steamStatusCacheByProfileId.set(profileId, null);
+        return null;
+      })
+      .finally(() => {
+        steamStatusPromiseByProfileId.delete(profileId);
+        setSteamStatusLoading(false);
+      });
+
+    steamStatusPromiseByProfileId.set(profileId, p);
+    setSteamStateFromPromise(p, setSteamStatus);
+  }, [profile?.id]);
+
+  const handleConnectSteam = async () => {
+    const next = `${window.location.pathname}${window.location.search}`;
+    window.location.href = `/api/auth/steam/login/?next=${encodeURIComponent(
+      next
+    )}`;
+  };
+
+  const handleDisconnectSteam = async () => {
+    try {
+      setSteamStatusLoading(true);
+      await disconnectSteam();
+      // Mantemos os campos para não quebrar a UI.
+      setSteamStatus({
+        connected: false,
+        nickname: null,
+        avatar: null,
+        steam_profile_public: false,
+      });
+      if (profile?.id) {
+        steamStatusCacheByProfileId.set(profile.id, {
+          connected: false,
+          nickname: null,
+          avatar: null,
+          steam_profile_public: false,
+        });
+      }
+    } finally {
+      setSteamStatusLoading(false);
+    }
+  };
+
+  const gamesToRender = games ?? [];
+
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold mb-6">Biblioteca de Jogos</h3>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {games.map((game) => (
-          <Card
-            key={game.id}
-            className="hover:shadow-card transition-all duration-200"
-          >
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4 mb-4">
-                <img
-                  src={game.image}
-                  alt={game.name}
-                  className="w-12 h-12 rounded object-cover"
-                />
-                <div className="flex-1">
-                  <h4 className="font-semibold">{game.name}</h4>
-                  {game.id === "valorant" ? (
-                    <div className="text-sm text-muted-foreground space-y-1">
-                      <div>✅ Conectado</div>
-                      <div>Nick: RayJunior#BR1</div>
-                      <div>ID: #BR1-2023</div>
-                    </div>
-                  ) : (
-                    <div className="text-sm text-muted-foreground">
-                      ❌ Não conectado
-                    </div>
-                  )}
-                </div>
-              </div>
+      {gamesLoading && gamesToRender.length === 0 ? (
+        <LoadingComponent
+          text="Carregando jogos..."
+          showText
+          className="min-h-[140px]"
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {gamesToRender.map((game) => {
+            const steamGame = isSteamGame(game);
+            const steamConnected = steamStatus?.connected ?? false;
+            const steamAvatarSrc = steamConnected ? steamStatus?.avatar ?? null : null;
 
-              {game.id === "valorant" ? (
-                <div className="grid grid-cols-2 gap-3 text-center">
-                  <div className="p-2 bg-card/50 rounded">
-                    <div className="font-semibold text-neon-blue">Diamond 2</div>
-                    <div className="text-xs text-muted-foreground">Rank Atual</div>
+            const fallbackIconSrc = game.icon ?? game.image ?? null;
+            const gameIconSrc = steamGame
+              ? steamAvatarSrc ?? fallbackIconSrc
+              : fallbackIconSrc;
+            const gameIconUrl = resolveMediaUrl(gameIconSrc);
+
+            return (
+              <Card
+                key={game.id}
+                className="hover:shadow-card transition-all duration-200"
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4 mb-4">
+                    {gameIconUrl ? (
+                      <img
+                        src={gameIconUrl}
+                        alt={game.name}
+                        className="w-12 h-12 rounded object-cover"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded bg-card/50" />
+                    )}
+
+                    <div className="flex-1 space-y-2">
+                      <HoverCard>
+                        <HoverCardTrigger asChild>
+                          <h4 className="font-semibold cursor-help">
+                            {game.name}
+                          </h4>
+                        </HoverCardTrigger>
+                        <HoverCardContent>
+                          <GameHoverCardContent
+                            title={game.name}
+                            description={game.description}
+                            cover={game.image}
+                            logo={game.icon}
+                          />
+                          {game.acronym ? (
+                            <div className="mt-3 text-xs text-muted-foreground text-center w-full">
+                              {game.acronym}
+                            </div>
+                          ) : null}
+                        </HoverCardContent>
+                      </HoverCard>
+
+                      {game.company?.name ? (
+                        <HoverCard>
+                          <HoverCardTrigger asChild>
+                            <div className="text-sm text-muted-foreground cursor-help hover:underline">
+                              {game.company.name}
+                            </div>
+                          </HoverCardTrigger>
+                          <HoverCardContent>
+                            <GameHoverCardContent
+                              title={game.company.name}
+                              description={game.company.description}
+                              cover={game.company.banner}
+                              logo={game.company.logo}
+                            />
+                          </HoverCardContent>
+                        </HoverCard>
+                      ) : null}
+
+                      {steamGame ? (
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          <div>
+                            {steamStatusLoading
+                              ? "Carregando..."
+                              : steamConnected
+                                ? "✅ Conectado"
+                                : "❌ Não conectado"}
+                          </div>
+
+                          {steamConnected ? (
+                            <>
+                              {steamStatus?.steam_profile_public === false ? (
+                                <div className="text-xs">Perfil Privado</div>
+                              ) : (
+                                <div>Nick: {steamStatus?.nickname ?? "-"}</div>
+                              )}
+                            </>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-muted-foreground">Em breve</div>
+                      )}
+                    </div>
                   </div>
-                  <div className="p-2 bg-card/50 rounded">
-                    <div className="font-semibold text-neon-green">1,247</div>
-                    <div className="text-xs text-muted-foreground">RR</div>
-                  </div>
-                </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  className="w-full hover:bg-gradient-primary hover:text-white hover:border-transparent transition-all duration-200"
-                >
-                  Conectar Conta
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+
+                  {steamGame && isOwner ? (
+                    steamStatusLoading ? (
+                      <div className="w-full text-center text-sm text-muted-foreground">
+                        Carregando...
+                      </div>
+                    ) : steamConnected ? (
+                      <Button
+                        variant="outline"
+                        className="w-full hover:bg-gradient-primary hover:text-white hover:border-transparent transition-all duration-200"
+                        onClick={handleDisconnectSteam}
+                      >
+                        Desassociar Steam
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        className="w-full hover:bg-gradient-primary hover:text-white hover:border-transparent transition-all duration-200"
+                        onClick={handleConnectSteam}
+                      >
+                        Conectar conta
+                      </Button>
+                    )
+                  ) : null}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
+}
+
+function setGamesStateFromPromise(
+  promise: Promise<GameDetails[]>,
+  setGames: (value: GameDetails[] | null) => void
+) {
+  promise.then(setGames).catch(() => setGames(null));
+}
+
+function setSteamStateFromPromise(
+  promise: Promise<SteamStatusResponse | null>,
+  setSteam: (value: SteamStatusResponse | null) => void
+) {
+  promise.then((data) => setSteam(data)).catch(() => setSteam(null));
 }

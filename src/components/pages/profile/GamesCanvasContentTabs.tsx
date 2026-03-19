@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { getProfileByUsernameProps } from "@/services/getProfileByUsername";
 import { ApiResponseComments } from "@/context/CommentsContext";
@@ -34,6 +34,7 @@ import { getProfileMilestonesClient } from "@/services/getProfileMilestones";
 import { createMilestone, updateMilestone } from "@/actions/milestones";
 import { deleteMilestone } from "@/services/deleteMilestone";
 import { deletePostFile } from "@/services/cloudinary_requests/deletePostFile";
+import { usePathname, useSearchParams } from "next/navigation";
 
 interface GamesCanvasContentTabsProps {
   profile: getProfileByUsernameProps | null;
@@ -47,11 +48,45 @@ export function GamesCanvasContentTabs({
   onProfileUpdated,
 }: GamesCanvasContentTabsProps) {
   const { user } = useAuthContext();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const postsContext = useProfilePostsContext();
   const { removePost, getPostById } = postsContext;
   const isOwner = !!user && !!profile && user.username === profile.username;
 
-  const [activeTab, setActiveTab] = useState("bio");
+  const tabIdToSlug: Record<string, string> = {
+    bio: "bio",
+    media: "midias",
+    posts: "textos",
+    "game-stats": "estatisticas",
+    milestones: "marcos",
+    achievements: "conquistas",
+    games: "biblioteca",
+  };
+
+  const slugToTabId: Record<string, string> = Object.fromEntries(
+    Object.entries(tabIdToSlug).map(([k, v]) => [v, k])
+  );
+
+  const normalizeSlug = (value: string) =>
+    value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+
+  const getTabFromPathname = () => {
+    const parts = pathname.split("/").filter(Boolean);
+    // /profile
+    if (parts.length === 1 && parts[0] === "profile") return "bio";
+    // /profile/<tab>
+    if (parts.length === 2 && parts[0] === "profile") {
+      return slugToTabId[normalizeSlug(parts[1])] ?? "bio";
+    }
+    // /profile/<username>/<tab>
+    if (parts.length === 3 && parts[0] === "profile") {
+      return slugToTabId[normalizeSlug(parts[2])] ?? "bio";
+    }
+    return "bio";
+  };
+
+  const [activeTab, setActiveTab] = useState(() => getTabFromPathname());
   const [selectedGame, setSelectedGame] = useState("");
   const [comments, setComments] = useState<any[]>(initialComments.data ?? []);
   const [nextPage, setNextPage] = useState<string | null>(
@@ -93,6 +128,33 @@ export function GamesCanvasContentTabs({
     );
     setUserHasCommented(hasComment);
   }, [user?.username, comments]);
+
+  // Sincroniza a aba com a URL (para permitir acesso direto /profile/<tab>).
+  useEffect(() => {
+    setActiveTab(getTabFromPathname());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  // Mostra toaster quando o backend redireciona com erro (apenas uma vez por carga).
+  const didToastSteamErrorRef = useRef(false);
+  useEffect(() => {
+    const steamError = searchParams?.get("steam_error");
+    if (!steamError) return;
+    if (didToastSteamErrorRef.current) return;
+
+    didToastSteamErrorRef.current = true;
+    if (steamError === "steam_already_associated") {
+      CustomToast.error("Essa conta Steam já está associada a outra conta.", {
+        duration: CustomToastProps.defaultDuration,
+      });
+      return;
+    }
+
+    CustomToast.error("Falha ao conectar Steam.", {
+      description: `Erro: ${steamError}`,
+      duration: CustomToastProps.defaultDuration,
+    });
+  }, [searchParams]);
 
   useEffect(() => {
     if (!profile?.id) {
@@ -408,7 +470,32 @@ export function GamesCanvasContentTabs({
     <>
       <CustomToaster />
       <div className="flex-1">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs
+          value={activeTab}
+          onValueChange={(nextValue) => {
+            if (nextValue === activeTab) return;
+            setActiveTab(nextValue);
+            if (!profile) return;
+            const basePath = isOwner
+              ? "/profile"
+              : `/profile/${profile.username}`;
+            const desiredPath =
+              nextValue === "bio"
+                ? basePath
+                : `${basePath}/${tabIdToSlug[nextValue] ?? "bio"}`;
+
+            // Não navega de verdade: apenas troca a URL para evitar reload/piscar.
+            if (typeof window !== "undefined" && pathname !== desiredPath) {
+              const currentSearch = window.location.search ?? "";
+              window.history.replaceState(
+                null,
+                "",
+                desiredPath + (currentSearch ? currentSearch : "")
+              );
+            }
+          }}
+          className="w-full"
+        >
           <TabsList className="flex flex-wrap justify-center lg:justify-start gap-1 bg-card border border-border p-1 mb-6 h-auto overflow-visible">
             {tabsData.map((tab) => (
               <TabsTrigger
@@ -506,7 +593,7 @@ export function GamesCanvasContentTabs({
             </TabsContent>
 
             <TabsContent value="games" className="p-6">
-              <GamesLibraryTab />
+              <GamesLibraryTab profile={profile} isOwner={isOwner} />
             </TabsContent>
           </div>
         </Tabs>

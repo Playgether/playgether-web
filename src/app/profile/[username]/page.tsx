@@ -29,9 +29,37 @@ export default async function Profile({ params }) {
     );
   }
 
+  // Suporta URLs de aba no formato `/profile/<tab>`.
+  // Como existe o route `/profile/[username]`, precisamos detectar quando
+  // o "username" é na verdade um slug de aba.
+  const tabSlugs = new Set([
+    "bio",
+    "midias",
+    "textos",
+    "estatisticas",
+    "marcos",
+    "conquistas",
+    "biblioteca",
+  ]);
+
+  const normalizedParam = String(username)
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
+
+  let usernameToFetch = username;
+  if (tabSlugs.has(normalizedParam)) {
+    try {
+      const { payload: pl } = await jwtVerify(token, secret);
+      usernameToFetch = (pl as any).username;
+    } catch {
+      usernameToFetch = username;
+    }
+  }
+
   const [profileResponse, commentsResponse] = await Promise.all([
-    getProfileByUsername(username), // GET /api/v1/profiles/username/
-    getCommentsServer(username, null, "profiles"), // GET /api/v1/profiles/username/comments/
+    getProfileByUsername(usernameToFetch), // GET /api/v1/profiles/username/
+    getCommentsServer(usernameToFetch, null, "profiles"), // GET /api/v1/profiles/username/comments/
   ]);
 
   const profile = profileResponse.data?.[0] || profileResponse.data;
