@@ -3,6 +3,7 @@ export interface PostCommentsApiReturn {
   previous: string;
   results: PostsCommentsProps[];
 }
+import { apiFetch } from "@/services/apiFetch";
 export interface PostsCommentsProps {
   answers: PostCommentsApiReturn;
   id: number;
@@ -42,7 +43,7 @@ export async function getCommentsClient(
   pageParam: string | null = null
 ) {
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       `/api/comments/${id}?cursor=${pageParam || ""}`
     );
 

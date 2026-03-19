@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { api } from "@/services/api";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -16,29 +17,33 @@ export async function GET(request: Request) {
 
   // Encaminha o parâmetro `next` (se existir) para o backend,
   // para ele devolver o usuário na página correta em caso de sucesso/erro.
-  const url = new URL(`${baseUrl}/api/auth/steam/login/`);
-  if (next) url.searchParams.set("next", next);
-
-  const resp = await fetch(url.toString(), {
-    method: "GET",
+  const axiosResp = await api.get(`/api/auth/steam/login/`, {
+    params: next ? { next } : undefined,
     headers: { Authorization: `Bearer ${accessToken}` },
-    redirect: "manual",
-    cache: "no-store",
+    maxRedirects: 0,
+    validateStatus: () => true,
+    responseType: "text",
   });
 
   // Se a conta já estiver conectada, o backend retorna JSON (sem redirect).
-  const contentType = resp.headers.get("content-type") || "";
+  const contentType = axiosResp.headers?.["content-type"] || "";
   if (contentType.includes("application/json")) {
-    const json = await resp.json();
-    return NextResponse.json(json, { status: resp.status });
+    const json = (() => {
+      try {
+        return JSON.parse(axiosResp.data ?? "null");
+      } catch {
+        return { detail: axiosResp.data ?? "" };
+      }
+    })();
+    return NextResponse.json(json, { status: axiosResp.status });
   }
 
-  const location = resp.headers.get("location");
+  const location = axiosResp.headers?.["location"];
   if (!location) {
-    const text = await resp.text();
+    const text = axiosResp.data ?? "";
     try {
       const json = JSON.parse(text);
-      return NextResponse.json(json, { status: resp.status });
+      return NextResponse.json(json, { status: axiosResp.status });
     } catch {
       return NextResponse.json(
         { detail: text || "Missing redirect" },
@@ -52,16 +57,13 @@ export async function GET(request: Request) {
 
   // Encaminha cookie(s) de sessão do Django para o browser.
   // Isso garante que o social-auth associe no usuário correto (logado via JWT).
-  const setCookies =
-    // Node/undici costuma expor getSetCookie()
-    (resp.headers as any).getSetCookie?.() ??
-    (resp.headers.get("set-cookie") ? [resp.headers.get("set-cookie")] : []);
-
-  if (setCookies && setCookies.length > 0) {
-    for (const cookie of setCookies) {
-      nextResp.headers.append("set-cookie", cookie);
-    }
-  }
+  const setCookiesHeader = axiosResp.headers?.["set-cookie"];
+  const setCookies = Array.isArray(setCookiesHeader)
+    ? setCookiesHeader
+    : setCookiesHeader
+      ? [setCookiesHeader]
+      : [];
+  for (const cookie of setCookies) nextResp.headers.append("set-cookie", cookie);
 
   return nextResp;
 }

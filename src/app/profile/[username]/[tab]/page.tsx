@@ -15,8 +15,12 @@ export interface Props {
   params?: { username: string; tab: string };
 }
 
-export default async function ProfileWithTab({ params }: { params: Props["params"] }) {
-  const username = params?.username;
+export default async function ProfileWithTab({
+  params,
+}: {
+  params: Promise<{ username: string; tab: string }>;
+}) {
+  const { username } = await params;
   if (!username) {
     return (
       <BaseLayout>

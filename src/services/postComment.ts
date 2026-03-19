@@ -4,9 +4,11 @@ export interface commentProps {
   object_id: number;
 }
 
+import { apiFetch } from "@/services/apiFetch";
+
 export const postComment = async (data: commentProps) => {
   try {
-    const response = await fetch("/api/comments", {
+    const response = await apiFetch("/api/comments", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

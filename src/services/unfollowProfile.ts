@@ -1,6 +1,8 @@
+import { apiFetch } from "@/services/apiFetch";
+
 export const unfollowProfile = async (pk: string | number) => {
   try {
-    const response = await fetch(`/api/profiles/${pk}/unfollow`, {
+    const response = await apiFetch(`/api/profiles/${pk}/unfollow`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",

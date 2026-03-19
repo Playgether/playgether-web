@@ -1,6 +1,8 @@
+import { apiFetch } from "@/services/apiFetch";
+
 export const deleteLike = async (object_id: number, content_type: string) => {
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       `/api/likes/?content_type=${content_type}&object_id=${object_id}`,
       {
         method: "DELETE",

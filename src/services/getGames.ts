@@ -1,3 +1,5 @@
+import { apiFetch } from "@/services/apiFetch";
+
 export type CompanyDetails = {
   id: number;
   name: string;
@@ -26,7 +28,7 @@ export async function getGames(): Promise<GameDetails[]> {
   if (gamesCache) return gamesCache;
   if (gamesPromise) return gamesPromise;
 
-  const resp = await fetch("/api/games/list/", { method: "GET" });
+  const resp = await apiFetch("/api/games/list/", { method: "GET" });
   if (!resp.ok) {
     const text = await resp.text();
     throw new Error(text || "Failed to fetch games");

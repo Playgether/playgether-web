@@ -7,7 +7,7 @@ import { CreatePostProvider } from "./CreatePostContext";
 import { TermsProvider } from "./TermsContext";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { TermsAcceptanceModal } from "@/components/terms/TermsAcceptanceModal";
-import { FetchInterceptor } from "@/components/terms/FetchInterceptor";
+import { AxiosTermsInterceptor } from "@/components/terms/AxiosTermsInterceptor";
 
 export const AppProvider = ({ children } : { children: React.ReactNode }) => {
 
@@ -16,7 +16,7 @@ export const AppProvider = ({ children } : { children: React.ReactNode }) => {
     return (
     <AuthProvider>
         <TermsProvider>
-            <FetchInterceptor />
+            <AxiosTermsInterceptor />
             <TermsAcceptanceModal />
             <QueryClientProvider client={queryClient}>
                 <ProfileContextProvider>

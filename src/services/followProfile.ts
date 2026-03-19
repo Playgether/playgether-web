@@ -1,6 +1,8 @@
+import { apiFetch } from "@/services/apiFetch";
+
 export const followProfile = async (pk: string | number) => {
   try {
-    const response = await fetch(`/api/profiles/${pk}/follow`, {
+    const response = await apiFetch(`/api/profiles/${pk}/follow`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

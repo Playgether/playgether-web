@@ -5,9 +5,11 @@ export interface PatchProfilePayload {
   profile_banner?: string | null;
 }
 
+import { apiFetch } from "@/services/apiFetch";
+
 export const patchProfile = async (pk: string | number, data: PatchProfilePayload) => {
   try {
-    const response = await fetch(`/api/profiles/${pk}`, {
+    const response = await apiFetch(`/api/profiles/${pk}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",

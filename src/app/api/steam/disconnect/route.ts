@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { api } from "@/services/api";
 
 export async function POST() {
   const accessToken = (await cookies()).get("accessToken")?.value;
@@ -12,13 +13,17 @@ export async function POST() {
     return NextResponse.json({ detail: "Missing baseUrl" }, { status: 500 });
   }
 
-  const resp = await fetch(`${baseUrl}/api/games/connections/steam/disconnect/`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${accessToken}` },
-    cache: "no-store",
-  });
+  const axiosResp = await api.post(
+    `/api/games/connections/steam/disconnect/`,
+    {},
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      validateStatus: () => true,
+      responseType: "text",
+    }
+  );
 
-  const text = await resp.text();
+  const text = axiosResp.data ?? "";
   const json = (() => {
     try {
       return JSON.parse(text);
@@ -27,6 +32,6 @@ export async function POST() {
     }
   })();
 
-  return NextResponse.json(json, { status: resp.status });
+  return NextResponse.json(json, { status: axiosResp.status });
 }
 

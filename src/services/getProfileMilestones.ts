@@ -1,3 +1,5 @@
+import { apiFetch } from "@/services/apiFetch";
+
 export interface ProfileMilestoneMedia {
   id: number;
   media_url: string;
@@ -29,11 +31,12 @@ export async function getProfileMilestonesClient(
   pageSize: number = 10
 ): Promise<ProfileMilestonesResponse> {
   try {
-    const url = new URL(`/api/profiles/${profilePk}/milestones`, window.location.origin);
-    url.searchParams.set("page_size", String(pageSize));
-    if (cursor) url.searchParams.set("cursor", cursor);
+    const params = new URLSearchParams();
+    params.set("page_size", String(pageSize));
+    if (cursor) params.set("cursor", cursor);
+    const url = `/api/profiles/${profilePk}/milestones?${params.toString()}`;
 
-    const response = await fetch(url.toString(), { credentials: "include" });
+    const response = await apiFetch(url, { credentials: "include" });
 
     if (!response.ok) {
       if (response.status === 401) return { data: [], next_page: null };

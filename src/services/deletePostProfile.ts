@@ -1,5 +1,6 @@
 import axios from "axios";
 import type { PostProps } from "@/app/feed/types/PostProps";
+import { apiFetch } from "@/services/apiFetch";
 
 async function deleteMediaFromCloudinary(
   publicId: string,
@@ -27,7 +28,7 @@ export async function deletePostProfile(
     }
   }
 
-  const response = await fetch(`/api/posts/${postId}`, {
+  const response = await apiFetch(`/api/posts/${postId}`, {
     method: "DELETE",
     credentials: "include",
   });

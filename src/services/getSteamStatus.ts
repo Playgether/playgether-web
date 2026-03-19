@@ -1,3 +1,5 @@
+import { apiFetch } from "@/services/apiFetch";
+
 export type SteamStatusResponse = {
   connected: boolean;
   nickname: string | null;
@@ -6,7 +8,7 @@ export type SteamStatusResponse = {
 };
 
 export async function getSteamStatus(profileId: number): Promise<SteamStatusResponse> {
-  const res = await fetch(`/api/steam/status/${profileId}`, { method: "GET" });
+  const res = await apiFetch(`/api/steam/status/${profileId}`, { method: "GET" });
   if (!res.ok) {
     throw new Error("Failed to fetch Steam status");
   }

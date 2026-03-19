@@ -1,4 +1,5 @@
 import type { PostProps } from "@/app/feed/types/PostProps";
+import { apiFetch } from "@/services/apiFetch";
 
 export interface ProfilePostsResponse {
   data: PostProps[];
@@ -20,19 +21,17 @@ export async function getProfilePostsClient(
   filters?: ProfilePostsFilters
 ): Promise<ProfilePostsResponse> {
   try {
-    const url = new URL("/api/profile-posts", window.location.origin);
-    url.searchParams.set("username", username);
-    url.searchParams.set("has_post_media", String(hasPostMedia));
-    url.searchParams.set("page_size", String(pageSize));
-    if (cursor) url.searchParams.set("cursor", cursor);
-    if (filters?.search?.trim())
-      url.searchParams.set("search", filters.search.trim());
-    if (filters?.timestampStart)
-      url.searchParams.set("timestamp_start", filters.timestampStart);
-    if (filters?.timestampEnd)
-      url.searchParams.set("timestamp_end", filters.timestampEnd);
+    const params = new URLSearchParams();
+    params.set("username", username);
+    params.set("has_post_media", String(hasPostMedia));
+    params.set("page_size", String(pageSize));
+    if (cursor) params.set("cursor", cursor);
+    if (filters?.search?.trim()) params.set("search", filters.search.trim());
+    if (filters?.timestampStart) params.set("timestamp_start", filters.timestampStart);
+    if (filters?.timestampEnd) params.set("timestamp_end", filters.timestampEnd);
 
-    const response = await fetch(url.toString(), { credentials: "include" });
+    const url = `/api/profile-posts?${params.toString()}`;
+    const response = await apiFetch(url, { credentials: "include" });
 
     if (!response.ok) throw new Error("Request failed");
     return await response.json();

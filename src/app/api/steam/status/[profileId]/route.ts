@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { api } from "@/services/api";
 
 export async function GET(
   _request: Request,
@@ -17,16 +18,17 @@ export async function GET(
     return NextResponse.json({ detail: "Missing baseUrl" }, { status: 500 });
   }
 
-  const resp = await fetch(
-    `${baseUrl}/api/games/profiles/steam/status/${profileId}/`,
+  const axiosResp = await api.get(
+    `/api/games/profiles/steam/status/${profileId}/`,
     {
-    method: "GET",
-    headers: { Authorization: `Bearer ${accessToken}` },
-    cache: "no-store",
+      headers: { Authorization: `Bearer ${accessToken}` },
+      validateStatus: () => true,
+      responseType: "text",
+      // cache: no-store (server-side). axios doesn't cache by default.
     }
   );
 
-  const text = await resp.text();
+  const text = axiosResp.data ?? "";
   const json = (() => {
     try {
       return JSON.parse(text);
@@ -37,6 +39,6 @@ export async function GET(
 
   // Esperado: { platforms: { steam: { connected, nickname, avatar, steam_profile_public } } }
   const steam = json?.platforms?.steam ?? json;
-  return NextResponse.json(steam, { status: resp.status });
+  return NextResponse.json(steam, { status: axiosResp.status });
 }
 

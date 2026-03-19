@@ -16,6 +16,8 @@ import {
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
 import { GameHoverCardContent } from "@/components/pages/profile/components/GameHoverCardContent";
+import { CheckCircle2, XCircle } from "lucide-react";
+import { usePathname, useSearchParams } from "next/navigation";
 
 let gamesCache: GameDetails[] | null = null;
 let gamesPromise: Promise<GameDetails[]> | null = null;
@@ -54,6 +56,8 @@ export function GamesLibraryTab({
   profile: getProfileByUsernameProps | null;
   isOwner: boolean;
 }) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [steamStatus, setSteamStatus] = useState<SteamStatusResponse | null>(null);
   const [steamStatusLoading, setSteamStatusLoading] = useState(false);
   const [games, setGames] = useState<GameDetails[] | null>(null);
@@ -123,7 +127,8 @@ export function GamesLibraryTab({
   }, [profile?.id]);
 
   const handleConnectSteam = async () => {
-    const next = `${window.location.pathname}${window.location.search}`;
+    const currentSearch = searchParams?.toString() ?? "";
+    const next = `${pathname}${currentSearch ? `?${currentSearch}` : ""}`;
     window.location.href = `/api/auth/steam/login/?next=${encodeURIComponent(
       next
     )}`;
@@ -241,8 +246,18 @@ export function GamesLibraryTab({
                             {steamStatusLoading
                               ? "Carregando..."
                               : steamConnected
-                                ? "✅ Conectado"
-                                : "❌ Não conectado"}
+                                ? (
+                                    <span className="inline-flex items-center gap-2">
+                                      <CheckCircle2 className="w-4 h-4 text-neon-green" />
+                                      Conectado
+                                    </span>
+                                  )
+                                : (
+                                    <span className="inline-flex items-center gap-2">
+                                      <XCircle className="w-4 h-4 text-destructive" />
+                                      Não conectado
+                                    </span>
+                                  )}
                           </div>
 
                           {steamConnected ? (

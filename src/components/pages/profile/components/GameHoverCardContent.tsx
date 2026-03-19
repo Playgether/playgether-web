@@ -29,15 +29,17 @@ export function GameHoverCardContent({
 
   return (
     <div className="space-y-3 text-left max-h-64 overflow-y-auto pr-1">
-      {hasCover ? (
+      {/* {hasCover ? (
         <img
           src={coverUrl}
           alt={`${title} cover`}
           className="w-full h-24 object-contain rounded-md bg-card/50"
         />
       ) : (
-        <div className="w-full h-24 rounded-md bg-card/50 border border-border" />
-      )}
+        <div className="w-full h-24 rounded-md bg-card/50 border border-border">
+          <p>No Banner</p>
+        </div>
+      )} */}
 
       <div className="flex items-start gap-3">
         {hasLogo ? (
@@ -53,13 +55,10 @@ export function GameHoverCardContent({
         <div className="min-w-0">
           <div className="font-semibold truncate">{title}</div>
           {description ? (
-            <p className="text-sm text-muted-foreground">
-              {description}
-            </p>
+            <p className="text-sm text-muted-foreground">{description}</p>
           ) : null}
         </div>
       </div>
     </div>
   );
 }
-

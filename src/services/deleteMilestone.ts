@@ -1,5 +1,7 @@
+import { apiFetch } from "@/services/apiFetch";
+
 export async function deleteMilestone(milestoneId: number): Promise<void> {
-  const response = await fetch(`/api/milestones/${milestoneId}`, {
+  const response = await apiFetch(`/api/milestones/${milestoneId}`, {
     method: "DELETE",
     credentials: "include",
   });

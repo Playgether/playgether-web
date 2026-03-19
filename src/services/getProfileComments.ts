@@ -1,4 +1,5 @@
 import { PostsCommentsProps } from "./getComments";
+import { apiFetch } from "@/services/apiFetch";
 
 export interface ProfileCommentsResponse {
   data: PostsCommentsProps[];
@@ -11,10 +12,8 @@ export async function getProfileCommentsClient(
   cursor: string | null = null
 ): Promise<ProfileCommentsResponse> {
   try {
-    const url = new URL(`/api/profiles/${profilePk}/comments`, window.location.origin);
-    if (cursor) url.searchParams.set("cursor", cursor);
-
-    const response = await fetch(url.toString(), { credentials: "include" });
+    const url = `/api/profiles/${profilePk}/comments${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`;
+    const response = await apiFetch(url, { credentials: "include" });
 
     if (!response.ok) throw new Error("Request failed");
     return await response.json();

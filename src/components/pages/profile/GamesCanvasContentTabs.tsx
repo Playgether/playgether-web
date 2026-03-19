@@ -142,9 +142,37 @@ export function GamesCanvasContentTabs({
     if (!steamError) return;
     if (didToastSteamErrorRef.current) return;
 
+    const getCookie = (name: string) => {
+      if (typeof document === "undefined") return null;
+      const raw = document.cookie ?? "";
+      if (!raw) return null;
+      // parsing simples (sem RegExp) para evitar problemas de escape no build
+      const parts = raw.split("; ").map((p) => p.trim());
+      for (const part of parts) {
+        const [k, ...rest] = part.split("=");
+        if (k === name) return decodeURIComponent(rest.join("="));
+      }
+      return null;
+    };
+
+    // Proteção contra o usuário digitar manualmente `?steam_error=...`.
+    // O backend seta um cookie efêmero quando o erro realmente aconteceu.
+    const toastCookie = getCookie("steam_error_toast");
+    if (!toastCookie || toastCookie !== steamError) return;
+
+    // Limpa para garantir idempotência (mesmo se a página re-renderizar).
+    document.cookie = "steam_error_toast=; Max-Age=0; path=/";
+
     didToastSteamErrorRef.current = true;
     if (steamError === "steam_already_associated") {
       CustomToast.error("Essa conta Steam já está associada a outra conta.", {
+        duration: CustomToastProps.defaultDuration,
+      });
+      return;
+    }
+
+    if (steamError === "steam_rate_limited") {
+      CustomToast.error("Muitas tentativas. Aguarde alguns segundos e tente novamente.", {
         duration: CustomToastProps.defaultDuration,
       });
       return;
@@ -484,14 +512,12 @@ export function GamesCanvasContentTabs({
                 ? basePath
                 : `${basePath}/${tabIdToSlug[nextValue] ?? "bio"}`;
 
-            // Não navega de verdade: apenas troca a URL para evitar reload/piscar.
+            // Atualiza SOMENTE o texto da URL (sem navegação do Next),
+            // para evitar disparar o `loading.tsx` ao trocar de aba.
             if (typeof window !== "undefined" && pathname !== desiredPath) {
-              const currentSearch = window.location.search ?? "";
-              window.history.replaceState(
-                null,
-                "",
-                desiredPath + (currentSearch ? currentSearch : "")
-              );
+              const currentSearch = searchParams?.toString() ?? "";
+              const nextUrl = desiredPath + (currentSearch ? `?${currentSearch}` : "");
+              window.history.replaceState(null, "", nextUrl);
             }
           }}
           className="w-full"
