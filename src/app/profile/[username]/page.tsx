@@ -6,6 +6,7 @@ import NotFoundPages from "@/components/elements/NotFound/NotFoundPages";
 import { getProfileByUsername } from "@/services/getProfileByUsername";
 import GamesCanvasProfile from "@/components/pages/profile/GamesCanvasProfile";
 import { getCommentsServer } from "@/services/getCommentsServer";
+import { notFound } from "next/navigation";
 export const metadata: Metadata = {
   title: "Playgether - Profile",
   description: "Find people to chat with",
@@ -57,24 +58,23 @@ export default async function Profile({ params }) {
     }
   }
 
-  const [profileResponse, commentsResponse] = await Promise.all([
-    getProfileByUsername(usernameToFetch), // GET /api/v1/profiles/username/
-    getCommentsServer(usernameToFetch, null, "profiles"), // GET /api/v1/profiles/username/comments/
-  ]);
+  const profileResponse = await getProfileByUsername(usernameToFetch);
+  const profileData = profileResponse?.data;
+  const profile = Array.isArray(profileData) ? profileData[0] : profileData;
 
-  const profile = profileResponse.data?.[0] || profileResponse.data;
-  const initialComments = commentsResponse;
+  if (!profile) {
+    notFound();
+  }
+
+  const initialComments = await getCommentsServer(
+    usernameToFetch,
+    null,
+    "profiles",
+  );
 
   return (
     <BaseLayout>
-      {profile ? (
-        <GamesCanvasProfile
-          profile={profile}
-          initialComments={initialComments}
-        />
-      ) : (
-        <NotFoundPages message="Perfil não encontrado" />
-      )}
+      <GamesCanvasProfile profile={profile} initialComments={initialComments} />
     </BaseLayout>
   );
 }
