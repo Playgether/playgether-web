@@ -55,15 +55,31 @@ export async function GET(request: Request) {
   const redirectTo = location.startsWith("http") ? location : `${baseUrl}${location}`;
   const nextResp = NextResponse.redirect(redirectTo, 302);
 
-  // Encaminha cookie(s) de sessão do Django para o browser.
-  // Isso garante que o social-auth associe no usuário correto (logado via JWT).
+  let steamErrorInRedirect: string | null = null;
+  try {
+    const redirectUrl = new URL(redirectTo);
+    steamErrorInRedirect = redirectUrl.searchParams.get("steam_error");
+    if (steamErrorInRedirect) {
+      nextResp.cookies.set("steam_error_toast", steamErrorInRedirect, {
+        path: "/",
+        maxAge: 180,
+        sameSite: "lax",
+      });
+    }
+  } catch {
+    /* ignora */
+  }
+
   const setCookiesHeader = axiosResp.headers?.["set-cookie"];
   const setCookies = Array.isArray(setCookiesHeader)
     ? setCookiesHeader
     : setCookiesHeader
       ? [setCookiesHeader]
       : [];
-  for (const cookie of setCookies) nextResp.headers.append("set-cookie", cookie);
+  for (const cookie of setCookies) {
+    if (steamErrorInRedirect && String(cookie).toLowerCase().includes("steam_error_toast")) continue;
+    nextResp.headers.append("set-cookie", cookie);
+  }
 
   return nextResp;
 }

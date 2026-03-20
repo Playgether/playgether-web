@@ -15,7 +15,8 @@ import {
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
 import { GameHoverCardContent } from "@/components/pages/profile/components/GameHoverCardContent";
-import { getSteamStatus, type SteamStatusResponse } from "@/services/getSteamStatus";
+import { getStatsGames, type StatsGame } from "@/services/getStatsGames";
+import { getCs2Stats, type Cs2StatsResponse } from "@/services/getCs2Stats";
 
 function resolveMediaUrl(value: string | null | undefined): string {
   if (!value) return "";
@@ -24,21 +25,34 @@ function resolveMediaUrl(value: string | null | undefined): string {
   return getCloudinaryUrl(value);
 }
 
+const cs2StatsCacheByProfileId = new Map<number, Cs2StatsResponse | null>();
+const cs2StatsPromiseByProfileId = new Map<
+  number,
+  Promise<Cs2StatsResponse | null>
+>();
+
+const statsGamesCacheByProfileId = new Map<number, StatsGame[]>();
+const statsGamesPromiseByProfileId = new Map<number, Promise<StatsGame[]>>();
+
 interface GameStatsTabProps {
   profile: getProfileByUsernameProps | null;
   selectedGame: string;
   setSelectedGame: (game: string) => void;
+  isOwner?: boolean;
 }
 
 export function GameStatsTab({
   profile,
   selectedGame,
   setSelectedGame,
+  isOwner = false,
 }: GameStatsTabProps) {
   const [games, setGames] = useState<GameDetails[]>([]);
+  const [statsGames, setStatsGames] = useState<StatsGame[]>([]);
   const [loadingGames, setLoadingGames] = useState(false);
-  const [steamStatus, setSteamStatus] = useState<SteamStatusResponse | null>(null);
-  const [steamStatusLoading, setSteamStatusLoading] = useState(false);
+  const [loadingStatsGames, setLoadingStatsGames] = useState(false);
+  const [cs2Stats, setCs2Stats] = useState<Cs2StatsResponse | null>(null);
+  const [cs2StatsLoading, setCs2StatsLoading] = useState(false);
 
   const toKnownSlug = (game: GameDetails): "valorant" | "lol" | "csgo" | null => {
     const acronym = (game.acronym ?? "").toLowerCase();
@@ -51,31 +65,90 @@ export function GameStatsTab({
     return null;
   };
 
+  const availableSlugs = new Set(statsGames.map((g) => g.slug));
+
   useEffect(() => {
     setLoadingGames(true);
     getGames()
-      .then((data) => {
-        setGames(data);
-      })
+      .then((data) => setGames(data))
       .catch(() => setGames([]))
       .finally(() => setLoadingGames(false));
   }, []);
 
   useEffect(() => {
-    // Só precisamos da Steam status quando o usuário vai ver estatísticas do CS.
-    if (!profile?.id) return;
-    if (selectedGame !== "csgo") return;
+    if (!profile?.id) {
+      setStatsGames([]);
+      return;
+    }
+    const profileId = profile.id;
+    const cached = statsGamesCacheByProfileId.get(profileId);
+    if (cached !== undefined) {
+      setStatsGames(cached);
+      return;
+    }
+    const existingPromise = statsGamesPromiseByProfileId.get(profileId);
+    if (existingPromise) {
+      existingPromise.then(setStatsGames).catch(() => setStatsGames([]));
+      return;
+    }
+    setLoadingStatsGames(true);
+    const p = getStatsGames(profileId)
+      .then((data) => {
+        statsGamesCacheByProfileId.set(profileId, data.games);
+        return data.games;
+      })
+      .catch(() => {
+        statsGamesCacheByProfileId.set(profileId, []);
+        return [] as StatsGame[];
+      })
+      .finally(() => {
+        statsGamesPromiseByProfileId.delete(profileId);
+        setLoadingStatsGames(false);
+      });
+    statsGamesPromiseByProfileId.set(profileId, p);
+    p.then(setStatsGames).catch(() => setStatsGames([]));
+  }, [profile?.id]);
 
-    setSteamStatusLoading(true);
-    getSteamStatus(profile.id)
-      .then((data) => setSteamStatus(data))
-      .catch(() => setSteamStatus(null))
-      .finally(() => setSteamStatusLoading(false));
+  useEffect(() => {
+    if (!profile?.id || selectedGame !== "csgo") {
+      setCs2Stats(null);
+      return;
+    }
+    const profileId = profile.id;
+    const cached = cs2StatsCacheByProfileId.get(profileId);
+    if (cached !== undefined) {
+      setCs2Stats(cached);
+      return;
+    }
+    const existingPromise = cs2StatsPromiseByProfileId.get(profileId);
+    if (existingPromise) {
+      existingPromise.then(setCs2Stats).catch(() => setCs2Stats(null));
+      return;
+    }
+    setCs2StatsLoading(true);
+    const p = getCs2Stats(profileId)
+      .then((data) => {
+        cs2StatsCacheByProfileId.set(profileId, data);
+        return data;
+      })
+      .catch(() => {
+        cs2StatsCacheByProfileId.set(profileId, null);
+        return null;
+      })
+      .finally(() => {
+        cs2StatsPromiseByProfileId.delete(profileId);
+        setCs2StatsLoading(false);
+      });
+    cs2StatsPromiseByProfileId.set(profileId, p);
+    p.then(setCs2Stats).catch(() => setCs2Stats(null));
   }, [profile?.id, selectedGame]);
 
   const selectableGames = games
     .map((g) => ({ game: g, slug: toKnownSlug(g) }))
-    .filter((x): x is { game: GameDetails; slug: "valorant" | "lol" | "csgo" } => !!x.slug);
+    .filter((x): x is { game: GameDetails; slug: "lol" | "csgo" } => {
+      if (!x.slug) return false;
+      return (availableSlugs as Set<string>).has(x.slug);
+    });
 
   return (
     <div className="space-y-6">
@@ -84,12 +157,23 @@ export function GameStatsTab({
           <h2 className="text-2xl font-bold text-card-foreground">
             Escolha um jogo para ver as estatísticas
           </h2>
-          {loadingGames ? (
+          <p className="text-sm text-muted-foreground">
+            {isOwner
+              ? "Apenas jogos em que você está conectado aparecem aqui"
+              : "Apenas jogos em que este usuário está conectado aparecem aqui"}
+          </p>
+          {loadingGames || loadingStatsGames ? (
             <LoadingComponent
               text="Carregando jogos..."
               showText
               className="min-h-[180px]"
             />
+          ) : selectableGames.length === 0 ? (
+            <div className="rounded-lg border border-border bg-card/50 p-6 text-muted-foreground">
+              {isOwner
+                ? "Nenhum jogo conectado. Conecte sua conta na aba Biblioteca para ver estatísticas."
+                : "Este usuário ainda não se conectou a nenhum jogo"}
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
               {selectableGames.map(({ game, slug }) => (
@@ -167,14 +251,14 @@ export function GameStatsTab({
             </h2>
           </div>
 
-          {selectedGame === "csgo" && steamStatusLoading ? (
+          {selectedGame === "csgo" && cs2StatsLoading ? (
             <LoadingComponent
-              text="Carregando status da Steam..."
+              text="Carregando estatísticas..."
               showText
               className="min-h-[140px]"
             />
-          ) : selectedGame === "csgo" && steamStatus ? (
-            steamStatus.steam_profile_public === false ? (
+          ) : selectedGame === "csgo" && cs2Stats ? (
+            cs2Stats.available === false && cs2Stats.steam_profile_public === false ? (
               <div className="rounded-lg border border-border bg-card/50 p-4 text-sm text-muted-foreground">
                 Perfil da Steam privado. Não é possível exibir estatísticas.
               </div>
@@ -182,6 +266,7 @@ export function GameStatsTab({
               <ProfileGameStatsSection
                 selectedGame="csgo"
                 profile={profile}
+                cs2Stats={cs2Stats}
               />
             )
           ) : (

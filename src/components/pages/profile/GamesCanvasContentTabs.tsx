@@ -34,7 +34,7 @@ import { getProfileMilestonesClient } from "@/services/getProfileMilestones";
 import { createMilestone, updateMilestone } from "@/actions/milestones";
 import { deleteMilestone } from "@/services/deleteMilestone";
 import { deletePostFile } from "@/services/cloudinary_requests/deletePostFile";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 
 interface GamesCanvasContentTabsProps {
   profile: getProfileByUsernameProps | null;
@@ -50,6 +50,7 @@ export function GamesCanvasContentTabs({
   const { user } = useAuthContext();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const postsContext = useProfilePostsContext();
   const { removePost, getPostById } = postsContext;
   const isOwner = !!user && !!profile && user.username === profile.username;
@@ -168,21 +169,25 @@ export function GamesCanvasContentTabs({
       CustomToast.error("Essa conta Steam já está associada a outra conta.", {
         duration: CustomToastProps.defaultDuration,
       });
-      return;
-    }
-
-    if (steamError === "steam_rate_limited") {
-      CustomToast.error("Muitas tentativas. Aguarde alguns segundos e tente novamente.", {
+    } else if (steamError === "steam_rate_limited") {
+      CustomToast.error(
+        "Muitas tentativas. Aguarde alguns minutos antes de tentar conectar a Steam novamente.",
+        {
+          duration: CustomToastProps.defaultDuration,
+        }
+      );
+    } else {
+      CustomToast.error("Falha ao conectar Steam.", {
+        description: `Erro: ${steamError}`,
         duration: CustomToastProps.defaultDuration,
       });
-      return;
     }
-
-    CustomToast.error("Falha ao conectar Steam.", {
-      description: `Erro: ${steamError}`,
-      duration: CustomToastProps.defaultDuration,
-    });
-  }, [searchParams]);
+    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    params.delete("steam_error");
+    const newSearch = params.toString();
+    const newUrl = newSearch ? `${pathname}?${newSearch}` : pathname;
+    router.replace(newUrl, { scroll: false });
+  }, [searchParams, pathname, router]);
 
   useEffect(() => {
     if (!profile?.id) {
@@ -560,6 +565,7 @@ export function GamesCanvasContentTabs({
                 profile={profile}
                 selectedGame={selectedGame}
                 setSelectedGame={setSelectedGame}
+                isOwner={isOwner}
               />
             </TabsContent>
 

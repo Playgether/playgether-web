@@ -32,6 +32,8 @@ import {
   TrendingUp,
 } from "lucide-react";
 import type { getProfileByUsernameProps } from "@/services/getProfileByUsername";
+import type { Cs2StatsResponse } from "@/services/getCs2Stats";
+import { Info } from "lucide-react";
 
 // ---- Types ----
 
@@ -113,10 +115,30 @@ interface Match {
 // ---- Mock Data ----
 
 const seasons: Season[] = [
-  { id: "s1", label: "EP08 - ACT3", startDate: "2025-01-15", endDate: "2025-03-15" },
-  { id: "s2", label: "EP08 - ACT2", startDate: "2024-11-20", endDate: "2025-01-14" },
-  { id: "s3", label: "EP08 - ACT1", startDate: "2024-10-01", endDate: "2024-11-19" },
-  { id: "s4", label: "EP07 - ACT3", startDate: "2024-08-15", endDate: "2024-09-30" },
+  {
+    id: "s1",
+    label: "EP08 - ACT3",
+    startDate: "2025-01-15",
+    endDate: "2025-03-15",
+  },
+  {
+    id: "s2",
+    label: "EP08 - ACT2",
+    startDate: "2024-11-20",
+    endDate: "2025-01-14",
+  },
+  {
+    id: "s3",
+    label: "EP08 - ACT1",
+    startDate: "2024-10-01",
+    endDate: "2024-11-19",
+  },
+  {
+    id: "s4",
+    label: "EP07 - ACT3",
+    startDate: "2024-08-15",
+    endDate: "2024-09-30",
+  },
 ];
 
 const fpsStatsS1: FpsStats = {
@@ -183,8 +205,18 @@ const fpsStatsS2: FpsStats = {
 const fpsStatsBySeason: Record<string, FpsStats> = {
   s1: fpsStatsS1,
   s2: fpsStatsS2,
-  s3: { ...fpsStatsS1, currentElo: "10,200", previousSeasonElo: "9,800", peakElo: "10,500" },
-  s4: { ...fpsStatsS1, currentElo: "9,800", previousSeasonElo: "9,200", peakElo: "10,100" },
+  s3: {
+    ...fpsStatsS1,
+    currentElo: "10,200",
+    previousSeasonElo: "9,800",
+    peakElo: "10,500",
+  },
+  s4: {
+    ...fpsStatsS1,
+    currentElo: "9,800",
+    previousSeasonElo: "9,200",
+    peakElo: "10,100",
+  },
 };
 
 const lolStatsS1: LolStats = {
@@ -222,7 +254,11 @@ const lolStatsBySeason: Record<string, LolStats> = {
   s4: { ...lolStatsS1, currentRank: "Gold 1", lp: 95 },
 };
 
-const generateMatches = (gameId: GameId, count: number, offset = 0): Match[] => {
+const generateMatches = (
+  gameId: GameId,
+  count: number,
+  offset = 0,
+): Match[] => {
   const maps =
     gameId === "csgo"
       ? ["Mirage", "Dust2", "Inferno", "Overpass", "Nuke", "Ancient"]
@@ -230,7 +266,15 @@ const generateMatches = (gameId: GameId, count: number, offset = 0): Match[] => 
         ? ["Ascent", "Bind", "Haven", "Split", "Icebox"]
         : ["Summoner's Rift"];
   const results: ("win" | "loss")[] = ["win", "loss"];
-  const dates = ["2h atrás", "5h atrás", "1d atrás", "2d atrás", "3d atrás", "5d atrás", "1 sem atrás"];
+  const dates = [
+    "2h atrás",
+    "5h atrás",
+    "1d atrás",
+    "2d atrás",
+    "3d atrás",
+    "5d atrás",
+    "1 sem atrás",
+  ];
 
   return Array.from({ length: count }, (_, i) => {
     const idx = offset + i;
@@ -255,8 +299,8 @@ const generateMatches = (gameId: GameId, count: number, offset = 0): Match[] => 
         headshotPct: gameId !== "lol" ? 55 + (idx % 25) : undefined,
         adr: gameId !== "lol" ? 75 + idx * 2 : undefined,
         acs: gameId === "valorant" ? 180 + idx * 3 : undefined,
-        firstBloods: gameId !== "lol" ? (idx % 3) : undefined,
-        mvps: gameId !== "lol" ? (idx % 2) : undefined,
+        firstBloods: gameId !== "lol" ? idx % 3 : undefined,
+        mvps: gameId !== "lol" ? idx % 2 : undefined,
         damage: gameId === "lol" ? 18000 + idx * 200 : undefined,
         cs: gameId === "lol" ? 150 + idx * 10 : undefined,
         vision: gameId === "lol" ? 25 + (idx % 15) : undefined,
@@ -271,11 +315,13 @@ const generateMatches = (gameId: GameId, count: number, offset = 0): Match[] => 
 interface ProfileGameStatsSectionProps {
   selectedGame: GameId;
   profile: getProfileByUsernameProps | null;
+  cs2Stats?: Cs2StatsResponse | null;
 }
 
 export function ProfileGameStatsSection({
   selectedGame,
   profile,
+  cs2Stats,
 }: ProfileGameStatsSectionProps) {
   const [statsTab, setStatsTab] = useState("overview");
   const [season, setSeason] = useState("s1");
@@ -297,13 +343,13 @@ export function ProfileGameStatsSection({
       : profile?.name || "Player";
   const profileAvatar = profile?.profile_photo || "/profile/perfil.jpg";
 
+  const useRealCs2Stats =
+    selectedGame === "csgo" && cs2Stats?.available && cs2Stats?.stats;
   const fpsStats = fpsStatsBySeason[season] ?? fpsStatsBySeason["s1"];
   const lolStats = lolStatsBySeason[season] ?? lolStatsBySeason["s1"];
 
   const allMatches = generateMatches(selectedGame, matchesLoaded);
-  const matchesToShow = competitiveOnly
-    ? allMatches
-    : allMatches; // No filtro real, só UI
+  const matchesToShow = competitiveOnly ? allMatches : allMatches; // No filtro real, só UI
 
   const handleLoadMore = () => {
     setLoadingMore(true);
@@ -328,69 +374,88 @@ export function ProfileGameStatsSection({
             {profileNick}
           </h3>
           <p className="text-sm text-muted-foreground">
-            {selectedGame === "csgo" ? "Steam" : selectedGame === "valorant" ? "Riot ID" : "Summoner"}
+            {selectedGame === "csgo"
+              ? "Steam"
+              : selectedGame === "valorant"
+                ? "Riot ID"
+                : "Summoner"}
             {" · "}
             {displayName}
           </p>
         </div>
       </div>
 
-      {/* Filters row */}
-      <div className="flex flex-wrap items-center gap-3">
-        <Select value={season} onValueChange={setSeason}>
-          <SelectTrigger className="w-[180px] bg-card border-border">
-            <SelectValue placeholder="Temporada" />
-          </SelectTrigger>
-          <SelectContent>
-            {seasons.map((s) => (
-              <SelectItem key={s.id} value={s.id}>
-                {s.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button
-          variant={competitiveOnly ? "default" : "outline"}
-          size="sm"
-          onClick={() => setCompetitiveOnly(!competitiveOnly)}
-          className={
-            competitiveOnly
-              ? "bg-gradient-primary text-white border-0"
-              : "border-border"
-          }
-        >
-          Competitivo
-        </Button>
-        {!competitiveOnly && (
+      {/* Filters row - hide for CS2 (no seasons in Steam API) */}
+      {!useRealCs2Stats && (
+        <div className="flex flex-wrap items-center gap-3">
+          <Select value={season} onValueChange={setSeason}>
+            <SelectTrigger className="w-[180px] bg-card border-border">
+              <SelectValue placeholder="Temporada" />
+            </SelectTrigger>
+            <SelectContent>
+              {seasons.map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button
-            variant="outline"
+            variant={competitiveOnly ? "default" : "outline"}
             size="sm"
-            className="border-border"
-            onClick={() => setCompetitiveOnly(true)}
+            onClick={() => setCompetitiveOnly(!competitiveOnly)}
+            className={
+              competitiveOnly
+                ? "bg-gradient-primary text-white border-0"
+                : "border-border"
+            }
           >
-            Todos
+            Competitivo
           </Button>
-        )}
-      </div>
+          {!competitiveOnly && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-border"
+              onClick={() => setCompetitiveOnly(true)}
+            >
+              Todos
+            </Button>
+          )}
+        </div>
+      )}
+
+      {useRealCs2Stats && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2 w-fit">
+          <Info className="h-3.5 w-3.5 shrink-0" />
+          <span>Estatísticas atualizadas a cada 30 minutos</span>
+        </div>
+      )}
 
       <Tabs value={statsTab} onValueChange={setStatsTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-card border border-border">
+        <TabsList
+          className={`grid w-full bg-card border border-border ${useRealCs2Stats ? "grid-cols-1" : "grid-cols-2"}`}
+        >
           <TabsTrigger
             value="overview"
             className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white"
           >
             Overview
           </TabsTrigger>
-          <TabsTrigger
-            value="matches"
-            className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white"
-          >
-            Partidas
-          </TabsTrigger>
+          {!useRealCs2Stats && (
+            <TabsTrigger
+              value="matches"
+              className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white"
+            >
+              Partidas
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 mt-6">
-          {gameType === "fps" ? (
+          {useRealCs2Stats ? (
+            <Cs2Overview stats={cs2Stats.stats!} />
+          ) : gameType === "fps" ? (
             <FpsOverview stats={fpsStats} />
           ) : (
             <LolOverview stats={lolStats} />
@@ -408,6 +473,293 @@ export function ProfileGameStatsSection({
           />
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+// ---- CS2 Overview (real stats from Steam API) ----
+
+type Cs2StatsData = NonNullable<Cs2StatsResponse["stats"]>;
+
+function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        <StatCard
+          icon={<Target className="h-4 w-4" />}
+          label="K/D"
+          value={stats.kdFormatted}
+          accent="text-neon-green"
+        />
+        <StatCard
+          icon={<Crosshair className="h-4 w-4" />}
+          label="HS%"
+          value={`${stats.headshotPct}%`}
+          accent="text-neon-blue"
+        />
+        <StatCard
+          icon={<Trophy className="h-4 w-4" />}
+          label="Win Rate"
+          value={`${stats.winrate}%`}
+          accent="text-neon-purple"
+        />
+        <StatCard
+          icon={<Clock className="h-4 w-4" />}
+          label="Horas"
+          value={`${stats.totalHours}h`}
+          accent="text-neon-pink"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card className="bg-card/50 border-border">
+          <CardContent className="p-4">
+            <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
+              <Swords className="h-4 w-4" />
+              K/D e Precisão
+            </h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Kills</span>
+                <span className="font-medium">
+                  {stats.totalKills.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Mortes</span>
+                <span className="font-medium">
+                  {stats.totalDeaths.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Tiros disparados</span>
+                <span className="font-medium">
+                  {stats.totalShotsFired.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Tiros acertados</span>
+                <span className="font-medium">
+                  {stats.totalShotsHit.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Precisão</span>
+                <span className="font-medium">{stats.accuracy}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">
+                  Média de tiros por kill
+                </span>
+                <span className="font-medium">{stats.shotsPerKill}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/50 border-border">
+          <CardContent className="p-4">
+            <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
+              <Trophy className="h-4 w-4" />
+              Partidas e Rounds
+            </h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Partidas</span>
+                <span className="font-medium">
+                  {stats.totalMatchesPlayed.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Vitórias</span>
+                <span className="font-medium text-neon-green">
+                  {stats.totalMatchesWon.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Rounds</span>
+                <span className="font-medium">
+                  {stats.totalRoundsPlayed.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">MVPs</span>
+                <span className="font-medium">
+                  {stats.totalMvps.toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/50 border-border">
+          <CardContent className="p-4">
+            <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
+              <Crosshair className="h-4 w-4" />
+              Headshots
+            </h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Headshots totais</span>
+                <span className="font-medium">
+                  {stats.totalHeadshots.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">
+                  Percentual de headshot
+                </span>
+                <span className="font-medium">{stats.headshotPct}%</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/50 border-border">
+          <CardContent className="p-4">
+            <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              Bombas e Utilidade
+            </h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Plants</span>
+                <span className="font-medium">
+                  {stats.totalPlants.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Defuses</span>
+                <span className="font-medium">
+                  {stats.totalDefuses.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Kills faca</span>
+                <span className="font-medium">{stats.totalKillsKnife}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Kills granada</span>
+                <span className="font-medium">{stats.totalKillsHegrenade}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Kills molotov</span>
+                <span className="font-medium">{stats.totalKillsMolotov}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">
+                  Tiros de taser (Zeus)
+                </span>
+                <span className="font-medium">{stats.totalShotsTaser}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/50 border-border">
+          <CardContent className="p-4">
+            <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              CT vs T
+            </h4>
+            <div className="space-y-2 text-sm">
+              {(stats.ctWeaponKills ?? []).map((w) => (
+                <div key={w.name} className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    Kills com {w.name}
+                  </span>
+                  <span className="font-medium">
+                    {w.kills.toLocaleString()} kills ({w.pct}%)
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {stats.sniperStats && (
+          <Card className="bg-card/50 border-border">
+            <CardContent className="p-4">
+              <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
+                <Target className="h-4 w-4" />
+                Snipers
+              </h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Kills</span>
+                  <span className="font-medium">
+                    {stats.sniperStats.totalKills.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Percentual</span>
+                  <span className="font-medium">{stats.sniperStats.pct}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    Kills vs sniper zoomado
+                  </span>
+                  <span className="font-medium">
+                    {stats.sniperStats.killsVsZoomed?.toLocaleString() ?? 0}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {(stats.alternativeWeapons ?? []).length > 0 && (
+        <Card className="bg-card/50 border-border">
+          <CardContent className="p-4">
+            <h4 className="font-semibold text-sm text-muted-foreground mb-3">
+              Armas alternativas favoritas
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {stats.alternativeWeapons.map((w) => (
+                <Badge
+                  key={w.name}
+                  variant="secondary"
+                  className="border border-border py-1.5 px-2 gap-1"
+                >
+                  <span className="font-medium">{w.name}</span>
+                  <span className="text-muted-foreground">
+                    {w.kills.toLocaleString()} kills ({w.pct}%)
+                  </span>
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {stats.mapWinRates.length > 0 && (
+        <Card className="bg-card/50 border-border">
+          <CardContent className="p-4">
+            <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
+              <Map className="h-4 w-4" />
+              Vitórias por mapa
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {stats.mapWinRates.map((m) => (
+                <div
+                  key={m.map}
+                  className="flex items-center justify-between p-2 rounded-lg bg-muted/30 border border-border/50"
+                >
+                  <span className="font-medium text-sm">{m.map}</span>
+                  <span
+                    className={`text-sm font-semibold ${
+                      m.winPct >= 50 ? "text-neon-green" : "text-red-500"
+                    }`}
+                  >
+                    {m.winPct}% ({m.wins}V/{m.losses}D)
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
@@ -461,7 +813,9 @@ function FpsOverview({ stats }: { stats: FpsStats }) {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Pico</span>
-                <span className="font-medium text-neon-green">{stats.peakElo}</span>
+                <span className="font-medium text-neon-green">
+                  {stats.peakElo}
+                </span>
               </div>
             </div>
           </CardContent>
@@ -505,11 +859,17 @@ function FpsOverview({ stats }: { stats: FpsStats }) {
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <p className="text-muted-foreground">Total</p>
-                <p className="font-semibold">{stats.totalKills} / {stats.totalDeaths} / {stats.totalAssists}</p>
+                <p className="font-semibold">
+                  {stats.totalKills} / {stats.totalDeaths} /{" "}
+                  {stats.totalAssists}
+                </p>
               </div>
               <div>
                 <p className="text-muted-foreground">Season</p>
-                <p className="font-semibold">{stats.seasonKills} / {stats.seasonDeaths} / {stats.seasonAssists}</p>
+                <p className="font-semibold">
+                  {stats.seasonKills} / {stats.seasonDeaths} /{" "}
+                  {stats.seasonAssists}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -524,11 +884,15 @@ function FpsOverview({ stats }: { stats: FpsStats }) {
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <p className="text-muted-foreground">Total</p>
-                <p className="font-semibold text-neon-blue">{stats.totalHours}h</p>
+                <p className="font-semibold text-neon-blue">
+                  {stats.totalHours}h
+                </p>
               </div>
               <div>
                 <p className="text-muted-foreground">Season</p>
-                <p className="font-semibold text-neon-purple">{stats.seasonHours}h</p>
+                <p className="font-semibold text-neon-purple">
+                  {stats.seasonHours}h
+                </p>
               </div>
             </div>
           </CardContent>
@@ -629,11 +993,17 @@ function LolOverview({ stats }: { stats: LolStats }) {
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <p className="text-muted-foreground">Total</p>
-                <p className="font-semibold">{stats.totalKills} / {stats.totalDeaths} / {stats.totalAssists}</p>
+                <p className="font-semibold">
+                  {stats.totalKills} / {stats.totalDeaths} /{" "}
+                  {stats.totalAssists}
+                </p>
               </div>
               <div>
                 <p className="text-muted-foreground">Season</p>
-                <p className="font-semibold">{stats.seasonKills} / {stats.seasonDeaths} / {stats.seasonAssists}</p>
+                <p className="font-semibold">
+                  {stats.seasonKills} / {stats.seasonDeaths} /{" "}
+                  {stats.seasonAssists}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -648,11 +1018,15 @@ function LolOverview({ stats }: { stats: LolStats }) {
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <p className="text-muted-foreground">Total</p>
-                <p className="font-semibold text-neon-blue">{stats.totalHours}h</p>
+                <p className="font-semibold text-neon-blue">
+                  {stats.totalHours}h
+                </p>
               </div>
               <div>
                 <p className="text-muted-foreground">Season</p>
-                <p className="font-semibold text-neon-purple">{stats.seasonHours}h</p>
+                <p className="font-semibold text-neon-purple">
+                  {stats.seasonHours}h
+                </p>
               </div>
             </div>
           </CardContent>
@@ -762,9 +1136,7 @@ function MatchHistory({
             <Collapsible
               key={match.id}
               open={expandedMatch === match.id}
-              onOpenChange={(open) =>
-                onToggleExpand(open ? match.id : null)
-              }
+              onOpenChange={(open) => onToggleExpand(open ? match.id : null)}
             >
               <div
                 className={`rounded-lg border transition-colors ${
@@ -814,55 +1186,75 @@ function MatchHistory({
                         {match.expandedDetails.headshotPct != null && (
                           <div>
                             <span className="text-muted-foreground">HS%</span>
-                            <p className="font-medium">{match.expandedDetails.headshotPct}%</p>
+                            <p className="font-medium">
+                              {match.expandedDetails.headshotPct}%
+                            </p>
                           </div>
                         )}
                         {match.expandedDetails.adr != null && (
                           <div>
                             <span className="text-muted-foreground">ADR</span>
-                            <p className="font-medium">{match.expandedDetails.adr}</p>
+                            <p className="font-medium">
+                              {match.expandedDetails.adr}
+                            </p>
                           </div>
                         )}
                         {match.expandedDetails.acs != null && (
                           <div>
                             <span className="text-muted-foreground">ACS</span>
-                            <p className="font-medium">{match.expandedDetails.acs}</p>
+                            <p className="font-medium">
+                              {match.expandedDetails.acs}
+                            </p>
                           </div>
                         )}
                         {match.expandedDetails.firstBloods != null && (
                           <div>
-                            <span className="text-muted-foreground">First Blood</span>
-                            <p className="font-medium">{match.expandedDetails.firstBloods}</p>
+                            <span className="text-muted-foreground">
+                              First Blood
+                            </span>
+                            <p className="font-medium">
+                              {match.expandedDetails.firstBloods}
+                            </p>
                           </div>
                         )}
                         {match.expandedDetails.mvps != null && (
                           <div>
                             <span className="text-muted-foreground">MVPs</span>
-                            <p className="font-medium">{match.expandedDetails.mvps}</p>
+                            <p className="font-medium">
+                              {match.expandedDetails.mvps}
+                            </p>
                           </div>
                         )}
                         {match.expandedDetails.damage != null && (
                           <div>
                             <span className="text-muted-foreground">Dano</span>
-                            <p className="font-medium">{match.expandedDetails.damage?.toLocaleString()}</p>
+                            <p className="font-medium">
+                              {match.expandedDetails.damage?.toLocaleString()}
+                            </p>
                           </div>
                         )}
                         {match.expandedDetails.cs != null && (
                           <div>
                             <span className="text-muted-foreground">CS</span>
-                            <p className="font-medium">{match.expandedDetails.cs}</p>
+                            <p className="font-medium">
+                              {match.expandedDetails.cs}
+                            </p>
                           </div>
                         )}
                         {match.expandedDetails.vision != null && (
                           <div>
                             <span className="text-muted-foreground">Visão</span>
-                            <p className="font-medium">{match.expandedDetails.vision}</p>
+                            <p className="font-medium">
+                              {match.expandedDetails.vision}
+                            </p>
                           </div>
                         )}
                         {match.expandedDetails.gold != null && (
                           <div>
                             <span className="text-muted-foreground">Ouro</span>
-                            <p className="font-medium">{match.expandedDetails.gold?.toLocaleString()}</p>
+                            <p className="font-medium">
+                              {match.expandedDetails.gold?.toLocaleString()}
+                            </p>
                           </div>
                         )}
                       </div>
