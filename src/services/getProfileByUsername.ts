@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 
 export interface getProfileByUsernameProps {
   id: number;
+  /** ID do User Django (enviado pela API para isOwner confiável) */
+  user_id?: number;
   bio: string;
   profile_photo: string;
   profile_banner?: string;

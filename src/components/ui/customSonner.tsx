@@ -38,6 +38,10 @@ const CustomSonner = ({ message, type, description, action }: CustomSonnerProps)
       className += " bg-yellow-500 text-black-500";
       icon = <FaExclamationTriangle />;
       break;
+    case "neutral":
+      className += " bg-zinc-600 text-white";
+      icon = <FaInfoCircle />;
+      break;
     default:
       className += " bg-[#fff] text-black-500";
   }
@@ -116,6 +120,11 @@ export const CustomToast = {
   warning: (message: React.ReactNode, options: ToastOptions = {}) =>
     toast.custom(
       () => <CustomSonner message={message} type="warning" {...options} />,
+      getToastOptionsWithoutDescription(options)
+    ),
+  neutral: (message: React.ReactNode, options: ToastOptions = {}) =>
+    toast.custom(
+      () => <CustomSonner message={message} type="neutral" {...options} />,
       getToastOptionsWithoutDescription(options)
     ),
 };

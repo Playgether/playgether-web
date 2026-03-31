@@ -11,17 +11,23 @@ import jwt_decode from "jwt-decode";
 //   return userJson as UserProps;
 // }
 
-export async function decodeUser(): Promise<Omit<UserProps, "id"> | null> {
+type JwtPayload = UserProps & { user_id?: number };
+
+export async function decodeUser(): Promise<UserProps | null> {
   const accessToken = (await cookies()).get("accessToken");
 
   if (!accessToken) return null;
 
-  const decodedAccessToken: UserProps = jwt_decode(accessToken.value);
+  const decodedAccessToken = jwt_decode<JwtPayload>(accessToken.value);
 
-  const filteredUser: Omit<UserProps, "id"> = {
+  const filteredUser: UserProps = {
     username: decodedAccessToken.username,
     first_name: decodedAccessToken.first_name,
     last_name: decodedAccessToken.last_name,
+    user_id:
+      typeof decodedAccessToken.user_id === "number"
+        ? decodedAccessToken.user_id
+        : undefined,
   };
 
   return filteredUser;

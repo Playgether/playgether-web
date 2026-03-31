@@ -56,16 +56,24 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const userLocalStorage =
         typeof window !== "undefined" ? localStorage.getItem("user") : null;
       const cachedUser = userLocalStorage ? JSON.parse(userLocalStorage) : null;
+      const fromJwt = await decodeUser();
       if (cachedUser !== null) {
-        setUser(cachedUser);
-      } else {
-        const user_decoded = await decodeUser();
-        if (user_decoded) {
-          if (typeof window !== "undefined") {
-            localStorage.setItem("user", JSON.stringify(user_decoded));
-          }
-          setUser(user_decoded);
+        const merged: UserProps = {
+          ...cachedUser,
+          user_id: fromJwt?.user_id ?? cachedUser.user_id,
+          username: fromJwt?.username ?? cachedUser.username,
+          first_name: fromJwt?.first_name ?? cachedUser.first_name,
+          last_name: fromJwt?.last_name ?? cachedUser.last_name,
+        };
+        setUser(merged);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user", JSON.stringify(merged));
         }
+      } else if (fromJwt) {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user", JSON.stringify(fromJwt));
+        }
+        setUser(fromJwt);
       }
     };
     fetchData();

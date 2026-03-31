@@ -1,7 +1,7 @@
 import { apiFetch } from "@/services/apiFetch";
 
 export type StatsGame = {
-  slug: "csgo" | "lol";
+  slug: string;
   available: boolean;
   steam_profile_public?: boolean;
 };

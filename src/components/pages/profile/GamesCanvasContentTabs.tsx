@@ -53,7 +53,14 @@ export function GamesCanvasContentTabs({
   const router = useRouter();
   const postsContext = useProfilePostsContext();
   const { removePost, getPostById } = postsContext;
-  const isOwner = !!user && !!profile && user.username === profile.username;
+  const isOwner = Boolean(
+    user &&
+      profile &&
+      ((typeof user.user_id === "number" &&
+        typeof profile.user_id === "number" &&
+        user.user_id === profile.user_id) ||
+        user.username.toLowerCase() === profile.username.toLowerCase())
+  );
 
   const tabIdToSlug: Record<string, string> = {
     bio: "bio",
@@ -589,6 +596,8 @@ export function GamesCanvasContentTabs({
 
             <TabsContent value="achievements" className="p-6">
               <AchievementsTab
+                profile={profile}
+                isOwner={isOwner}
                 onAchievementClick={(achievement) => {
                   setSelectedAchievement(achievement);
                   setIsAchievementModalOpen(true);

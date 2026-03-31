@@ -23,7 +23,12 @@ export type AchievementType = {
   game: string;
   date: string;
   percentage: number;
-  progression?: { current: number; next: number; path: number[] };
+  progression?: {
+    current: number;
+    next: number;
+    path: number[];
+    unit?: string;
+  };
   recentlyUnlocked?: boolean;
 };
 
@@ -140,14 +145,16 @@ export function AchievementModal({
                     </span>
                     <span className="font-medium">{achievement.date}</span>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
+                  {/* Taxa global (%): oculto no lançamento — poucos usuários distorce o número.
+                      O backend pode continuar enviando `percentage`; reative quando houver base estável. */}
+                  {/* <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">
                       % dos jogadores
                     </span>
                     <span className="font-medium">
                       {achievement.percentage}%
                     </span>
-                  </div>
+                  </div> */}
 
                   {achievement.progression ? (
                     <div className="pt-2 border-t border-border">
@@ -155,27 +162,33 @@ export function AchievementModal({
                         Caminho da Conquista
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        {achievement.progression.path.map((p: number) => (
-                          <Badge
-                            key={p}
-                            variant="outline"
-                            className={
-                              p <= achievement.progression!.current
-                                ? "text-white border-0"
-                                : "border-border"
-                            }
-                            style={
-                              p <= achievement.progression!.current
-                                ? { background: config.badgeGradient }
-                                : undefined
-                            }
-                          >
-                            {p}h
-                          </Badge>
-                        ))}
+                        {achievement.progression.path.map((p: number) => {
+                          const u = achievement.progression?.unit === "h" ? "h" : "";
+                          return (
+                            <Badge
+                              key={p}
+                              variant="outline"
+                              className={
+                                p <= achievement.progression!.current
+                                  ? "text-white border-0"
+                                  : "border-border"
+                              }
+                              style={
+                                p <= achievement.progression!.current
+                                  ? { background: config.badgeGradient }
+                                  : undefined
+                              }
+                            >
+                              {u ? `${p}${u}` : p}
+                            </Badge>
+                          );
+                        })}
                       </div>
                       <div className="text-sm text-muted-foreground mt-2">
-                        Próxima: {achievement.progression.next}h
+                        Próxima:{" "}
+                        {achievement.progression.unit === "h"
+                          ? `${achievement.progression.next}h`
+                          : achievement.progression.next}
                       </div>
                     </div>
                   ) : null}
