@@ -3,8 +3,8 @@ import { cookies } from "next/headers";
 import { api } from "@/services/api";
 
 export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ profileId: string }> }
+  request: Request,
+  { params }: { params: Promise<{ profileId: string }> },
 ) {
   const { profileId } = await params;
   const accessToken = (await cookies()).get("accessToken")?.value;
@@ -17,14 +17,14 @@ export async function GET(
     return NextResponse.json({ detail: "Missing baseUrl" }, { status: 500 });
   }
 
-  const axiosResp = await api.get(
-    `/api/games/profiles/${profileId}/achievements/`,
-    {
-      headers: { Authorization: `Bearer ${accessToken}` },
-      validateStatus: () => true,
-      responseType: "text",
-    }
-  );
+  const qs = new URL(request.url).searchParams.toString();
+  const path = `/api/games/profiles/${profileId}/achievements/${qs ? `?${qs}` : ""}`;
+
+  const axiosResp = await api.get(path, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    validateStatus: () => true,
+    responseType: "text",
+  });
 
   const text = axiosResp.data ?? "";
   const json = (() => {

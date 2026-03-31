@@ -31,15 +31,36 @@ export type ProfileAchievementApi = {
 
 export type ProfileAchievementsResponse = {
   achievements: ProfileAchievementApi[];
+  count: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  /** ISO datetime por slug (csgo, playgether, lol, …) após sync bem-sucedido. */
+  achievement_last_sync_by_slug?: Record<string, string>;
+};
+
+export type GetProfileAchievementsParams = {
+  page?: number;
+  page_size?: number;
+  game_slugs?: string[];
 };
 
 export async function getProfileAchievements(
-  profileId: number
+  profileId: number,
+  params?: GetProfileAchievementsParams,
 ): Promise<ProfileAchievementsResponse> {
-  const res = await apiFetch(
-    `/api/games/profiles/${profileId}/achievements/`,
-    { method: "GET", credentials: "include" }
-  );
+  const search = new URLSearchParams();
+  if (params?.page != null) search.set("page", String(params.page));
+  if (params?.page_size != null) search.set("page_size", String(params.page_size));
+  if (params?.game_slugs?.length) {
+    search.set("game_slugs", params.game_slugs.join(","));
+  }
+  const qs = search.toString();
+  const path = `/api/games/profiles/${profileId}/achievements/${qs ? `?${qs}` : ""}`;
+  const res = await apiFetch(path, {
+    method: "GET",
+    credentials: "include",
+  });
   if (!res.ok) {
     throw new Error("Failed to fetch achievements");
   }

@@ -31,6 +31,8 @@ import { CustomToastProps } from "@/error/custom-toaster/enum";
 import { cn } from "@/lib/utils";
 import { useAuthContext } from "@/context/AuthContext";
 
+const ACHIEVEMENTS_PAGE_SIZE = 12;
+
 function isProfileOwner(
   user: { username?: string; user_id?: number } | null,
   profile: getProfileByUsernameProps | null,
@@ -55,11 +57,35 @@ const SLUG_LABELS: Record<string, string> = {
   valorant: "Valorant",
 };
 
-const achievementsCacheByProfileId = new Map<number, ProfileAchievementApi[]>();
-const achievementsPromiseByProfileId = new Map<
-  number,
-  Promise<ProfileAchievementApi[]>
->();
+function formatAchievementLastSync(iso: string | undefined): string {
+  if (!iso?.trim()) return "Ainda não sincronizado";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(d);
+}
+
+/** Data/hora de desbloqueio no fuso do dispositivo (ISO do backend em UTC). */
+function formatAchievementUnlockedShown(
+  a: ProfileAchievementApi,
+  whenLocked: "tile" | "modal",
+): string {
+  if (!a.unlocked) {
+    return whenLocked === "modal" ? "Não desbloqueada" : "—";
+  }
+  if (a.unlocked_at) {
+    const d = new Date(a.unlocked_at);
+    if (!Number.isNaN(d.getTime())) {
+      return new Intl.DateTimeFormat("pt-BR", {
+        dateStyle: "short",
+        timeStyle: "short",
+      }).format(d);
+    }
+  }
+  return a.date?.trim() ? a.date : "—";
+}
 
 const statsGamesCacheByProfileId = new Map<number, StatsGame[]>();
 const statsGamesPromiseByProfileId = new Map<number, Promise<StatsGame[]>>();
@@ -75,7 +101,7 @@ function toModalAchievement(
     rarity: a.rarity,
     icon: a.icon,
     game: a.game,
-    date: a.unlocked && a.date ? a.date : "Não desbloqueada",
+    date: formatAchievementUnlockedShown(a, "modal"),
     percentage: a.percentage,
     progression: a.progression
       ? {
@@ -116,13 +142,36 @@ export function AchievementsTab({
   const [selectedGameSlugs, setSelectedGameSlugs] = useState<Set<string>>(
     () => new Set(),
   );
+  const [listPage, setListPage] = useState(1);
+  const [listMeta, setListMeta] = useState({
+    count: 0,
+    page: 1,
+    page_size: ACHIEVEMENTS_PAGE_SIZE,
+    total_pages: 1,
+  });
+  const [lastSyncBySlug, setLastSyncBySlug] = useState<Record<string, string>>(
+    {},
+  );
 
   const profileId = profile?.id;
+
+  const slugsKey = useMemo(
+    () => [...selectedGameSlugs].sort().join(","),
+    [selectedGameSlugs],
+  );
 
   useEffect(() => {
     setSessionNewIds(new Set());
     setFilterSessionOnly(false);
     setSelectedGameSlugs(new Set());
+    setListPage(1);
+    setListMeta({
+      count: 0,
+      page: 1,
+      page_size: ACHIEVEMENTS_PAGE_SIZE,
+      total_pages: 1,
+    });
+    setLastSyncBySlug({});
   }, [profileId]);
 
   useEffect(() => {
@@ -164,6 +213,7 @@ export function AchievementsTab({
    */
   useEffect(() => {
     if (statsGames.length === 0) return;
+    setListPage(1);
     setSelectedGameSlugs((prev) => {
       const avail = new Set<string>(statsGames.map((g) => g.slug));
       if (prev.size === 0) {
@@ -180,46 +230,56 @@ export function AchievementsTab({
     });
   }, [statsGames]);
 
-  const loadAchievements = useCallback(
-    async (opts?: { bypassCache?: boolean }) => {
+  const fetchAchievementsPage = useCallback(
+    async (page: number) => {
       if (!profileId) return;
-      if (opts?.bypassCache) {
-        achievementsCacheByProfileId.delete(profileId);
-        achievementsPromiseByProfileId.delete(profileId);
-      }
-      const cached = achievementsCacheByProfileId.get(profileId);
-      if (cached !== undefined && !opts?.bypassCache) {
-        setAchievements(cached);
-        return;
-      }
-      const existing = achievementsPromiseByProfileId.get(profileId);
-      if (existing && !opts?.bypassCache) {
-        existing.then(setAchievements).catch(() => setAchievements([]));
+      const slugs = slugsKey.split(",").filter(Boolean);
+      if (slugs.length === 0) {
+        setAchievements([]);
+        setListMeta({
+          count: 0,
+          page: 1,
+          page_size: ACHIEVEMENTS_PAGE_SIZE,
+          total_pages: 1,
+        });
         return;
       }
       setLoadingList(true);
-      const p = getProfileAchievements(profileId)
-        .then((data) => {
-          achievementsCacheByProfileId.set(profileId, data.achievements);
-          return data.achievements;
-        })
-        .catch(() => {
-          achievementsCacheByProfileId.set(profileId, []);
-          return [];
-        })
-        .finally(() => {
-          achievementsPromiseByProfileId.delete(profileId);
-          setLoadingList(false);
+      try {
+        const data = await getProfileAchievements(profileId, {
+          page,
+          page_size: ACHIEVEMENTS_PAGE_SIZE,
+          game_slugs: slugs,
         });
-      achievementsPromiseByProfileId.set(profileId, p);
-      p.then(setAchievements).catch(() => setAchievements([]));
+        setAchievements(data.achievements);
+        setListMeta({
+          count: data.count,
+          page: data.page,
+          page_size: data.page_size,
+          total_pages: Math.max(1, data.total_pages || 1),
+        });
+        setListPage(data.page);
+        if (data.achievement_last_sync_by_slug) {
+          setLastSyncBySlug(data.achievement_last_sync_by_slug);
+        }
+      } catch {
+        setAchievements([]);
+        setListMeta({
+          count: 0,
+          page: 1,
+          page_size: ACHIEVEMENTS_PAGE_SIZE,
+          total_pages: 1,
+        });
+      } finally {
+        setLoadingList(false);
+      }
     },
-    [profileId],
+    [profileId, slugsKey],
   );
 
   useEffect(() => {
-    loadAchievements();
-  }, [loadAchievements]);
+    fetchAchievementsPage(listPage);
+  }, [listPage, fetchAchievementsPage]);
 
   const slugOrder = useMemo(() => statsGames.map((g) => g.slug), [statsGames]);
 
@@ -231,17 +291,11 @@ export function AchievementsTab({
   const handleConfirmSync = async () => {
     if (!profileId || !isOwner || !pickSlug || syncBusy) return;
 
-    const unlockedBefore = new Set(
-      achievements.filter((a) => a.unlocked).map((a) => a.id),
-    );
-
     setSyncBusy(true);
     try {
       const result = await refreshProfileAchievements(profileId, pickSlug);
 
-      const trulyNewIds = result.newly_unlocked_ids.filter(
-        (id) => !unlockedBefore.has(id),
-      );
+      const trulyNewIds = result.newly_unlocked_ids;
 
       if (trulyNewIds.length > 0) {
         setSessionNewIds((prev) => {
@@ -253,7 +307,7 @@ export function AchievementsTab({
         });
       }
 
-      await loadAchievements({ bypassCache: true });
+      await fetchAchievementsPage(1);
 
       if (trulyNewIds.length > 0) {
         CustomToast.success(
@@ -287,13 +341,11 @@ export function AchievementsTab({
     if (filterSessionOnly && sessionNewIds.size > 0) {
       list = list.filter((a) => sessionNewIds.has(a.id));
     }
-    if (selectedGameSlugs.size > 0) {
-      list = list.filter((a) => selectedGameSlugs.has(a.game_slug));
-    }
     return list;
-  }, [achievements, filterSessionOnly, sessionNewIds, selectedGameSlugs]);
+  }, [achievements, filterSessionOnly, sessionNewIds]);
 
   const toggleGameFilter = (slug: string) => {
+    setListPage(1);
     setSelectedGameSlugs((prev) => {
       const next = new Set(prev);
       if (next.has(slug)) next.delete(slug);
@@ -303,10 +355,12 @@ export function AchievementsTab({
   };
 
   const selectAllGameFilters = () => {
+    setListPage(1);
     setSelectedGameSlugs(new Set(slugOrder));
   };
 
   const clearGameFilters = () => {
+    setListPage(1);
     setSelectedGameSlugs(new Set());
   };
 
@@ -332,7 +386,7 @@ export function AchievementsTab({
             <div className="rounded-lg border border-border bg-card/40 p-4 space-y-2">
               <p className="text-xs text-muted-foreground">
                 Sincroniza dados do jogo escolhido e verifica desbloqueios. Não
-                depende do filtro da lista acima.
+                depende do filtro da lista abaixo.
               </p>
               <Button
                 type="button"
@@ -401,6 +455,26 @@ export function AchievementsTab({
               })}
             </div>
           </div>
+
+          <div className="rounded-lg border border-border bg-card/30 px-4 py-3 space-y-1.5">
+            <p className="text-xs font-medium text-foreground">
+              Última sincronização
+            </p>
+            <p className="text-[11px] text-muted-foreground leading-snug">
+              As últimas atualizações de cada jogo
+            </p>
+            <ul className="text-xs text-muted-foreground space-y-0.5 list-none p-0 m-0">
+              {slugOrder.map((slug) => (
+                <li key={slug}>
+                  <span className="text-foreground/85">
+                    {SLUG_LABELS[slug] ?? slug}
+                  </span>
+                  {": "}
+                  {formatAchievementLastSync(lastSyncBySlug[slug])}
+                </li>
+              ))}
+            </ul>
+          </div>
         </>
       )}
 
@@ -440,29 +514,96 @@ export function AchievementsTab({
             : "Nenhuma conquista para os jogos e filtros selecionados."}
         </p>
       ) : (
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 gap-4"
-          initial="hidden"
-          animate="visible"
-          variants={{
-            hidden: {},
-            visible: { transition: { staggerChildren: 0.05 } },
-          }}
-        >
-          {displayedAchievements.map((achievement) => (
-            <AchievementCardItem
-              key={achievement.id}
-              achievement={achievement}
-              sessionNewIds={sessionNewIds}
-              showRecentBadge
-              onOpen={() =>
-                onAchievementClick(
-                  toModalAchievement(achievement, sessionNewIds),
-                )
-              }
-            />
-          ))}
-        </motion.div>
+        <div className="space-y-4">
+          {loadingList && displayedAchievements.length > 0 && (
+            <div className="flex justify-center py-1" aria-live="polite">
+              <Loader2
+                className="h-5 w-5 animate-spin text-muted-foreground"
+                aria-hidden
+              />
+            </div>
+          )}
+          <motion.div
+            key={`${slugsKey}-${listPage}`}
+            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: {},
+              visible: { transition: { staggerChildren: 0.04 } },
+            }}
+          >
+            {displayedAchievements.map((achievement) => (
+              <AchievementCardItem
+                key={achievement.id}
+                achievement={achievement}
+                sessionNewIds={sessionNewIds}
+                showRecentBadge
+                onOpen={() =>
+                  onAchievementClick(
+                    toModalAchievement(achievement, sessionNewIds),
+                  )
+                }
+              />
+            ))}
+          </motion.div>
+
+          {listMeta.count > 0 && listMeta.total_pages > 1 && (
+            <div className="flex flex-col items-center gap-3 border-t border-border pt-6">
+              <p className="text-sm text-muted-foreground">
+                Página {listMeta.page} de {listMeta.total_pages} ·{" "}
+                {listMeta.count} conquista
+                {listMeta.count === 1 ? "" : "s"}
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={listMeta.page <= 1 || loadingList}
+                  onClick={() => setListPage((p) => Math.max(1, p - 1))}
+                >
+                  Anterior
+                </Button>
+                {listMeta.total_pages <= 9 ? (
+                  Array.from(
+                    { length: listMeta.total_pages },
+                    (_, i) => i + 1,
+                  ).map((n) => (
+                    <Button
+                      key={n}
+                      type="button"
+                      variant={n === listMeta.page ? "default" : "outline"}
+                      size="sm"
+                      className="min-w-9 px-2"
+                      disabled={loadingList}
+                      onClick={() => setListPage(n)}
+                    >
+                      {n}
+                    </Button>
+                  ))
+                ) : (
+                  <span className="text-sm text-muted-foreground tabular-nums px-2">
+                    {listMeta.page} / {listMeta.total_pages}
+                  </span>
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={
+                    listMeta.page >= listMeta.total_pages || loadingList
+                  }
+                  onClick={() =>
+                    setListPage((p) => Math.min(listMeta.total_pages, p + 1))
+                  }
+                >
+                  Próxima
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       <Dialog
@@ -593,7 +734,7 @@ function AchievementCardItem({
       <ConquistText
         title={achievement.title}
         text={achievement.description}
-        date={achievement.unlocked && achievement.date ? achievement.date : "—"}
+        date={formatAchievementUnlockedShown(achievement, "tile")}
         Icon={iconNode}
         rarity={achievement.rarity}
         recentlyUnlocked={recentlyUnlocked}

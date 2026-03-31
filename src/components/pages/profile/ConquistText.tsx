@@ -8,7 +8,11 @@ import {
   type Variants,
 } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-import { type RarityLevel, type RarityConfig, rarityConfig } from "./rarityConfig";
+import {
+  type RarityLevel,
+  type RarityConfig,
+  rarityConfig,
+} from "./rarityConfig";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -92,9 +96,7 @@ const FloatingParticle = ({
         opacity: isFireMode
           ? [0.8 * intensity, 0.5 * intensity, 0]
           : [0, 0.7 * intensity, 0],
-        scale: isFireMode
-          ? [1, 0.7, 0.2]
-          : [0.5, 1 * intensity, 0.5],
+        scale: isFireMode ? [1, 0.7, 0.2] : [0.5, 1 * intensity, 0.5],
       }}
       transition={{
         duration: particle.duration * (isExpanded ? 0.8 : 1),
@@ -270,8 +272,8 @@ const AnimatedBorder = ({
   const speed = isExpanded
     ? config.borderRotationSpeed * 0.6
     : isHovered
-    ? config.borderRotationSpeed * 0.75
-    : config.borderRotationSpeed;
+      ? config.borderRotationSpeed * 0.75
+      : config.borderRotationSpeed;
 
   return (
     <motion.div
@@ -306,8 +308,7 @@ const RarityBadge = ({
   isHovered: boolean;
   reducedMotion: boolean;
 }) => {
-  const isAnimated =
-    !reducedMotion && config.animationIntensity !== "none";
+  const isAnimated = !reducedMotion && config.animationIntensity !== "none";
 
   return (
     <motion.div
@@ -402,7 +403,7 @@ export const ConquistText = ({
           "rgba(255,255,255,0.5)",
       })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rarity]
+    [rarity],
   );
 
   // Stable electric spark data
@@ -418,7 +419,7 @@ export const ConquistText = ({
         repeatDelay: 1 + Math.random() * 2.5,
       })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rarity]
+    [rarity],
   );
 
   // Stable cosmic star data
@@ -437,7 +438,7 @@ export const ConquistText = ({
         twinkleDuration: 1.5 + Math.random() * 3,
       })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rarity]
+    [rarity],
   );
 
   // Glow shadow derived from state
@@ -603,9 +604,7 @@ export const ConquistText = ({
                       />
                     )}
 
-                  <div
-                    className={`scale-75 relative z-10 ${config.textColor}`}
-                  >
+                  <div className={`scale-75 relative z-10 ${config.textColor}`}>
                     {Icon ?? <span className="text-xl">🏆</span>}
                   </div>
                 </motion.div>
@@ -614,7 +613,9 @@ export const ConquistText = ({
                 <div className="flex-1 min-w-0 space-y-1">
                   {/* Header row */}
                   <div className="flex items-start justify-between gap-2 flex-wrap">
-                    <h4 className={`font-semibold ${config.textColor} leading-snug`}>
+                    <h4
+                      className={`font-semibold ${config.textColor} leading-snug`}
+                    >
                       {title}
                     </h4>
                     <span className="text-xs text-muted-foreground px-2 py-0.5 rounded border border-border/40 bg-black/20 whitespace-nowrap flex-shrink-0">
