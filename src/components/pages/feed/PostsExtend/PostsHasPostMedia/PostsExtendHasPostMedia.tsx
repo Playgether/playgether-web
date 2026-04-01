@@ -52,6 +52,7 @@ const PostsExtendHasPostMedia = ({
                 timestamp={resourceObject.timestamp}
                 imageClassName="mt-3 ml-3 h-10 w-10"
                 usernameAndTimestampDiv="self-end"
+                highlightedAchievements={resourceObject.highlighted_achievements}
               />
               <BorderLine />
               <PostTextPostExpand

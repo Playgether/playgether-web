@@ -1,6 +1,7 @@
 import { PostLikes } from "@/app/feed/types/PostLikesProps";
 import { PostMedias } from "@/app/feed/types/PostMediaProps";
 import { PostReposts } from "@/app/feed/types/PostRepostsProps";
+import type { HighlightedAchievementPublic } from "@/types/highlightedAchievements";
 
 export interface FeedProps {
   created_by_user: number;
@@ -19,4 +20,5 @@ export interface FeedProps {
   has_post_media: boolean;
   link: string;
   user_already_like: boolean;
+  highlighted_achievements?: HighlightedAchievementPublic[];
 }

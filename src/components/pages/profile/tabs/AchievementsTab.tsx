@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Loader2, SlidersHorizontal } from "lucide-react";
+import { Loader2, MoreVertical, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -36,6 +36,13 @@ import {
   rarityConfig,
   type RarityLevel,
 } from "@/components/pages/profile/rarityConfig";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { setProfileAchievementHighlights } from "@/services/setProfileAchievementHighlights";
 
 const ACHIEVEMENTS_PAGE_SIZE = 12;
 
@@ -141,15 +148,18 @@ interface AchievementsTabProps {
   profile: getProfileByUsernameProps | null;
   isOwner: boolean;
   onAchievementClick: (achievement: AchievementType) => void;
+  onProfileUpdated?: (updated: Partial<getProfileByUsernameProps>) => void;
 }
 
 export function AchievementsTab({
   profile,
   isOwner: isOwnerFromParent,
   onAchievementClick,
+  onProfileUpdated,
 }: AchievementsTabProps) {
   const { user } = useAuthContext();
   const isOwner = isProfileOwner(user, profile) || isOwnerFromParent;
+  const [highlightBusy, setHighlightBusy] = useState(false);
 
   const [achievements, setAchievements] = useState<ProfileAchievementApi[]>([]);
   const [loadingList, setLoadingList] = useState(false);
@@ -181,11 +191,39 @@ export function AchievementsTab({
   const [draftGameSlugs, setDraftGameSlugs] = useState<Set<string>>(
     () => new Set(),
   );
-  const [draftRarities, setDraftRarities] = useState<Set<RarityLevel>>(
-    () => newFullRaritySet(),
+  const [draftRarities, setDraftRarities] = useState<Set<RarityLevel>>(() =>
+    newFullRaritySet(),
   );
 
   const profileId = profile?.id;
+
+  const highlightedIds = useMemo(
+    () => profile?.highlighted_achievements?.map((h) => h.id) ?? [],
+    [profile?.highlighted_achievements],
+  );
+
+  const saveHighlights = useCallback(
+    async (nextIds: number[]) => {
+      if (!profileId || !isOwner) return;
+      setHighlightBusy(true);
+      try {
+        const { highlighted_achievements } =
+          await setProfileAchievementHighlights(profileId, nextIds);
+        onProfileUpdated?.({ highlighted_achievements });
+        CustomToast.success("Destaques atualizados.", {
+          duration: CustomToastProps.defaultDuration,
+        });
+      } catch (e) {
+        CustomToast.error(
+          e instanceof Error ? e.message : "Não foi possível salvar destaques.",
+          { duration: CustomToastProps.defaultDuration },
+        );
+      } finally {
+        setHighlightBusy(false);
+      }
+    },
+    [profileId, isOwner, onProfileUpdated],
+  );
 
   const slugsKey = useMemo(
     () => [...selectedGameSlugs].sort().join(","),
@@ -295,9 +333,7 @@ export function AchievementsTab({
           page,
           page_size: ACHIEVEMENTS_PAGE_SIZE,
           game_slugs: slugs,
-          rarities: allRarities
-            ? undefined
-            : [...selectedRarities].sort(),
+          rarities: allRarities ? undefined : [...selectedRarities].sort(),
         });
         setAchievements(data.achievements);
         setListMeta({
@@ -467,6 +503,15 @@ export function AchievementsTab({
               >
                 Atualizar Conquistas
               </Button>
+              <p className="text-xs text-muted-foreground border-t border-border pt-3 mt-1 leading-snug">
+                Toque em{" "}
+                <span className="inline-flex items-center align-middle rounded border border-border px-1 py-0">
+                  <MoreVertical className="h-3 w-3" aria-hidden />
+                </span>{" "}
+                numa conquista desbloqueada para destacar até{" "}
+                <span className="text-foreground font-medium">3</span> — elas
+                aparecem no feed, nos comentários e no seu cartão de perfil.
+              </p>
             </div>
           )}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-border bg-card/40 px-4 py-3">
@@ -491,8 +536,8 @@ export function AchievementsTab({
               </Button>
               <p className="text-xs text-muted-foreground leading-snug">
                 Jogos e nível de raridade (comum, raro, lendário…). Combine os
-                dois; a lista mostra só o que atende a tudo. Ordem: desbloqueadas
-                mais recentes primeiro.
+                dois; a lista mostra só o que atende a tudo. Ordem:
+                desbloqueadas mais recentes primeiro.
               </p>
             </div>
           </div>
@@ -580,6 +625,10 @@ export function AchievementsTab({
                 achievement={achievement}
                 sessionNewIds={sessionNewIds}
                 showRecentBadge
+                isOwner={isOwner}
+                highlightedIds={highlightedIds}
+                highlightBusy={highlightBusy}
+                onSaveHighlights={saveHighlights}
                 onOpen={() =>
                   onAchievementClick(
                     toModalAchievement(achievement, sessionNewIds),
@@ -669,9 +718,7 @@ export function AchievementsTab({
                       variant="ghost"
                       size="sm"
                       className="h-7 text-xs"
-                      onClick={() =>
-                        setDraftGameSlugs(new Set(slugOrder))
-                      }
+                      onClick={() => setDraftGameSlugs(new Set(slugOrder))}
                     >
                       Marcar todos
                     </Button>
@@ -726,9 +773,7 @@ export function AchievementsTab({
                       variant="ghost"
                       size="sm"
                       className="h-7 text-xs"
-                      onClick={() =>
-                        setDraftRarities(newFullRaritySet())
-                      }
+                      onClick={() => setDraftRarities(newFullRaritySet())}
                     >
                       Marcar todos
                     </Button>
@@ -893,11 +938,19 @@ function AchievementCardItem({
   sessionNewIds,
   showRecentBadge,
   onOpen,
+  isOwner,
+  highlightedIds,
+  highlightBusy,
+  onSaveHighlights,
 }: {
   achievement: ProfileAchievementApi;
   sessionNewIds: Set<number>;
   showRecentBadge: boolean;
   onOpen: () => void;
+  isOwner: boolean;
+  highlightedIds: number[];
+  highlightBusy: boolean;
+  onSaveHighlights: (nextIds: number[]) => void;
 }) {
   const recentlyUnlocked =
     showRecentBadge &&
@@ -915,6 +968,9 @@ function AchievementCardItem({
     <span className="text-xl">{achievement.icon || "🏆"}</span>
   );
 
+  const isHighlighted = highlightedIds.includes(achievement.id);
+  const atCapacity = highlightedIds.length >= 3 && !isHighlighted;
+
   return (
     <motion.div
       variants={{
@@ -925,8 +981,56 @@ function AchievementCardItem({
           transition: { duration: 0.35, ease: "easeOut" },
         },
       }}
-      className={cn(!achievement.unlocked && "opacity-[0.72]")}
+      className={cn("relative", !achievement.unlocked && "opacity-[0.72]")}
     >
+      {isOwner && achievement.unlocked ? (
+        <div
+          className="absolute top-2 right-2 z-20"
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                className="h-8 w-8 rounded-full border border-border/80 bg-background/90 shadow-sm"
+                disabled={highlightBusy}
+                aria-label="Opções da conquista"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              {isHighlighted ? (
+                <DropdownMenuItem
+                  disabled={highlightBusy}
+                  onClick={() =>
+                    onSaveHighlights(
+                      highlightedIds.filter((id) => id !== achievement.id),
+                    )
+                  }
+                >
+                  Remover destaque
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  disabled={highlightBusy || atCapacity}
+                  onClick={() =>
+                    onSaveHighlights(
+                      [...highlightedIds, achievement.id].slice(0, 3),
+                    )
+                  }
+                >
+                  Destacar conquista
+                  {atCapacity ? " (máx. 3)" : ""}
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ) : null}
       <ConquistText
         title={achievement.title}
         text={achievement.description}

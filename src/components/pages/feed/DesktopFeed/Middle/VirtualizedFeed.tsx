@@ -57,6 +57,7 @@ const VirtualizedFeed = () => {
                   profile_photo={resource.created_by_user_photo}
                   imageClassName="mt-3 ml-3 h-10 w-10"
                   timestamp={resource.timestamp}
+                  highlightedAchievements={resource.highlighted_achievements}
                 />
               </div>
               <div

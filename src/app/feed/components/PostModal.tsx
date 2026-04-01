@@ -27,6 +27,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Textarea } from "@/components/ui/textarea";
 import { updateCommentAction } from "@/actions/updateComment";
 import { CommentContentType } from "@/components/content_types/CommentContentType";
+import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
 
 export const PostModal = ({
   postId,
@@ -461,10 +462,13 @@ export const PostModal = ({
                     components.NoImageProfile
                   )}
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <h3 className="font-bold text-lg">{post.name}</h3>
                     {post.verified && texts.verified}
+                    <HighlightedAchievementBadges
+                      achievements={post.highlighted_achievements}
+                    />
                   </div>
                   <p className="text-sm text-muted-foreground">
                     @{post.username}
@@ -557,12 +561,16 @@ export const PostModal = ({
                             {/* Container principal do comentário */}
                             <div className="flex-1 min-w-0">
                               {/* Cabeçalho do comentário com nome, data e ações */}
-                              <div className="flex items-center justify-between mb-1">
-                                <div className="flex items-center space-x-2">
-                                  <span className="font-medium text-sm">
+                              <div className="flex items-center justify-between mb-1 gap-2">
+                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+                                  <span className="font-medium text-sm shrink-0">
                                     {comment.created_by_user_name}
                                   </span>
-                                  <span className="text-xs text-muted-foreground">
+                                  <HighlightedAchievementBadges
+                                    achievements={comment.highlighted_achievements}
+                                    className="max-w-full"
+                                  />
+                                  <span className="text-xs text-muted-foreground shrink-0">
                                     <DateAndHour date={comment.timestamp} />
                                   </span>
                                 </div>
@@ -609,6 +617,8 @@ export const PostModal = ({
                                             user: comment.user,
                                             quantity_replies:
                                               comment.quantity_replies,
+                                            highlighted_achievements:
+                                              comment.highlighted_achievements,
                                           },
                                           undefined,
                                         )
@@ -816,12 +826,18 @@ export const PostModal = ({
 
                                     <div className="flex-1 min-w-0">
                                       {/* Cabeçalho da reply com nome, data e ações */}
-                                      <div className="flex items-center justify-between mb-1">
-                                        <div className="flex items-center space-x-2">
-                                          <span className="font-medium text-xs">
+                                      <div className="flex items-center justify-between mb-1 gap-2">
+                                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+                                          <span className="font-medium text-xs shrink-0">
                                             {reply.created_by_user_name}
                                           </span>
-                                          <span className="text-xs text-muted-foreground">
+                                          <HighlightedAchievementBadges
+                                            achievements={
+                                              reply.highlighted_achievements
+                                            }
+                                            className="max-w-full"
+                                          />
+                                          <span className="text-xs text-muted-foreground shrink-0">
                                             <DateAndHour
                                               date={reply.timestamp}
                                             />
@@ -874,6 +890,8 @@ export const PostModal = ({
                                                     user: reply.user,
                                                     quantity_replies:
                                                       reply.quantity_replies,
+                                                    highlighted_achievements:
+                                                      reply.highlighted_achievements,
                                                   },
                                                   comment.id,
                                                 )

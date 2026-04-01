@@ -1,5 +1,6 @@
 import { api } from "./api";
 import { cookies } from "next/headers";
+import type { HighlightedAchievementPublic } from "@/types/highlightedAchievements";
 
 export interface getProfileByUsernameProps {
   id: number;
@@ -22,6 +23,7 @@ export interface getProfileByUsernameProps {
   quantity_posts: number;
   user_already_like?: boolean;
   user_already_follow?: boolean;
+  highlighted_achievements?: HighlightedAchievementPublic[];
 }
 export const getProfileByUsername = async (username: string) => {
   const accessToken = (await cookies()).get("accessToken")?.value;

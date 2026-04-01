@@ -73,6 +73,7 @@ export const PostTextPostExpand = ({
                 created_by_user_name={resourceObject.created_by_user_name}
                 timestamp={resourceObject.timestamp}
                 text={resourceObject.comment}
+                highlightedAchievements={resourceObject.highlighted_achievements}
               />
             )}
             {showExpandButton ? (
@@ -104,6 +105,7 @@ export const PostTextPostExpand = ({
                 created_by_user_name={resourceObject.created_by_user_name}
                 timestamp={resourceObject.timestamp}
                 text={resourceObject.comment}
+                highlightedAchievements={resourceObject.highlighted_achievements}
               />
             )}
             <HideTextButton handleToggle={handleToggle} />

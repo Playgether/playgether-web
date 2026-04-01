@@ -1,9 +1,11 @@
+import { apiFetch } from "@/services/apiFetch";
+import type { HighlightedAchievementPublic } from "@/types/highlightedAchievements";
+
 export interface PostCommentsApiReturn {
   next: string;
   previous: string;
   results: PostsCommentsProps[];
 }
-import { apiFetch } from "@/services/apiFetch";
 export interface PostsCommentsProps {
   answers: PostCommentsApiReturn;
   id: number;
@@ -20,6 +22,7 @@ export interface PostsCommentsProps {
   edited: boolean;
   quantity_replies: number;
   user_username: string;
+  highlighted_achievements?: HighlightedAchievementPublic[];
 }
 
 export interface PostCommentsOfCommentsProps {
@@ -36,6 +39,7 @@ export interface PostCommentsOfCommentsProps {
   user: number;
   answers: PostCommentsOfCommentsProps[];
   edited: boolean;
+  highlighted_achievements?: HighlightedAchievementPublic[];
 }
 
 export async function getCommentsClient(

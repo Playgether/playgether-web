@@ -21,6 +21,7 @@ const PostHasNoMedia = ({ resource }: PostsExtendHasNoPostMediaProps) => {
             username={resource.created_by_user_name}
             timestamp={resource.timestamp}
             imageClassName="mt-3 ml-3 h-8 w-8"
+            highlightedAchievements={resource.highlighted_achievements}
           />
           <BorderLine />
           <PostTextPostExpand

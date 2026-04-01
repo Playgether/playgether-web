@@ -16,6 +16,7 @@ import { games } from "../constants";
 import NoImageProfile from "@/components/general/NoImageProfile";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
+import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
 
 interface BioTabProps {
   profile: getProfileByUsernameProps | null;
@@ -168,14 +169,18 @@ export function BioTab({
                   )}
                 </div>
                 <div className="flex-1">
-                  <div className="flex gap-2 mb-2">
-                    <div className="flex flex-col mt-1">
+                  <div className="flex flex-wrap gap-2 mb-2 items-start">
+                    <div className="flex flex-col mt-1 min-w-0">
                       <span className="font-medium text-sm">
                         {comment.created_by_user_name ?? comment.author}
                       </span>
                       <span className="font-light text-xs text-muted-foreground">
                         @{comment.user_username ?? ""}
                       </span>
+                      <HighlightedAchievementBadges
+                        achievements={comment.highlighted_achievements}
+                        className="mt-1"
+                      />
                     </div>
                     <div>
                       <span className="text-xs text-muted-foreground">

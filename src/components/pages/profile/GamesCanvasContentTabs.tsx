@@ -598,6 +598,7 @@ export function GamesCanvasContentTabs({
               <AchievementsTab
                 profile={profile}
                 isOwner={isOwner}
+                onProfileUpdated={onProfileUpdated}
                 onAchievementClick={(achievement) => {
                   setSelectedAchievement(achievement);
                   setIsAchievementModalOpen(true);

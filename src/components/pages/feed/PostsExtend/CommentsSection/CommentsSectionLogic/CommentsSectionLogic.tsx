@@ -43,6 +43,7 @@ const CommentsSection = ({ post_id }: { post_id: number }) => {
                     timestamp={item.timestamp}
                     usernameAndTimestampDiv="flex flex-row w-full justify-between pr-4"
                     imageClassName="h-6 w-6"
+                    highlightedAchievements={item.highlighted_achievements}
                   />
                   {item.edited === true ? <EditedComment /> : null}
                 </div>

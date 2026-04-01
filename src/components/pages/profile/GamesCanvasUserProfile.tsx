@@ -17,6 +17,7 @@ import { deleteLike } from "@/services/deleteLike";
 import { LikeContentType } from "@/components/content_types/LikeContentType";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import { CustomToastProps } from "@/error/custom-toaster/enum";
+import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
 
 export function GamesCanvasUserProfile({
   profile,
@@ -228,6 +229,11 @@ export function GamesCanvasUserProfile({
                       .toLowerCase()
                       .replace(/\s+/g, "")}
                   </p>
+                  <div className="pt-2">
+                    <HighlightedAchievementBadges
+                      achievements={profile?.highlighted_achievements}
+                    />
+                  </div>
                   <p className="text-sm text-card-foreground leading-relaxed whitespace-pre-wrap pt-4">
                     {profile?.bio}
                   </p>

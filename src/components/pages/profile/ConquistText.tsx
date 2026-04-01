@@ -13,6 +13,7 @@ import {
   type RarityConfig,
   rarityConfig,
 } from "./rarityConfig";
+import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -295,6 +296,203 @@ const AnimatedBorder = ({
   );
 };
 
+/** Mesma borda cônica da aba de conquistas, sem rotação (chips em destaque). */
+const StaticBorder = ({ config }: { config: RarityConfig }) => {
+  if (!config.borderGradient) return null;
+  return (
+    <div
+      className="absolute pointer-events-none"
+      style={{
+        inset: "-200%",
+        width: "500%",
+        height: "500%",
+        background: config.borderGradient,
+      }}
+    />
+  );
+};
+
+export type RarityAchievementChromeProps = {
+  rarity: RarityLevel;
+  isHovered: boolean;
+  isExpanded: boolean;
+  reducedMotion: boolean;
+  /** true = gradiente cônico fixo; false = rotação como no card da aba. */
+  staticBorder: boolean;
+  /** Chip compacto (ex.: destaques no header): `rounded-md`, borda 1px. */
+  variant?: "card" | "chip";
+  unlockOverlay?: React.ReactNode;
+  contentClassName?: string;
+  className?: string;
+  children: React.ReactNode;
+};
+
+/** Borda, brilho externo e efeitos (partículas, elétrico, cósmico) iguais ao card da aba. */
+export function RarityAchievementChrome({
+  rarity,
+  isHovered,
+  isExpanded,
+  reducedMotion,
+  staticBorder,
+  variant = "card",
+  unlockOverlay,
+  contentClassName = "relative z-10 p-4",
+  className,
+  children,
+}: RarityAchievementChromeProps) {
+  const config = rarityConfig[rarity];
+  const isAnimated = !reducedMotion && config.animationIntensity !== "none";
+  const showBorder = config.hasAnimatedBorder && isAnimated;
+  const isChip = variant === "chip";
+
+  const particles = useMemo<ParticleData[]>(
+    () =>
+      Array.from({ length: config.particleCount }, (_, i) => ({
+        id: i,
+        x: 5 + Math.random() * 90,
+        y: 5 + Math.random() * 90,
+        size: 2 + Math.random() * 4,
+        duration: 2 + Math.random() * 3,
+        delay: Math.random() * 3,
+        color:
+          config.particleColors[i % config.particleColors.length] ??
+          "rgba(255,255,255,0.5)",
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rarity],
+  );
+
+  const sparks = useMemo<SparkData[]>(
+    () =>
+      Array.from({ length: 6 }, (_, i) => ({
+        id: i,
+        x: Math.random() * 90,
+        y: Math.random() * 90,
+        rotation: Math.random() * 360,
+        duration: 0.2 + Math.random() * 0.2,
+        delay: Math.random() * 2,
+        repeatDelay: 1 + Math.random() * 2.5,
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rarity],
+  );
+
+  const stars = useMemo<StarData[]>(
+    () =>
+      Array.from({ length: config.particleCount }, (_, i) => ({
+        id: i,
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        size: 1 + Math.random() * 3,
+        duration: 0,
+        delay: Math.random() * 4,
+        color:
+          config.particleColors[i % config.particleColors.length] ??
+          "rgba(255,255,255,0.8)",
+        twinkleDuration: 1.5 + Math.random() * 3,
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rarity],
+  );
+
+  const glowShadow = useMemo(() => {
+    if (!isAnimated) return config.glowBase;
+    if (isExpanded) return config.glowExpanded;
+    if (isHovered) return config.glowHover;
+    return config.glowBase;
+  }, [isAnimated, isExpanded, isHovered, config]);
+
+  return (
+    <motion.div
+      className={cn(isChip ? "rounded-md" : "rounded-xl", className)}
+      animate={{ boxShadow: glowShadow }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      style={{ willChange: "box-shadow" }}
+    >
+      <div
+        className={cn(
+          "relative overflow-hidden",
+          isChip ? "rounded-md" : "rounded-xl",
+        )}
+        style={{ padding: showBorder && !isChip ? "1.5px" : "1px" }}
+      >
+        {showBorder ? (
+          staticBorder ? (
+            <StaticBorder config={config} />
+          ) : (
+            <AnimatedBorder
+              config={config}
+              isHovered={isHovered}
+              isExpanded={isExpanded}
+            />
+          )
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{ background: config.staticBorderColor }}
+          />
+        )}
+
+        <div
+          className={cn(
+            "relative overflow-hidden",
+            isChip
+              ? "rounded-[calc(var(--radius)-2px)]"
+              : "rounded-[calc(var(--radius)-1.5px)]",
+          )}
+          style={{ background: config.cardBg }}
+        >
+          {isAnimated &&
+            (rarity === "legendary" || rarity === "celestial") && (
+              <motion.div
+                className="absolute inset-0 pointer-events-none"
+                animate={{
+                  opacity: isExpanded ? 0.18 : isHovered ? 0.12 : 0.07,
+                }}
+                style={{
+                  background:
+                    rarity === "celestial"
+                      ? "radial-gradient(ellipse at 50% 50%, rgba(167,139,250,0.5) 0%, rgba(59,130,246,0.3) 50%, transparent 80%)"
+                      : "radial-gradient(ellipse at 50% 50%, rgba(251,191,36,0.4) 0%, transparent 70%)",
+                }}
+                transition={{ duration: 0.5 }}
+              />
+            )}
+
+          {isAnimated && config.hasParticles && !config.hasCosmicEffect && (
+            <ParticleSystem
+              particles={particles}
+              isHovered={isHovered}
+              isExpanded={isExpanded}
+              isFireMode={config.hasFireEffect}
+            />
+          )}
+
+          {isAnimated && config.hasCosmicEffect && (
+            <CosmicEffect
+              stars={stars}
+              isHovered={isHovered}
+              isExpanded={isExpanded}
+            />
+          )}
+
+          {isAnimated && config.hasElectricEffect && (
+            <ElectricEffect
+              sparks={sparks}
+              isHovered={isHovered}
+              config={config}
+            />
+          )}
+
+          {unlockOverlay}
+
+          <div className={contentClassName}>{children}</div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 // ─── Rarity Badge ─────────────────────────────────────────────────────────────
 
 const RarityBadge = ({
@@ -388,67 +586,6 @@ export const ConquistText = ({
     return () => clearTimeout(t);
   }, [recentlyUnlocked]);
 
-  // Stable particle data
-  const particles = useMemo<ParticleData[]>(
-    () =>
-      Array.from({ length: config.particleCount }, (_, i) => ({
-        id: i,
-        x: 5 + Math.random() * 90,
-        y: 5 + Math.random() * 90,
-        size: 2 + Math.random() * 4,
-        duration: 2 + Math.random() * 3,
-        delay: Math.random() * 3,
-        color:
-          config.particleColors[i % config.particleColors.length] ??
-          "rgba(255,255,255,0.5)",
-      })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rarity],
-  );
-
-  // Stable electric spark data
-  const sparks = useMemo<SparkData[]>(
-    () =>
-      Array.from({ length: 6 }, (_, i) => ({
-        id: i,
-        x: Math.random() * 90,
-        y: Math.random() * 90,
-        rotation: Math.random() * 360,
-        duration: 0.2 + Math.random() * 0.2,
-        delay: Math.random() * 2,
-        repeatDelay: 1 + Math.random() * 2.5,
-      })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rarity],
-  );
-
-  // Stable cosmic star data
-  const stars = useMemo<StarData[]>(
-    () =>
-      Array.from({ length: config.particleCount }, (_, i) => ({
-        id: i,
-        x: Math.random() * 100,
-        y: Math.random() * 100,
-        size: 1 + Math.random() * 3,
-        duration: 0,
-        delay: Math.random() * 4,
-        color:
-          config.particleColors[i % config.particleColors.length] ??
-          "rgba(255,255,255,0.8)",
-        twinkleDuration: 1.5 + Math.random() * 3,
-      })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rarity],
-  );
-
-  // Glow shadow derived from state
-  const glowShadow = useMemo(() => {
-    if (!isAnimated) return config.glowBase;
-    if (isExpanded) return config.glowExpanded;
-    if (isHovered) return config.glowHover;
-    return config.glowBase;
-  }, [isAnimated, isExpanded, isHovered, config]);
-
   const handleClick = useCallback(() => {
     if (onCardClick) {
       onCardClick();
@@ -458,7 +595,6 @@ export const ConquistText = ({
   }, [onCardClick]);
 
   const isCommon = rarity === "common";
-  const showBorder = config.hasAnimatedBorder && isAnimated;
 
   return (
     <motion.div
@@ -476,91 +612,19 @@ export const ConquistText = ({
       transition={{ duration: 0.3, ease: "easeOut" }}
       style={{ willChange: "transform" }}
     >
-      {/* ── Outer glow wrapper ────────────────────────────────────────────── */}
-      <motion.div
-        className="rounded-xl"
-        animate={{ boxShadow: glowShadow }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        style={{ willChange: "box-shadow" }}
+      <RarityAchievementChrome
+        rarity={rarity}
+        isHovered={isHovered}
+        isExpanded={isExpanded}
+        reducedMotion={reducedMotion}
+        staticBorder={false}
+        unlockOverlay={
+          <AnimatePresence>
+            {showUnlocked && <RecentlyUnlockedOverlay key="unlocked" />}
+          </AnimatePresence>
+        }
       >
-        {/* ── Border container (clips the rotating gradient) ─────────────── */}
-        <div
-          className="relative rounded-xl overflow-hidden"
-          style={{ padding: showBorder ? "1.5px" : "1px" }}
-        >
-          {/* Border layer */}
-          {showBorder ? (
-            <AnimatedBorder
-              config={config}
-              isHovered={isHovered}
-              isExpanded={isExpanded}
-            />
-          ) : (
-            <div
-              className="absolute inset-0"
-              style={{ background: config.staticBorderColor }}
-            />
-          )}
-
-          {/* ── Inner card ─────────────────────────────────────────────────── */}
-          <div
-            className="relative rounded-[calc(var(--radius)-1.5px)] overflow-hidden"
-            style={{ background: config.cardBg }}
-          >
-            {/* Background glow overlay (for extreme rarities) */}
-            {isAnimated &&
-              (rarity === "legendary" || rarity === "celestial") && (
-                <motion.div
-                  className="absolute inset-0 pointer-events-none"
-                  animate={{
-                    opacity: isExpanded ? 0.18 : isHovered ? 0.12 : 0.07,
-                  }}
-                  style={{
-                    background:
-                      rarity === "celestial"
-                        ? "radial-gradient(ellipse at 50% 50%, rgba(167,139,250,0.5) 0%, rgba(59,130,246,0.3) 50%, transparent 80%)"
-                        : "radial-gradient(ellipse at 50% 50%, rgba(251,191,36,0.4) 0%, transparent 70%)",
-                  }}
-                  transition={{ duration: 0.5 }}
-                />
-              )}
-
-            {/* Particle system */}
-            {isAnimated && config.hasParticles && !config.hasCosmicEffect && (
-              <ParticleSystem
-                particles={particles}
-                isHovered={isHovered}
-                isExpanded={isExpanded}
-                isFireMode={config.hasFireEffect}
-              />
-            )}
-
-            {/* Cosmic star system */}
-            {isAnimated && config.hasCosmicEffect && (
-              <CosmicEffect
-                stars={stars}
-                isHovered={isHovered}
-                isExpanded={isExpanded}
-              />
-            )}
-
-            {/* Electric effect */}
-            {isAnimated && config.hasElectricEffect && (
-              <ElectricEffect
-                sparks={sparks}
-                isHovered={isHovered}
-                config={config}
-              />
-            )}
-
-            {/* Recently unlocked overlay */}
-            <AnimatePresence>
-              {showUnlocked && <RecentlyUnlockedOverlay key="unlocked" />}
-            </AnimatePresence>
-
-            {/* ── Content ──────────────────────────────────────────────────── */}
-            <div className="relative z-10 p-4">
-              <div className="flex items-start gap-4">
+        <div className="flex items-start gap-4">
                 {/* Icon box */}
                 <motion.div
                   className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 relative overflow-hidden"
@@ -687,10 +751,7 @@ export const ConquistText = ({
                   </AnimatePresence>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
+      </RarityAchievementChrome>
     </motion.div>
   );
 };

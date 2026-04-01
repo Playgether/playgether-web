@@ -60,6 +60,7 @@ export const ExpandedComments = ({
               className="w-full"
               usernameAndTimestampDiv="w-full flex flex-row justify-between pr-4"
               imageClassName="h-6 w-6"
+              highlightedAchievements={answer.highlighted_achievements}
             />
             {answer.edited === true ? <EditedComment /> : null}
           </div>

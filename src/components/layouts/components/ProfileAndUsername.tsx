@@ -3,6 +3,8 @@ import UserNamePost from "../../pages/feed/DesktopFeed/MultUseComponents/UserNam
 import { twJoin } from "tailwind-merge";
 import ProfileImagePost from "../../pages/feed/DesktopFeed/Middle/PostsComponents/ProfileImagePost/ProfileImagePost";
 import DateAndHour from "../DateAndHour/DateAndHour";
+import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
+import type { HighlightedAchievementPublic } from "@/types/highlightedAchievements";
 
 export interface ProfileAndUsernameProps
   extends HTMLAttributes<HTMLDivElement> {
@@ -20,6 +22,8 @@ export interface ProfileAndUsernameProps
   timestamp?: Date;
   /** Esta variável opcional recebe estilos adicionais para o wrapper da div que está o componente UserNamePost */
   usernameAndTimestampDiv?: string;
+  /** Conquistas em destaque do autor (feed, comentários, etc.). */
+  highlightedAchievements?: HighlightedAchievementPublic[] | null;
 }
 
 /** Este componente é responsável por criar uma identidade visual pré definida para identificação de usuários (autor de posts, comentários etc.), use-o quando precisar deste
@@ -31,18 +35,26 @@ const ProfileAndUsername = ({
   imageClassName,
   timestamp,
   usernameAndTimestampDiv,
+  highlightedAchievements,
   ...rest
 }: ProfileAndUsernameProps) => {
   return (
     <div className={twJoin("", rest.className)} {...rest}>
-      <div className="flex items-center gap-2">
+      <div className="flex items-start gap-2 min-w-0">
         <ProfileImagePost
           username={username}
           link_photo={profile_photo}
           className={`${imageClassName} h-10 w-10`}
         />
-        <div className={twJoin("text-lg", usernameAndTimestampDiv)}>
-          <UserNamePost username={username} />
+        <div
+          className={twJoin("text-lg min-w-0 flex-1", usernameAndTimestampDiv)}
+        >
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <UserNamePost username={username} />
+            <HighlightedAchievementBadges
+              achievements={highlightedAchievements}
+            />
+          </div>
           {timestamp ? (
             <div className="ProfileAndUsername-wrapper text-sm">
               <DateAndHour date={timestamp} />
