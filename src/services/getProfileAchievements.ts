@@ -43,6 +43,8 @@ export type GetProfileAchievementsParams = {
   page?: number;
   page_size?: number;
   game_slugs?: string[];
+  /** Valores de `rarity` separados por vírgula na query; omitir = todos os níveis. */
+  rarities?: string[];
 };
 
 export async function getProfileAchievements(
@@ -54,6 +56,9 @@ export async function getProfileAchievements(
   if (params?.page_size != null) search.set("page_size", String(params.page_size));
   if (params?.game_slugs?.length) {
     search.set("game_slugs", params.game_slugs.join(","));
+  }
+  if (params?.rarities?.length) {
+    search.set("rarities", params.rarities.join(","));
   }
   const qs = search.toString();
   const path = `/api/games/profiles/${profileId}/achievements/${qs ? `?${qs}` : ""}`;

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { Loader2, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -15,7 +15,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import type { getProfileByUsernameProps } from "@/services/getProfileByUsername";
 import {
   getProfileAchievements,
@@ -30,8 +32,28 @@ import { CustomToast } from "@/components/ui/customSonner";
 import { CustomToastProps } from "@/error/custom-toaster/enum";
 import { cn } from "@/lib/utils";
 import { useAuthContext } from "@/context/AuthContext";
+import {
+  rarityConfig,
+  type RarityLevel,
+} from "@/components/pages/profile/rarityConfig";
 
 const ACHIEVEMENTS_PAGE_SIZE = 12;
+
+/** Ordem de exibição dos níveis (alinhada ao backend `Achievement.Rarity`). */
+const ACHIEVEMENT_RARITY_ORDER: RarityLevel[] = [
+  "common",
+  "medium",
+  "rare",
+  "ultra-rare",
+  "epic",
+  "mythic",
+  "legendary",
+  "celestial",
+];
+
+function newFullRaritySet(): Set<RarityLevel> {
+  return new Set(ACHIEVEMENT_RARITY_ORDER);
+}
 
 function isProfileOwner(
   user: { username?: string; user_id?: number } | null,
@@ -152,12 +174,32 @@ export function AchievementsTab({
   const [lastSyncBySlug, setLastSyncBySlug] = useState<Record<string, string>>(
     {},
   );
+  const [selectedRarities, setSelectedRarities] = useState<Set<RarityLevel>>(
+    () => newFullRaritySet(),
+  );
+  const [filtersModalOpen, setFiltersModalOpen] = useState(false);
+  const [draftGameSlugs, setDraftGameSlugs] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [draftRarities, setDraftRarities] = useState<Set<RarityLevel>>(
+    () => newFullRaritySet(),
+  );
 
   const profileId = profile?.id;
 
   const slugsKey = useMemo(
     () => [...selectedGameSlugs].sort().join(","),
     [selectedGameSlugs],
+  );
+
+  const raritiesKey = useMemo(
+    () => [...selectedRarities].sort().join(","),
+    [selectedRarities],
+  );
+
+  const listQueryKey = useMemo(
+    () => `${slugsKey}|${raritiesKey}`,
+    [slugsKey, raritiesKey],
   );
 
   useEffect(() => {
@@ -172,6 +214,7 @@ export function AchievementsTab({
       total_pages: 1,
     });
     setLastSyncBySlug({});
+    setSelectedRarities(newFullRaritySet());
   }, [profileId]);
 
   useEffect(() => {
@@ -246,10 +289,15 @@ export function AchievementsTab({
       }
       setLoadingList(true);
       try {
+        const allRarities =
+          selectedRarities.size === ACHIEVEMENT_RARITY_ORDER.length;
         const data = await getProfileAchievements(profileId, {
           page,
           page_size: ACHIEVEMENTS_PAGE_SIZE,
           game_slugs: slugs,
+          rarities: allRarities
+            ? undefined
+            : [...selectedRarities].sort(),
         });
         setAchievements(data.achievements);
         setListMeta({
@@ -274,7 +322,7 @@ export function AchievementsTab({
         setLoadingList(false);
       }
     },
-    [profileId, slugsKey],
+    [profileId, slugsKey, raritiesKey],
   );
 
   useEffect(() => {
@@ -282,6 +330,47 @@ export function AchievementsTab({
   }, [listPage, fetchAchievementsPage]);
 
   const slugOrder = useMemo(() => statsGames.map((g) => g.slug), [statsGames]);
+
+  const filterNarrowCount = useMemo(() => {
+    let n = 0;
+    if (slugOrder.length > 0 && selectedGameSlugs.size < slugOrder.length) {
+      n += 1;
+    }
+    if (selectedRarities.size < ACHIEVEMENT_RARITY_ORDER.length) {
+      n += 1;
+    }
+    return n;
+  }, [selectedGameSlugs.size, selectedRarities.size, slugOrder.length]);
+
+  const openFiltersModal = () => {
+    setDraftGameSlugs(new Set(selectedGameSlugs));
+    setDraftRarities(new Set(selectedRarities));
+    setFiltersModalOpen(true);
+  };
+
+  const applyFiltersFromModal = () => {
+    if (draftGameSlugs.size === 0) {
+      CustomToast.error("Marque pelo menos um jogo.", {
+        duration: CustomToastProps.defaultDuration,
+      });
+      return;
+    }
+    if (draftRarities.size === 0) {
+      CustomToast.error("Marque pelo menos um nível de raridade.", {
+        duration: CustomToastProps.defaultDuration,
+      });
+      return;
+    }
+    setListPage(1);
+    setSelectedGameSlugs(new Set(draftGameSlugs));
+    setSelectedRarities(new Set(draftRarities));
+    setFiltersModalOpen(false);
+  };
+
+  const resetDraftFilters = () => {
+    setDraftGameSlugs(new Set(slugOrder));
+    setDraftRarities(newFullRaritySet());
+  };
 
   const openSyncDialog = () => {
     setPickSlug(slugOrder[0] ?? "");
@@ -344,26 +433,6 @@ export function AchievementsTab({
     return list;
   }, [achievements, filterSessionOnly, sessionNewIds]);
 
-  const toggleGameFilter = (slug: string) => {
-    setListPage(1);
-    setSelectedGameSlugs((prev) => {
-      const next = new Set(prev);
-      if (next.has(slug)) next.delete(slug);
-      else next.add(slug);
-      return next;
-    });
-  };
-
-  const selectAllGameFilters = () => {
-    setListPage(1);
-    setSelectedGameSlugs(new Set(slugOrder));
-  };
-
-  const clearGameFilters = () => {
-    setListPage(1);
-    setSelectedGameSlugs(new Set());
-  };
-
   if (!profileId) {
     return <p className="text-muted-foreground text-sm">Carregando perfil…</p>;
   }
@@ -400,59 +469,31 @@ export function AchievementsTab({
               </Button>
             </div>
           )}
-          <div className="rounded-lg border border-border bg-card/40 p-4 space-y-4">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <p className="text-sm font-medium text-foreground">
-                  Filtrar por jogo
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Mostre só as conquistas dos jogos marcados. Pode combinar
-                  vários (ex.: CS2 e outro).
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2 shrink-0">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 text-xs"
-                  onClick={selectAllGameFilters}
-                >
-                  Marcar todos
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 text-xs"
-                  onClick={clearGameFilters}
-                >
-                  Limpar filtro
-                </Button>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-x-6 gap-y-3">
-              {slugOrder.map((slug) => {
-                const label = SLUG_LABELS[slug] ?? slug;
-                const checked = selectedGameSlugs.has(slug);
-                const id = `achievement-filter-${slug}`;
-                return (
-                  <div key={slug} className="flex items-center gap-2">
-                    <Checkbox
-                      id={id}
-                      checked={checked}
-                      onCheckedChange={() => toggleGameFilter(slug)}
-                    />
-                    <Label
-                      htmlFor={id}
-                      className="text-sm font-normal cursor-pointer"
-                    >
-                      {label}
-                    </Label>
-                  </div>
-                );
-              })}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-border bg-card/40 px-4 py-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+                onClick={openFiltersModal}
+              >
+                <SlidersHorizontal className="h-4 w-4 mr-2" aria-hidden />
+                Filtros
+                {filterNarrowCount > 0 ? (
+                  <Badge
+                    variant="secondary"
+                    className="ml-2 min-w-5 justify-center px-1.5 py-0 text-[10px]"
+                  >
+                    {filterNarrowCount}
+                  </Badge>
+                ) : null}
+              </Button>
+              <p className="text-xs text-muted-foreground leading-snug">
+                Jogos e nível de raridade (comum, raro, lendário…). Combine os
+                dois; a lista mostra só o que atende a tudo. Ordem: desbloqueadas
+                mais recentes primeiro.
+              </p>
             </div>
           </div>
 
@@ -511,7 +552,7 @@ export function AchievementsTab({
         <p className="text-sm text-muted-foreground text-center py-12">
           {filterSessionOnly && sessionNewIds.size > 0
             ? "Nenhuma conquista nova nesta sessão com os filtros atuais."
-            : "Nenhuma conquista para os jogos e filtros selecionados."}
+            : "Nenhuma conquista para os jogos e níveis selecionados nos filtros."}
         </p>
       ) : (
         <div className="space-y-4">
@@ -524,7 +565,7 @@ export function AchievementsTab({
             </div>
           )}
           <motion.div
-            key={`${slugsKey}-${listPage}`}
+            key={`${listQueryKey}-${listPage}`}
             className="grid grid-cols-1 md:grid-cols-2 gap-4"
             initial="hidden"
             animate="visible"
@@ -605,6 +646,161 @@ export function AchievementsTab({
           )}
         </div>
       )}
+
+      <Dialog open={filtersModalOpen} onOpenChange={setFiltersModalOpen}>
+        <DialogContent className="sm:max-w-md max-h-[min(90vh,640px)] flex flex-col gap-0 p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-2 shrink-0">
+            <DialogTitle>Filtrar conquistas</DialogTitle>
+            <DialogDescription>
+              Escolha quais jogos e quais níveis de raridade entram na lista. Os
+              filtros se combinam (como num e-commerce).
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="h-[min(52vh,420px)] w-full px-6">
+            <div className="space-y-6 pr-3 pb-4">
+              <section className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Jogo
+                  </h3>
+                  <div className="flex gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() =>
+                        setDraftGameSlugs(new Set(slugOrder))
+                      }
+                    >
+                      Marcar todos
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => setDraftGameSlugs(new Set())}
+                    >
+                      Limpar
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-x-5 gap-y-2">
+                  {slugOrder.map((slug) => {
+                    const label = SLUG_LABELS[slug] ?? slug;
+                    const id = `filter-draft-game-${slug}`;
+                    return (
+                      <div key={slug} className="flex items-center gap-2">
+                        <Checkbox
+                          id={id}
+                          checked={draftGameSlugs.has(slug)}
+                          onCheckedChange={() => {
+                            setDraftGameSlugs((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(slug)) next.delete(slug);
+                              else next.add(slug);
+                              return next;
+                            });
+                          }}
+                        />
+                        <Label
+                          htmlFor={id}
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          {label}
+                        </Label>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+              <section className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Nível (raridade)
+                  </h3>
+                  <div className="flex gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() =>
+                        setDraftRarities(newFullRaritySet())
+                      }
+                    >
+                      Marcar todos
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => setDraftRarities(new Set())}
+                    >
+                      Limpar
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {ACHIEVEMENT_RARITY_ORDER.map((r) => {
+                    const cfg = rarityConfig[r];
+                    const id = `filter-draft-rarity-${r}`;
+                    return (
+                      <div key={r} className="flex items-center gap-2">
+                        <Checkbox
+                          id={id}
+                          checked={draftRarities.has(r)}
+                          onCheckedChange={() => {
+                            setDraftRarities((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(r)) next.delete(r);
+                              else next.add(r);
+                              return next;
+                            });
+                          }}
+                        />
+                        <Label
+                          htmlFor={id}
+                          className="text-sm font-normal cursor-pointer flex items-center gap-2"
+                        >
+                          <span>{cfg.icon}</span>
+                          {cfg.label}
+                        </Label>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            </div>
+          </ScrollArea>
+          <DialogFooter className="px-6 py-4 border-t border-border bg-card/40 shrink-0 flex-col sm:flex-row gap-2 sm:justify-between">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="sm:mr-auto"
+              onClick={resetDraftFilters}
+            >
+              Restaurar padrão
+            </Button>
+            <div className="flex w-full sm:w-auto gap-2 justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setFiltersModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button type="button" size="sm" onClick={applyFiltersFromModal}>
+                Aplicar filtros
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={syncDialogOpen}
