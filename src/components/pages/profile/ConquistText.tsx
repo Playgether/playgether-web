@@ -203,7 +203,7 @@ const AnimatedBorder = ({
 
   return (
     <motion.div
-      className="absolute pointer-events-none"
+      className="absolute pointer-events-none z-[1]"
       style={{
         inset: "-200%",
         width: "500%",
@@ -226,7 +226,7 @@ const StaticBorder = ({ config }: { config: RarityConfig }) => {
   if (!config.borderGradient) return null;
   return (
     <div
-      className="absolute pointer-events-none"
+      className="absolute pointer-events-none z-[1]"
       style={{
         inset: "-200%",
         width: "500%",
@@ -326,6 +326,16 @@ export function RarityAchievementChrome({
         )}
         style={{ padding: showBorder && !isChip ? "1.5px" : "1px" }}
       >
+        {showBorder && config.rotatingBorder && !staticBorder ? (
+          <div
+            className={cn(
+              "absolute inset-0 pointer-events-none z-0",
+              isChip ? "rounded-md" : "rounded-xl",
+            )}
+            style={{ background: config.staticBorderColor }}
+            aria-hidden
+          />
+        ) : null}
         {showBorder ? (
           staticBorder || !config.rotatingBorder ? (
             <StaticBorder config={config} />
@@ -345,7 +355,7 @@ export function RarityAchievementChrome({
 
         <div
           className={cn(
-            "relative overflow-hidden",
+            "relative z-[2] overflow-hidden",
             isChip
               ? "rounded-[calc(var(--radius)-2px)]"
               : "rounded-[calc(var(--radius)-1.5px)]",
@@ -513,7 +523,6 @@ export const ConquistText = ({
 
   return (
     <motion.div
-      layout
       variants={cardVariants}
       className="relative w-full cursor-pointer rounded-xl overflow-hidden"
       onClick={handleClick}

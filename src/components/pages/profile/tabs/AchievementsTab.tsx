@@ -121,6 +121,7 @@ function toModalAchievement(
     game: a.game,
     date: formatAchievementUnlockedShown(a, "modal"),
     percentage: a.percentage,
+    checkpointValue: a.checkpoint_value,
     progression: a.progression
       ? {
           current: a.progression.current,

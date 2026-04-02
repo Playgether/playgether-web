@@ -24,6 +24,8 @@ export type AchievementType = {
   game: string;
   date: string;
   percentage: number;
+  /** Marco desta linha na escada (ex. 2500); limita o “Caminho” neste modal. */
+  checkpointValue?: number | null;
   progression?: {
     current: number;
     next: number | null;
@@ -52,10 +54,26 @@ export function AchievementModal({
     achievement.rarity === "legendary" || achievement.rarity === "celestial";
 
   const prog = achievement.progression;
-  const progressCurrent = prog?.current ?? 0;
-  const progressNext =
+  const statProgress = prog?.current ?? 0;
+  const tierCap =
+    achievement.checkpointValue != null &&
+    typeof achievement.checkpointValue === "number"
+      ? achievement.checkpointValue
+      : null;
+  /** Progresso exibido neste modal: não ultrapassa o marco desta conquista. */
+  const displayCurrent =
+    tierCap !== null ? Math.min(statProgress, tierCap) : statProgress;
+  const globalNext =
     prog?.next != null && typeof prog.next === "number" ? prog.next : null;
-  const hasNextCheckpoint = progressNext != null;
+  /** Próximo marco na escada a partir do nível desta conquista (ex. na de 2500 → 5000). */
+  const nextForView =
+    tierCap !== null && prog?.path?.length
+      ? (() => {
+          const ahead = prog.path.filter((p) => p > tierCap);
+          return ahead.length ? Math.min(...ahead) : null;
+        })()
+      : globalNext;
+  const hasNextCheckpoint = nextForView != null;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -70,10 +88,17 @@ export function AchievementModal({
             className="relative rounded-xl overflow-hidden"
             style={{ padding: showAnimatedBorder ? "1.5px" : "1px" }}
           >
+            {showAnimatedBorder && borderRotates ? (
+              <div
+                className="absolute inset-0 rounded-xl pointer-events-none z-0"
+                style={{ background: config.staticBorderColor }}
+                aria-hidden
+              />
+            ) : null}
             {showAnimatedBorder ? (
               borderRotates ? (
                 <motion.div
-                  className="absolute pointer-events-none"
+                  className="absolute pointer-events-none z-[1]"
                   style={{
                     inset: "-200%",
                     width: "500%",
@@ -90,7 +115,7 @@ export function AchievementModal({
                 />
               ) : (
                 <div
-                  className="absolute pointer-events-none"
+                  className="absolute pointer-events-none z-[1]"
                   style={{
                     inset: "-200%",
                     width: "500%",
@@ -107,7 +132,7 @@ export function AchievementModal({
             )}
 
             <div
-              className="relative overflow-hidden"
+              className="relative z-[2] overflow-hidden"
               style={{
                 background: config.cardBg,
                 borderRadius: "calc(var(--radius) - 1.5px)",
@@ -194,7 +219,7 @@ export function AchievementModal({
                       <div className="flex flex-wrap gap-2">
                         {achievement.progression.path.map((p: number) => {
                           const u = achievement.progression?.unit === "h" ? "h" : "";
-                          const unlocked = p <= progressCurrent;
+                          const unlocked = p <= displayCurrent;
                           return (
                             <Badge
                               key={p}
@@ -219,8 +244,8 @@ export function AchievementModal({
                         <div className="text-sm text-muted-foreground mt-2">
                           Próxima:{" "}
                           {achievement.progression!.unit === "h"
-                            ? `${progressNext}h`
-                            : progressNext}
+                            ? `${nextForView}h`
+                            : nextForView}
                         </div>
                       ) : null}
                     </div>
