@@ -14,6 +14,7 @@ import {
   rarityConfig,
 } from "./rarityConfig";
 import { cn } from "@/lib/utils";
+import { AchievementElectricOverlay } from "./AchievementElectricOverlay";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -36,16 +37,6 @@ interface ParticleData {
   duration: number;
   delay: number;
   color: string;
-}
-
-interface SparkData {
-  id: number;
-  x: number;
-  y: number;
-  rotation: number;
-  duration: number;
-  delay: number;
-  repeatDelay: number;
 }
 
 interface StarData {
@@ -132,72 +123,6 @@ const ParticleSystem = ({
     ))}
   </div>
 );
-
-// ─── Electric Effect ──────────────────────────────────────────────────────────
-
-const ElectricSpark = ({
-  spark,
-  isHovered,
-  color,
-}: {
-  spark: SparkData;
-  isHovered: boolean;
-  color: string;
-}) => (
-  <motion.div
-    className="absolute pointer-events-none"
-    style={{
-      left: `${spark.x}%`,
-      top: `${spark.y}%`,
-      width: isHovered ? "30px" : "18px",
-      height: "1.5px",
-      background: color,
-      filter: `blur(0.5px) drop-shadow(0 0 3px ${color})`,
-      rotate: spark.rotation,
-      originX: "0%",
-      willChange: "opacity, scaleX",
-    }}
-    animate={{
-      opacity: [0, 1, 0.6, 0],
-      scaleX: [0, 1, 0.8, 0],
-    }}
-    transition={{
-      duration: spark.duration,
-      delay: spark.delay,
-      repeat: Infinity,
-      repeatDelay: spark.repeatDelay,
-      ease: "easeOut",
-    }}
-  />
-);
-
-const ElectricEffect = ({
-  sparks,
-  isHovered,
-  config,
-}: {
-  sparks: SparkData[];
-  isHovered: boolean;
-  config: RarityConfig;
-}) => {
-  const color =
-    config.label === "Lendário"
-      ? "rgba(251,191,36,0.9)"
-      : "rgba(196,181,253,0.9)";
-
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-[calc(var(--radius)-1px)]">
-      {sparks.map((s) => (
-        <ElectricSpark
-          key={s.id}
-          spark={s}
-          isHovered={isHovered}
-          color={color}
-        />
-      ))}
-    </div>
-  );
-};
 
 // ─── Cosmic Effect ────────────────────────────────────────────────────────────
 
@@ -362,21 +287,6 @@ export function RarityAchievementChrome({
     [rarity],
   );
 
-  const sparks = useMemo<SparkData[]>(
-    () =>
-      Array.from({ length: 6 }, (_, i) => ({
-        id: i,
-        x: Math.random() * 90,
-        y: Math.random() * 90,
-        rotation: Math.random() * 360,
-        duration: 0.2 + Math.random() * 0.2,
-        delay: Math.random() * 2,
-        repeatDelay: 1 + Math.random() * 2.5,
-      })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rarity],
-  );
-
   const stars = useMemo<StarData[]>(
     () =>
       Array.from({ length: config.particleCount }, (_, i) => ({
@@ -417,7 +327,7 @@ export function RarityAchievementChrome({
         style={{ padding: showBorder && !isChip ? "1.5px" : "1px" }}
       >
         {showBorder ? (
-          staticBorder ? (
+          staticBorder || !config.rotatingBorder ? (
             <StaticBorder config={config} />
           ) : (
             <AnimatedBorder
@@ -477,10 +387,15 @@ export function RarityAchievementChrome({
           )}
 
           {isAnimated && config.hasElectricEffect && (
-            <ElectricEffect
-              sparks={sparks}
+            <AchievementElectricOverlay
+              rarity={rarity}
               isHovered={isHovered}
-              config={config}
+              isExpanded={isExpanded}
+              clipClassName={
+                isChip
+                  ? "rounded-[calc(var(--radius)-2px)]"
+                  : "rounded-[calc(var(--radius)-1.5px)]"
+              }
             />
           )}
 
@@ -600,7 +515,7 @@ export const ConquistText = ({
     <motion.div
       layout
       variants={cardVariants}
-      className="relative w-full cursor-pointer"
+      className="relative w-full cursor-pointer rounded-xl overflow-hidden"
       onClick={handleClick}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}

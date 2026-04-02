@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils";
 import { useAuthContext } from "@/context/AuthContext";
 import {
   rarityConfig,
+  RARITY_ORDER,
   type RarityLevel,
 } from "@/components/pages/profile/rarityConfig";
 import {
@@ -46,20 +47,8 @@ import { setProfileAchievementHighlights } from "@/services/setProfileAchievemen
 
 const ACHIEVEMENTS_PAGE_SIZE = 12;
 
-/** Ordem de exibição dos níveis (alinhada ao backend `Achievement.Rarity`). */
-const ACHIEVEMENT_RARITY_ORDER: RarityLevel[] = [
-  "common",
-  "medium",
-  "rare",
-  "ultra-rare",
-  "epic",
-  "mythic",
-  "legendary",
-  "celestial",
-];
-
 function newFullRaritySet(): Set<RarityLevel> {
-  return new Set(ACHIEVEMENT_RARITY_ORDER);
+  return new Set(RARITY_ORDER);
 }
 
 function isProfileOwner(
@@ -328,7 +317,7 @@ export function AchievementsTab({
       setLoadingList(true);
       try {
         const allRarities =
-          selectedRarities.size === ACHIEVEMENT_RARITY_ORDER.length;
+          selectedRarities.size === RARITY_ORDER.length;
         const data = await getProfileAchievements(profileId, {
           page,
           page_size: ACHIEVEMENTS_PAGE_SIZE,
@@ -372,7 +361,7 @@ export function AchievementsTab({
     if (slugOrder.length > 0 && selectedGameSlugs.size < slugOrder.length) {
       n += 1;
     }
-    if (selectedRarities.size < ACHIEVEMENT_RARITY_ORDER.length) {
+    if (selectedRarities.size < RARITY_ORDER.length) {
       n += 1;
     }
     return n;
@@ -789,7 +778,7 @@ export function AchievementsTab({
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
-                  {ACHIEVEMENT_RARITY_ORDER.map((r) => {
+                  {RARITY_ORDER.map((r) => {
                     const cfg = rarityConfig[r];
                     const id = `filter-draft-rarity-${r}`;
                     return (

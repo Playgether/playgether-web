@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { X } from "lucide-react";
+import { AchievementElectricOverlay } from "../AchievementElectricOverlay";
 import { rarityConfig } from "../rarityConfig";
 import type { RarityLevel } from "../rarityConfig";
 
@@ -25,7 +26,7 @@ export type AchievementType = {
   percentage: number;
   progression?: {
     current: number;
-    next: number;
+    next: number | null;
     path: number[];
     unit?: string;
   };
@@ -45,8 +46,16 @@ export function AchievementModal({
 
   const config = rarityConfig[achievement.rarity] ?? rarityConfig.common;
   const showAnimatedBorder = config.hasAnimatedBorder;
+  const borderRotates = config.rotatingBorder;
+  const hasElectric = config.hasElectricEffect;
   const isLegendaryOrCelestial =
     achievement.rarity === "legendary" || achievement.rarity === "celestial";
+
+  const prog = achievement.progression;
+  const progressCurrent = prog?.current ?? 0;
+  const progressNext =
+    prog?.next != null && typeof prog.next === "number" ? prog.next : null;
+  const hasNextCheckpoint = progressNext != null;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -62,22 +71,34 @@ export function AchievementModal({
             style={{ padding: showAnimatedBorder ? "1.5px" : "1px" }}
           >
             {showAnimatedBorder ? (
-              <motion.div
-                className="absolute pointer-events-none"
-                style={{
-                  inset: "-200%",
-                  width: "500%",
-                  height: "500%",
-                  background: config.borderGradient,
-                  willChange: "transform",
-                }}
-                animate={{ rotate: 360 }}
-                transition={{
-                  duration: config.borderRotationSpeed * 0.6,
-                  repeat: Infinity,
-                  ease: "linear",
-                }}
-              />
+              borderRotates ? (
+                <motion.div
+                  className="absolute pointer-events-none"
+                  style={{
+                    inset: "-200%",
+                    width: "500%",
+                    height: "500%",
+                    background: config.borderGradient,
+                    willChange: "transform",
+                  }}
+                  animate={{ rotate: 360 }}
+                  transition={{
+                    duration: Math.max(config.borderRotationSpeed * 0.6, 0.35),
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
+                />
+              ) : (
+                <div
+                  className="absolute pointer-events-none"
+                  style={{
+                    inset: "-200%",
+                    width: "500%",
+                    height: "500%",
+                    background: config.borderGradient,
+                  }}
+                />
+              )
             ) : (
               <div
                 className="absolute inset-0"
@@ -106,6 +127,15 @@ export function AchievementModal({
                   }}
                 />
               )}
+
+              {hasElectric ? (
+                <AchievementElectricOverlay
+                  rarity={achievement.rarity}
+                  isHovered
+                  isExpanded
+                  clipClassName="rounded-[calc(var(--radius)-1.5px)]"
+                />
+              ) : null}
 
               <div className="relative z-10 p-6 pt-12">
                 <DialogClose
@@ -164,17 +194,18 @@ export function AchievementModal({
                       <div className="flex flex-wrap gap-2">
                         {achievement.progression.path.map((p: number) => {
                           const u = achievement.progression?.unit === "h" ? "h" : "";
+                          const unlocked = p <= progressCurrent;
                           return (
                             <Badge
                               key={p}
                               variant="outline"
                               className={
-                                p <= achievement.progression!.current
+                                unlocked
                                   ? "text-white border-0"
-                                  : "border-border"
+                                  : "border-border text-muted-foreground bg-muted/30"
                               }
                               style={
-                                p <= achievement.progression!.current
+                                unlocked
                                   ? { background: config.badgeGradient }
                                   : undefined
                               }
@@ -184,12 +215,14 @@ export function AchievementModal({
                           );
                         })}
                       </div>
-                      <div className="text-sm text-muted-foreground mt-2">
-                        Próxima:{" "}
-                        {achievement.progression.unit === "h"
-                          ? `${achievement.progression.next}h`
-                          : achievement.progression.next}
-                      </div>
+                      {hasNextCheckpoint ? (
+                        <div className="text-sm text-muted-foreground mt-2">
+                          Próxima:{" "}
+                          {achievement.progression!.unit === "h"
+                            ? `${progressNext}h`
+                            : progressNext}
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
                 </div>

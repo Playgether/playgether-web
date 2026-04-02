@@ -4,7 +4,8 @@ import type { RarityLevel } from "@/components/pages/profile/rarityConfig";
 export type ProfileAchievementProgression = {
   path: number[];
   current: number;
-  next: number;
+  /** Próximo marco; `null` quando já está no último nível. */
+  next: number | null;
   unit: string;
 };
 

@@ -27,8 +27,13 @@ export interface RarityConfig {
   hasFireEffect: boolean;
   hasCosmicEffect: boolean;
   hasAnimatedBorder: boolean;
+  /** Se false, borda só exibe o gradiente (ex. linear LR) sem rotação. */
+  rotatingBorder: boolean;
   borderRotationSpeed: number;
   hoverScale: number;
+  /** Multiplicadores dos raios (só Lendário/Celestial). >1 = mais lento. */
+  electricSparkDurationScale?: number;
+  electricSparkRepeatScale?: number;
 }
 
 export const rarityConfig: Record<RarityLevel, RarityConfig> = {
@@ -51,6 +56,7 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
     hasFireEffect: false,
     hasCosmicEffect: false,
     hasAnimatedBorder: false,
+    rotatingBorder: false,
     borderRotationSpeed: 0,
     hoverScale: 1.0,
   },
@@ -74,6 +80,7 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
     hasFireEffect: false,
     hasCosmicEffect: false,
     hasAnimatedBorder: false,
+    rotatingBorder: false,
     borderRotationSpeed: 0,
     hoverScale: 1.02,
   },
@@ -86,23 +93,20 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
     glowExpanded: "0 0 40px rgba(59, 130, 246, 0.55), 0 0 15px rgba(34, 211, 238, 0.3)",
     cardBg: "linear-gradient(135deg, rgba(23,37,84,0.65), rgba(7,89,133,0.35))",
     borderGradient:
-      "conic-gradient(from 0deg, #1d4ed8, #0891b2, #22d3ee, #0891b2, #1d4ed8)",
+      "linear-gradient(90deg, #1d4ed8, #22d3ee, #0891b2, #1d4ed8)",
     staticBorderColor: "rgba(96, 165, 250, 0.5)",
     textColor: "text-blue-400",
     badgeGradient: "linear-gradient(90deg, #1d4ed8, #0891b2)",
     animationIntensity: "low",
-    hasParticles: true,
-    particleCount: 4,
-    particleColors: [
-      "rgba(96,165,250,0.7)",
-      "rgba(34,211,238,0.65)",
-      "rgba(147,197,253,0.55)",
-    ],
+    hasParticles: false,
+    particleCount: 0,
+    particleColors: [],
     hasElectricEffect: false,
     hasFireEffect: false,
     hasCosmicEffect: false,
     hasAnimatedBorder: true,
-    borderRotationSpeed: 8,
+    rotatingBorder: false,
+    borderRotationSpeed: 0,
     hoverScale: 1.02,
   },
 
@@ -115,23 +119,20 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
       "0 0 52px rgba(139, 92, 246, 0.65), 0 0 24px rgba(196, 181, 253, 0.4)",
     cardBg: "linear-gradient(135deg, rgba(46,16,101,0.7), rgba(88,28,135,0.45))",
     borderGradient:
-      "conic-gradient(from 0deg, #6d28d9, #a855f7, #c4b5fd, #a855f7, #6d28d9)",
+      "linear-gradient(90deg, #6d28d9, #a855f7, #c4b5fd, #a855f7, #6d28d9)",
     staticBorderColor: "rgba(167, 139, 250, 0.6)",
     textColor: "text-violet-400",
     badgeGradient: "linear-gradient(90deg, #6d28d9, #a855f7)",
     animationIntensity: "medium",
-    hasParticles: true,
-    particleCount: 5,
-    particleColors: [
-      "rgba(167,139,250,0.8)",
-      "rgba(196,181,253,0.65)",
-      "rgba(139,92,246,0.75)",
-    ],
-    hasElectricEffect: true,
+    hasParticles: false,
+    particleCount: 0,
+    particleColors: [],
+    hasElectricEffect: false,
     hasFireEffect: false,
     hasCosmicEffect: false,
     hasAnimatedBorder: true,
-    borderRotationSpeed: 5,
+    rotatingBorder: false,
+    borderRotationSpeed: 0,
     hoverScale: 1.03,
   },
 
@@ -149,19 +150,15 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
     textColor: "text-purple-400",
     badgeGradient: "linear-gradient(90deg, #9333ea, #ec4899)",
     animationIntensity: "medium",
-    hasParticles: true,
-    particleCount: 7,
-    particleColors: [
-      "rgba(192,132,252,0.85)",
-      "rgba(249,168,212,0.75)",
-      "rgba(168,85,247,0.8)",
-      "rgba(236,72,153,0.65)",
-    ],
+    hasParticles: false,
+    particleCount: 0,
+    particleColors: [],
     hasElectricEffect: false,
     hasFireEffect: false,
     hasCosmicEffect: false,
     hasAnimatedBorder: true,
-    borderRotationSpeed: 4,
+    rotatingBorder: true,
+    borderRotationSpeed: 12,
     hoverScale: 1.03,
   },
 
@@ -181,19 +178,15 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
     textColor: "text-red-400",
     badgeGradient: "linear-gradient(90deg, #dc2626, #9333ea)",
     animationIntensity: "high",
-    hasParticles: true,
-    particleCount: 10,
-    particleColors: [
-      "rgba(239,68,68,0.85)",
-      "rgba(249,115,22,0.75)",
-      "rgba(168,85,247,0.65)",
-      "rgba(253,224,71,0.55)",
-    ],
+    hasParticles: false,
+    particleCount: 0,
+    particleColors: [],
     hasElectricEffect: false,
-    hasFireEffect: true,
+    hasFireEffect: false,
     hasCosmicEffect: false,
     hasAnimatedBorder: true,
-    borderRotationSpeed: 3,
+    rotatingBorder: true,
+    borderRotationSpeed: 8,
     hoverScale: 1.04,
   },
 
@@ -213,20 +206,18 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
     textColor: "text-yellow-400",
     badgeGradient: "linear-gradient(90deg, #92400e, #fbbf24, #92400e)",
     animationIntensity: "high",
-    hasParticles: true,
-    particleCount: 12,
-    particleColors: [
-      "rgba(251,191,36,0.9)",
-      "rgba(245,158,11,0.8)",
-      "rgba(253,224,71,0.75)",
-      "rgba(255,255,255,0.55)",
-    ],
+    hasParticles: false,
+    particleCount: 0,
+    particleColors: [],
     hasElectricEffect: true,
     hasFireEffect: false,
     hasCosmicEffect: false,
     hasAnimatedBorder: true,
-    borderRotationSpeed: 4,
+    rotatingBorder: true,
+    borderRotationSpeed: 3.4,
     hoverScale: 1.04,
+    electricSparkDurationScale: 0.78,
+    electricSparkRepeatScale: 0.68,
   },
 
   celestial: {
@@ -247,25 +238,22 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
     badgeGradient:
       "linear-gradient(90deg, #7c3aed, #3b82f6, #ec4899, #7c3aed)",
     animationIntensity: "extreme",
-    hasParticles: true,
-    particleCount: 15,
-    particleColors: [
-      "rgba(196,181,253,0.9)",
-      "rgba(147,197,253,0.85)",
-      "rgba(249,168,212,0.8)",
-      "rgba(255,255,255,0.9)",
-      "rgba(167,139,250,0.75)",
-      "rgba(103,232,249,0.7)",
-    ],
-    hasElectricEffect: false,
+    hasParticles: false,
+    particleCount: 0,
+    particleColors: [],
+    hasElectricEffect: true,
     hasFireEffect: false,
-    hasCosmicEffect: true,
+    hasCosmicEffect: false,
     hasAnimatedBorder: true,
-    borderRotationSpeed: 3,
+    rotatingBorder: true,
+    borderRotationSpeed: 5.5,
     hoverScale: 1.05,
+    electricSparkDurationScale: 1.55,
+    electricSparkRepeatScale: 1.75,
   },
 };
 
+/** Lendário é o último nível na UI (o mais “premium”). */
 export const RARITY_ORDER: RarityLevel[] = [
   "common",
   "medium",
@@ -273,6 +261,6 @@ export const RARITY_ORDER: RarityLevel[] = [
   "ultra-rare",
   "epic",
   "mythic",
-  "legendary",
   "celestial",
+  "legendary",
 ];
