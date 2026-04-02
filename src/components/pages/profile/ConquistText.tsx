@@ -445,7 +445,7 @@ export function RarityAchievementChrome({
 
 // ─── Rarity Badge ─────────────────────────────────────────────────────────────
 
-const RarityBadge = ({
+export const RarityBadge = ({
   config,
   rarity,
   isHovered,
@@ -460,7 +460,7 @@ const RarityBadge = ({
 
   return (
     <motion.div
-      className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full text-white select-none"
+      className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full text-white select-none shrink-0"
       style={{ background: config.badgeGradient }}
       animate={
         isAnimated && rarity !== "common" && rarity !== "medium"
