@@ -50,6 +50,17 @@ interface StarData {
   twinkleDuration: number;
 }
 
+/** Conic em rotação via `transform` deixa faixas nas bordas arredondadas; animamos o ângulo do gradiente. */
+export function borderGradientWithAnimatedConicAngle(
+  borderGradient: string,
+): string {
+  if (!/^conic-gradient/i.test(borderGradient.trim())) return borderGradient;
+  return borderGradient.replace(
+    /\bfrom\s+0deg\b/i,
+    "from var(--achievement-conic-angle, 0deg)",
+  );
+}
+
 // ─── Particle System ──────────────────────────────────────────────────────────
 
 const FloatingParticle = ({
@@ -202,6 +213,8 @@ const AnimatedBorder = ({
       ? config.borderRotationSpeed * 0.65
       : config.borderRotationSpeed * 0.6;
 
+  const bg = borderGradientWithAnimatedConicAngle(config.borderGradient);
+
   return (
     <motion.div
       className="absolute pointer-events-none z-[1]"
@@ -209,12 +222,11 @@ const AnimatedBorder = ({
         inset: "-200%",
         width: "500%",
         height: "500%",
-        background: config.borderGradient,
-        willChange: "transform",
-        backfaceVisibility: "hidden",
-        WebkitBackfaceVisibility: "hidden",
+        background: bg,
+        willChange: "--achievement-conic-angle",
       }}
-      animate={{ rotate: 360 }}
+      initial={{ "--achievement-conic-angle": "0deg" }}
+      animate={{ "--achievement-conic-angle": "360deg" }}
       transition={{
         duration: speed,
         repeat: Infinity,

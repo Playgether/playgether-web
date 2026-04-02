@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { X } from "lucide-react";
+import { borderGradientWithAnimatedConicAngle } from "../ConquistText";
 import { AchievementElectricOverlay } from "../AchievementElectricOverlay";
 import { rarityConfig } from "../rarityConfig";
 import type { RarityLevel } from "../rarityConfig";
@@ -109,12 +110,13 @@ export function AchievementModal({
                     inset: "-200%",
                     width: "500%",
                     height: "500%",
-                    background: config.borderGradient,
-                    willChange: "transform",
-                    backfaceVisibility: "hidden",
-                    WebkitBackfaceVisibility: "hidden",
+                    background: borderGradientWithAnimatedConicAngle(
+                      config.borderGradient,
+                    ),
+                    willChange: "--achievement-conic-angle",
                   }}
-                  animate={{ rotate: 360 }}
+                  initial={{ "--achievement-conic-angle": "0deg" }}
+                  animate={{ "--achievement-conic-angle": "360deg" }}
                   transition={{
                     duration: Math.max(config.borderRotationSpeed * 0.6, 0.35),
                     repeat: Infinity,

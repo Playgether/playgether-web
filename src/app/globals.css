@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Interpola suave do ângulo em conic-gradient (borda animada das conquistas). */
+@property --achievement-conic-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
