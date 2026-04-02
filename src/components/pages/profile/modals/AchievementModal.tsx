@@ -86,7 +86,13 @@ export function AchievementModal({
         >
           <div
             className="relative rounded-xl overflow-hidden"
-            style={{ padding: showAnimatedBorder ? "1.5px" : "1px" }}
+            style={{
+              padding: showAnimatedBorder ? "1.5px" : "1px",
+              isolation: "isolate",
+              clipPath: "inset(0 round var(--radius))",
+              WebkitClipPath: "inset(0 round var(--radius))",
+              transform: "translateZ(0)",
+            }}
           >
             {showAnimatedBorder && borderRotates ? (
               <div
@@ -105,6 +111,8 @@ export function AchievementModal({
                     height: "500%",
                     background: config.borderGradient,
                     willChange: "transform",
+                    backfaceVisibility: "hidden",
+                    WebkitBackfaceVisibility: "hidden",
                   }}
                   animate={{ rotate: 360 }}
                   transition={{

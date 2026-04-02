@@ -195,11 +195,12 @@ const AnimatedBorder = ({
   isHovered: boolean;
   isExpanded: boolean;
 }) => {
+  /** Mesma cadência do expandido no colapsado (duração “cheia” expõe cantos do quadrado). */
   const speed = isExpanded
     ? config.borderRotationSpeed * 0.6
     : isHovered
-      ? config.borderRotationSpeed * 0.75
-      : config.borderRotationSpeed;
+      ? config.borderRotationSpeed * 0.65
+      : config.borderRotationSpeed * 0.6;
 
   return (
     <motion.div
@@ -210,6 +211,8 @@ const AnimatedBorder = ({
         height: "500%",
         background: config.borderGradient,
         willChange: "transform",
+        backfaceVisibility: "hidden",
+        WebkitBackfaceVisibility: "hidden",
       }}
       animate={{ rotate: 360 }}
       transition={{
@@ -324,7 +327,17 @@ export function RarityAchievementChrome({
           "relative overflow-hidden",
           isChip ? "rounded-md" : "rounded-xl",
         )}
-        style={{ padding: showBorder && !isChip ? "1.5px" : "1px" }}
+        style={{
+          padding: showBorder && !isChip ? "1.5px" : "1px",
+          ...(!isChip
+            ? {
+                isolation: "isolate" as const,
+                clipPath: "inset(0 round var(--radius))",
+                WebkitClipPath: "inset(0 round var(--radius))",
+                transform: "translateZ(0)",
+              }
+            : {}),
+        }}
       >
         {showBorder && config.rotatingBorder && !staticBorder ? (
           <div
@@ -529,7 +542,9 @@ export const ConquistText = ({
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
       whileHover={
-        !reducedMotion && config.hoverScale > 1
+        !reducedMotion &&
+        config.hoverScale > 1 &&
+        !config.rotatingBorder
           ? { scale: config.hoverScale }
           : {}
       }
