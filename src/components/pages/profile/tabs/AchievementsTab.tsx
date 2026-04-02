@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Loader2, MoreVertical, SlidersHorizontal } from "lucide-react";
+import { Loader2, MoreVertical, SlidersHorizontal, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -188,31 +188,9 @@ export function AchievementsTab({
   const profileId = profile?.id;
 
   const highlightedIds = useMemo(
-    () => profile?.highlighted_achievements?.map((h) => h.id) ?? [],
+    () =>
+      profile?.highlighted_achievements?.map((h) => Number(h.id)) ?? [],
     [profile?.highlighted_achievements],
-  );
-
-  const saveHighlights = useCallback(
-    async (nextIds: number[]) => {
-      if (!profileId || !isOwner) return;
-      setHighlightBusy(true);
-      try {
-        const { highlighted_achievements } =
-          await setProfileAchievementHighlights(profileId, nextIds);
-        onProfileUpdated?.({ highlighted_achievements });
-        CustomToast.success("Destaques atualizados.", {
-          duration: CustomToastProps.defaultDuration,
-        });
-      } catch (e) {
-        CustomToast.error(
-          e instanceof Error ? e.message : "Não foi possível salvar destaques.",
-          { duration: CustomToastProps.defaultDuration },
-        );
-      } finally {
-        setHighlightBusy(false);
-      }
-    },
-    [profileId, isOwner, onProfileUpdated],
   );
 
   const slugsKey = useMemo(
@@ -349,6 +327,30 @@ export function AchievementsTab({
       }
     },
     [profileId, slugsKey, raritiesKey],
+  );
+
+  const saveHighlights = useCallback(
+    async (nextIds: number[]) => {
+      if (!profileId || !isOwner) return;
+      setHighlightBusy(true);
+      try {
+        const { highlighted_achievements } =
+          await setProfileAchievementHighlights(profileId, nextIds);
+        onProfileUpdated?.({ highlighted_achievements });
+        CustomToast.success("Destaques atualizados.", {
+          duration: CustomToastProps.defaultDuration,
+        });
+        await fetchAchievementsPage(1);
+      } catch (e) {
+        CustomToast.error(
+          e instanceof Error ? e.message : "Não foi possível salvar destaques.",
+          { duration: CustomToastProps.defaultDuration },
+        );
+      } finally {
+        setHighlightBusy(false);
+      }
+    },
+    [profileId, isOwner, onProfileUpdated, fetchAchievementsPage],
   );
 
   useEffect(() => {
@@ -493,7 +495,7 @@ export function AchievementsTab({
               >
                 Atualizar Conquistas
               </Button>
-              <p className="text-xs text-muted-foreground border-t border-border pt-3 mt-1 leading-snug">
+              <p className="text-xs text-muted-foreground border-t border-border pt-3 mt-1 leading-snug cursor-help">
                 Toque em{" "}
                 <span className="inline-flex items-center align-middle rounded border border-border px-1 py-0">
                   <MoreVertical className="h-3 w-3" aria-hidden />
@@ -526,8 +528,11 @@ export function AchievementsTab({
               </Button>
               <p className="text-xs text-muted-foreground leading-snug">
                 Jogos e nível de raridade (comum, raro, lendário…). Combine os
-                dois; a lista mostra só o que atende a tudo. Ordem:
-                desbloqueadas mais recentes primeiro.
+                dois; a lista mostra só o que atende a tudo. Ordem:{" "}
+                <span className="text-foreground/90 font-medium">
+                  em destaque primeiro
+                </span>
+                , depois desbloqueadas mais recentes.
               </p>
             </div>
           </div>
@@ -958,7 +963,7 @@ function AchievementCardItem({
     <span className="text-xl">{achievement.icon || "🏆"}</span>
   );
 
-  const isHighlighted = highlightedIds.includes(achievement.id);
+  const isHighlighted = highlightedIds.includes(Number(achievement.id));
   const atCapacity = highlightedIds.length >= 3 && !isHighlighted;
 
   return (
@@ -971,56 +976,11 @@ function AchievementCardItem({
           transition: { duration: 0.35, ease: "easeOut" },
         },
       }}
-      className={cn("relative", !achievement.unlocked && "opacity-[0.72]")}
+      className={cn(
+        "relative rounded-xl",
+        !achievement.unlocked && "opacity-[0.72]",
+      )}
     >
-      {isOwner && achievement.unlocked ? (
-        <div
-          className="absolute top-2 right-2 z-20"
-          onClick={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                variant="secondary"
-                size="icon"
-                className="h-8 w-8 rounded-full border border-border/80 bg-background/90 shadow-sm"
-                disabled={highlightBusy}
-                aria-label="Opções da conquista"
-              >
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
-              {isHighlighted ? (
-                <DropdownMenuItem
-                  disabled={highlightBusy}
-                  onClick={() =>
-                    onSaveHighlights(
-                      highlightedIds.filter((id) => id !== achievement.id),
-                    )
-                  }
-                >
-                  Remover destaque
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem
-                  disabled={highlightBusy || atCapacity}
-                  onClick={() =>
-                    onSaveHighlights(
-                      [...highlightedIds, achievement.id].slice(0, 3),
-                    )
-                  }
-                >
-                  Destacar conquista
-                  {atCapacity ? " (máx. 3)" : ""}
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      ) : null}
       <ConquistText
         title={achievement.title}
         text={achievement.description}
@@ -1029,6 +989,69 @@ function AchievementCardItem({
         rarity={achievement.rarity}
         recentlyUnlocked={recentlyUnlocked}
         onCardClick={onOpen}
+        leadingBadgeSlot={
+          isHighlighted ? (
+            <div className="pointer-events-none flex shrink-0 items-center gap-1 rounded-full border border-amber-400/35 bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-100 backdrop-blur-sm">
+              <Star
+                className="h-3 w-3 shrink-0 fill-amber-300/90 text-amber-200"
+                aria-hidden
+              />
+              Em destaque
+            </div>
+          ) : undefined
+        }
+        headerEndSlot={
+          isOwner && achievement.unlocked ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="relative h-7 w-7 shrink-0 rounded-md text-zinc-300 opacity-90 hover:opacity-100 -translate-y-1 translate-x-1 hover:bg-black/35 hover:text-white"
+                  disabled={highlightBusy}
+                  aria-label="Opções da conquista"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                {isHighlighted ? (
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    disabled={highlightBusy}
+                    onClick={() =>
+                      onSaveHighlights(
+                        highlightedIds.filter(
+                          (id) => id !== Number(achievement.id),
+                        ),
+                      )
+                    }
+                  >
+                    Remover destaque
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    disabled={highlightBusy || atCapacity}
+                    onClick={() =>
+                      onSaveHighlights(
+                        [...highlightedIds, Number(achievement.id)].slice(
+                          0,
+                          3,
+                        ),
+                      )
+                    }
+                  >
+                    Destacar conquista
+                    {atCapacity ? " (máx. 3)" : ""}
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : undefined
+        }
       />
     </motion.div>
   );

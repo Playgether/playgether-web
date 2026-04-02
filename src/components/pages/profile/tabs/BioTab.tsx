@@ -168,21 +168,22 @@ export function BioTab({
                     />
                   )}
                 </div>
-                <div className="flex-1">
-                  <div className="flex flex-wrap gap-2 mb-2 items-start">
-                    <div className="flex flex-col mt-1 min-w-0">
-                      <span className="font-medium text-sm">
-                        {comment.created_by_user_name ?? comment.author}
-                      </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap gap-x-2 gap-y-1 mb-2 items-start justify-between">
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="font-medium text-sm shrink-0">
+                          {comment.created_by_user_name ?? comment.author}
+                        </span>
+                        <HighlightedAchievementBadges
+                          achievements={comment.highlighted_achievements}
+                        />
+                      </div>
                       <span className="font-light text-xs text-muted-foreground">
                         @{comment.user_username ?? ""}
                       </span>
-                      <HighlightedAchievementBadges
-                        achievements={comment.highlighted_achievements}
-                        className="mt-1"
-                      />
                     </div>
-                    <div>
+                    <div className="flex flex-wrap items-center gap-2 shrink-0 justify-end">
                       <span className="text-xs text-muted-foreground">
                         {comment.timestamp ? (
                           <DateAndHour date={comment.timestamp} />
@@ -190,12 +191,12 @@ export function BioTab({
                           (comment.time ?? "")
                         )}
                       </span>
+                      {comment.edited && (
+                        <span className="text-xs text-muted-foreground">
+                          (editado)
+                        </span>
+                      )}
                     </div>
-                    {comment.edited && (
-                      <span className="text-xs text-muted-foreground mt-1">
-                        (editado)
-                      </span>
-                    )}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {comment.comment ?? comment.content}

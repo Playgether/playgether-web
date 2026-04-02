@@ -27,6 +27,10 @@ export interface ConquistTextProps {
   recentlyUnlocked?: boolean;
   /** Quando definido, o clique no card chama esta função em vez de expandir/recolher */
   onCardClick?: () => void;
+  /** Ações à direita da data (ex.: menu ⋮ do dono na aba de conquistas). */
+  headerEndSlot?: React.ReactNode;
+  /** Conteúdo antes do selo de raridade (ex.: pill “Em destaque”). */
+  leadingBadgeSlot?: React.ReactNode;
 }
 
 interface ParticleData {
@@ -223,6 +227,7 @@ const AnimatedBorder = ({
         width: "500%",
         height: "500%",
         background: bg,
+        opacity: 0.92,
         willChange: "--achievement-conic-angle",
       }}
       initial={{ "--achievement-conic-angle": "0deg" }}
@@ -327,6 +332,39 @@ export function RarityAchievementChrome({
     return config.glowBase;
   }, [isAnimated, isExpanded, isHovered, config]);
 
+  const ringInsetPx = showBorder && !isChip ? 1.5 : 1;
+
+  const borderBackdrop = (
+    <>
+      {showBorder && config.rotatingBorder && !staticBorder ? (
+        <div
+          className={cn(
+            "absolute inset-0 pointer-events-none z-0",
+            isChip ? "rounded-md" : "rounded-xl",
+          )}
+          style={{ background: config.staticBorderColor }}
+          aria-hidden
+        />
+      ) : null}
+      {showBorder ? (
+        staticBorder || !config.rotatingBorder ? (
+          <StaticBorder config={config} />
+        ) : (
+          <AnimatedBorder
+            config={config}
+            isHovered={isHovered}
+            isExpanded={isExpanded}
+          />
+        )
+      ) : (
+        <div
+          className="absolute inset-0"
+          style={{ background: config.staticBorderColor }}
+        />
+      )}
+    </>
+  );
+
   return (
     <motion.div
       className={cn(isChip ? "rounded-md" : "rounded-xl", className)}
@@ -339,43 +377,24 @@ export function RarityAchievementChrome({
           "relative overflow-hidden",
           isChip ? "rounded-md" : "rounded-xl",
         )}
-        style={{
-          padding: showBorder && !isChip ? "1.5px" : "1px",
-          ...(!isChip
-            ? {
+        style={
+          isChip
+            ? { padding: "1px" }
+            : {
+                display: "grid",
+                gridTemplateColumns: "minmax(0, 1fr)",
+                gridTemplateRows: "minmax(0, auto)",
                 isolation: "isolate" as const,
-                clipPath: "inset(0 round var(--radius))",
-                WebkitClipPath: "inset(0 round var(--radius))",
                 transform: "translateZ(0)",
               }
-            : {}),
-        }}
+        }
       >
-        {showBorder && config.rotatingBorder && !staticBorder ? (
-          <div
-            className={cn(
-              "absolute inset-0 pointer-events-none z-0",
-              isChip ? "rounded-md" : "rounded-xl",
-            )}
-            style={{ background: config.staticBorderColor }}
-            aria-hidden
-          />
-        ) : null}
-        {showBorder ? (
-          staticBorder || !config.rotatingBorder ? (
-            <StaticBorder config={config} />
-          ) : (
-            <AnimatedBorder
-              config={config}
-              isHovered={isHovered}
-              isExpanded={isExpanded}
-            />
-          )
+        {isChip ? (
+          borderBackdrop
         ) : (
-          <div
-            className="absolute inset-0"
-            style={{ background: config.staticBorderColor }}
-          />
+          <div className="col-start-1 row-start-1 relative min-h-0 min-w-0">
+            {borderBackdrop}
+          </div>
         )}
 
         <div
@@ -383,26 +402,33 @@ export function RarityAchievementChrome({
             "relative z-[2] overflow-hidden",
             isChip
               ? "rounded-[calc(var(--radius)-2px)]"
-              : "rounded-[calc(var(--radius)-1.5px)]",
+              : "col-start-1 row-start-1 min-h-0 min-w-0",
           )}
-          style={{ background: config.cardBg }}
+          style={{
+            background: config.cardBg,
+            ...(!isChip
+              ? {
+                  margin: `${ringInsetPx}px`,
+                  borderRadius: `calc(var(--radius) - ${ringInsetPx}px)`,
+                }
+              : {}),
+          }}
         >
-          {isAnimated &&
-            (rarity === "legendary" || rarity === "celestial") && (
-              <motion.div
-                className="absolute inset-0 pointer-events-none"
-                animate={{
-                  opacity: isExpanded ? 0.18 : isHovered ? 0.12 : 0.07,
-                }}
-                style={{
-                  background:
-                    rarity === "celestial"
-                      ? "radial-gradient(ellipse at 50% 50%, rgba(167,139,250,0.5) 0%, rgba(59,130,246,0.3) 50%, transparent 80%)"
-                      : "radial-gradient(ellipse at 50% 50%, rgba(251,191,36,0.4) 0%, transparent 70%)",
-                }}
-                transition={{ duration: 0.5 }}
-              />
-            )}
+          {isAnimated && (rarity === "legendary" || rarity === "celestial") && (
+            <motion.div
+              className="absolute inset-0 pointer-events-none"
+              animate={{
+                opacity: isExpanded ? 0.18 : isHovered ? 0.12 : 0.07,
+              }}
+              style={{
+                background:
+                  rarity === "celestial"
+                    ? "radial-gradient(ellipse at 50% 50%, rgba(167,139,250,0.5) 0%, rgba(59,130,246,0.3) 50%, transparent 80%)"
+                    : "radial-gradient(ellipse at 50% 50%, rgba(251,191,36,0.4) 0%, transparent 70%)",
+              }}
+              transition={{ duration: 0.5 }}
+            />
+          )}
 
           {isAnimated && config.hasParticles && !config.hasCosmicEffect && (
             <ParticleSystem
@@ -429,7 +455,9 @@ export function RarityAchievementChrome({
               clipClassName={
                 isChip
                   ? "rounded-[calc(var(--radius)-2px)]"
-                  : "rounded-[calc(var(--radius)-1.5px)]"
+                  : ringInsetPx === 1.5
+                    ? "rounded-[calc(var(--radius)-1.5px)]"
+                    : "rounded-[calc(var(--radius)-1px)]"
               }
             />
           )}
@@ -521,6 +549,8 @@ export const ConquistText = ({
   rarity = "common",
   recentlyUnlocked = false,
   onCardClick,
+  headerEndSlot,
+  leadingBadgeSlot,
 }: ConquistTextProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -549,14 +579,12 @@ export const ConquistText = ({
   return (
     <motion.div
       variants={cardVariants}
-      className="relative w-full cursor-pointer rounded-xl overflow-hidden"
+      className="relative w-full cursor-pointer rounded-xl overflow-visible"
       onClick={handleClick}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
       whileHover={
-        !reducedMotion &&
-        config.hoverScale > 1 &&
-        !config.rotatingBorder
+        !reducedMotion && config.hoverScale > 1 && !config.rotatingBorder
           ? { scale: config.hoverScale }
           : {}
       }
@@ -576,132 +604,142 @@ export const ConquistText = ({
         }
       >
         <div className="flex items-start gap-4">
-                {/* Icon box */}
-                <motion.div
-                  className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 relative overflow-hidden"
-                  animate={
-                    isAnimated && !isCommon
-                      ? {
-                          boxShadow: isHovered
-                            ? `0 0 16px ${config.staticBorderColor}, inset 0 0 8px ${config.staticBorderColor}33`
-                            : `0 0 6px ${config.staticBorderColor}99`,
-                        }
-                      : {}
+          {/* Icon box */}
+          <motion.div
+            className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 relative overflow-hidden"
+            animate={
+              isAnimated && !isCommon
+                ? {
+                    boxShadow: isHovered
+                      ? `0 0 16px ${config.staticBorderColor}, inset 0 0 8px ${config.staticBorderColor}33`
+                      : `0 0 6px ${config.staticBorderColor}99`,
                   }
-                  style={{
-                    background: isCommon
-                      ? "rgba(39,39,42,0.6)"
-                      : `${config.staticBorderColor}22`,
-                    border: `1px solid ${config.staticBorderColor}66`,
-                    willChange: "box-shadow",
+                : {}
+            }
+            style={{
+              background: isCommon
+                ? "rgba(39,39,42,0.6)"
+                : `${config.staticBorderColor}22`,
+              border: `1px solid ${config.staticBorderColor}66`,
+              willChange: "box-shadow",
+            }}
+            transition={{ duration: 0.35 }}
+          >
+            {/* Icon inner glow for epic+ */}
+            {isAnimated &&
+              (rarity === "legendary" ||
+                rarity === "celestial" ||
+                rarity === "mythic" ||
+                rarity === "epic") && (
+                <motion.div
+                  className="absolute inset-0"
+                  animate={{
+                    opacity: [0.15, 0.35, 0.15],
                   }}
-                  transition={{ duration: 0.35 }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                  style={{
+                    background: `radial-gradient(circle, ${config.staticBorderColor}55, transparent 70%)`,
+                  }}
+                />
+              )}
+
+            <div className={`scale-75 relative z-10 ${config.textColor}`}>
+              {Icon ?? <span className="text-xl">🏆</span>}
+            </div>
+          </motion.div>
+
+          {/* Text content */}
+          <div className="flex-1 min-w-0 space-y-1">
+            {/* Header row */}
+            <div className="flex items-start justify-between gap-2 flex-wrap">
+              <h4
+                className={`min-w-0 flex-1 font-semibold ${config.textColor} leading-snug`}
+              >
+                {title}
+              </h4>
+              <div className="flex items-center gap-0.5 flex-shrink-0">
+                <span className="text-xs text-zinc-300 px-2 py-0.5 rounded border border-border/40 bg-black/20 whitespace-nowrap">
+                  {date}
+                </span>
+                {headerEndSlot ? (
+                  <span
+                    className="flex shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    {headerEndSlot}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+
+            {/* Rarity badge */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {leadingBadgeSlot}
+              <RarityBadge
+                config={config}
+                rarity={rarity}
+                isHovered={isHovered}
+                reducedMotion={reducedMotion}
+              />
+
+              {/* Collapsed description preview */}
+              {!isExpanded && (
+                <p className="text-xs text-zinc-300 truncate flex-1">{text}</p>
+              )}
+
+              {/* Chevron */}
+              <motion.div
+                animate={{ rotate: isExpanded ? 180 : 0 }}
+                transition={{ duration: 0.25 }}
+                className="flex-shrink-0 ml-auto"
+              >
+                <ChevronDown className="h-3.5 w-3.5 text-zinc-400" />
+              </motion.div>
+            </div>
+
+            {/* Expanded description */}
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.div
+                  key="description"
+                  variants={descriptionVariants}
+                  initial="collapsed"
+                  animate="expanded"
+                  exit="collapsed"
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="overflow-hidden"
                 >
-                  {/* Icon inner glow for epic+ */}
+                  <p className="text-sm text-zinc-300 leading-relaxed">
+                    {text}
+                  </p>
+
+                  {/* Expanded halo accent for high+ rarities */}
                   {isAnimated &&
-                    (rarity === "legendary" ||
-                      rarity === "celestial" ||
+                    (rarity === "epic" ||
                       rarity === "mythic" ||
-                      rarity === "epic") && (
+                      rarity === "legendary" ||
+                      rarity === "celestial") && (
                       <motion.div
-                        className="absolute inset-0"
-                        animate={{
-                          opacity: [0.15, 0.35, 0.15],
-                        }}
-                        transition={{
-                          duration: 2,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                        }}
+                        className="mt-3 h-px w-full"
                         style={{
-                          background: `radial-gradient(circle, ${config.staticBorderColor}55, transparent 70%)`,
+                          background: `linear-gradient(90deg, transparent, ${config.staticBorderColor}, transparent)`,
                         }}
+                        initial={{ scaleX: 0, opacity: 0 }}
+                        animate={{ scaleX: 1, opacity: 0.7 }}
+                        exit={{ scaleX: 0, opacity: 0 }}
+                        transition={{ duration: 0.4 }}
                       />
                     )}
-
-                  <div className={`scale-75 relative z-10 ${config.textColor}`}>
-                    {Icon ?? <span className="text-xl">🏆</span>}
-                  </div>
                 </motion.div>
-
-                {/* Text content */}
-                <div className="flex-1 min-w-0 space-y-1">
-                  {/* Header row */}
-                  <div className="flex items-start justify-between gap-2 flex-wrap">
-                    <h4
-                      className={`font-semibold ${config.textColor} leading-snug`}
-                    >
-                      {title}
-                    </h4>
-                    <span className="text-xs text-zinc-300 px-2 py-0.5 rounded border border-border/40 bg-black/20 whitespace-nowrap flex-shrink-0">
-                      {date}
-                    </span>
-                  </div>
-
-                  {/* Rarity badge */}
-                  <div className="flex items-center gap-2">
-                    <RarityBadge
-                      config={config}
-                      rarity={rarity}
-                      isHovered={isHovered}
-                      reducedMotion={reducedMotion}
-                    />
-
-                    {/* Collapsed description preview */}
-                    {!isExpanded && (
-                      <p className="text-xs text-zinc-300 truncate flex-1">
-                        {text}
-                      </p>
-                    )}
-
-                    {/* Chevron */}
-                    <motion.div
-                      animate={{ rotate: isExpanded ? 180 : 0 }}
-                      transition={{ duration: 0.25 }}
-                      className="flex-shrink-0 ml-auto"
-                    >
-                      <ChevronDown className="h-3.5 w-3.5 text-zinc-400" />
-                    </motion.div>
-                  </div>
-
-                  {/* Expanded description */}
-                  <AnimatePresence>
-                    {isExpanded && (
-                      <motion.div
-                        key="description"
-                        variants={descriptionVariants}
-                        initial="collapsed"
-                        animate="expanded"
-                        exit="collapsed"
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
-                        className="overflow-hidden"
-                      >
-                        <p className="text-sm text-zinc-300 leading-relaxed">
-                          {text}
-                        </p>
-
-                        {/* Expanded halo accent for high+ rarities */}
-                        {isAnimated &&
-                          (rarity === "epic" ||
-                            rarity === "mythic" ||
-                            rarity === "legendary" ||
-                            rarity === "celestial") && (
-                            <motion.div
-                              className="mt-3 h-px w-full"
-                              style={{
-                                background: `linear-gradient(90deg, transparent, ${config.staticBorderColor}, transparent)`,
-                              }}
-                              initial={{ scaleX: 0, opacity: 0 }}
-                              animate={{ scaleX: 1, opacity: 0.7 }}
-                              exit={{ scaleX: 0, opacity: 0 }}
-                              transition={{ duration: 0.4 }}
-                            />
-                          )}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
       </RarityAchievementChrome>
     </motion.div>
   );

@@ -201,7 +201,7 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
       "0 0 80px rgba(251, 191, 36, 0.85), 0 0 45px rgba(245, 158, 11, 0.65)",
     cardBg: "linear-gradient(135deg, rgba(66,32,6,0.85), rgba(120,53,15,0.55))",
     borderGradient:
-      "conic-gradient(from 0deg, #b45309, #fbbf24, #fde68a, #fbbf24, #b45309)",
+      "conic-gradient(from 22deg, #b45309, #fbbf24, #fde68a, #fbbf24, #b45309, #fbbf24, #fde68a, #fbbf24, #b45309)",
     staticBorderColor: "rgba(251, 191, 36, 0.7)",
     textColor: "text-yellow-400",
     badgeGradient: "linear-gradient(90deg, #92400e, #fbbf24, #92400e)",
@@ -232,7 +232,7 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
     cardBg:
       "linear-gradient(135deg, rgba(46,16,101,0.9), rgba(23,37,84,0.75), rgba(76,5,55,0.65))",
     borderGradient:
-      "conic-gradient(from 0deg, #7c3aed, #3b82f6, #ec4899, #06b6d4, #a855f7, #7c3aed)",
+      "conic-gradient(from 22deg, #7c3aed, #3b82f6, #ec4899, #06b6d4, #a855f7, #7c3aed, #3b82f6, #ec4899, #06b6d4, #a855f7, #7c3aed)",
     staticBorderColor: "rgba(196, 181, 253, 0.8)",
     textColor: "text-violet-300",
     badgeGradient:

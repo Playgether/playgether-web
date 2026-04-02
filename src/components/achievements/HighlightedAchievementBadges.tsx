@@ -56,7 +56,7 @@ function AchievementHighlightChip({
     <Tooltip>
       <TooltipTrigger asChild>
         <motion.span
-          className={cn("inline-flex max-w-full min-w-0 cursor-default", className)}
+          className={cn("inline-flex max-w-full min-w-0 cursor-help", className)}
           onHoverStart={() => setHover(true)}
           onHoverEnd={() => setHover(false)}
           whileHover={
@@ -176,7 +176,10 @@ export function HighlightedAchievementBadges({
   return (
     <TooltipProvider delayDuration={280}>
       <div
-        className={cn("flex flex-wrap items-center gap-1 min-w-0", className)}
+        className={cn(
+          "flex w-fit max-w-full flex-wrap items-center gap-1 min-w-0",
+          className,
+        )}
         aria-label="Conquistas em destaque"
       >
         {list.map((a) => (

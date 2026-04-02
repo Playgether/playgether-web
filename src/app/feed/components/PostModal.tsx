@@ -463,11 +463,16 @@ export const PostModal = ({
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <h3 className="font-bold text-lg">{post.name}</h3>
-                    {post.verified && texts.verified}
+                  <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                    <div className="inline-flex min-w-0 max-w-full shrink-0 items-center gap-2">
+                      <h3 className="w-fit max-w-full shrink-0 text-lg font-bold">
+                        {post.name}
+                      </h3>
+                      {post.verified && texts.verified}
+                    </div>
                     <HighlightedAchievementBadges
                       achievements={post.highlighted_achievements}
+                      className="min-w-0"
                     />
                   </div>
                   <p className="text-sm text-muted-foreground">
@@ -562,15 +567,19 @@ export const PostModal = ({
                             <div className="flex-1 min-w-0">
                               {/* Cabeçalho do comentário com nome, data e ações */}
                               <div className="flex items-center justify-between mb-1 gap-2">
-                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
-                                  <span className="font-medium text-sm shrink-0">
-                                    {comment.created_by_user_name}
-                                  </span>
-                                  <HighlightedAchievementBadges
-                                    achievements={comment.highlighted_achievements}
-                                    className="max-w-full"
-                                  />
-                                  <span className="text-xs text-muted-foreground shrink-0">
+                                <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                                  <div className="inline-flex min-w-0 max-w-full shrink-0 items-center gap-x-2 gap-y-1">
+                                    <span className="shrink-0 text-sm font-medium">
+                                      {comment.created_by_user_name}
+                                    </span>
+                                    <HighlightedAchievementBadges
+                                      achievements={
+                                        comment.highlighted_achievements
+                                      }
+                                      className="max-w-full min-w-0"
+                                    />
+                                  </div>
+                                  <span className="shrink-0 text-xs text-muted-foreground">
                                     <DateAndHour date={comment.timestamp} />
                                   </span>
                                 </div>
@@ -827,17 +836,19 @@ export const PostModal = ({
                                     <div className="flex-1 min-w-0">
                                       {/* Cabeçalho da reply com nome, data e ações */}
                                       <div className="flex items-center justify-between mb-1 gap-2">
-                                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
-                                          <span className="font-medium text-xs shrink-0">
-                                            {reply.created_by_user_name}
-                                          </span>
-                                          <HighlightedAchievementBadges
-                                            achievements={
-                                              reply.highlighted_achievements
-                                            }
-                                            className="max-w-full"
-                                          />
-                                          <span className="text-xs text-muted-foreground shrink-0">
+                                        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                                          <div className="inline-flex min-w-0 max-w-full shrink-0 items-center gap-x-2 gap-y-1">
+                                            <span className="shrink-0 text-xs font-medium">
+                                              {reply.created_by_user_name}
+                                            </span>
+                                            <HighlightedAchievementBadges
+                                              achievements={
+                                                reply.highlighted_achievements
+                                              }
+                                              className="max-w-full min-w-0"
+                                            />
+                                          </div>
+                                          <span className="shrink-0 text-xs text-muted-foreground">
                                             <DateAndHour
                                               date={reply.timestamp}
                                             />

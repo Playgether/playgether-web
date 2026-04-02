@@ -11,7 +11,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { X } from "lucide-react";
-import { borderGradientWithAnimatedConicAngle } from "../ConquistText";
 import { AchievementElectricOverlay } from "../AchievementElectricOverlay";
 import { rarityConfig } from "../rarityConfig";
 import type { RarityLevel } from "../rarityConfig";
@@ -76,6 +75,14 @@ export function AchievementModal({
       : globalNext;
   const hasNextCheckpoint = nextForView != null;
 
+  /** Recuo uniforme da “aro” (grid + margin evita borda mais fina em baixo/direita por subpixel). */
+  const ringInsetPx = showAnimatedBorder ? 1.5 : 1;
+  const innerRadius = `calc(var(--radius) - ${ringInsetPx}px)`;
+  const electricClipClass =
+    ringInsetPx === 1.5
+      ? "rounded-[calc(var(--radius)-1.5px)]"
+      : "rounded-[calc(var(--radius)-1px)]";
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-md p-0 gap-0 border-0 bg-transparent shadow-none overflow-visible [&>button]:hidden">
@@ -86,66 +93,72 @@ export function AchievementModal({
           style={{ willChange: "box-shadow" }}
         >
           <div
-            className="relative rounded-xl overflow-hidden"
+            className="relative overflow-hidden rounded-xl"
             style={{
-              padding: showAnimatedBorder ? "1.5px" : "1px",
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr)",
+              gridTemplateRows: "minmax(0, auto)",
               isolation: "isolate",
-              clipPath: "inset(0 round var(--radius))",
-              WebkitClipPath: "inset(0 round var(--radius))",
               transform: "translateZ(0)",
             }}
           >
-            {showAnimatedBorder && borderRotates ? (
-              <div
-                className="absolute inset-0 rounded-xl pointer-events-none z-0"
-                style={{ background: config.staticBorderColor }}
-                aria-hidden
-              />
-            ) : null}
-            {showAnimatedBorder ? (
-              borderRotates ? (
-                <motion.div
-                  className="absolute pointer-events-none z-[1]"
-                  style={{
-                    inset: "-200%",
-                    width: "500%",
-                    height: "500%",
-                    background: borderGradientWithAnimatedConicAngle(
-                      config.borderGradient,
-                    ),
-                    willChange: "--achievement-conic-angle",
-                  }}
-                  initial={{ "--achievement-conic-angle": "0deg" }}
-                  animate={{ "--achievement-conic-angle": "360deg" }}
-                  transition={{
-                    duration: Math.max(config.borderRotationSpeed * 0.6, 0.35),
-                    repeat: Infinity,
-                    ease: "linear",
-                  }}
+            <div className="col-start-1 row-start-1 relative min-h-0 min-w-0">
+              {showAnimatedBorder && borderRotates ? (
+                <div
+                  className="absolute inset-0 rounded-xl pointer-events-none z-0"
+                  style={{ background: config.staticBorderColor }}
+                  aria-hidden
                 />
+              ) : null}
+              {showAnimatedBorder ? (
+                borderRotates ? (
+                  <motion.div
+                    className="absolute pointer-events-none z-[1]"
+                    style={{
+                      inset: "-200%",
+                      width: "500%",
+                      height: "500%",
+                      background: config.borderGradient,
+                      opacity: 0.92,
+                      willChange: "transform",
+                      backfaceVisibility: "hidden",
+                      WebkitBackfaceVisibility: "hidden",
+                    }}
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: Math.max(
+                        config.borderRotationSpeed * 0.6,
+                        0.35,
+                      ),
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  />
+                ) : (
+                  <div
+                    className="absolute pointer-events-none z-[1]"
+                    style={{
+                      inset: "-200%",
+                      width: "500%",
+                      height: "500%",
+                      background: config.borderGradient,
+                    }}
+                  />
+                )
               ) : (
                 <div
-                  className="absolute pointer-events-none z-[1]"
-                  style={{
-                    inset: "-200%",
-                    width: "500%",
-                    height: "500%",
-                    background: config.borderGradient,
-                  }}
+                  className="absolute inset-0"
+                  style={{ background: config.staticBorderColor }}
                 />
-              )
-            ) : (
-              <div
-                className="absolute inset-0"
-                style={{ background: config.staticBorderColor }}
-              />
-            )}
+              )}
+            </div>
 
             <div
-              className="relative z-[2] overflow-hidden"
+              className="relative z-[2] col-start-1 row-start-1 min-h-0 min-w-0 overflow-hidden"
               style={{
+                margin: `${ringInsetPx}px`,
                 background: config.cardBg,
-                borderRadius: "calc(var(--radius) - 1.5px)",
+                borderRadius: innerRadius,
               }}
             >
               {isLegendaryOrCelestial && (
@@ -168,7 +181,7 @@ export function AchievementModal({
                   rarity={achievement.rarity}
                   isHovered
                   isExpanded
-                  clipClassName="rounded-[calc(var(--radius)-1.5px)]"
+                  clipClassName={electricClipClass}
                 />
               ) : null}
 
@@ -228,7 +241,8 @@ export function AchievementModal({
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {achievement.progression.path.map((p: number) => {
-                          const u = achievement.progression?.unit === "h" ? "h" : "";
+                          const u =
+                            achievement.progression?.unit === "h" ? "h" : "";
                           const unlocked = p <= displayCurrent;
                           return (
                             <Badge

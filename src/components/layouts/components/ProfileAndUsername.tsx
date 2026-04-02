@@ -49,10 +49,13 @@ const ProfileAndUsername = ({
         <div
           className={twJoin("text-lg min-w-0 flex-1", usernameAndTimestampDiv)}
         >
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <UserNamePost username={username} />
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 [&_.UserNamePost-wrapper]:mt-0">
+            <div className="inline-flex min-w-0 max-w-full shrink-0 items-center">
+              <UserNamePost username={username} />
+            </div>
             <HighlightedAchievementBadges
               achievements={highlightedAchievements}
+              className="min-w-0"
             />
           </div>
           {timestamp ? (
