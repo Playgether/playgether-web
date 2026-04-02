@@ -83,10 +83,10 @@ function AchievementHighlightChip({
               {iconNode}
             </span>
             <span className="text-[10px] font-semibold leading-tight truncate flex items-baseline gap-0.5 min-w-0 flex-1">
-              <span className="tabular-nums text-white/80 shrink-0">
+              <span className="tabular-nums text-zinc-300 shrink-0">
                 {a.game_short}
               </span>
-              <span className="text-white/50 font-normal shrink-0">·</span>
+              <span className="text-zinc-400 font-normal shrink-0">·</span>
               <span className="truncate font-medium text-white">{titleShort}</span>
             </span>
           </RarityAchievementChrome>
@@ -134,7 +134,7 @@ function AchievementHighlightChip({
                   <p className="font-semibold text-sm leading-snug text-white">
                     {a.title}
                   </p>
-                  <p className="text-xs text-muted-foreground">{a.game}</p>
+                  <p className="text-xs text-zinc-300">{a.game}</p>
                 </div>
                 <RarityBadge
                   config={cfg}
@@ -146,15 +146,11 @@ function AchievementHighlightChip({
             </div>
           </div>
           {a.date ? (
-            <p className="text-xs text-muted-foreground">
-              Desbloqueada: {a.date}
-            </p>
+            <p className="text-xs text-zinc-300">Desbloqueada: {a.date}</p>
           ) : null}
-          <p className="text-xs leading-relaxed text-muted-foreground">
-            {a.description}
-          </p>
+          <p className="text-xs leading-relaxed text-zinc-300">{a.description}</p>
           {a.percentage > 0 ? (
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-[11px] text-zinc-300">
               ~{a.percentage.toFixed(1)}% dos jogadores
             </p>
           ) : null}

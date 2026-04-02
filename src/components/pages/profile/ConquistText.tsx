@@ -633,7 +633,7 @@ export const ConquistText = ({
                     >
                       {title}
                     </h4>
-                    <span className="text-xs text-muted-foreground px-2 py-0.5 rounded border border-border/40 bg-black/20 whitespace-nowrap flex-shrink-0">
+                    <span className="text-xs text-zinc-300 px-2 py-0.5 rounded border border-border/40 bg-black/20 whitespace-nowrap flex-shrink-0">
                       {date}
                     </span>
                   </div>
@@ -649,7 +649,7 @@ export const ConquistText = ({
 
                     {/* Collapsed description preview */}
                     {!isExpanded && (
-                      <p className="text-xs text-muted-foreground truncate flex-1">
+                      <p className="text-xs text-zinc-300 truncate flex-1">
                         {text}
                       </p>
                     )}
@@ -660,7 +660,7 @@ export const ConquistText = ({
                       transition={{ duration: 0.25 }}
                       className="flex-shrink-0 ml-auto"
                     >
-                      <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                      <ChevronDown className="h-3.5 w-3.5 text-zinc-400" />
                     </motion.div>
                   </div>
 
@@ -676,7 +676,7 @@ export const ConquistText = ({
                         transition={{ duration: 0.3, ease: "easeInOut" }}
                         className="overflow-hidden"
                       >
-                        <p className="text-sm text-muted-foreground leading-relaxed">
+                        <p className="text-sm text-zinc-300 leading-relaxed">
                           {text}
                         </p>
 
