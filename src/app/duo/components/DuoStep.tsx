@@ -67,8 +67,13 @@ export default function DuoSteps({ initialStep }: { initialStep: string }) {
         return (
           <GameVerification
             game={shared.selectedGame}
-            onReady={(stats, schema) => {
-              updateShared({ stats, schema });
+            onReady={(stats, schema, verifyPreferences) => {
+              setShared((s) => ({
+                ...s,
+                stats,
+                schema,
+                preferences: { ...s.preferences, ...verifyPreferences },
+              }));
               changeStep("roles");
             }}
             onBack={() => changeStep("game")}

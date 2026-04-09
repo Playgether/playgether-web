@@ -99,7 +99,17 @@ export interface MatchPartner {
   first_name: string;
   last_name: string;
   profile_photo: string | null;
-  preferences: GamePreferences;
+  preferences: Partial<GamePreferences>;
+  /** Estatísticas do jogo (CS2, LoL, …) vindas do backend. */
+  game_stats?: Record<string, unknown> | null;
+}
+
+export interface DuoMatchScoreBreakdown {
+  elo: number;
+  role: number;
+  schedule: number;
+  extras: number;
+  total: number;
 }
 
 export interface DuoMatch {
@@ -107,6 +117,7 @@ export interface DuoMatch {
   game_name: string;
   game_slug: string;
   score: number;
+  score_breakdown?: DuoMatchScoreBreakdown | null;
   created_at: string;
   partner: MatchPartner;
 }

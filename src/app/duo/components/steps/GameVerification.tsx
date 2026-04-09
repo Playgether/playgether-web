@@ -10,7 +10,11 @@ import { CsProfile } from "../game/CsProfile";
 
 interface GameVerificationProps {
   game: Game;
-  onReady: (stats: GameStats, schema: GameSchema) => void;
+  onReady: (
+    stats: GameStats,
+    schema: GameSchema,
+    verifyPreferences: Partial<GamePreferences>
+  ) => void;
   onBack: () => void;
 }
 
@@ -65,7 +69,7 @@ export function GameVerification({ game, onReady, onBack }: GameVerificationProp
 
   function handleContinue() {
     if (!stats || !schema) return;
-    onReady({ ...stats, ...buildPreferences() } as GameStats, schema);
+    onReady(stats, schema, buildPreferences());
   }
 
   return (

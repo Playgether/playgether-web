@@ -10,12 +10,18 @@ import {
   Users,
   Wifi,
   WifiOff,
-  Clock,
   AlertCircle,
+  Target,
+  Crosshair,
+  Timer,
+  Sunrise,
+  Sun,
+  Sunset,
+  Moon,
 } from "lucide-react";
+import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
 import { useDuoSocket } from "../../hooks/useDuoSocket";
 import type { DuoMatch, Game, GamePreferences } from "../../types/duo";
-import { enterQueue } from "../../services/duoApi";
 
 interface MatchResultsProps {
   game: Game;
@@ -226,12 +232,15 @@ export function MatchResults({ game, preferences, onBack }: MatchResultsProps) {
 
 function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
   const partner = match.partner;
-  const prefs = partner.preferences as any;
+  const prefs = partner.preferences as Record<string, any>;
   const slug = match.game_slug;
+  const gs = (partner.game_stats ?? {}) as Record<string, any>;
 
   const displayName = partner.first_name
     ? `${partner.first_name} ${partner.last_name}`.trim()
     : partner.username;
+
+  const photoSrc = resolveGameMediaUrl(partner.profile_photo);
 
   return (
     <div
@@ -242,9 +251,9 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
       <div className="flex items-start justify-between mb-5">
         <div className="flex items-center space-x-3">
           <div className="relative">
-            {partner.profile_photo ? (
+            {photoSrc ? (
               <img
-                src={partner.profile_photo}
+                src={photoSrc}
                 alt={displayName}
                 className="w-14 h-14 rounded-full border-2 border-primary/30 object-cover"
               />
@@ -262,52 +271,146 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
         </div>
 
         <div className="text-right">
-          <Badge className="bg-neon-green/20 text-neon-green border-neon-green/30 mb-1">
-            {Math.round(match.score)}% Match
+          <Badge className="bg-neon-green/20 text-neon-green border-neon-green/30">
+            {Math.round(match.score)}% match
           </Badge>
         </div>
       </div>
 
       {/* Game-specific preferences summary */}
-      <div className="space-y-2 mb-5">
+      <div className="space-y-4 mb-5">
         {slug === "lol" && (
-          <>
-            {prefs.main_role && (
-              <InfoRow label="Lane principal" value={prefs.main_role} />
-            )}
-            {prefs.desired_roles?.length > 0 && (
-              <InfoRow label="Busca parceiro em" value={prefs.desired_roles.join(", ")} />
-            )}
-            {prefs.own_elo && (
-              <InfoRow label="Elo" value={prefs.own_elo} />
-            )}
-          </>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-0">
+            <div className="space-y-2 sm:pr-4">
+              <p className="text-xs font-semibold text-primary uppercase tracking-wide">
+                Dele
+              </p>
+              {prefs.main_role ? (
+                <InfoRow label="Lane principal" value={prefs.main_role} />
+              ) : null}
+              {prefs.secondary_role ? (
+                <InfoRow label="Lane secundária" value={prefs.secondary_role} />
+              ) : null}
+              {prefs.own_elo ? (
+                <InfoRow label="Elo" value={prefs.own_elo} />
+              ) : null}
+            </div>
+            <div className="space-y-2 sm:border-l sm:border-border/60 sm:pl-4">
+              <p className="text-xs font-semibold text-primary uppercase tracking-wide">
+                O que procura
+              </p>
+              {prefs.desired_roles?.length > 0 ? (
+                <InfoRow
+                  label="Lanes no duo"
+                  value={prefs.desired_roles.join(", ")}
+                />
+              ) : null}
+              {prefs.accepted_elo?.length > 0 ? (
+                <InfoRow
+                  label="Elos que aceita"
+                  value={prefs.accepted_elo.join(", ")}
+                />
+              ) : null}
+            </div>
+          </div>
         )}
 
         {slug === "cs2" && (
           <>
-            {prefs.own_range && (
-              <InfoRow label="Premier" value={prefs.own_range} />
-            )}
-            {prefs.roles?.length > 0 && (
-              <InfoRow label="Funções" value={prefs.roles.join(", ")} />
-            )}
-            {prefs.favorite_weapons?.length > 0 && (
-              <InfoRow label="Armas" value={prefs.favorite_weapons.join(", ")} />
-            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-0">
+              <div className="space-y-2 sm:pr-4">
+                <p className="text-xs font-semibold text-primary uppercase tracking-wide">
+                  Dele
+                </p>
+                {prefs.own_range ? (
+                  <InfoRow label="Faixa Premier" value={prefs.own_range} />
+                ) : null}
+                {prefs.roles?.length > 0 ? (
+                  <InfoRow label="Funções" value={prefs.roles.join(", ")} />
+                ) : null}
+                {prefs.favorite_weapons?.length > 0 ? (
+                  <InfoRow
+                    label="Armas favoritas"
+                    value={prefs.favorite_weapons.join(", ")}
+                  />
+                ) : null}
+              </div>
+              <div className="space-y-2 sm:border-l sm:border-border/60 sm:pl-4">
+                <p className="text-xs font-semibold text-primary uppercase tracking-wide">
+                  O que procura
+                </p>
+                {prefs.accepted_ranges?.length > 0 ? (
+                  <InfoRow
+                    label="Faixas que aceita"
+                    value={prefs.accepted_ranges.join(", ")}
+                  />
+                ) : null}
+                {prefs.desired_roles?.length > 0 ? (
+                  <InfoRow
+                    label="Funções no duo"
+                    value={prefs.desired_roles.join(", ")}
+                  />
+                ) : null}
+              </div>
+            </div>
+
+            {gs.kd != null || gs.hours_played != null || gs.hs_percent != null ? (
+              <div className="pt-3 border-t border-border/50">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                  Stats CS2
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {gs.kd != null ? (
+                    <div className="rounded-lg bg-muted/30 border border-border/40 p-2.5 text-center">
+                      <Target className="h-4 w-4 mx-auto mb-1 text-neon-green" />
+                      <div className="text-[10px] text-muted-foreground leading-tight">
+                        K/D
+                      </div>
+                      <div className="font-semibold text-sm text-card-foreground">
+                        {String(gs.kd)}
+                      </div>
+                    </div>
+                  ) : null}
+                  {gs.hs_percent != null ? (
+                    <div className="rounded-lg bg-muted/30 border border-border/40 p-2.5 text-center">
+                      <Crosshair className="h-4 w-4 mx-auto mb-1 text-sky-400" />
+                      <div className="text-[10px] text-muted-foreground leading-tight">
+                        HS%
+                      </div>
+                      <div className="font-semibold text-sm text-card-foreground">
+                        {gs.hs_percent}%
+                      </div>
+                    </div>
+                  ) : null}
+                  {gs.hours_played != null ? (
+                    <div className="rounded-lg bg-muted/30 border border-border/40 p-2.5 text-center">
+                      <Timer className="h-4 w-4 mx-auto mb-1 text-amber-400" />
+                      <div className="text-[10px] text-muted-foreground leading-tight">
+                        Tempo no jogo
+                      </div>
+                      <div className="font-semibold text-sm text-card-foreground">
+                        {gs.hours_played} h
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
           </>
         )}
 
-        {prefs.play_times?.length > 0 && (
-          <div className="flex items-center space-x-2 text-sm">
-            <Clock className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-            <span className="text-muted-foreground">
-              {prefs.play_times
-                .map((t: string) => ({ morning: "Manhã", afternoon: "Tarde", evening: "Noite", night: "Madrugada" }[t] ?? t))
-                .join(", ")}
-            </span>
+        {prefs.play_times?.length > 0 ? (
+          <div className="pt-1">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+              Costuma jogar
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {prefs.play_times.map((t: string) => (
+                <PlayTimeChip key={t} slotId={t} />
+              ))}
+            </div>
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Actions */}
@@ -321,6 +424,32 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
         </Button>
       </div>
     </div>
+  );
+}
+
+const PLAY_TIME_META: Record<
+  string,
+  { label: string; Icon: typeof Sunrise; iconClass: string }
+> = {
+  morning: { label: "Manhã", Icon: Sunrise, iconClass: "text-amber-400" },
+  afternoon: { label: "Tarde", Icon: Sun, iconClass: "text-yellow-400" },
+  evening: { label: "Noite", Icon: Sunset, iconClass: "text-orange-400" },
+  night: { label: "Madrugada", Icon: Moon, iconClass: "text-violet-400" },
+};
+
+function PlayTimeChip({ slotId }: { slotId: string }) {
+  const meta = PLAY_TIME_META[slotId];
+  if (!meta) {
+    return (
+      <span className="text-xs text-muted-foreground capitalize">{slotId}</span>
+    );
+  }
+  const Icon = meta.Icon;
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-md bg-muted/40 px-2 py-1 text-xs text-card-foreground border border-border/40">
+      <Icon className={`h-3.5 w-3.5 shrink-0 ${meta.iconClass}`} />
+      {meta.label}
+    </span>
   );
 }
 
