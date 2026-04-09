@@ -8,11 +8,11 @@ import type {
   WsQueueStatus,
 } from "../types/duo";
 
-const WS_BASE =
-  process.env.NEXT_PUBLIC_WS_URL ||
-  (typeof window !== "undefined"
-    ? `ws://${window.location.host}`
-    : "ws://localhost:8000");
+function wsBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_WS_URL) return process.env.NEXT_PUBLIC_WS_URL;
+  if (typeof window !== "undefined") return `ws://${window.location.host}`;
+  return "ws://localhost:3000";
+}
 
 interface UseDuoSocketOptions {
   gameSlug: string;
@@ -58,35 +58,8 @@ export function useDuoSocket({
   useEffect(() => {
     if (!enabled || !gameSlug) return;
 
-    const token =
-      typeof document !== "undefined"
-        ? document.cookie.match(/access_token=([^;]+)/)?.[1]
-        : null;
-
-    const url = `${WS_BASE}/ws/duo/${gameSlug}/`;
-    const ws = new WebSocket(url);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      setState((s) => ({ ...s, connected: true, error: null }));
-    };
-
-    ws.onclose = () => {
-      setState((s) => ({ ...s, connected: false }));
-    };
-
-    ws.onerror = () => {
-      setState((s) => ({ ...s, error: "WebSocket connection error" }));
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const msg: WsMessage = JSON.parse(event.data);
-        handleMessage(msg);
-      } catch {
-        // ignore malformed messages
-      }
-    };
+    let cancelled = false;
+    let ws: WebSocket | null = null;
 
     function handleMessage(msg: WsMessage) {
       switch (msg.type) {
@@ -120,8 +93,56 @@ export function useDuoSocket({
       }
     }
 
+    fetch("/api/notifications-ws-token", { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : { token: null }))
+      .then((data: { token?: string | null }) => {
+        if (cancelled) return;
+        if (!data?.token) {
+          setState((s) => ({
+            ...s,
+            error: "Faça login para usar o Duo Finder.",
+            connected: false,
+          }));
+          return;
+        }
+
+        const base = wsBaseUrl().replace(/\/$/, "");
+        const wsUrl = `${base}/ws/duo/${encodeURIComponent(gameSlug)}/?token=${encodeURIComponent(data.token)}`;
+
+        ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
+
+        ws.onopen = () => {
+          setState((s) => ({ ...s, connected: true, error: null }));
+        };
+
+        ws.onclose = () => {
+          setState((s) => ({ ...s, connected: false }));
+        };
+
+        ws.onerror = () => {
+          setState((s) => ({ ...s, error: "WebSocket connection error" }));
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const msg: WsMessage = JSON.parse(event.data);
+            handleMessage(msg);
+          } catch {
+            // ignore malformed messages
+          }
+        };
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setState((s) => ({ ...s, error: "Não foi possível autenticar o WebSocket." }));
+        }
+      });
+
     return () => {
-      ws.close();
+      cancelled = true;
+      ws?.close();
+      wsRef.current = null;
     };
   }, [enabled, gameSlug]);
 

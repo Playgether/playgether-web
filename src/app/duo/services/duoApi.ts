@@ -7,12 +7,13 @@ import type {
   StatsResponse,
 } from "../types/duo";
 
-const BASE = "/api/v1/duo";
+/** Proxied by Next.js Route Handlers — reads httpOnly `accessToken` and sends Bearer to Django. */
+const BASE = "/api/duo";
 
 // ─── Queue ────────────────────────────────────────────────────────────────────
 
 export async function getActiveQueues(): Promise<DuoQueue[]> {
-  const res = await apiFetch(`${BASE}/queue/`, {
+  const res = await apiFetch(`${BASE}/queue`, {
     method: "GET",
     credentials: "include",
   });
@@ -24,7 +25,7 @@ export async function enterQueue(
   game_slug: string,
   preferences: Partial<GamePreferences>
 ): Promise<DuoQueue> {
-  const res = await apiFetch(`${BASE}/queue/`, {
+  const res = await apiFetch(`${BASE}/queue`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -38,14 +39,14 @@ export async function enterQueue(
 }
 
 export async function leaveQueue(queueId: number): Promise<void> {
-  await apiFetch(`${BASE}/queue/${queueId}/`, {
+  await apiFetch(`${BASE}/queue/${queueId}`, {
     method: "DELETE",
     credentials: "include",
   });
 }
 
 export async function renewQueue(queueId: number): Promise<DuoQueue> {
-  const res = await apiFetch(`${BASE}/queue/${queueId}/renew/`, {
+  const res = await apiFetch(`${BASE}/queue/${queueId}/renew`, {
     method: "POST",
     credentials: "include",
   });
@@ -60,8 +61,8 @@ export async function renewQueue(queueId: number): Promise<DuoQueue> {
 
 export async function getMatches(game_slug?: string): Promise<DuoMatch[]> {
   const url = game_slug
-    ? `${BASE}/matches/?game_slug=${game_slug}`
-    : `${BASE}/matches/`;
+    ? `${BASE}/matches?game_slug=${encodeURIComponent(game_slug)}`
+    : `${BASE}/matches`;
   const res = await apiFetch(url, {
     method: "GET",
     credentials: "include",
@@ -73,7 +74,7 @@ export async function getMatches(game_slug?: string): Promise<DuoMatch[]> {
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 export async function getGameSchema(game_slug: string): Promise<GameSchema> {
-  const res = await apiFetch(`${BASE}/schema/${game_slug}/`, {
+  const res = await apiFetch(`${BASE}/schema/${encodeURIComponent(game_slug)}`, {
     method: "GET",
     credentials: "include",
   });
@@ -84,7 +85,7 @@ export async function getGameSchema(game_slug: string): Promise<GameSchema> {
 // ─── Stats ────────────────────────────────────────────────────────────────────
 
 export async function getGameStats(game_slug: string): Promise<StatsResponse> {
-  const res = await apiFetch(`${BASE}/stats/${game_slug}/`, {
+  const res = await apiFetch(`${BASE}/stats/${encodeURIComponent(game_slug)}`, {
     method: "GET",
     credentials: "include",
   });
