@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import type { Game, GamePreferences, GameSchema, GameStats } from "../types/duo";
 import type { DuoQueue } from "../types/duo";
@@ -31,7 +31,29 @@ interface SharedState {
 export default function DuoSteps({ initialStep }: { initialStep: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const step = (searchParams?.get("step") || initialStep) as DuoStep;
+  const stepFromQuery = searchParams?.get("step");
+
+  /**
+   * O `useSearchParams()` pode ficar um frame atrás do `router.push`. O fallback
+   * `|| initialStep` usa o step da *primeira* renderização do servidor (quase
+   * sempre "game"), o que causa flash da lista de jogos ao ir para verify/results.
+   * Mantemos o step alvo em estado até a URL coincidir.
+   */
+  const [pendingStep, setPendingStep] = useState<DuoStep | null>(null);
+
+  useEffect(() => {
+    if (pendingStep === null || !stepFromQuery) return;
+    if (stepFromQuery === pendingStep) {
+      setPendingStep(null);
+    }
+  }, [pendingStep, stepFromQuery]);
+
+  const step = (
+    pendingStep ??
+    (stepFromQuery as DuoStep) ??
+    (initialStep as DuoStep) ??
+    "game"
+  ) as DuoStep;
 
   const [shared, setShared] = useState<SharedState>({
     selectedGame: null,
@@ -45,6 +67,7 @@ export default function DuoSteps({ initialStep }: { initialStep: string }) {
 
   const changeStep = useCallback(
     (newStep: DuoStep) => {
+      setPendingStep(newStep);
       router.push(`/duo?step=${newStep}`);
     },
     [router]
@@ -187,7 +210,14 @@ export default function DuoSteps({ initialStep }: { initialStep: string }) {
           <MatchResults
             game={shared.selectedGame}
             preferences={shared.preferences}
-            onBack={() => changeStep("filter")}
+            onEditFilters={() => {
+              setShared((s) => ({
+                ...s,
+                stats: null,
+                schema: null,
+              }));
+              changeStep("verify");
+            }}
             onChooseGame={() => {
               updateShared({ selectedGame: null });
               changeStep("game");

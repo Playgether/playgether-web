@@ -22,13 +22,16 @@ import {
   Moon,
 } from "lucide-react";
 import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
+import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
 import { useDuoSocket } from "../../hooks/useDuoSocket";
+import { useLiveExpiryLabel } from "../../hooks/useLiveExpiryLabel";
 import type { DuoMatch, Game, GamePreferences } from "../../types/duo";
 
 interface MatchResultsProps {
   game: Game;
   preferences: Partial<GamePreferences>;
-  onBack: () => void;
+  /** Mesmo destino que «Editar preferências» em manage-queue: fluxo a partir da verificação do perfil. */
+  onEditFilters: () => void;
   /** Volta à escolha de jogos (lista inicial do Duo Finder). */
   onChooseGame: () => void;
 }
@@ -37,10 +40,11 @@ type FilterMode = "all" | "online";
 
 const PATIENT_SEARCH_MS = 50_000;
 
-export function MatchResults({ game, preferences, onBack, onChooseGame }: MatchResultsProps) {
+export function MatchResults({ game, preferences, onEditFilters, onChooseGame }: MatchResultsProps) {
   const slug = game.acronym.toLowerCase();
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
-  const [searching, setSearching] = useState(false);
+  /** Começa em true para não exibir o vazio «ninguém encontrado» antes do primeiro start_search. */
+  const [searching, setSearching] = useState(true);
   const [searchPhase, setSearchPhase] = useState<"active" | "patient">("active");
   const prefsSignature = useMemo(
     () => JSON.stringify(preferences ?? {}),
@@ -61,11 +65,13 @@ export function MatchResults({ game, preferences, onBack, onChooseGame }: MatchR
     pulseDuoResultsPresence,
   } = useDuoSocket({ gameSlug: slug, enabled: true });
 
-  useEffect(() => {
-    if (!connected) {
-      lastSentPrefsSigRef.current = null;
-    }
-  }, [connected]);
+  const liveExpiryLabel = useLiveExpiryLabel(
+    queueStatus === "in_queue" ||
+      queueStatus === "searching" ||
+      queueStatus === "renewed"
+      ? expiresAt
+      : null
+  );
 
   // Reenvia start_search quando conecta, reconecta ou as preferências mudam (ex.: voltou dos filtros).
   useEffect(() => {
@@ -83,6 +89,16 @@ export function MatchResults({ game, preferences, onBack, onChooseGame }: MatchR
     const id = window.setInterval(pulseDuoResultsPresence, 45_000);
     return () => window.clearInterval(id);
   }, [connected, pulseDuoResultsPresence]);
+
+  useEffect(() => {
+    if (error) setSearching(false);
+  }, [error]);
+
+  useEffect(() => {
+    if (queueStatus === "evicted" || queueStatus === "left") {
+      setSearching(false);
+    }
+  }, [queueStatus]);
 
   useEffect(() => {
     if (!searching || matches.length > 0) {
@@ -107,10 +123,7 @@ export function MatchResults({ game, preferences, onBack, onChooseGame }: MatchR
 
   const sortedMatches = [...displayedMatches].sort((a, b) => b.score - a.score);
 
-  // Format expiry countdown
-  const expiryLabel = expiresAt
-    ? formatExpiry(expiresAt)
-    : null;
+  const bootstrapping = queueStatus === null && !error;
 
   return (
     <div className="min-h-screen w-screen py-8 px-4">
@@ -151,12 +164,15 @@ export function MatchResults({ game, preferences, onBack, onChooseGame }: MatchR
         </div>
 
         {/* Queue status bar */}
-        {(queueStatus === "in_queue" || queueStatus === "searching") && (
+        {(queueStatus === "in_queue" ||
+          queueStatus === "searching" ||
+          queueStatus === "renewed") && (
           <div className="card-glass rounded-xl p-4 mb-6 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse" />
               <span className="text-sm text-muted-foreground">
-                Na fila {expiryLabel && `· Expira ${expiryLabel}`}
+                Na fila{" "}
+                {liveExpiryLabel ? `· Expira em ${liveExpiryLabel}` : null}
               </span>
             </div>
             <div className="flex items-center flex-wrap gap-2 justify-end">
@@ -164,7 +180,7 @@ export function MatchResults({ game, preferences, onBack, onChooseGame }: MatchR
                 size="sm"
                 variant="outline"
                 className="text-xs border-border"
-                onClick={onBack}
+                onClick={onEditFilters}
               >
                 <SlidersHorizontal className="w-3 h-3 mr-1" />
                 Mudar filtros
@@ -246,8 +262,23 @@ export function MatchResults({ game, preferences, onBack, onChooseGame }: MatchR
           ))}
         </div>
 
+        {/* Estado inicial: evita overlay «ninguém encontrado» antes do WebSocket / fila */}
+        {bootstrapping && matches.length === 0 && (
+          <div
+            className="flex flex-col items-center justify-center py-24 space-y-3 px-4"
+            aria-busy="true"
+            aria-live="polite"
+          >
+            <div className="relative">
+              <div className="w-16 h-16 border-4 border-primary/20 rounded-full" />
+              <div className="w-16 h-16 border-4 border-transparent border-t-primary rounded-full animate-spin absolute inset-0" />
+            </div>
+            <p className="text-sm text-muted-foreground">Verificando fila…</p>
+          </div>
+        )}
+
         {/* Searching indicator */}
-        {searching && matches.length === 0 && (
+        {!bootstrapping && searching && matches.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 space-y-4 px-4">
             <div className="relative">
               <div className="w-16 h-16 border-4 border-primary/20 rounded-full" />
@@ -284,7 +315,10 @@ export function MatchResults({ game, preferences, onBack, onChooseGame }: MatchR
         )}
 
         {/* No results (and not searching) */}
-        {!searching && sortedMatches.length === 0 && queueStatus !== "evicted" && (
+        {!bootstrapping &&
+          !searching &&
+          sortedMatches.length === 0 &&
+          queueStatus !== "evicted" && (
           <div className="flex flex-col items-center justify-center py-24 space-y-4">
             <Trophy className="w-12 h-12 text-muted-foreground" />
             <p className="text-muted-foreground text-center">
@@ -359,6 +393,16 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
           </Badge>
         </div>
       </div>
+
+      {partner.highlighted_achievements &&
+      partner.highlighted_achievements.length > 0 ? (
+        <div className="mb-4">
+          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-2">
+            Conquistas em destaque
+          </p>
+          <HighlightedAchievementBadges achievements={partner.highlighted_achievements} />
+        </div>
+      ) : null}
 
       {/* Game-specific preferences summary */}
       <div className="space-y-4 mb-5">
@@ -545,11 +589,3 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function formatExpiry(isoString: string): string {
-  const diff = new Date(isoString).getTime() - Date.now();
-  if (diff <= 0) return "agora";
-  const hours = Math.floor(diff / 3_600_000);
-  const minutes = Math.floor((diff % 3_600_000) / 60_000);
-  if (hours > 0) return `em ${hours}h ${minutes}m`;
-  return `em ${minutes}m`;
-}

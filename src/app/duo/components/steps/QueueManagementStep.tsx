@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useLiveExpiryLabel } from "../../hooks/useLiveExpiryLabel";
 import {
   ArrowLeft,
   Clock,
@@ -25,14 +26,6 @@ interface QueueManagementStepProps {
   onGoToSearch?: () => void;
 }
 
-function formatTimeRemaining(seconds: number): string {
-  if (seconds <= 0) return "expirando…";
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m} min`;
-}
-
 export function QueueManagementStep({
   game,
   queue,
@@ -44,6 +37,7 @@ export function QueueManagementStep({
 }: QueueManagementStepProps) {
   const [busy, setBusy] = useState<"renew" | "leave" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const liveRemaining = useLiveExpiryLabel(queue.expires_at);
 
   const canRenew = queue.is_near_expiry;
 
@@ -103,9 +97,9 @@ export function QueueManagementStep({
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-8">
             <Clock className="w-4 h-4 shrink-0" />
             <span>
-              Tempo restante estimado:{" "}
-              <strong className="text-card-foreground font-medium">
-                {formatTimeRemaining(queue.time_remaining_seconds)}
+              Tempo restante na fila:{" "}
+              <strong className="text-card-foreground font-medium font-mono tabular-nums">
+                {liveRemaining ?? "—"}
               </strong>
             </span>
           </div>
@@ -168,8 +162,9 @@ export function QueueManagementStep({
 
           <p className="text-[11px] text-muted-foreground mt-6 leading-relaxed">
             Em <strong className="text-card-foreground font-medium">Editar preferências</strong>, avance
-            até o fim do fluxo para voltar à busca. Ao salvar na última etapa, o tempo da fila é{" "}
-            <strong className="text-card-foreground font-medium">reiniciado</strong> (regra do Duo Finder).
+            até o fim do fluxo para voltar à busca. O tempo na fila só é{" "}
+            <strong className="text-card-foreground font-medium">reiniciado</strong> se você alterar
+            alguma preferência em relação ao que estava salvo.
           </p>
         </div>
       </div>

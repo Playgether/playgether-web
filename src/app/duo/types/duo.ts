@@ -1,3 +1,5 @@
+import type { HighlightedAchievementPublic } from "@/types/highlightedAchievements";
+
 // ─── Game (from backend /api/v1/games/) ─────────────────────────────────────
 
 export interface Game {
@@ -102,6 +104,8 @@ export interface MatchPartner {
   preferences: Partial<GamePreferences>;
   /** Estatísticas do jogo (CS2, LoL, …) vindas do backend. */
   game_stats?: Record<string, unknown> | null;
+  /** Conquistas fixadas no perfil (até 3), para exibir no card do duo. */
+  highlighted_achievements?: HighlightedAchievementPublic[];
 }
 
 export interface DuoMatchScoreBreakdown {
