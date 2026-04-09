@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Gamepad2, Loader2 } from "lucide-react";
+import { ChevronRight, Gamepad2, Loader2 } from "lucide-react";
 import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
 import {
   HoverCard,
@@ -56,79 +56,78 @@ export function GameSelection({ onSelect }: GameSelectionProps) {
         )}
 
         {!loading && !error && (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             {games.map((game, index) => {
               const coverSrc = resolveGameMediaUrl(game.image);
               const iconSrc = resolveGameMediaUrl(game.icon);
+              const titleRow = (
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  {iconSrc ? (
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border/50 bg-background/80 shadow-sm">
+                      <img src={iconSrc} alt="" className="h-7 w-7 object-contain" />
+                    </span>
+                  ) : (
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border/50 bg-muted/40">
+                      <Gamepad2 className="h-5 w-5 text-muted-foreground" />
+                    </span>
+                  )}
+                  <h3 className="truncate text-base font-semibold tracking-tight text-card-foreground transition-colors group-hover:text-primary sm:text-lg">
+                    {game.name}
+                  </h3>
+                  <ChevronRight
+                    className="ml-auto h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:opacity-80"
+                    aria-hidden
+                  />
+                </div>
+              );
+
               return (
                 <button
                   key={game.id}
+                  type="button"
+                  aria-label={`Buscar duo em ${game.name}`}
                   onClick={() => onSelect(game)}
-                  className="card-glass rounded-xl p-6 group animate-fade-in-scale text-left
-                  hover:border-primary/50 hover:shadow-glow-primary transition-all duration-300"
+                  className="group animate-fade-in-scale overflow-hidden rounded-2xl border border-border/55 bg-card/30 text-left shadow-sm outline-none ring-offset-background transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-card/45 hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:ring-offset-2"
                   style={{ animationDelay: `${index * 0.08}s` }}
                 >
-                  {/* Capa: área maior + contain para não cortar arte */}
-                  <div className="w-full h-44 rounded-lg mb-4 overflow-hidden bg-muted/40 flex items-center justify-center px-2 py-2">
-                    {coverSrc ? (
-                      <img
-                        src={coverSrc}
-                        alt={game.name}
-                        className="max-h-full max-w-full w-auto h-auto object-contain"
-                      />
-                    ) : (
-                      <Gamepad2 className="w-12 h-12 text-muted-foreground" />
-                    )}
+                  <div className="relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-b from-muted/60 via-muted/25 to-background">
+                    <div
+                      className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,hsl(var(--primary)_/_0.08),transparent_70%)]"
+                      aria-hidden
+                    />
+                    <div className="relative flex h-full w-full items-center justify-center p-4 sm:p-5">
+                      {coverSrc ? (
+                        <img
+                          src={coverSrc}
+                          alt=""
+                          decoding="async"
+                          className="max-h-full max-w-full object-contain drop-shadow-md transition-transform duration-300 group-hover:scale-[1.03]"
+                        />
+                      ) : (
+                        <Gamepad2 className="h-14 w-14 text-muted-foreground/60" />
+                      )}
+                    </div>
                   </div>
 
-                  {/* Ícone + nome; descrição só no hover */}
-                  {game.description ? (
-                    <HoverCard openDelay={200} closeDelay={100}>
-                      <HoverCardTrigger asChild>
-                        <div className="w-full text-left cursor-help pointer-events-auto">
-                          <div className="flex items-center gap-3">
-                            {iconSrc ? (
-                              <img
-                                src={iconSrc}
-                                alt=""
-                                className="w-8 h-8 shrink-0 rounded object-contain bg-muted/30"
-                              />
-                            ) : null}
-                            <h3 className="text-xl font-bold text-card-foreground group-hover:text-primary transition-colors">
-                              {game.name}
-                            </h3>
-                          </div>
-                        </div>
-                      </HoverCardTrigger>
-                      <HoverCardContent
-                        side="top"
-                        align="start"
-                        className="w-80 z-[100]"
-                      >
-                        <GameHoverCardContent
-                          title={game.name}
-                          description={game.description}
-                          cover={game.image}
-                          logo={game.icon}
-                        />
-                      </HoverCardContent>
-                    </HoverCard>
-                  ) : (
-                    <div className="w-full text-left">
-                      <div className="flex items-center gap-3">
-                        {iconSrc ? (
-                          <img
-                            src={iconSrc}
-                            alt=""
-                            className="w-8 h-8 shrink-0 rounded object-contain bg-muted/30"
+                  <div className="border-t border-border/45 bg-muted/15 px-4 py-3.5 backdrop-blur-[2px]">
+                    {game.description ? (
+                      <HoverCard openDelay={200} closeDelay={100}>
+                        <HoverCardTrigger asChild>
+                          <div className="w-full cursor-help text-left">{titleRow}</div>
+                        </HoverCardTrigger>
+                        <HoverCardContent side="top" align="start" className="z-[100] w-80">
+                          <GameHoverCardContent
+                            title={game.name}
+                            description={game.description}
+                            cover={game.image}
+                            logo={game.icon}
                           />
-                        ) : null}
-                        <h3 className="text-xl font-bold text-card-foreground group-hover:text-primary transition-colors">
-                          {game.name}
-                        </h3>
-                      </div>
-                    </div>
-                  )}
+                        </HoverCardContent>
+                      </HoverCard>
+                    ) : (
+                      titleRow
+                    )}
+                  </div>
                 </button>
               );
             })}
