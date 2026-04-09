@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -8,6 +8,8 @@ import {
   RefreshCw,
   Trophy,
   Users,
+  Gamepad2,
+  SlidersHorizontal,
   Wifi,
   WifiOff,
   AlertCircle,
@@ -27,27 +29,69 @@ interface MatchResultsProps {
   game: Game;
   preferences: Partial<GamePreferences>;
   onBack: () => void;
+  /** Volta à escolha de jogos (lista inicial do Duo Finder). */
+  onChooseGame: () => void;
 }
 
 type FilterMode = "all" | "online";
 
-export function MatchResults({ game, preferences, onBack }: MatchResultsProps) {
+const PATIENT_SEARCH_MS = 50_000;
+
+export function MatchResults({ game, preferences, onBack, onChooseGame }: MatchResultsProps) {
   const slug = game.acronym.toLowerCase();
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
   const [searching, setSearching] = useState(false);
-  const hasStarted = useRef(false);
+  const [searchPhase, setSearchPhase] = useState<"active" | "patient">("active");
+  const prefsSignature = useMemo(
+    () => JSON.stringify(preferences ?? {}),
+    [preferences]
+  );
+  const lastSentPrefsSigRef = useRef<string | null>(null);
 
-  const { connected, queueStatus, expiresAt, isNearExpiry, matches, error, startSearch, leaveQueue, renewQueue } =
-    useDuoSocket({ gameSlug: slug, enabled: true });
+  const {
+    connected,
+    queueStatus,
+    expiresAt,
+    isNearExpiry,
+    matches,
+    error,
+    startSearch,
+    leaveQueue,
+    renewQueue,
+    pulseDuoResultsPresence,
+  } = useDuoSocket({ gameSlug: slug, enabled: true });
 
-  // On mount: start search via WS once connected
   useEffect(() => {
-    if (connected && !hasStarted.current) {
-      hasStarted.current = true;
-      setSearching(true);
-      startSearch(preferences);
+    if (!connected) {
+      lastSentPrefsSigRef.current = null;
     }
-  }, [connected, preferences, startSearch]);
+  }, [connected]);
+
+  // Reenvia start_search quando conecta, reconecta ou as preferências mudam (ex.: voltou dos filtros).
+  useEffect(() => {
+    if (!connected) return;
+    if (lastSentPrefsSigRef.current === prefsSignature) return;
+    lastSentPrefsSigRef.current = prefsSignature;
+    setSearching(true);
+    setSearchPhase("active");
+    startSearch(preferences);
+  }, [connected, prefsSignature, preferences, startSearch]);
+
+  useEffect(() => {
+    if (!connected) return;
+    pulseDuoResultsPresence();
+    const id = window.setInterval(pulseDuoResultsPresence, 45_000);
+    return () => window.clearInterval(id);
+  }, [connected, pulseDuoResultsPresence]);
+
+  useEffect(() => {
+    if (!searching || matches.length > 0) {
+      setSearchPhase("active");
+      return;
+    }
+    const t = window.setTimeout(() => setSearchPhase("patient"), PATIENT_SEARCH_MS);
+    return () => window.clearTimeout(t);
+  }, [searching, matches.length]);
 
   // After initial matches arrive stop "searching" spinner
   useEffect(() => {
@@ -75,10 +119,22 @@ export function MatchResults({ game, preferences, onBack }: MatchResultsProps) {
         <div className="flex items-center justify-between mb-6 mt-12">
           <div>
             <h1 className="text-3xl font-bold text-card-foreground">{game.name} – Duos</h1>
-            <p className="text-muted-foreground mt-1">
-              {sortedMatches.length > 0
-                ? `${sortedMatches.length} parceiro${sortedMatches.length !== 1 ? "s" : ""} compatível${sortedMatches.length !== 1 ? "s" : ""}`
-                : "Buscando parceiros..."}
+            <p className="text-muted-foreground mt-1 max-w-xl">
+              {sortedMatches.length > 0 ? (
+                <>
+                  {sortedMatches.length} parceiro{sortedMatches.length !== 1 ? "s" : ""}{" "}
+                  {sortedMatches.length === 1 ? "compatível" : "compatíveis"}
+                </>
+              ) : searching && searchPhase === "patient" ? (
+                <>
+                  Ninguém compatível com seus filtros agora. Se aparecer alguém, avisamos por
+                  notificação. Pode ficar aqui ou usar o resto do app à vontade.
+                </>
+              ) : searching ? (
+                "Buscando parceiros compatíveis com seus filtros…"
+              ) : (
+                "Pronto para novas sugestões."
+              )}
             </p>
           </div>
 
@@ -103,7 +159,16 @@ export function MatchResults({ game, preferences, onBack }: MatchResultsProps) {
                 Na fila {expiryLabel && `· Expira ${expiryLabel}`}
               </span>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center flex-wrap gap-2 justify-end">
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs border-border"
+                onClick={onBack}
+              >
+                <SlidersHorizontal className="w-3 h-3 mr-1" />
+                Mudar filtros
+              </Button>
               {isNearExpiry && (
                 <Button
                   size="sm"
@@ -136,7 +201,11 @@ export function MatchResults({ game, preferences, onBack }: MatchResultsProps) {
             <Button
               size="sm"
               className="ml-auto bg-gradient-primary text-primary-foreground"
-              onClick={() => { hasStarted.current = false; startSearch(preferences); }}
+              onClick={() => {
+                lastSentPrefsSigRef.current = null;
+                setSearching(true);
+                startSearch(preferences);
+              }}
             >
               Voltar à fila
             </Button>
@@ -179,12 +248,25 @@ export function MatchResults({ game, preferences, onBack }: MatchResultsProps) {
 
         {/* Searching indicator */}
         {searching && matches.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-24 space-y-4">
+          <div className="flex flex-col items-center justify-center py-24 space-y-4 px-4">
             <div className="relative">
               <div className="w-16 h-16 border-4 border-primary/20 rounded-full" />
               <div className="w-16 h-16 border-4 border-transparent border-t-primary rounded-full animate-spin absolute inset-0" />
             </div>
-            <p className="text-muted-foreground">Buscando parceiros compatíveis...</p>
+            {searchPhase === "patient" ? (
+              <div className="text-center text-muted-foreground max-w-md space-y-2 text-sm leading-relaxed">
+                <p>
+                  Ainda não encontramos ninguém com esses filtros neste momento. Quando surgir uma
+                  combinação, você será notificado (se não estiver nesta tela).
+                </p>
+                <p>
+                  Pode continuar aqui ou navegar pelo feed e pelo restante do app — sua fila segue
+                  ativa.
+                </p>
+              </div>
+            ) : (
+              <p className="text-muted-foreground">Buscando parceiros compatíveis…</p>
+            )}
           </div>
         )}
 
@@ -214,13 +296,14 @@ export function MatchResults({ game, preferences, onBack }: MatchResultsProps) {
         )}
 
         {/* Action Buttons */}
-        <div className="flex justify-center space-x-4 mb-16">
+        <div className="flex flex-wrap justify-center gap-3 mb-16">
           <Button
             variant="outline"
-            className="px-8 py-3 text-muted-foreground border-border hover:border-primary/50 hover:text-primary transition-all duration-300"
-            onClick={onBack}
+            className="px-8 py-3 border-primary/30 text-primary hover:bg-primary/10"
+            onClick={onChooseGame}
           >
-            Voltar aos filtros
+            <Gamepad2 className="w-4 h-4 mr-2" />
+            Escolher jogo
           </Button>
         </div>
       </div>

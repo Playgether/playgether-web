@@ -10,6 +10,8 @@ import { CsProfile } from "../game/CsProfile";
 
 interface GameVerificationProps {
   game: Game;
+  /** Preferências já salvas (ex.: ao reeditar de uma fila ativa). */
+  initialPreferences?: Partial<GamePreferences>;
   onReady: (
     stats: GameStats,
     schema: GameSchema,
@@ -18,7 +20,12 @@ interface GameVerificationProps {
   onBack: () => void;
 }
 
-export function GameVerification({ game, onReady, onBack }: GameVerificationProps) {
+export function GameVerification({
+  game,
+  initialPreferences,
+  onReady,
+  onBack,
+}: GameVerificationProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [connected, setConnected] = useState<boolean | null>(null);
@@ -39,6 +46,9 @@ export function GameVerification({ game, onReady, onBack }: GameVerificationProp
   useEffect(() => {
     setLoading(true);
     setError(null);
+    setConnected(null);
+    setStats(null);
+    setSchema(null);
 
     Promise.all([getGameStats(slug), getGameSchema(slug)])
       .then(([statsRes, schemaRes]) => {
@@ -49,6 +59,22 @@ export function GameVerification({ game, onReady, onBack }: GameVerificationProp
       .catch(() => setError("Erro ao carregar dados do jogo."))
       .finally(() => setLoading(false));
   }, [slug]);
+
+  useEffect(() => {
+    const p = initialPreferences as Record<string, unknown> | undefined;
+    if (!p || typeof p !== "object") return;
+    if (slug === "lol") {
+      if (typeof p.main_role === "string" && p.main_role) setLolMainRole(p.main_role);
+      if (typeof p.secondary_role === "string" && p.secondary_role)
+        setLolSecondaryRole(p.secondary_role);
+    }
+    if (slug === "cs2") {
+      if (Array.isArray(p.roles)) setCsRoles(p.roles as string[]);
+      if (Array.isArray(p.favorite_weapons))
+        setCsWeapons(p.favorite_weapons as string[]);
+      if (typeof p.own_range === "string" && p.own_range) setCsOwnRange(p.own_range);
+    }
+  }, [slug, initialPreferences]);
 
   function buildPreferences(): Partial<GamePreferences> {
     if (slug === "lol") {

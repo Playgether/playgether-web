@@ -2,15 +2,20 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState, useCallback } from "react";
+import { Loader2 } from "lucide-react";
 import type { Game, GamePreferences, GameSchema, GameStats } from "../types/duo";
+import type { DuoQueue } from "../types/duo";
+import { getActiveQueues } from "../services/duoApi";
 import { GameSelection } from "./steps/GameSelection";
 import { GameVerification } from "./steps/GameVerification";
 import { RoleSelection } from "./steps/RoleSelection";
 import { EloFilter } from "./steps/EloFilter";
 import { MatchResults } from "./steps/MatchResults";
+import { QueueManagementStep } from "./steps/QueueManagementStep";
 
 export type DuoStep =
   | "game"
+  | "manage-queue"
   | "verify"
   | "roles"
   | "filter"
@@ -34,10 +39,13 @@ export default function DuoSteps({ initialStep }: { initialStep: string }) {
     schema: null,
     preferences: {},
   });
+  const [activeQueueForGame, setActiveQueueForGame] = useState<DuoQueue | null>(null);
+  /** Evita flash de tela errada enquanto resolve fila ativa pós-escolha do jogo. */
+  const [resolvingGameSelection, setResolvingGameSelection] = useState(false);
 
   const changeStep = useCallback(
     (newStep: DuoStep) => {
-      router.push(`?step=${newStep}`);
+      router.push(`/duo?step=${newStep}`);
     },
     [router]
   );
@@ -50,8 +58,29 @@ export default function DuoSteps({ initialStep }: { initialStep: string }) {
   const gameSelectionStep = (
     <GameSelection
       onSelect={(game) => {
-        updateShared({ selectedGame: game });
-        changeStep("verify");
+        void (async () => {
+          setResolvingGameSelection(true);
+          updateShared({ selectedGame: game });
+          const slug = game.acronym.toLowerCase();
+          try {
+            const queues = await getActiveQueues();
+            const existing = queues.find(
+              (q) => (q.game_slug || "").toLowerCase() === slug
+            );
+            if (existing) {
+              setActiveQueueForGame(existing);
+              changeStep("manage-queue");
+            } else {
+              setActiveQueueForGame(null);
+              changeStep("verify");
+            }
+          } catch {
+            setActiveQueueForGame(null);
+            changeStep("verify");
+          } finally {
+            setResolvingGameSelection(false);
+          }
+        })();
       }}
     />
   );
@@ -61,12 +90,54 @@ export default function DuoSteps({ initialStep }: { initialStep: string }) {
       case "game":
         return gameSelectionStep;
 
+      case "manage-queue":
+        if (!shared.selectedGame || !activeQueueForGame) return gameSelectionStep;
+        return (
+          <QueueManagementStep
+            game={shared.selectedGame}
+            queue={activeQueueForGame}
+            onBack={() => {
+              setActiveQueueForGame(null);
+              changeStep("game");
+            }}
+            onQueueUpdated={(q) => setActiveQueueForGame(q)}
+            onLeftQueue={() => {
+              setActiveQueueForGame(null);
+              updateShared({ selectedGame: null });
+              changeStep("game");
+            }}
+            onEditPreferences={() => {
+              setShared((s) => ({
+                ...s,
+                preferences: {
+                  ...(activeQueueForGame.preferences as Partial<GamePreferences>),
+                },
+                stats: null,
+                schema: null,
+              }));
+              setActiveQueueForGame(null);
+              changeStep("verify");
+            }}
+            onGoToSearch={() => {
+              setShared((s) => ({
+                ...s,
+                preferences: {
+                  ...(activeQueueForGame.preferences as Partial<GamePreferences>),
+                },
+              }));
+              setActiveQueueForGame(null);
+              changeStep("results");
+            }}
+          />
+        );
+
       case "verify":
         // Guard: no game selected → fall back to game selection without calling router during render
         if (!shared.selectedGame) return gameSelectionStep;
         return (
           <GameVerification
             game={shared.selectedGame}
+            initialPreferences={shared.preferences}
             onReady={(stats, schema, verifyPreferences) => {
               setShared((s) => ({
                 ...s,
@@ -117,6 +188,10 @@ export default function DuoSteps({ initialStep }: { initialStep: string }) {
             game={shared.selectedGame}
             preferences={shared.preferences}
             onBack={() => changeStep("filter")}
+            onChooseGame={() => {
+              updateShared({ selectedGame: null });
+              changeStep("game");
+            }}
           />
         );
 
@@ -126,7 +201,17 @@ export default function DuoSteps({ initialStep }: { initialStep: string }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-background">
+    <div className="min-h-screen bg-gradient-background relative">
+      {resolvingGameSelection ? (
+        <div
+          className="fixed inset-0 z-[200] flex flex-col items-center justify-center gap-3 bg-background/85 backdrop-blur-sm"
+          aria-busy="true"
+          aria-live="polite"
+        >
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Verificando sua fila…</p>
+        </div>
+      ) : null}
       <div className="ml-20">{renderStep()}</div>
     </div>
   );

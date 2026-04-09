@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getMatches } from "../services/duoApi";
 import type {
   DuoMatch,
   GamePreferences,
@@ -33,6 +34,10 @@ interface DuoSocketActions {
   leaveQueue: () => void;
   renewQueue: () => void;
   updatePreferences: (preferences: Partial<GamePreferences>) => void;
+  /** Alinha a lista com o backend (F5, foco na aba, parceiro saiu da fila). */
+  refreshMatches: () => void;
+  /** Mantém o backend ciente de que o usuário está em /duo resultados (evita notificação in-app duplicada). */
+  pulseDuoResultsPresence: () => void;
 }
 
 export function useDuoSocket({
@@ -54,6 +59,29 @@ export function useDuoSocket({
       wsRef.current.send(JSON.stringify(data));
     }
   }, []);
+
+  const refreshMatches = useCallback(() => {
+    if (!gameSlug) return;
+    getMatches(gameSlug)
+      .then((list) => {
+        setState((s) => ({ ...s, matches: dedupeMatches(list) }));
+      })
+      .catch(() => {});
+  }, [gameSlug]);
+
+  useEffect(() => {
+    if (!enabled || !gameSlug) return;
+    refreshMatches();
+  }, [enabled, gameSlug, refreshMatches]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const onVis = () => {
+      if (document.visibilityState === "visible") refreshMatches();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, [enabled, refreshMatches]);
 
   useEffect(() => {
     if (!enabled || !gameSlug) return;
@@ -168,7 +196,19 @@ export function useDuoSocket({
     [send]
   );
 
-  return { ...state, startSearch, leaveQueue, renewQueue, updatePreferences };
+  const pulseDuoResultsPresence = useCallback(() => {
+    send({ type: "results_heartbeat" });
+  }, [send]);
+
+  return {
+    ...state,
+    startSearch,
+    leaveQueue,
+    renewQueue,
+    updatePreferences,
+    refreshMatches,
+    pulseDuoResultsPresence,
+  };
 }
 
 function dedupeMatches(matches: DuoMatch[]): DuoMatch[] {
