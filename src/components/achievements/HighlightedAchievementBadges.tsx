@@ -76,12 +76,12 @@ function AchievementHighlightChip({
             staticBorder={false}
             variant="chip"
             className="min-w-0 max-w-full"
-            contentClassName="relative z-10 flex items-center gap-1 max-w-full min-w-0 rounded-[calc(var(--radius)-2px)] px-1.5 py-0.5 subpixel-antialiased"
+            contentClassName="relative z-10 flex items-center gap-1 max-w-full min-w-0 rounded-[calc(var(--radius)-2px)] px-1.5 py-[3px] subpixel-antialiased"
           >
             <span className={cn("flex shrink-0 items-center", cfg.textColor)}>
               {iconNode}
             </span>
-            <span className="flex min-h-3.5 min-w-0 flex-1 items-center gap-0.5 truncate text-[10px] font-semibold leading-none">
+            <span className="flex min-w-0 flex-1 items-center gap-0.5 truncate text-[10px] font-semibold leading-tight">
               <span className="shrink-0 tabular-nums text-zinc-300 [transform:translateZ(0)]">
                 {a.game_short}
               </span>
