@@ -466,7 +466,10 @@ export function RarityAchievementChrome({
 
           {/* Camada própria + backface: reduz artefato de nitidez no texto (Edge) com raios animados atrás */}
           <div
-            className={cn(contentClassName, "[transform:translateZ(0)] [backface-visibility:hidden]")}
+            className={cn(
+              contentClassName,
+              "[transform:translateZ(0)] [backface-visibility:hidden] subpixel-antialiased",
+            )}
           >
             {children}
           </div>
@@ -493,7 +496,7 @@ export const RarityBadge = ({
 
   return (
     <motion.div
-      className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full text-white select-none shrink-0"
+      className="inline-flex items-center gap-1.5 text-xs font-bold leading-none text-white select-none shrink-0 rounded-full px-2 py-0.5 subpixel-antialiased [transform:translateZ(0)]"
       style={{ background: config.badgeGradient }}
       animate={
         isAnimated && rarity !== "common" && rarity !== "medium"
@@ -507,12 +510,14 @@ export const RarityBadge = ({
       transition={{ duration: 0.3 }}
     >
       <span
-        className="inline-flex size-[1.15em] shrink-0 items-center justify-center leading-none"
+        className="flex h-4 w-4 shrink-0 items-center justify-center overflow-visible text-[0.95rem] leading-none"
         aria-hidden
       >
         {config.icon}
       </span>
-      <span className="leading-none">{config.label}</span>
+      <span className="flex items-center leading-none [transform:translateZ(0)]">
+        {config.label}
+      </span>
     </motion.div>
   );
 };

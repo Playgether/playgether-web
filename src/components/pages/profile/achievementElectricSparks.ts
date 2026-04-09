@@ -10,17 +10,44 @@ export type ElectricSparkData = {
   repeatDelay: number;
 };
 
-export function buildElectricSparks(config: RarityConfig): ElectricSparkData[] {
+/** PRNG determinístico por seed (evita padrão idêntico em todas as tags da mesma raridade). */
+function mulberry32(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Converte `useId()` (ou qualquer string) em inteiro para seed estável. */
+export function hashInstanceSeed(id: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0 || 1;
+}
+
+export function buildElectricSparks(
+  config: RarityConfig,
+  seed: number,
+): ElectricSparkData[] {
+  const rand = mulberry32(seed);
   const dScale = config.electricSparkDurationScale ?? 1;
   const rScale = config.electricSparkRepeatScale ?? 1;
-  return Array.from({ length: 6 }, (_, i) => ({
+  const count = 6 + Math.floor(rand() * 5);
+  return Array.from({ length: count }, (_, i) => ({
     id: i,
-    x: Math.random() * 90,
-    y: Math.random() * 90,
-    rotation: Math.random() * 360,
-    duration: (0.2 + Math.random() * 0.2) * dScale,
-    delay: Math.random() * 2,
-    repeatDelay: (1 + Math.random() * 2.5) * rScale,
+    x: 3 + rand() * 94,
+    y: 3 + rand() * 94,
+    rotation: rand() * 360,
+    duration: (0.14 + rand() * 0.42) * dScale,
+    delay: rand() * 3.2,
+    repeatDelay: (0.35 + rand() * 3.8) * rScale,
   }));
 }
 

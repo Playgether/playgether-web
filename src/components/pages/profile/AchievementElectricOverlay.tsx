@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { rarityConfig, type RarityLevel } from "./rarityConfig";
 import {
   buildElectricSparks,
   electricSparkColorForRarity,
+  hashInstanceSeed,
   type ElectricSparkData,
 } from "./achievementElectricSparks";
 
@@ -65,10 +66,11 @@ export function AchievementElectricOverlay({
 }) {
   const reducedMotion = useReducedMotion() ?? false;
   const config = rarityConfig[rarity];
+  const instanceId = useId();
   const sparks = useMemo(
-    () => buildElectricSparks(config),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rarity],
+    () =>
+      buildElectricSparks(config, hashInstanceSeed(`${rarity}:${instanceId}`)),
+    [config, rarity, instanceId],
   );
 
   if (reducedMotion || !config.hasElectricEffect) return null;
@@ -83,7 +85,7 @@ export function AchievementElectricOverlay({
     >
       {sparks.map((s) => (
         <ElectricSpark
-          key={s.id}
+          key={`${instanceId}-${s.id}`}
           spark={s}
           isHovered={isHovered}
           color={color}
