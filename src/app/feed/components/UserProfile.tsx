@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, MessageSquare, Image } from "lucide-react";
 import type { StaticImageData } from "next/image";
+import { PresenceStatusDot } from "@/components/presence/PresenceStatusDot";
 
 interface UserProfileProps {
   user: {
@@ -14,20 +15,27 @@ interface UserProfileProps {
     following: number;
     posts: number;
   };
+  /** Quando definido, exibe bolinha de presença (ex.: usuário logado). */
+  userId?: number;
 }
 
-export const UserProfile = ({ user }: UserProfileProps) => {
+export const UserProfile = ({ user, userId }: UserProfileProps) => {
   return (
     <Card className="bg-card border-border/50 backdrop-blur-sm hover:shadow-glow-primary/30 hover:scale-[1.02] hover:border-primary/40 transition-all duration-300 animate-fade-up">
       <CardContent className="p-6 text-center">
         {/* Avatar centralizado */}
         <div className="flex justify-center mb-4">
-          <Avatar className="w-20 h-20 ring-4 ring-primary/30">
-            <AvatarImage src={typeof user.avatar === 'string' ? user.avatar : user.avatar.src} alt={user.name} />
-            <AvatarFallback className="bg-gradient-primary text-white font-bold text-xl">
-              {user.name.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative inline-block">
+            <Avatar className="w-20 h-20 ring-4 ring-primary/30">
+              <AvatarImage src={typeof user.avatar === 'string' ? user.avatar : user.avatar.src} alt={user.name} />
+              <AvatarFallback className="bg-gradient-primary text-white font-bold text-xl">
+                {user.name.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+            {userId != null ? (
+              <PresenceStatusDot userId={userId} sizeClass="w-5 h-5" />
+            ) : null}
+          </div>
         </div>
 
         {/* Nome e username centralizados */}

@@ -56,7 +56,11 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const userLocalStorage =
         typeof window !== "undefined" ? localStorage.getItem("user") : null;
       const cachedUser = userLocalStorage ? JSON.parse(userLocalStorage) : null;
-      const fromJwt = await decodeUser();
+      let fromJwt = await decodeUser();
+      if (!fromJwt) {
+        const renewed = await refreshTokenServer();
+        if (renewed) fromJwt = await decodeUser();
+      }
       if (cachedUser !== null) {
         const merged: UserProps = {
           ...cachedUser,
@@ -97,6 +101,20 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         refreshIntervalRef.current = null;
       }
     };
+  }, [user, logout]);
+
+  /** Ao voltar à aba após dormir/rede instável, tenta renovar o access antes das chamadas à API. */
+  useEffect(() => {
+    if (!user) return;
+    const onVis = () => {
+      if (document.visibilityState !== "visible") return;
+      void (async () => {
+        const success = await refreshTokenServer();
+        if (!success) await logout();
+      })();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
   }, [user, logout]);
   return (
     <AuthContext.Provider

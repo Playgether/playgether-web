@@ -18,6 +18,7 @@ import { LikeContentType } from "@/components/content_types/LikeContentType";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import { CustomToastProps } from "@/error/custom-toaster/enum";
 import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
+import { PresenceStatusDot } from "@/components/presence/PresenceStatusDot";
 
 export function GamesCanvasUserProfile({
   profile,
@@ -206,7 +207,13 @@ export function GamesCanvasUserProfile({
                       />
                     )}
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-neon-green rounded-full border-2 border-card" />
+                  {profile?.user_id != null ? (
+                    <PresenceStatusDot
+                      userId={profile.user_id}
+                      sizeClass="w-5 h-5"
+                      borderClass="border-2 border-card"
+                    />
+                  ) : null}
                 </div>
               </div>
 

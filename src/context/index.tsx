@@ -1,6 +1,7 @@
 'use client'
 
 import { AuthProvider } from "./AuthContext"
+import { PresenceProvider } from "./PresenceContext";
 import { NotificationsContextProvider } from "./NotificationsContext";
 import { ProfileContextProvider } from "./ProfileContext";
 import { CreatePostProvider } from "./CreatePostContext";
@@ -15,6 +16,7 @@ export const AppProvider = ({ children } : { children: React.ReactNode }) => {
 
     return (
     <AuthProvider>
+        <PresenceProvider>
         <TermsProvider>
             <AxiosTermsInterceptor />
             <TermsAcceptanceModal />
@@ -28,6 +30,7 @@ export const AppProvider = ({ children } : { children: React.ReactNode }) => {
                 </ProfileContextProvider>
             </QueryClientProvider>
         </TermsProvider>
+        </PresenceProvider>
     </AuthProvider>
     )
 };

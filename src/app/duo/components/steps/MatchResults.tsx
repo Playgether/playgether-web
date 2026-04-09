@@ -22,9 +22,11 @@ import {
   Moon,
 } from "lucide-react";
 import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
+import { PresenceStatusDot } from "@/components/presence/PresenceStatusDot";
 import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
 import { useDuoSocket } from "../../hooks/useDuoSocket";
 import { useLiveExpiryLabel } from "../../hooks/useLiveExpiryLabel";
+import { usePresenceContext } from "@/context/PresenceContext";
 import type { DuoMatch, Game, GamePreferences } from "../../types/duo";
 
 interface MatchResultsProps {
@@ -40,8 +42,13 @@ type FilterMode = "all" | "online";
 
 const PATIENT_SEARCH_MS = 50_000;
 
+function partnerLooksActive(status: string) {
+  return status === "online" || status === "away" || status === "dnd";
+}
+
 export function MatchResults({ game, preferences, onEditFilters, onChooseGame }: MatchResultsProps) {
   const slug = game.acronym.toLowerCase();
+  const { getPresence } = usePresenceContext();
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
   /** Começa em true para não exibir o vazio «ninguém encontrado» antes do primeiro start_search. */
   const [searching, setSearching] = useState(true);
@@ -118,7 +125,9 @@ export function MatchResults({ game, preferences, onEditFilters, onChooseGame }:
 
   const displayedMatches: DuoMatch[] =
     filterMode === "online"
-      ? matches // real online status requires further integration – show all for now
+      ? matches.filter((m) =>
+          partnerLooksActive(getPresence(m.partner.user_id).status),
+        )
       : matches;
 
   const sortedMatches = [...displayedMatches].sort((a, b) => b.score - a.score);
@@ -367,7 +376,7 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
       {/* Header */}
       <div className="flex items-start justify-between mb-5">
         <div className="flex items-center space-x-3">
-          <div className="relative">
+          <div className="relative inline-block">
             {photoSrc ? (
               <img
                 src={photoSrc}
@@ -379,6 +388,7 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
                 {(partner.first_name || partner.username)[0]?.toUpperCase()}
               </div>
             )}
+            <PresenceStatusDot userId={partner.user_id} sizeClass="w-3.5 h-3.5" />
           </div>
 
           <div>

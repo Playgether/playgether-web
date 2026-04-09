@@ -23,6 +23,8 @@ export interface getProfileByUsernameProps {
   quantity_posts: number;
   user_already_like?: boolean;
   user_already_follow?: boolean;
+  /** Follow mútuo com o visitante autenticado. */
+  is_friend?: boolean;
   highlighted_achievements?: HighlightedAchievementPublic[];
 }
 export const getProfileByUsername = async (username: string) => {
