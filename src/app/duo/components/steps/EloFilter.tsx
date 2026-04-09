@@ -1,197 +1,195 @@
+"use client";
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Filter, Trophy, Clock, Users } from "lucide-react";
-import { servers } from "../../constants/servers";
-import { ranks } from "../../constants/ranks";
-import { filters } from "../../constants/filters";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Filter, Trophy, Clock } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import type { Game, GamePreferences, GameSchema, LolSchema, CsSchema } from "../../types/duo";
+
+const PLAY_TIMES = [
+  { id: "morning", label: "Manhã (6h – 12h)" },
+  { id: "afternoon", label: "Tarde (12h – 18h)" },
+  { id: "evening", label: "Noite (18h – 00h)" },
+  { id: "night", label: "Madrugada (00h – 6h)" },
+] as const;
+
+// const AGES = [];     // TEMPORARIAMENTE IGNORADO
+// const SERVERS = [];  // TEMPORARIAMENTE IGNORADO
 
 interface EloFilterProps {
-  onNext: () => void;
+  game: Game;
+  schema: GameSchema;
+  preferences: Partial<GamePreferences>;
+  onNext: (prefs: Partial<GamePreferences>) => void;
   onBack: () => void;
 }
 
-export const EloFilter = ({ onNext, onBack }: EloFilterProps) => {
-  const [selectedRanks, setSelectedRanks] = useState<string[]>(["Gold"]);
-  const [selectedServer, setSelectedServer] = useState("BR");
-  const [ageRange, setAgeRange] = useState([18]);
-  const [playTime, setPlayTime] = useState("evening");
-//   const [voiceChat, setVoiceChat] = useState(true);
-//   const [duoOnly, setDuoOnly] = useState(true);
+export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilterProps) {
+  const slug = game.acronym.toLowerCase();
+  const isLol = slug === "lol";
+  const isCs = slug === "cs2";
 
- const handleRankChange = (rank: string) => {
-  setSelectedRanks((prev) => prev.includes(rank) ? prev.filter((r) => r !== rank) : [...prev, rank]);
- } 
+  // LoL: multi-select elo tiers
+  const lolSchema = isLol ? (schema as LolSchema) : null;
+  const [selectedElos, setSelectedElos] = useState<string[]>(
+    (preferences as any).accepted_elo ?? []
+  );
+
+  // CS: multi-select premier ranges
+  const csSchema = isCs ? (schema as CsSchema) : null;
+  const [selectedRanges, setSelectedRanges] = useState<string[]>(
+    (preferences as any).accepted_ranges ?? []
+  );
+
+  // Shared: play times
+  const [selectedTimes, setSelectedTimes] = useState<string[]>(
+    (preferences as any).play_times ?? []
+  );
+
+  const toggleElo = (tier: string) =>
+    setSelectedElos((prev) =>
+      prev.includes(tier) ? prev.filter((t) => t !== tier) : [...prev, tier]
+    );
+
+  const toggleRange = (range: string) =>
+    setSelectedRanges((prev) =>
+      prev.includes(range) ? prev.filter((r) => r !== range) : [...prev, range]
+    );
+
+  const toggleTime = (time: string) =>
+    setSelectedTimes((prev) =>
+      prev.includes(time) ? prev.filter((t) => t !== time) : [...prev, time]
+    );
+
+  function handleSearch() {
+    const base: Partial<GamePreferences> = { play_times: selectedTimes } as any;
+    if (isLol) {
+      onNext({ ...base, accepted_elo: selectedElos } as any);
+    } else if (isCs) {
+      onNext({ ...base, accepted_ranges: selectedRanges } as any);
+    } else {
+      onNext(base);
+    }
+  }
+
+  const eloLabel = isLol ? "Elo" : "Range de Pontos Premier";
+  const eloOptions: string[] = isLol
+    ? (lolSchema?.elo_tiers ?? [])
+    : (csSchema?.premier_ranges ?? []);
+  const selectedEloValues = isLol ? selectedElos : selectedRanges;
+  const toggleEloFn = isLol ? toggleElo : toggleRange;
 
   return (
     <div className="min-h-screen w-screen flex items-center justify-center p-6">
-      <div className="w-full max-w-4xl animate-slide-in-up">
+      <div className="w-full max-w-3xl animate-slide-in-up">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-10">
           <div className="flex items-center justify-center space-x-3 mb-4">
-            <Filter className="w-8 h-8 text-primary" />
-            <h1 className="text-4xl font-bold text-card-foreground">
-              Filtre Seu Match
+            <Filter className="w-7 h-7 text-primary" />
+            <h1 className="text-3xl font-bold text-card-foreground">
+              Preferências Avançadas
             </h1>
           </div>
-          <p className="text-muted-foreground text-lg">
-            Defina suas preferências para encontrar o parceiro ideal
+          <p className="text-muted-foreground">
+            Refine sua busca para encontrar o parceiro ideal em {game.name}
           </p>
         </div>
 
-        {/* Filter Grid */}
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
-          {/* Rank & Server */}
-          <div className="card-glass rounded-xl p-6 space-y-6">
-            <div className="flex items-center space-x-3 mb-4">
-              <Trophy className="w-6 h-6 text-accent" />
-              <h3 className="text-xl font-bold text-card-foreground">Rank & Server</h3>
+        <div className="grid md:grid-cols-2 gap-6 mb-10">
+          {/* Elo / Range filter */}
+          <div className="card-glass rounded-xl p-6 space-y-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <Trophy className="w-5 h-5 text-accent" />
+              <h3 className="text-lg font-bold text-card-foreground">{eloLabel}</h3>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                  Ranks
-                </label>
-                <Popover>
-                  <PopoverTrigger className="bg-input/50
-                    border
-                    border-border
-                    rounded-lg
-                    px-4
-                    py-2
-                    w-full
-                    text-left
-                    focus:border-primary
-                    transition-colors
-                    flex items-center justify-between"
-                  >
-                    <span>
-                      {selectedRanks.length > 0 ? selectedRanks.join(", ") : "Select Ranks"}
-                    </span>
+            <p className="text-xs text-muted-foreground mb-3">
+              {selectedEloValues.length === 0
+                ? "Qualquer " + (isLol ? "elo" : "range")
+                : selectedEloValues.join(", ")}
+            </p>
 
-                    <svg width="20" height="20" fill="none" stroke="currentColor" className="ml-2 text-muted-foreground">
-                      <path d="M6 8l4 4 4-4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </PopoverTrigger>
-                  <PopoverContent className="bg-[#0F172A] border-border p-2">
-                    {ranks.map((rank) => (
-                      <div key={rank} className="flex items-center gap-2 py-1">
-                        <Checkbox 
-                          checked={selectedRanks.includes(rank)}
-                          onCheckedChange={() => handleRankChange(rank)}
-                        />
+            <Popover>
+              <PopoverTrigger className="bg-input/50 border border-border rounded-lg px-4 py-2 w-full text-left focus:border-primary transition-colors flex items-center justify-between">
+                <span className="text-sm">
+                  {selectedEloValues.length > 0
+                    ? `${selectedEloValues.length} selecionado(s)`
+                    : `Selecionar ${isLol ? "elos" : "ranges"}`}
+                </span>
+                <svg width="16" height="16" fill="none" stroke="currentColor">
+                  <path d="M4 6l4 4 4-4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </PopoverTrigger>
+              <PopoverContent className="bg-[#0F172A] border-border p-3 space-y-1 max-h-60 overflow-y-auto">
+                {eloOptions.map((opt) => (
+                  <div key={opt} className="flex items-center gap-2 py-1 cursor-pointer" onClick={() => toggleEloFn(opt)}>
+                    <Checkbox
+                      checked={selectedEloValues.includes(opt)}
+                      onCheckedChange={() => toggleEloFn(opt)}
+                    />
+                    <span className="text-sm">{opt}</span>
+                  </div>
+                ))}
+              </PopoverContent>
+            </Popover>
 
-                        <span>{rank}</span>
-                      </div>
-                    ))}
-                  </PopoverContent>
-                </Popover>
-              </div>
+            {selectedEloValues.length > 0 && (
+              <button
+                className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                onClick={() => isLol ? setSelectedElos([]) : setSelectedRanges([])}
+              >
+                Limpar seleção
+              </button>
+            )}
+          </div>
 
-              <div>
-                <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                  Server
-                </label>
-                <Select value={selectedServer} onValueChange={setSelectedServer}>
-                  <SelectTrigger className="bg-input/50 border-border focus:border-primary transition-colors">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#0F172A] border-border">
-                    {servers.map((server) => (
-                      <SelectItem key={server} value={server}>
-                        {server}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          {/* Play Time filter */}
+          <div className="card-glass rounded-xl p-6 space-y-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <Clock className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-bold text-card-foreground">Horário</h3>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              Quando você costuma jogar?
+            </p>
+            <div className="space-y-2">
+              {PLAY_TIMES.map(({ id, label }) => (
+                <div
+                  key={id}
+                  className="flex items-center gap-2 cursor-pointer group"
+                  onClick={() => toggleTime(id)}
+                >
+                  <Checkbox
+                    checked={selectedTimes.includes(id)}
+                    onCheckedChange={() => toggleTime(id)}
+                  />
+                  <span className={`text-sm transition-colors ${selectedTimes.includes(id) ? "text-primary" : "text-muted-foreground group-hover:text-card-foreground"}`}>
+                    {label}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Preferences */}
-          <div className="card-glass rounded-xl p-6 space-y-6">
-            <div className="flex items-center space-x-3 mb-4">
-              <Clock className="w-6 h-6 text-primary" />
-              <h3 className="text-xl font-bold text-card-foreground">Preferências</h3>
-            </div>
+          {/* Idade – TEMPORARIAMENTE IGNORADO */}
+          {/* <div>Faixa de idade</div> */}
 
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                  Idade: {ageRange[0]}+
-                </label>
-                <Slider
-                  value={ageRange}
-                  onValueChange={setAgeRange}
-                  max={99}
-                  min={16}
-                  step={1}
-                  className="w-full"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                  Preferred Play Time
-                </label>
-                <Select value={playTime} onValueChange={setPlayTime}>
-                  <SelectTrigger className="bg-input/50 border-border focus:border-primary transition-colors">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#0F172A] border-border">
-                    <SelectItem value="morning">Manhã (6AM - 12PM)</SelectItem>
-                    <SelectItem value="afternoon">Tarde (12PM - 6PM)</SelectItem>
-                    <SelectItem value="evening">Noite (6PM - 12AM)</SelectItem>
-                    <SelectItem value="night">Madrugada (12AM - 6AM)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
+          {/* Servidor – TEMPORARIAMENTE IGNORADO */}
+          {/* <div>Servidor</div> */}
         </div>
 
-        {/* Filter Tags */}
-        {/* <div className="card-glass rounded-xl p-6 mb-12">
-          <div className="flex items-center space-x-3 mb-4">
-            <Users className="w-6 h-6 text-primary" />
-            <h3 className="text-xl font-bold text-card-foreground">Match Preferences</h3>
-          </div>
-          
-          <div className="flex flex-wrap gap-3">
-            {filters.map((filter, index) => (
-              <Badge
-                key={index}
-                variant={filter.active ? "default" : "outline"}
-                className={`
-                  px-4 py-2 cursor-pointer transition-all duration-300
-                  ${filter.active 
-                    ? 'bg-primary text-primary-foreground shadow-glow-primary' 
-                    : 'text-muted-foreground hover:text-primary hover:border-primary/50'
-                  }
-                `}
-              >
-                {filter.label}
-              </Badge>
-            ))}
-          </div>
-        </div> */}
-
-        {/* Action Buttons */}
-        <div className="flex justify-center space-x-6">
+        {/* Actions */}
+        <div className="flex justify-center space-x-4">
           <Button
             variant="outline"
             className="px-8 py-3 text-muted-foreground border-border hover:border-primary/50 hover:text-primary transition-all duration-300"
             onClick={onBack}
           >
-            Back
+            Voltar
           </Button>
           <Button
-            onClick={onNext}
+            onClick={handleSearch}
             className="bg-gradient-primary hover:shadow-glow-primary text-primary-foreground px-12 py-3 font-semibold rounded-xl transition-all duration-300 hover:scale-105"
           >
             Buscar Duo
@@ -200,4 +198,4 @@ export const EloFilter = ({ onNext, onBack }: EloFilterProps) => {
       </div>
     </div>
   );
-};
+}

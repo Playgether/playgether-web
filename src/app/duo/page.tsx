@@ -10,7 +10,7 @@ export default async function Duo({
   const resolvedSearchParams = await searchParams;
   return (
     <BaseLayout>
-        <DuoSteps initialStep={resolvedSearchParams?.step || "profile"} />
+        <DuoSteps initialStep={resolvedSearchParams?.step || "game"} />
     </BaseLayout>
   )
 }
