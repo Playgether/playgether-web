@@ -126,7 +126,7 @@ export function MatchResults({ game, preferences, onEditFilters, onChooseGame }:
   const bootstrapping = queueStatus === null && !error;
 
   return (
-    <div className="min-h-screen w-screen py-8 px-4">
+    <div className="min-h-layout-main w-full max-w-full py-8 px-4">
       <div className="w-full max-w-5xl mx-auto animate-slide-in-up">
         {/* Header */}
         <div className="flex items-center justify-between mb-6 mt-12">

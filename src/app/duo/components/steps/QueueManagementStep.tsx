@@ -68,7 +68,7 @@ export function QueueManagementStep({
   }
 
   return (
-    <div className="min-h-screen w-screen flex items-center justify-center p-6">
+    <div className="min-h-layout-main w-full max-w-full flex items-center justify-center p-6">
       <div className="w-full max-w-lg animate-slide-in-up">
         <button
           type="button"

@@ -35,7 +35,9 @@ export default function BaseLayout({
         {/* Top Navigation */}
         <TopNavigation />
 
-        {children}
+        <div className="pt-[var(--layout-header-height)] pb-[var(--layout-quick-messages-height)]">
+          {children}
+        </div>
 
         <CreatePostModal />
 

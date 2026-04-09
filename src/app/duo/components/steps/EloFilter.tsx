@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Filter, Trophy, Clock } from "lucide-react";
+import { ChevronDown, Clock, Filter, Trophy } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { Game, GamePreferences, GameSchema, LolSchema, CsSchema } from "../../types/duo";
 
@@ -81,49 +81,63 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
   const toggleEloFn = isLol ? toggleElo : toggleRange;
 
   return (
-    <div className="min-h-screen w-screen flex items-center justify-center p-6">
+    <div className="min-h-layout-main w-full max-w-full flex items-center justify-center px-4 py-10 sm:px-6">
       <div className="w-full max-w-3xl animate-slide-in-up">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <div className="flex items-center justify-center space-x-3 mb-4">
-            <Filter className="w-7 h-7 text-primary" />
-            <h1 className="text-3xl font-bold text-card-foreground">
-              Preferências Avançadas
-            </h1>
+        <div className="mb-10 text-center">
+          <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-primary">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-glow-primary" aria-hidden />
+            Passo 3 · Preferências
+          </span>
+          <div className="mx-auto mt-5 flex max-w-xl flex-col items-center gap-3">
+            <div className="flex items-center gap-3">
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 text-primary ring-1 ring-primary/20">
+                <Filter className="h-6 w-6" />
+              </span>
+              <h1 className="text-balance text-left text-2xl font-bold tracking-tight text-card-foreground sm:text-3xl">
+                Preferências avançadas
+              </h1>
+            </div>
+            <p className="max-w-md text-pretty text-sm text-muted-foreground sm:text-base">
+              Refine a busca em <span className="font-medium text-card-foreground">{game.name}</span> antes de ver os duos.
+            </p>
           </div>
-          <p className="text-muted-foreground">
-            Refine sua busca para encontrar o parceiro ideal em {game.name}
-          </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 mb-10">
-          {/* Elo / Range filter */}
-          <div className="card-glass rounded-xl p-6 space-y-4">
-            <div className="flex items-center space-x-2 mb-2">
-              <Trophy className="w-5 h-5 text-accent" />
-              <h3 className="text-lg font-bold text-card-foreground">{eloLabel}</h3>
+        <div className="mb-10 grid gap-5 md:grid-cols-2 md:gap-6">
+          <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/35 p-6 shadow-sm backdrop-blur-sm before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-primary/35 before:to-transparent">
+            <div className="mb-4 flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/20">
+                <Trophy className="h-5 w-5" />
+              </span>
+              <div>
+                <h3 className="text-base font-semibold text-card-foreground">{eloLabel}</h3>
+                <p className="text-xs text-muted-foreground">
+                  {selectedEloValues.length === 0
+                    ? `Qualquer ${isLol ? "elo" : "range"} será considerado.`
+                    : `${selectedEloValues.length} opção(ões) selecionada(s).`}
+                </p>
+              </div>
             </div>
 
-            <p className="text-xs text-muted-foreground mb-3">
-              {selectedEloValues.length === 0
-                ? "Qualquer " + (isLol ? "elo" : "range")
-                : selectedEloValues.join(", ")}
-            </p>
-
             <Popover>
-              <PopoverTrigger className="bg-input/50 border border-border rounded-lg px-4 py-2 w-full text-left focus:border-primary transition-colors flex items-center justify-between">
-                <span className="text-sm">
+              <PopoverTrigger className="flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-border/80 bg-input/40 px-4 text-left text-sm font-medium text-card-foreground shadow-sm transition-colors hover:border-primary/40 hover:bg-input/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
+                <span className="truncate">
                   {selectedEloValues.length > 0
                     ? `${selectedEloValues.length} selecionado(s)`
                     : `Selecionar ${isLol ? "elos" : "ranges"}`}
                 </span>
-                <svg width="16" height="16" fill="none" stroke="currentColor">
-                  <path d="M4 6l4 4 4-4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
               </PopoverTrigger>
-              <PopoverContent className="bg-[#0F172A] border-border p-3 space-y-1 max-h-60 overflow-y-auto">
+              <PopoverContent
+                align="start"
+                className="z-[120] max-h-60 w-[var(--radix-popover-trigger-width)] min-w-[12rem] overflow-y-auto border-border p-2 shadow-lg"
+              >
                 {eloOptions.map((opt) => (
-                  <div key={opt} className="flex items-center gap-2 py-1 cursor-pointer" onClick={() => toggleEloFn(opt)}>
+                  <div
+                    key={opt}
+                    className="flex cursor-pointer items-center gap-3 rounded-lg py-2 pl-2 pr-1 hover:bg-muted/50"
+                    onClick={() => toggleEloFn(opt)}
+                  >
                     <Checkbox
                       checked={selectedEloValues.includes(opt)}
                       onCheckedChange={() => toggleEloFn(opt)}
@@ -134,41 +148,46 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
               </PopoverContent>
             </Popover>
 
-            {selectedEloValues.length > 0 && (
+            {selectedEloValues.length > 0 ? (
               <button
-                className="text-xs text-muted-foreground hover:text-primary transition-colors"
-                onClick={() => isLol ? setSelectedElos([]) : setSelectedRanges([])}
+                type="button"
+                className="mt-3 text-xs font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-primary hover:underline"
+                onClick={() => (isLol ? setSelectedElos([]) : setSelectedRanges([]))}
               >
                 Limpar seleção
               </button>
-            )}
+            ) : null}
           </div>
 
-          {/* Play Time filter */}
-          <div className="card-glass rounded-xl p-6 space-y-4">
-            <div className="flex items-center space-x-2 mb-2">
-              <Clock className="w-5 h-5 text-primary" />
-              <h3 className="text-lg font-bold text-card-foreground">Horário</h3>
+          <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/35 p-6 shadow-sm backdrop-blur-sm before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-primary/35 before:to-transparent">
+            <div className="mb-4 flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/25">
+                <Clock className="h-5 w-5" />
+              </span>
+              <div>
+                <h3 className="text-base font-semibold text-card-foreground">Horário</h3>
+                <p className="text-xs text-muted-foreground">Quando você costuma jogar?</p>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground mb-3">
-              Quando você costuma jogar?
-            </p>
-            <div className="space-y-2">
-              {PLAY_TIMES.map(({ id, label }) => (
-                <div
-                  key={id}
-                  className="flex items-center gap-2 cursor-pointer group"
-                  onClick={() => toggleTime(id)}
-                >
-                  <Checkbox
-                    checked={selectedTimes.includes(id)}
-                    onCheckedChange={() => toggleTime(id)}
-                  />
-                  <span className={`text-sm transition-colors ${selectedTimes.includes(id) ? "text-primary" : "text-muted-foreground group-hover:text-card-foreground"}`}>
+            <div className="flex flex-wrap gap-2">
+              {PLAY_TIMES.map(({ id, label }) => {
+                const on = selectedTimes.includes(id);
+                return (
+                  <button
+                    type="button"
+                    key={id}
+                    aria-pressed={on}
+                    onClick={() => toggleTime(id)}
+                    className={`rounded-full border px-3.5 py-2 text-left text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 sm:text-sm ${
+                      on
+                        ? "border-primary/70 bg-primary/20 text-primary shadow-glow-primary/30"
+                        : "border-border/70 bg-background/40 text-muted-foreground hover:border-primary/35 hover:text-card-foreground"
+                    }`}
+                  >
                     {label}
-                  </span>
-                </div>
-              ))}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -179,20 +198,19 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
           {/* <div>Servidor</div> */}
         </div>
 
-        {/* Actions */}
-        <div className="flex justify-center space-x-4">
+        <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center sm:gap-4">
           <Button
             variant="outline"
-            className="px-8 py-3 text-muted-foreground border-border hover:border-primary/50 hover:text-primary transition-all duration-300"
+            className="order-2 h-12 rounded-xl border-border/80 px-8 text-muted-foreground hover:border-primary/45 hover:bg-primary/5 hover:text-primary sm:order-1"
             onClick={onBack}
           >
             Voltar
           </Button>
           <Button
             onClick={handleSearch}
-            className="bg-gradient-primary hover:shadow-glow-primary text-primary-foreground px-12 py-3 font-semibold rounded-xl transition-all duration-300 hover:scale-105"
+            className="order-1 h-12 rounded-xl bg-gradient-primary px-12 font-semibold text-primary-foreground shadow-lg shadow-primary/15 transition-all duration-300 hover:scale-[1.02] hover:shadow-glow-primary sm:order-2 sm:min-w-[12rem]"
           >
-            Buscar Duo
+            Buscar duo
           </Button>
         </div>
       </div>

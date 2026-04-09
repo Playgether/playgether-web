@@ -231,7 +231,7 @@ export default function DuoSteps({ initialStep }: { initialStep: string }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-background relative">
+    <div className="min-h-layout-main bg-gradient-background relative">
       {resolvingGameSelection ? (
         <div
           className="fixed inset-0 z-[200] flex flex-col items-center justify-center gap-3 bg-background/85 backdrop-blur-sm"

@@ -29,7 +29,7 @@ export function GameSelection({ onSelect }: GameSelectionProps) {
   }, []);
 
   return (
-    <div className="min-h-screen w-screen flex items-center justify-center p-6">
+    <div className="min-h-layout-main w-full max-w-full flex items-center justify-center p-6">
       <div className="w-full max-w-4xl animate-slide-in-up">
         {/* Header */}
         <div className="text-center mb-12">

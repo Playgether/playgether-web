@@ -70,6 +70,10 @@ All colors MUST be HSL.
     --ring: 241 60% 66%;
     --radius: 0.75rem;
 
+    /* BaseLayout: altura do TopNavigation (h-16) + reserva para QuickMessagesFooter (medido em runtime) */
+    --layout-header-height: 4rem;
+    --layout-quick-messages-height: 5.5rem;
+
     /* Enhanced Responsive Gradients with more intense blue to purple transition */
     --gradient-primary: linear-gradient(
       135deg,
@@ -881,5 +885,12 @@ All colors MUST be HSL.
 
   .dark .backdrop-blur-glass {
     background: rgba(0, 0, 0, 0.2);
+  }
+
+  /** Área útil entre header fixo e footer de mensagens rápidas (scroll + flex center) */
+  .min-h-layout-main {
+    min-height: calc(
+      100dvh - var(--layout-header-height) - var(--layout-quick-messages-height)
+    );
   }
 }

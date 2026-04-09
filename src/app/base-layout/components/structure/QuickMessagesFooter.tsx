@@ -1,4 +1,5 @@
 "use client";
+import { useLayoutEffect, useRef } from "react";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { AnimatePresence, motion } from "framer-motion";
 import { QuickMessagesHistoryModal } from "./QuickMessagesHistoryModal";
@@ -31,10 +32,30 @@ export const QuickMessagesFooter = () => {
   } = useQuickMessagesUI(quickMessages);
   const { BaseLayout } = useBaseLayoutServerContext();
   const components = BaseLayout.ServerQuickMessagesFooter.components;
+  const footerShellRef = useRef<HTMLDivElement | null>(null);
+
+  useLayoutEffect(() => {
+    const el = footerShellRef.current;
+    if (!el) return;
+    const syncHeight = () => {
+      const raw = el.getBoundingClientRect().height;
+      // Evita 0px se o ref ainda não pintou (animação / Strict Mode)
+      const h = Math.max(48, Math.ceil(raw || 0));
+      document.documentElement.style.setProperty("--layout-quick-messages-height", `${h}px`);
+    };
+    syncHeight();
+    const ro = new ResizeObserver(syncHeight);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      document.documentElement.style.removeProperty("--layout-quick-messages-height");
+    };
+  }, [activeMessages.length]);
 
   if (activeMessages.length === 0) {
     return (
       <motion.div
+        ref={footerShellRef}
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
@@ -81,6 +102,7 @@ export const QuickMessagesFooter = () => {
 
   return (
     <motion.div
+      ref={footerShellRef}
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: 100, opacity: 0 }}

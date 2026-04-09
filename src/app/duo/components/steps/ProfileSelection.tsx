@@ -11,7 +11,7 @@ interface ProfileSelectionProps {
 export const ProfileSelection = ({ onNext }: ProfileSelectionProps) => {
   const [secondRole, setSecondRole] = useState<string>('Top');
   return (
-    <div className="w-screen min-h-screen flex items-center justify-center p-6">
+    <div className="flex min-h-layout-main w-full max-w-full items-center justify-center p-6">
       <div className="w-full max-w-4xl animate-slide-in-up">
         {/* Header */}
         <div className="text-center mb-12">
