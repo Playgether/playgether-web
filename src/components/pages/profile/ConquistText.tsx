@@ -464,7 +464,12 @@ export function RarityAchievementChrome({
 
           {unlockOverlay}
 
-          <div className={contentClassName}>{children}</div>
+          {/* Camada própria + backface: reduz artefato de nitidez no texto (Edge) com raios animados atrás */}
+          <div
+            className={cn(contentClassName, "[transform:translateZ(0)] [backface-visibility:hidden]")}
+          >
+            {children}
+          </div>
         </div>
       </div>
     </motion.div>
@@ -501,8 +506,13 @@ export const RarityBadge = ({
       }
       transition={{ duration: 0.3 }}
     >
-      <span>{config.icon}</span>
-      <span>{config.label}</span>
+      <span
+        className="inline-flex size-[1.15em] shrink-0 items-center justify-center leading-none"
+        aria-hidden
+      >
+        {config.icon}
+      </span>
+      <span className="leading-none">{config.label}</span>
     </motion.div>
   );
 };

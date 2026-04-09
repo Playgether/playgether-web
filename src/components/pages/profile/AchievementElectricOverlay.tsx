@@ -29,7 +29,9 @@ function ElectricSpark({
         width: isHovered ? "30px" : "18px",
         height: "1.5px",
         background: color,
-        filter: `blur(0.5px) drop-shadow(0 0 3px ${color})`,
+        // Sem blur no próprio raio: em alguns browsers (Edge) blur+drop-shadow em
+        // animação fazia o texto irmão “respirar” em nitidez; o brilho vem do drop-shadow.
+        filter: `drop-shadow(0 0 2px ${color}) drop-shadow(0 0 4px ${color})`,
         rotate: spark.rotation,
         originX: "0%",
         willChange: "opacity, scaleX",
@@ -77,6 +79,7 @@ export function AchievementElectricOverlay({
   return (
     <div
       className={`absolute inset-0 overflow-hidden pointer-events-none ${clipClassName}`}
+      style={{ contain: "paint", isolation: "isolate" }}
     >
       {sparks.map((s) => (
         <ElectricSpark
