@@ -186,7 +186,11 @@ export function MatchResults({ game, preferences, onBack }: MatchResultsProps) {
         {sortedMatches.length > 0 && (
           <div className="grid md:grid-cols-2 gap-6 mb-10">
             {sortedMatches.map((match, index) => (
-              <MatchCard key={match.id} match={match} index={index} />
+              <MatchCard
+                key={`${match.id}-${match.partner.user_id}`}
+                match={match}
+                index={index}
+              />
             ))}
           </div>
         )}

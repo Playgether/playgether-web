@@ -172,10 +172,11 @@ export function useDuoSocket({
 }
 
 function dedupeMatches(matches: DuoMatch[]): DuoMatch[] {
-  const seen = new Set<number>();
+  const seen = new Set<string>();
   return matches.filter((m) => {
-    if (seen.has(m.id)) return false;
-    seen.add(m.id);
+    const k = `${m.id}-${m.partner?.user_id ?? ""}`;
+    if (seen.has(k)) return false;
+    seen.add(k);
     return true;
   });
 }

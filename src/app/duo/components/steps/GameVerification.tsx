@@ -80,11 +80,13 @@ export function GameVerification({ game, onReady, onBack }: GameVerificationProp
           <span>Escolher outro jogo</span>
         </button>
 
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-card-foreground mb-2">{game.name}</h1>
-          <p className="text-muted-foreground">Verifique seus dados antes de entrar na fila</p>
-        </div>
+        {/* Header — oculto quando a conta do jogo não está conectada */}
+        {(loading || error || connected !== false) && (
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-card-foreground mb-2">{game.name}</h1>
+            <p className="text-muted-foreground">Verifique seus dados antes de entrar na fila</p>
+          </div>
+        )}
 
         {/* Loading */}
         {loading && (
