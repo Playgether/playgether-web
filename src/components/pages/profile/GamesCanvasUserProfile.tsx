@@ -19,6 +19,10 @@ import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import { CustomToastProps } from "@/error/custom-toaster/enum";
 import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
 import { notifyFriendsListChanged } from "@/lib/friendsListEvents";
+import { cn } from "@/lib/utils";
+
+const PROFILE_CARD_BIO_COLLAPSE_AFTER_CHARS = 200;
+const PROFILE_CARD_BIO_COLLAPSE_AFTER_LINES = 5;
 
 export function GamesCanvasUserProfile({
   profile,
@@ -39,6 +43,11 @@ export function GamesCanvasUserProfile({
   const [isLiked, setIsLiked] = useState(profile?.user_already_like ?? false);
   const [likes, setLikes] = useState(profile?.quantity_likes ?? 0);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [bioExpanded, setBioExpanded] = useState(false);
+
+  useEffect(() => {
+    setBioExpanded(false);
+  }, [profile?.username, profile?.bio]);
 
   useEffect(() => {
     if (profile) {
@@ -163,6 +172,14 @@ export function GamesCanvasUserProfile({
     }
   };
 
+  const profileCardBioText = profile?.bio ?? "";
+  const profileCardBioLineCount = profileCardBioText
+    .replace(/\r\n/g, "\n")
+    .split("\n").length;
+  const profileCardBioNeedsToggle =
+    profileCardBioText.length > PROFILE_CARD_BIO_COLLAPSE_AFTER_CHARS ||
+    profileCardBioLineCount > PROFILE_CARD_BIO_COLLAPSE_AFTER_LINES;
+
   return (
     <>
       <CustomToaster />
@@ -234,9 +251,28 @@ export function GamesCanvasUserProfile({
                       achievements={profile?.highlighted_achievements}
                     />
                   </div>
-                  <p className="text-sm text-card-foreground leading-relaxed whitespace-pre-wrap pt-4">
-                    {profile?.bio}
-                  </p>
+                  <div className="pt-4 space-y-1">
+                    <p
+                      className={cn(
+                        "text-sm text-card-foreground leading-relaxed whitespace-pre-wrap",
+                        !bioExpanded &&
+                          profileCardBioNeedsToggle &&
+                          "max-h-[6.5rem] overflow-hidden",
+                      )}
+                    >
+                      {profileCardBioText}
+                    </p>
+                    {profileCardBioNeedsToggle ? (
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="h-auto p-0 text-xs text-primary"
+                        onClick={() => setBioExpanded((v) => !v)}
+                      >
+                        {bioExpanded ? "Ver menos" : "Ver mais"}
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 py-4">

@@ -69,7 +69,10 @@ export const NotificationsCard = ({
             notifications.map((notification, index) => (
               <div
                 key={notification.id}
-                className="p-3 rounded-xl bg-better-contrast hover:bg-muted/50 hover:shadow-improved transition-all duration-200 cursor-pointer group animate-slide-up"
+                className={cn(
+                  "p-3 rounded-xl bg-better-contrast hover:bg-muted/50 hover:shadow-improved transition-all duration-200 cursor-pointer group animate-slide-up",
+                  index === 0 && "mt-2",
+                )}
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <div className="flex flex-col items-start space-x-3">

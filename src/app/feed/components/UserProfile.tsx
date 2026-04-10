@@ -5,6 +5,7 @@ import type { StaticImageData } from "next/image";
 import { PresenceStatusDot } from "@/components/presence/PresenceStatusDot";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
+import TextLimitComponent from "@/components/layouts/SuspenseFallBack/TextLimitComponent/TextLimitComponent";
 
 interface UserProfileProps {
   user: {
@@ -93,9 +94,12 @@ export const UserProfile = ({
             <Skeleton className="h-4 w-4/5 mx-auto max-w-[240px]" />
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-            {user.bio}
-          </p>
+          <TextLimitComponent
+            text={user.bio}
+            maxCharacters={40}
+            className="mb-6"
+            paragraphClassName="text-sm text-muted-foreground leading-relaxed text-center"
+          />
         )}
 
         <Button

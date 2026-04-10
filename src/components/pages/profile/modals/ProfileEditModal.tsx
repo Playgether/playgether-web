@@ -16,7 +16,10 @@ import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import { CustomToastProps } from "@/error/custom-toaster/enum";
-import { patchProfile } from "@/services/patchProfile";
+import {
+  patchProfile,
+  PROFILE_BIO_MAX_LENGTH,
+} from "@/services/patchProfile";
 import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
 import type { getProfileByUsernameProps } from "@/services/getProfileByUsername";
 import { useAuthContext } from "@/context/AuthContext";
@@ -245,6 +248,15 @@ export function ProfileEditModal({
     setIsSubmitting(true);
 
     try {
+      if (bio.length > PROFILE_BIO_MAX_LENGTH) {
+        CustomToast.error("Bio muito longa", {
+          description: `A bio pode ter no máximo ${PROFILE_BIO_MAX_LENGTH} caracteres. Encurte o texto e salve novamente.`,
+          duration: CustomToastProps.defaultDuration,
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       const payload: {
         name?: string;
         bio?: string;
@@ -279,11 +291,18 @@ export function ProfileEditModal({
       });
       onClose();
     } catch (error: any) {
-      CustomToast.error("Erro ao atualizar perfil", {
-        description:
-          error?.message ?? "Ocorreu um erro. Tente novamente.",
-        duration: CustomToastProps.defaultDuration,
-      });
+      const raw = String(error?.message ?? "");
+      if (raw.startsWith("BIO_MAX_LENGTH:")) {
+        CustomToast.error("Bio muito longa", {
+          description: raw.slice("BIO_MAX_LENGTH:".length),
+          duration: CustomToastProps.defaultDuration,
+        });
+      } else {
+        CustomToast.error("Erro ao atualizar perfil", {
+          description: raw || "Ocorreu um erro. Tente novamente.",
+          duration: CustomToastProps.defaultDuration,
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -463,13 +482,25 @@ export function ProfileEditModal({
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Bio</label>
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-sm font-medium">Bio</label>
+                <span
+                  className={`text-xs tabular-nums ${
+                    bio.length > PROFILE_BIO_MAX_LENGTH
+                      ? "text-destructive"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  {bio.length}/{PROFILE_BIO_MAX_LENGTH}
+                </span>
+              </div>
               <div className="flex gap-2">
                 <Textarea
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   disabled={!isEditingBio}
                   rows={4}
+                  maxLength={PROFILE_BIO_MAX_LENGTH}
                   className="flex-1 resize-none"
                 />
                 <Button
