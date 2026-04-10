@@ -44,7 +44,10 @@ export const UserProfile = ({
       : "/";
 
   return (
-    <Card className="bg-card border-border/50 backdrop-blur-sm hover:shadow-glow-primary/30 hover:scale-[1.02] hover:border-primary/40 transition-all duration-300 animate-fade-up">
+    <Card
+      data-feed-user-profile-card
+      className="bg-card border-border/50 backdrop-blur-sm hover:shadow-glow-primary/30 hover:scale-[1.02] hover:border-primary/40 transition-all duration-300 animate-fade-up"
+    >
       <CardContent className="p-6 text-center">
         <div className="flex justify-center mb-4">
           <div className="relative inline-block">

@@ -4,8 +4,10 @@ import { Bell, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { useNotifications } from "../hooks/useNotificationsWebSocket";
+import { useFeedProfileCardHeight } from "../hooks/useFeedProfileCardHeight";
 import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
 import { NotificationProps } from "../types/NotificationProps";
+import { cn } from "@/lib/utils";
 
 export const NotificationsCard = ({
   notificationsList,
@@ -21,9 +23,23 @@ export const NotificationsCard = ({
     },
     notificationsList: notificationsList,
   });
+
+  const profileCardHeightPx = useFeedProfileCardHeight();
+
   return (
-    <Card className="bg-card border-border/50 backdrop-blur-sm animate-fade-up hover:shadow-glow-primary/30 hover:scale-[1.02] hover:border-primary/40 transition-all duration-300">
-      <CardHeader className="pb-4">
+    <Card
+      className={cn(
+        "bg-card border-border/50 backdrop-blur-sm animate-fade-up hover:shadow-glow-primary/30 hover:scale-[1.02] hover:border-primary/40 transition-all duration-300",
+        "flex flex-col overflow-hidden",
+        profileCardHeightPx == null && "max-h-[min(70vh,28rem)]",
+      )}
+      style={
+        profileCardHeightPx != null
+          ? { maxHeight: profileCardHeightPx }
+          : undefined
+      }
+    >
+      <CardHeader className="shrink-0 pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-bold">
             Notificações recentes
@@ -38,7 +54,7 @@ export const NotificationsCard = ({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-1">
         <>
           {notifications.length === 0 ? (
             <div className="text-center py-8">
