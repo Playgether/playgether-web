@@ -1,13 +1,19 @@
 "use client";
 
-import { createContext, useState, useContext, useEffect } from "react";
+import {
+  createContext,
+  useState,
+  useContext,
+  useEffect,
+  useCallback,
+} from "react";
 import { ProfileProps } from "@/types/ProfileProps";
 import { getProfile } from "@/actions/getProfile";
 import { useAuthContext } from "./AuthContext";
 
 type ProfileContextProps = {
-  profile: ProfileProps | null | void;
-  fetchProfile: () => Promise<ProfileProps>;
+  profile: ProfileProps | null | undefined;
+  fetchProfile: () => Promise<ProfileProps | null>;
 };
 
 const ProfileContext = createContext<ProfileContextProps>(
@@ -19,14 +25,22 @@ const ProfileContextProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [profile, setProfile] = useState<ProfileProps | void | null>();
-  const { user, isLoggedOut } = useAuthContext();
+  const [profile, setProfile] = useState<ProfileProps | null | undefined>(
+    undefined,
+  );
+  const { isLoggedOut } = useAuthContext();
 
-  async function fetchProfile() {
-    const response = await getProfile();
-    setProfile(response.data);
-    return response;
-  }
+  const fetchProfile = useCallback(async () => {
+    const data = await getProfile();
+    setProfile(data);
+    return data;
+  }, []);
+
+  useEffect(() => {
+    if (isLoggedOut) {
+      setProfile(undefined);
+    }
+  }, [isLoggedOut]);
 
   // useEffect(() => {
   //   if (!profile?.id && user) {

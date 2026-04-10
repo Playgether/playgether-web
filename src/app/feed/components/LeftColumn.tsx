@@ -6,7 +6,6 @@ import { UserProfile } from "./UserProfile";
 import avatarRaymond from "@/assets/avatar-raymond.jpg";
 import { useAuthContext } from "@/context/AuthContext";
 import { useProfileContext } from "@/context/ProfileContext";
-import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
 import { FeedLeftSidebarSkeleton } from "./FeedLeftSidebarSkeleton";
 
 function parsePostsCount(value: unknown): number {
@@ -39,10 +38,6 @@ export default function LeftColumn() {
           profile?.bio != null && String(profile.bio).trim() !== ""
             ? String(profile.bio)
             : "Você não possui uma bio, insira uma.",
-        avatar:
-          (profile?.profile_photo &&
-            resolveGameMediaUrl(profile.profile_photo)) ||
-          avatarRaymond,
         followers:
           profile && Array.isArray(profile.followed_by)
             ? profile.followed_by.length
@@ -68,6 +63,15 @@ export default function LeftColumn() {
           user={display}
           userId={user?.user_id != null ? Number(user.user_id) : undefined}
           allowStatusPicker={Boolean(user?.user_id)}
+          profilePhotoPublicId={
+            user
+              ? profile?.profile_photo?.trim()
+                ? profile.profile_photo.trim()
+                : null
+              : undefined
+          }
+          guestAvatar={user ? undefined : avatarRaymond}
+          profileDataPending={Boolean(user?.user_id) && profile === undefined}
         />
         <div className="sticky top-24">
           <OnlineFriends />

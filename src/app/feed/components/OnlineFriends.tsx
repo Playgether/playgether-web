@@ -3,9 +3,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Search } from "lucide-react";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
 import { apiFetch } from "@/services/apiFetch";
@@ -14,6 +13,7 @@ import { PresenceStatusDot } from "@/components/presence/PresenceStatusDot";
 import { useAuthContext } from "@/context/AuthContext";
 import { useProfileContext } from "@/context/ProfileContext";
 import { subscribeFriendsListInvalidate } from "@/lib/friendsListEvents";
+import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 
 type FriendApi = {
   id: number;
@@ -41,6 +41,21 @@ const getStatusLabel = (status: string) => {
 
 function isActiveOnApp(status: string) {
   return status === "online" || status === "away" || status === "dnd";
+}
+
+/** Até o WS de presença abrir, usa o status da API (cache); depois, o estado ao vivo. */
+function friendPresenceStatus(
+  f: FriendApi,
+  presenceCtx: React.ContextType<typeof PresenceContext>,
+): string {
+  if (!presenceCtx?.isPresenceConnected) {
+    return (
+      f.presence?.status ||
+      presenceCtx?.getPresence(f.user_id).status ||
+      "offline"
+    );
+  }
+  return presenceCtx.getPresence(f.user_id).status;
 }
 
 export const OnlineFriends = () => {
@@ -111,16 +126,12 @@ export const OnlineFriends = () => {
     }
   }, [user?.user_id, profile?.profile_photo, fetchProfile]);
 
-  const getPresence = presenceCtx?.getPresence;
-
   const visibleFriends = useMemo(() => {
     const q = query.trim().toLowerCase();
     let list = [...friends];
     list.sort((a, b) => a.name.localeCompare(b.name, "pt"));
     list = list.filter((f) => {
-      const st = getPresence
-        ? getPresence(f.user_id).status
-        : f.presence?.status || "offline";
+      const st = friendPresenceStatus(f, presenceCtx ?? null);
       return isActiveOnApp(st);
     });
     if (q) {
@@ -131,7 +142,7 @@ export const OnlineFriends = () => {
       );
     }
     return list;
-  }, [friends, query, getPresence]);
+  }, [friends, query, presenceCtx]);
 
   const slice = showAll ? visibleFriends : visibleFriends.slice(0, 8);
 
@@ -159,27 +170,13 @@ export const OnlineFriends = () => {
         ) : null}
 
         {showFriendsSkeleton ? (
-          <>
-            <div className="flex items-center gap-3 pb-3 mb-1 border-b border-border/50">
-              <Skeleton className="h-10 w-10 rounded-full shrink-0" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-3 w-16" />
-                <Skeleton className="h-4 w-28" />
-              </div>
-            </div>
-            {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="flex items-center space-x-3 p-3 rounded-xl bg-muted/20"
-              >
-                <Skeleton className="h-10 w-10 rounded-full shrink-0" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-36" />
-                  <Skeleton className="h-3 w-20" />
-                </div>
-              </div>
-            ))}
-          </>
+          <div className="min-h-[220px] flex flex-col items-center justify-center py-8">
+            <LoadingComponent
+              text="Carregando amigos..."
+              showText
+              className="text-muted-foreground"
+            />
+          </div>
         ) : (
           <>
             {user?.user_id != null ? (
@@ -210,7 +207,7 @@ export const OnlineFriends = () => {
                   <p className="text-xs text-muted-foreground">Seu status</p>
                   <p className="text-sm font-medium text-foreground truncate">
                     {getStatusLabel(
-                      presenceCtx?.getSelfPresenceDisplay().status ||
+                      presenceCtx?.getSelfPresenceDisplay().status ??
                         "offline",
                     )}
                   </p>
@@ -219,9 +216,7 @@ export const OnlineFriends = () => {
             ) : null}
 
             {slice.map((friend) => {
-              const st = getPresence
-                ? getPresence(friend.user_id).status
-                : friend.presence?.status || "offline";
+              const st = friendPresenceStatus(friend, presenceCtx ?? null);
               const photoSrc = resolveGameMediaUrl(friend.profile_photo);
               const initials =
                 friend.name

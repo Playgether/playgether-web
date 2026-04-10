@@ -1,7 +1,7 @@
 export interface ProfileProps {
   id: number;
   bio: string;
-  profile_photo: string;
+  profile_photo: string | null;
   hours_played: number;
   matches_played: number;
   performance: string;
