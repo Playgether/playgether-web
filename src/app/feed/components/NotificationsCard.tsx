@@ -67,7 +67,7 @@ export const NotificationsCard = ({
                           username={actor.username}
                           profilePhoto={actor.profile_photo ?? null}
                           sizeClass="h-8 w-8"
-                          className="border-2 border-background ring-2 ring-background"
+                          className="border border-background ring-1 ring-background"
                           fallbackTextClassName="text-xs"
                         />
                       ))}

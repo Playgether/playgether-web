@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { StaticImageData } from "next/image";
@@ -36,6 +37,11 @@ export const UserProfile = ({
       : guestAvatar?.src
         ? String(guestAvatar.src)
         : undefined;
+
+  const profileHref =
+    isOwnerCard && user.username && user.username !== "—"
+      ? `/profile/${encodeURIComponent(user.username)}`
+      : "/";
 
   return (
     <Card className="bg-card border-border/50 backdrop-blur-sm hover:shadow-glow-primary/30 hover:scale-[1.02] hover:border-primary/40 transition-all duration-300 animate-fade-up">
@@ -89,8 +95,11 @@ export const UserProfile = ({
           </p>
         )}
 
-        <Button className="w-full bg-gradient-primary hover:shadow-glow-primary text-white font-medium transition-all duration-300 hover:scale-105 mb-6">
-          Ver Perfil
+        <Button
+          asChild
+          className="w-full bg-gradient-primary hover:shadow-glow-primary text-white font-medium transition-all duration-300 hover:scale-105 mb-6"
+        >
+          <Link href={profileHref}>Ver Perfil</Link>
         </Button>
 
         {profileDataPending ? (
