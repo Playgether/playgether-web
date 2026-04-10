@@ -1,14 +1,29 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { OnlineFriends } from "./OnlineFriends";
 import { UserProfile } from "./UserProfile";
 import avatarRaymond from "@/assets/avatar-raymond.jpg";
 import { useAuthContext } from "@/context/AuthContext";
+import { useProfileContext } from "@/context/ProfileContext";
+import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
 import { FeedLeftSidebarSkeleton } from "./FeedLeftSidebarSkeleton";
+
+function parsePostsCount(value: unknown): number {
+  if (value == null) return 0;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  const n = parseInt(String(value), 10);
+  return Number.isFinite(n) ? n : 0;
+}
 
 export default function LeftColumn() {
   const { user, authSessionResolved } = useAuthContext();
+  const { profile, fetchProfile } = useProfileContext();
+
+  useEffect(() => {
+    if (!user?.user_id) return;
+    void fetchProfile();
+  }, [user?.user_id, fetchProfile]);
 
   if (!authSessionResolved) {
     return <FeedLeftSidebarSkeleton />;
@@ -20,11 +35,21 @@ export default function LeftColumn() {
           `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() ||
           user.username,
         username: user.username,
-        bio: "Você não possui uma bio, insira uma.",
-        avatar: avatarRaymond,
-        followers: 0,
-        following: 0,
-        posts: 0,
+        bio:
+          profile?.bio != null && String(profile.bio).trim() !== ""
+            ? String(profile.bio)
+            : "Você não possui uma bio, insira uma.",
+        avatar:
+          (profile?.profile_photo &&
+            resolveGameMediaUrl(profile.profile_photo)) ||
+          avatarRaymond,
+        followers:
+          profile && Array.isArray(profile.followed_by)
+            ? profile.followed_by.length
+            : 0,
+        following:
+          profile && Array.isArray(profile.follows) ? profile.follows.length : 0,
+        posts: parsePostsCount(profile?.quantity_posts),
       }
     : {
         name: "Visitante",

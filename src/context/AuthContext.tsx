@@ -88,6 +88,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           last_name: fromJwt?.last_name ?? cachedUser.last_name,
         };
         setUser(merged);
+        setIsLoggedOut(false);
         if (typeof window !== "undefined") {
           localStorage.setItem("user", JSON.stringify(merged));
         }
@@ -97,9 +98,11 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           localStorage.setItem("user", JSON.stringify(fromJwt));
         }
         setUser(fromJwt);
+        setIsLoggedOut(false);
         markAccessRefreshed();
       } else {
         setUser(null);
+        setIsLoggedOut(true);
       }
       if (!cancelled) setAuthSessionResolved(true);
     };

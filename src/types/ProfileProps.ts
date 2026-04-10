@@ -9,7 +9,9 @@ export interface ProfileProps {
   verified: boolean;
   quantity_comment: number;
   quantity_likes: number;
-  follows: [];
-  followed_by: [];
+  follows: unknown[];
+  followed_by: unknown[];
   name: string;
+  /** API pode enviar string (ex.: serializer com f-string). */
+  quantity_posts?: string | number;
 }

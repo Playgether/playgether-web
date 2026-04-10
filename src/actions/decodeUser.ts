@@ -20,14 +20,20 @@ export async function decodeUser(): Promise<UserProps | null> {
 
   const decodedAccessToken = jwt_decode<JwtPayload>(accessToken.value);
 
+  const rawId = decodedAccessToken.user_id;
+  const userIdNum =
+    typeof rawId === "number" && Number.isFinite(rawId)
+      ? rawId
+      : typeof rawId === "string" && rawId !== ""
+        ? Number(rawId)
+        : undefined;
+
   const filteredUser: UserProps = {
     username: decodedAccessToken.username,
     first_name: decodedAccessToken.first_name,
     last_name: decodedAccessToken.last_name,
     user_id:
-      typeof decodedAccessToken.user_id === "number"
-        ? decodedAccessToken.user_id
-        : undefined,
+      userIdNum !== undefined && Number.isFinite(userIdNum) ? userIdNum : undefined,
   };
 
   return filteredUser;
