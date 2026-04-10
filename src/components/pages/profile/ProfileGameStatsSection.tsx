@@ -32,7 +32,6 @@ import {
   TrendingUp,
 } from "lucide-react";
 import type { getProfileByUsernameProps } from "@/services/getProfileByUsername";
-import { PresenceStatusDot } from "@/components/presence/PresenceStatusDot";
 import type { Cs2StatsResponse } from "@/services/getCs2Stats";
 import { Info } from "lucide-react";
 
@@ -371,9 +370,6 @@ export function ProfileGameStatsSection({
               {profileNick.slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          {profile?.user_id != null ? (
-            <PresenceStatusDot userId={profile.user_id} sizeClass="w-3.5 h-3.5" />
-          ) : null}
         </div>
         <div>
           <h3 className="text-lg font-semibold text-card-foreground">

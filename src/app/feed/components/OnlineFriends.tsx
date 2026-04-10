@@ -4,12 +4,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
 import { apiFetch } from "@/services/apiFetch";
 import { PresenceContext } from "@/context/PresenceContext";
+import { PresenceStatusDot } from "@/components/presence/PresenceStatusDot";
+import { useAuthContext } from "@/context/AuthContext";
+import { useProfileContext } from "@/context/ProfileContext";
 
 type FriendApi = {
   id: number;
@@ -28,20 +30,10 @@ const getStatusLabel = (status: string) => {
       return "Ausente";
     case "dnd":
       return "Não perturbe";
+    case "offline":
+      return "Invisível";
     default:
       return "Offline";
-  }
-};
-
-const getStatusClass = (status: string) => {
-  switch (status) {
-    case "online":
-      return "status-online";
-    case "away":
-    case "dnd":
-      return "status-away";
-    default:
-      return "status-offline";
   }
 };
 
@@ -51,6 +43,8 @@ function isActiveOnApp(status: string) {
 
 export const OnlineFriends = () => {
   const router = useRouter();
+  const { user } = useAuthContext();
+  const { profile, fetchProfile } = useProfileContext();
   const presenceCtx = useContext(PresenceContext);
   const [friends, setFriends] = useState<FriendApi[]>([]);
   const [query, setQuery] = useState("");
@@ -78,6 +72,12 @@ export const OnlineFriends = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (user?.user_id && !profile?.profile_photo) {
+      void fetchProfile();
+    }
+  }, [user?.user_id, profile?.profile_photo, fetchProfile]);
 
   const getPresence = presenceCtx?.getPresence;
 
@@ -123,6 +123,36 @@ export const OnlineFriends = () => {
           <p className="text-xs text-destructive">{loadError}</p>
         ) : null}
 
+        {user?.user_id != null ? (
+          <div className="flex items-center gap-3 pb-3 mb-1 border-b border-border/50">
+            <div className="relative shrink-0">
+              <Avatar className="w-10 h-10">
+                <AvatarImage
+                  src={
+                    resolveGameMediaUrl(profile?.profile_photo) || undefined
+                  }
+                  alt={user.username}
+                />
+                <AvatarFallback className="bg-gradient-primary text-white text-sm">
+                  {(user.first_name?.[0] || user.username[0] || "?").toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <PresenceStatusDot
+                userId={Number(user.user_id)}
+                allowPicker
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-muted-foreground">Seu status</p>
+              <p className="text-sm font-medium text-foreground truncate">
+                {getStatusLabel(
+                  presenceCtx?.getSelfPresenceDisplay().status || "offline",
+                )}
+              </p>
+            </div>
+          </div>
+        ) : null}
+
         {slice.map((friend) => {
           const st = getPresence
             ? getPresence(friend.user_id).status
@@ -150,19 +180,14 @@ export const OnlineFriends = () => {
               }}
               className="flex items-center space-x-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 hover:shadow-improved transition-all duration-200 cursor-pointer group"
             >
-              <div className="relative">
+              <div className="relative shrink-0">
                 <Avatar className="w-10 h-10">
                   <AvatarImage src={photoSrc || undefined} alt={friend.name} />
                   <AvatarFallback className="bg-gradient-primary text-white text-sm">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
-                <div
-                  className={cn(
-                    "absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-background",
-                    getStatusClass(st),
-                  )}
-                />
+                <PresenceStatusDot userId={friend.user_id} />
               </div>
 
               <div className="flex-1 min-w-0">

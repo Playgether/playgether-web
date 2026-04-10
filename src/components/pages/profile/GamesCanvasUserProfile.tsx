@@ -18,8 +18,6 @@ import { LikeContentType } from "@/components/content_types/LikeContentType";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import { CustomToastProps } from "@/error/custom-toaster/enum";
 import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
-import { PresenceStatusDot } from "@/components/presence/PresenceStatusDot";
-
 export function GamesCanvasUserProfile({
   profile,
   onProfileUpdated,
@@ -28,7 +26,10 @@ export function GamesCanvasUserProfile({
   onProfileUpdated?: (updated: Partial<getProfileByUsernameProps>) => void;
 }) {
   const { user } = useAuthContext();
-  const isOwner = !!user && !!profile && user.username === profile.username;
+  const isOwner =
+    !!user &&
+    !!profile &&
+    user.username.toLowerCase() === profile.username.toLowerCase();
 
   const [isFollowing, setIsFollowing] = useState(
     profile?.user_already_follow ?? false,
@@ -207,13 +208,6 @@ export function GamesCanvasUserProfile({
                       />
                     )}
                   </div>
-                  {profile?.user_id != null ? (
-                    <PresenceStatusDot
-                      userId={profile.user_id}
-                      sizeClass="w-5 h-5"
-                      borderClass="border-2 border-card"
-                    />
-                  ) : null}
                 </div>
               </div>
 

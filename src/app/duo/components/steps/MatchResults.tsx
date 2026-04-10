@@ -388,7 +388,11 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
                 {(partner.first_name || partner.username)[0]?.toUpperCase()}
               </div>
             )}
-            <PresenceStatusDot userId={partner.user_id} sizeClass="w-3.5 h-3.5" />
+            <PresenceStatusDot
+              userId={partner.user_id}
+              sizeClass="w-3.5 h-3.5"
+              className="-translate-x-1 -translate-y-1"
+            />
           </div>
 
           <div>

@@ -36,6 +36,7 @@ export default function LeftColumn() {
       <UserProfile
         user={display}
         userId={user?.user_id != null ? Number(user.user_id) : undefined}
+        allowStatusPicker={Boolean(user?.user_id)}
       />
       <div className="sticky top-24">
         <OnlineFriends />

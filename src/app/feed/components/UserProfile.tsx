@@ -17,9 +17,15 @@ interface UserProfileProps {
   };
   /** Quando definido, exibe bolinha de presença (ex.: usuário logado). */
   userId?: number;
+  /** Card do próprio usuário: bolinha abre o seletor de status. */
+  allowStatusPicker?: boolean;
 }
 
-export const UserProfile = ({ user, userId }: UserProfileProps) => {
+export const UserProfile = ({
+  user,
+  userId,
+  allowStatusPicker = false,
+}: UserProfileProps) => {
   return (
     <Card className="bg-card border-border/50 backdrop-blur-sm hover:shadow-glow-primary/30 hover:scale-[1.02] hover:border-primary/40 transition-all duration-300 animate-fade-up">
       <CardContent className="p-6 text-center">
@@ -33,7 +39,11 @@ export const UserProfile = ({ user, userId }: UserProfileProps) => {
               </AvatarFallback>
             </Avatar>
             {userId != null ? (
-              <PresenceStatusDot userId={userId} sizeClass="w-5 h-5" />
+              <PresenceStatusDot
+                userId={userId}
+                sizeClass="w-5 h-5"
+                allowPicker={allowStatusPicker}
+              />
             ) : null}
           </div>
         </div>
