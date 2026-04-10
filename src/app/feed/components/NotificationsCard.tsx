@@ -75,10 +75,10 @@ export const NotificationsCard = ({
                 )}
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="flex flex-col items-start space-x-3">
+                <div className="flex w-full min-w-0 flex-col gap-2">
                   {/* User Avatars */}
-                  <div className="w-full flex justify-between">
-                    <div className="flex -space-x-2">
+                  <div className="flex w-full min-w-0 justify-between gap-2">
+                    <div className="flex shrink-0 -space-x-2">
                       {notification.actors.map((actor, userIndex) => (
                         <ProfileAvatar
                           key={`${actor.username}-${userIndex}`}
@@ -95,33 +95,22 @@ export const NotificationsCard = ({
                       <DateAndHour date={notification.timestamp} />
                     </span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between mb-1">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm text-foreground leading-relaxed">
-                          <span className="font-medium">
-                            {/* {notification.actors.map((u) => u.name).join(", ")} */}
-                            {/* {notification.actors.map((actor) => (
-                              <p>{actor.name}</p>
-                            ))} */}
-                          </span>{" "}
-                          {notification.message.includes(":")
-                            ? notification.message.split(":")[0].trim()
-                            : notification.message}
+                  <div className="min-w-0 w-full">
+                    <div className="min-w-0 w-full">
+                      <p className="text-sm text-foreground leading-relaxed break-words">
+                        {notification.message.includes(":")
+                          ? notification.message.split(":")[0].trim()
+                          : notification.message}
+                      </p>
+                      {notification.message.includes(":") ? (
+                        <p className="mt-1 min-w-0 truncate text-xs text-muted-foreground">
+                          {notification.message
+                            .split(":")
+                            .slice(1)
+                            .join(":")
+                            .trim()}
                         </p>
-                        {notification.message && (
-                          <p className="text-xs text-muted-foreground max-w-[200px] mt-1 truncate">
-                            {(() => {
-                              const parts = notification.message.split(":");
-                              if (parts.length > 1) {
-                                // Retorna tudo após o primeiro ":" e remove espaços em branco
-                                return parts.slice(1).join(":").trim();
-                              }
-                              // return notification.message;
-                            })()}
-                          </p>
-                        )}
-                      </div>
+                      ) : null}
                     </div>
                   </div>
                 </div>

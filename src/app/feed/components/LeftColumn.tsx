@@ -58,24 +58,22 @@ export default function LeftColumn() {
 
   return (
     <div className="col-span-3 space-y-6 sticky-container">
-      <div className="space-y-6">
-        <UserProfile
-          user={display}
-          userId={user?.user_id != null ? Number(user.user_id) : undefined}
-          allowStatusPicker={Boolean(user?.user_id)}
-          profilePhotoPublicId={
-            user
-              ? profile?.profile_photo?.trim()
-                ? profile.profile_photo.trim()
-                : null
-              : undefined
-          }
-          guestAvatar={user ? undefined : avatarRaymond}
-          profileDataPending={Boolean(user?.user_id) && profile === undefined}
-        />
-        <div className="sticky top-24">
-          <OnlineFriends />
-        </div>
+      <UserProfile
+        user={display}
+        userId={user?.user_id != null ? Number(user.user_id) : undefined}
+        allowStatusPicker={Boolean(user?.user_id)}
+        profilePhotoPublicId={
+          user
+            ? profile?.profile_photo?.trim()
+              ? profile.profile_photo.trim()
+              : null
+            : undefined
+        }
+        guestAvatar={user ? undefined : avatarRaymond}
+        profileDataPending={Boolean(user?.user_id) && profile === undefined}
+      />
+      <div className="sticky top-24">
+        <OnlineFriends />
       </div>
     </div>
   );
