@@ -18,6 +18,8 @@ import { LikeContentType } from "@/components/content_types/LikeContentType";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import { CustomToastProps } from "@/error/custom-toaster/enum";
 import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
+import { notifyFriendsListChanged } from "@/lib/friendsListEvents";
+
 export function GamesCanvasUserProfile({
   profile,
   onProfileUpdated,
@@ -115,11 +117,13 @@ export function GamesCanvasUserProfile({
     try {
       if (prevFollowing) {
         await unfollowProfile(profile.id);
+        notifyFriendsListChanged();
         CustomToast.success("Você deixou de seguir este perfil!", {
           duration: CustomToastProps.defaultDuration,
         });
       } else {
         await followProfile(profile.id);
+        notifyFriendsListChanged();
         CustomToast.success("Você passou a seguir este perfil!", {
           duration: CustomToastProps.defaultDuration,
         });

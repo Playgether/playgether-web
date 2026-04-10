@@ -266,21 +266,16 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
       return defaultPresence();
     }
     const st = computeEffectiveBroadcastStatus();
-    const wsOk =
-      readyState === ReadyState.OPEN || readyState === ReadyState.CONNECTING;
     if (manualPresenceMode === "offline") {
       return { status: "offline", last_seen: null };
     }
-    if (!wsOk) {
-      return { status: "offline", last_seen: null };
-    }
+    /** Enquanto o WS ainda não abriu, não usar "offline" na UI (evita "Invisível" com modo Automático). */
     return { status: st, last_seen: null };
   }, [
     selfId,
     loggedIn,
     computeEffectiveBroadcastStatus,
     manualPresenceMode,
-    readyState,
   ]);
 
   const openPresencePicker = useCallback(() => setPickerOpen(true), []);

@@ -29,6 +29,8 @@ type AuthContextProps = {
   logout: () => void;
   isLoggedOut: boolean;
   setIsLoggedOut: (value: boolean) => void;
+  /** true após a primeira verificação de sessão (JWT / cache) no cliente. */
+  authSessionResolved: boolean;
 };
 
 const AuthContext = createContext<AuthContextProps>({} as AuthContextProps);
@@ -37,6 +39,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const [user, setUser] = useState<UserProps | null>(null);
   const [isLoggedOut, setIsLoggedOut] = useState(true);
+  const [authSessionResolved, setAuthSessionResolved] = useState(false);
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   /** Última vez que o access foi renovado com sucesso (intervalo, foco na aba ou bootstrap). */
   const lastAccessRefreshAtRef = useRef<number>(0);
@@ -61,7 +64,9 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [router]);
 
   useEffect(() => {
+    let cancelled = false;
     const fetchData = async () => {
+      setAuthSessionResolved(false);
       const userLocalStorage =
         typeof window !== "undefined" ? localStorage.getItem("user") : null;
       const cachedUser = userLocalStorage ? JSON.parse(userLocalStorage) : null;
@@ -73,6 +78,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           fromJwt = await decodeUser();
         }
       }
+      if (cancelled) return;
       if (cachedUser !== null) {
         const merged: UserProps = {
           ...cachedUser,
@@ -92,9 +98,15 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
         setUser(fromJwt);
         markAccessRefreshed();
+      } else {
+        setUser(null);
       }
+      if (!cancelled) setAuthSessionResolved(true);
     };
-    fetchData();
+    void fetchData();
+    return () => {
+      cancelled = true;
+    };
   }, [isLoggedOut, markAccessRefreshed]);
 
   useEffect(() => {
@@ -145,6 +157,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         logout,
         isLoggedOut,
         setIsLoggedOut,
+        authSessionResolved,
       }}
     >
       <>{children}</>

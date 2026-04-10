@@ -5,9 +5,14 @@ import { OnlineFriends } from "./OnlineFriends";
 import { UserProfile } from "./UserProfile";
 import avatarRaymond from "@/assets/avatar-raymond.jpg";
 import { useAuthContext } from "@/context/AuthContext";
+import { FeedLeftSidebarSkeleton } from "./FeedLeftSidebarSkeleton";
 
 export default function LeftColumn() {
-  const { user } = useAuthContext();
+  const { user, authSessionResolved } = useAuthContext();
+
+  if (!authSessionResolved) {
+    return <FeedLeftSidebarSkeleton />;
+  }
 
   const display = user
     ? {
@@ -33,13 +38,15 @@ export default function LeftColumn() {
 
   return (
     <div className="col-span-3 space-y-6 sticky-container">
-      <UserProfile
-        user={display}
-        userId={user?.user_id != null ? Number(user.user_id) : undefined}
-        allowStatusPicker={Boolean(user?.user_id)}
-      />
-      <div className="sticky top-24">
-        <OnlineFriends />
+      <div className="space-y-6">
+        <UserProfile
+          user={display}
+          userId={user?.user_id != null ? Number(user.user_id) : undefined}
+          allowStatusPicker={Boolean(user?.user_id)}
+        />
+        <div className="sticky top-24">
+          <OnlineFriends />
+        </div>
       </div>
     </div>
   );
