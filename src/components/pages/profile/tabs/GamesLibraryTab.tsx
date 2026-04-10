@@ -129,9 +129,21 @@ export function GamesLibraryTab({
   const handleConnectSteam = async () => {
     const currentSearch = searchParams?.toString() ?? "";
     const next = `${pathname}${currentSearch ? `?${currentSearch}` : ""}`;
-    window.location.href = `/api/auth/steam/login/?next=${encodeURIComponent(
-      next
-    )}`;
+    const res = await fetch("/api/auth/steam/start", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ next }),
+    });
+    const data = (await res.json().catch(() => ({}))) as {
+      redirect_url?: string;
+      detail?: string;
+    };
+    if (!res.ok || !data.redirect_url) {
+      console.error(data.detail ?? "Falha ao iniciar login Steam");
+      return;
+    }
+    window.location.href = data.redirect_url;
   };
 
   const handleDisconnectSteam = async () => {
