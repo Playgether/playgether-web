@@ -14,6 +14,8 @@ import { logoutServer } from "@/actions/logout";
 import { refreshTokenServer } from "@/actions/refreshToken";
 
 const REFRESH_INTERVAL_MS = 18 * 60 * 1000; // 18 min (antes dos 20 min de expiry do access)
+/** Mínimo entre refreshes ao voltar à aba (evita spam em alt-tab rápido). */
+const VISIBILITY_REFRESH_MIN_GAP_MS = 5 * 60 * 1000; // 5 min
 
 export type UserProps = {
   username: string;
@@ -36,6 +38,12 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserProps | null>(null);
   const [isLoggedOut, setIsLoggedOut] = useState(true);
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  /** Última vez que o access foi renovado com sucesso (intervalo, foco na aba ou bootstrap). */
+  const lastAccessRefreshAtRef = useRef<number>(0);
+
+  const markAccessRefreshed = useCallback(() => {
+    lastAccessRefreshAtRef.current = Date.now();
+  }, []);
 
   const logout = useCallback(async () => {
     if (refreshIntervalRef.current) {
@@ -44,6 +52,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
     setIsLoggedOut(true);
     setUser(null);
+    lastAccessRefreshAtRef.current = 0;
     if (typeof window !== "undefined") {
       localStorage.removeItem("user");
     }
@@ -59,7 +68,10 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       let fromJwt = await decodeUser();
       if (!fromJwt) {
         const renewed = await refreshTokenServer();
-        if (renewed) fromJwt = await decodeUser();
+        if (renewed) {
+          markAccessRefreshed();
+          fromJwt = await decodeUser();
+        }
       }
       if (cachedUser !== null) {
         const merged: UserProps = {
@@ -73,15 +85,17 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (typeof window !== "undefined") {
           localStorage.setItem("user", JSON.stringify(merged));
         }
+        markAccessRefreshed();
       } else if (fromJwt) {
         if (typeof window !== "undefined") {
           localStorage.setItem("user", JSON.stringify(fromJwt));
         }
         setUser(fromJwt);
+        markAccessRefreshed();
       }
     };
     fetchData();
-  }, [isLoggedOut]);
+  }, [isLoggedOut, markAccessRefreshed]);
 
   useEffect(() => {
     if (!user) return;
@@ -90,6 +104,8 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const success = await refreshTokenServer();
       if (!success) {
         await logout();
+      } else {
+        markAccessRefreshed();
       }
     };
 
@@ -101,21 +117,27 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         refreshIntervalRef.current = null;
       }
     };
-  }, [user, logout]);
+  }, [user, logout, markAccessRefreshed]);
 
-  /** Ao voltar à aba após dormir/rede instável, tenta renovar o access antes das chamadas à API. */
+  /**
+   * Ao voltar à aba: renova o access só se já passou tempo suficiente desde a última renovação
+   * (o intervalo de 18 min já cobre o caso “aba aberta”; aqui evita alt-tab repetido sem critério).
+   */
   useEffect(() => {
     if (!user) return;
     const onVis = () => {
       if (document.visibilityState !== "visible") return;
+      const elapsed = Date.now() - lastAccessRefreshAtRef.current;
+      if (elapsed < VISIBILITY_REFRESH_MIN_GAP_MS) return;
       void (async () => {
         const success = await refreshTokenServer();
         if (!success) await logout();
+        else markAccessRefreshed();
       })();
     };
     document.addEventListener("visibilitychange", onVis);
     return () => document.removeEventListener("visibilitychange", onVis);
-  }, [user, logout]);
+  }, [user, logout, markAccessRefreshed]);
   return (
     <AuthContext.Provider
       value={{

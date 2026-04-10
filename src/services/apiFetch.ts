@@ -1,16 +1,45 @@
 import axios from "axios";
 import { dispatchTermsNotAccepted } from "@/context/TermsContext";
+import { refreshTokenServer } from "@/actions/refreshToken";
+import { logoutServer } from "@/actions/logout";
 
 type TermsNotAcceptedDetail = {
   detail?: string;
   pending_documents?: unknown[];
 };
 
+/** Uma única renovação em voo quando vários 401 chegam juntos. */
+let refreshInFlight: Promise<boolean> | null = null;
+
+function dedupedRefresh(): Promise<boolean> {
+  if (!refreshInFlight) {
+    refreshInFlight = refreshTokenServer()
+      .then((ok) => ok)
+      .catch(() => false)
+      .finally(() => {
+        refreshInFlight = null;
+      });
+  }
+  return refreshInFlight;
+}
+
+async function handleSessionExpiredOnClient(): Promise<void> {
+  await logoutServer();
+  try {
+    localStorage.removeItem("user");
+  } catch {
+    // ignore
+  }
+  window.location.href = "/";
+}
+
 /**
  * Wrapper com a interface "fetch-like" que:
  * - não sobrescreve `window.fetch`;
  * - usa axios internamente para manter consistência;
- * - detecta `403 TERMS_NOT_ACCEPTED` e dispara `dispatchTermsNotAccepted`.
+ * - detecta `403 TERMS_NOT_ACCEPTED` e dispara `dispatchTermsNotAccepted`;
+ * - em `401` no browser (com `credentials: "include"`): tenta renovar o access uma vez;
+ *   se a renovação falhar, encerra sessão e manda para a home.
  *
  * Mantém retorno `Response` para não exigir mudanças em todos os services.
  */
@@ -25,26 +54,47 @@ export async function apiFetch(
 
   const withCredentials = init?.credentials === "include";
 
-  try {
-    const axiosResp = await axios.request({
+  const runAxios = () =>
+    axios.request({
       url,
       method: method as any,
       headers,
       data: body,
       withCredentials,
-      // não seguir redirects (equivalente ao redirect manual do fetch)
       maxRedirects: 0,
       validateStatus: () => true,
       responseType: "text",
     });
 
+  const buildResponse = (axiosResp: Awaited<ReturnType<typeof runAxios>>) => {
     const contentType = axiosResp.headers?.["content-type"];
-    const response = new Response(axiosResp.data ?? "", {
+    return new Response(axiosResp.data ?? "", {
       status: axiosResp.status,
       headers: {
         ...(contentType ? { "content-type": contentType } : {}),
       },
     });
+  };
+
+  try {
+    let axiosResp = await runAxios();
+
+    const canTryRefresh =
+      typeof window !== "undefined" &&
+      withCredentials &&
+      axiosResp.status === 401;
+
+    if (canTryRefresh) {
+      const renewed = await dedupedRefresh();
+      if (renewed) {
+        axiosResp = await runAxios();
+      } else {
+        await handleSessionExpiredOnClient();
+        return new Response("", { status: 401, statusText: "Unauthorized" });
+      }
+    }
+
+    const response = buildResponse(axiosResp);
 
     if (response.status === 403) {
       try {
@@ -61,18 +111,15 @@ export async function apiFetch(
 
     return response;
   } catch (err: any) {
-    // Caso axios falhe por rede e não exista response.status, re-throw.
     if (err?.response?.status) {
       const contentType = err.response.headers?.["content-type"];
-      const response = new Response(err.response.data ?? "", {
+      return new Response(err.response.data ?? "", {
         status: err.response.status,
         headers: {
           ...(contentType ? { "content-type": contentType } : {}),
         },
       });
-      return response;
     }
     throw err;
   }
 }
-
