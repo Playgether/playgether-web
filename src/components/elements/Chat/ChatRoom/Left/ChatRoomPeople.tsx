@@ -16,6 +16,7 @@ function ChatRoomPeople() {
             <ProfileImagePost
               link_photo={user.profile_photo}
               username={user.username}
+              displayName={user.fullname}
               className="h-10 w-10"
             />
           </div>

@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useFeedServerContext } from "../context/FeedServerContext";
 import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import VideoComponent from "@/components/layouts/VideoComponent/VideoComponent";
 import { useRouter } from "next/navigation";
 import { useCommentsContext } from "@/context/CommentsContext";
@@ -90,7 +91,6 @@ export const PostModal = ({
   const icons = Feed.ServerPostModal.icons;
   const texts = Feed.ServerPostModal.text;
   const buttons = Feed.ServerPostModal.buttons;
-  const components = Feed.ServerFeedPost.components;
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -452,16 +452,14 @@ export const PostModal = ({
             {/* Post Header */}
             <div className="p-6 pb-2 border-b border-border/50 sticky bg-background z-10 top-0 ">
               <div className="flex items-center space-x-3 mb-2 z-20">
-                <div className="w-12 h-12 relative rounded-full overflow-hidden ring-2 ring-primary/30">
-                  {post.profile_photo ? (
-                    <ImageComponent
-                      media_id={post.profile_photo || ""}
-                      className="object-cover rounded-full h-10 w-10"
-                    />
-                  ) : (
-                    components.NoImageProfile
-                  )}
-                </div>
+                <ProfileAvatar
+                  displayName={post.name}
+                  username={post.username}
+                  profilePhoto={post.profile_photo}
+                  sizeClass="h-12 w-12"
+                  ringClass="ring-2 ring-primary/30"
+                  fallbackTextClassName="text-sm"
+                />
                 <div className="flex-1 min-w-0">
                   <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                     <div className="inline-flex min-w-0 max-w-full shrink-0 items-center gap-2">
@@ -551,17 +549,16 @@ export const PostModal = ({
                       <div className="space-y-4 pb-4">
                         <div key={comment.id} className="space-y-2">
                           <div className="flex items-start space-x-3 pl-1">
-                            {comment.created_by_user_photo ? (
-                              <div className="w-12 h-12 pl-2 relative rounded-full overflow-hidden ring-2 ring-primary/30 flex-shrink-0">
-                                <ImageComponent
-                                  media_id={comment.created_by_user_photo}
-                                  alt={`Profile photo of the user ${comment?.created_by_user_name}`}
-                                  className="object-cover rounded-full"
-                                />
-                              </div>
-                            ) : (
-                              components.NoImageProfile
-                            )}
+                            <div className="pl-2 flex-shrink-0">
+                              <ProfileAvatar
+                                displayName={comment.created_by_user_name}
+                                username={comment.user_username}
+                                profilePhoto={comment.created_by_user_photo}
+                                sizeClass="h-12 w-12"
+                                ringClass="ring-2 ring-primary/30"
+                                fallbackTextClassName="text-sm"
+                              />
+                            </div>
 
                             {/* Container principal do comentário */}
                             <div className="flex-1 min-w-0">
@@ -819,19 +816,16 @@ export const PostModal = ({
                                     key={reply.id}
                                     className="flex items-start space-x-3"
                                   >
-                                    {reply.created_by_user_photo ? (
-                                      <div className="w-12 h-12 pl-2 relative rounded-full overflow-hidden ring-2 ring-primary/30 flex-shrink-0">
-                                        <ImageComponent
-                                          media_id={reply.created_by_user_photo}
-                                          alt={`Profile photo of the user ${reply?.created_by_user_name}`}
-                                          className="object-cover rounded-full"
-                                        />
-                                      </div>
-                                    ) : (
-                                      <div className="w-8 h-8 flex-shrink-0">
-                                        {components.NoImageReplieProfile}
-                                      </div>
-                                    )}
+                                    <div className="pl-2 flex-shrink-0">
+                                      <ProfileAvatar
+                                        displayName={reply.created_by_user_name}
+                                        username={reply.user_username}
+                                        profilePhoto={reply.created_by_user_photo}
+                                        sizeClass="h-8 w-8"
+                                        ringClass="ring-2 ring-primary/30"
+                                        fallbackTextClassName="text-xs"
+                                      />
+                                    </div>
 
                                     <div className="flex-1 min-w-0">
                                       {/* Cabeçalho da reply com nome, data e ações */}

@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Edit, Loader2, Image, Trash2, ImagePlus } from "lucide-react";
 import { CldUploadWidget } from "next-cloudinary";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
-import NoImageProfile from "@/components/general/NoImageProfile";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import { CustomToastProps } from "@/error/custom-toaster/enum";
 import { patchProfile } from "@/services/patchProfile";
@@ -384,19 +384,14 @@ export function ProfileEditModal({
 
             <div className="flex flex-col items-center gap-2">
               <label className="text-sm font-medium w-full">Foto de perfil</label>
-              <div className="relative w-24 h-24 rounded-full overflow-hidden ring-2 ring-primary/30 shrink-0">
-                {displayPhoto ? (
-                  <ImageComponent
-                    media_id={displayPhoto}
-                    className="object-cover w-full h-full rounded-full"
-                  />
-                ) : (
-                  <NoImageProfile
-                    className="w-24 h-24"
-                    iconClassName="w-12 h-12"
-                  />
-                )}
-              </div>
+              <ProfileAvatar
+                displayName={profile?.name ?? user?.username ?? "?"}
+                username={profile?.username ?? user?.username}
+                profilePhoto={displayPhoto}
+                sizeClass="h-24 w-24"
+                ringClass="ring-2 ring-primary/30"
+                fallbackTextClassName="text-2xl font-bold"
+              />
               <div className="flex gap-2 justify-center">
                 <CldUploadWidget
                   key={widgetKey}

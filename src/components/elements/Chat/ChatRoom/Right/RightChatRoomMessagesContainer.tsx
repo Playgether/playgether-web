@@ -32,7 +32,8 @@ function RightChatRoomMessagesContainer({
       )}
       <div className="flex mb-4 chat-message z-30">
         <ProfileImagePost
-          username={"test"}
+          username="test"
+          displayName={name}
           link_photo={image}
           className={`h-10 w-10 mr-2`}
         />

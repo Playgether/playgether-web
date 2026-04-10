@@ -1,11 +1,9 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { StaticImageData } from "next/image";
 import { PresenceStatusDot } from "@/components/presence/PresenceStatusDot";
-import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
-import NoImageProfile from "@/components/general/NoImageProfile";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 
 interface UserProfileProps {
   user: {
@@ -16,18 +14,10 @@ interface UserProfileProps {
     following: number;
     posts: number;
   };
-  /** Quando definido, exibe bolinha de presença (ex.: usuário logado). */
   userId?: number;
-  /** Card do próprio usuário: bolinha abre o seletor de status. */
   allowStatusPicker?: boolean;
-  /**
-   * Mesmo critério da página de perfil: `media_id` Cloudinary.
-   * Se ausente/vazio → `NoImageProfile`.
-   */
   profilePhotoPublicId?: string | null;
-  /** Visitante: avatar estático (ex. placeholder). */
   guestAvatar?: string | StaticImageData;
-  /** Perfil da API ainda não retornou (só para dono logado). */
   profileDataPending?: boolean;
 }
 
@@ -40,13 +30,12 @@ export const UserProfile = ({
   profileDataPending = false,
 }: UserProfileProps) => {
   const isOwnerCard = userId != null;
-  const photoRaw =
-    typeof profilePhotoPublicId === "string"
-      ? profilePhotoPublicId.trim()
-      : "";
-  const hasPhoto = photoRaw.length > 0;
-  const useDirectUrl =
-    photoRaw.startsWith("http") || photoRaw.startsWith("/");
+  const guestPhotoSrc =
+    typeof guestAvatar === "string"
+      ? guestAvatar
+      : guestAvatar?.src
+        ? String(guestAvatar.src)
+        : undefined;
 
   return (
     <Card className="bg-card border-border/50 backdrop-blur-sm hover:shadow-glow-primary/30 hover:scale-[1.02] hover:border-primary/40 transition-all duration-300 animate-fade-up">
@@ -54,44 +43,27 @@ export const UserProfile = ({
         <div className="flex justify-center mb-4">
           <div className="relative inline-block">
             {isOwnerCard ? (
-              <div className="relative w-20 h-20 ring-4 ring-primary/30 rounded-full overflow-hidden flex items-center justify-center shrink-0 bg-muted">
-                {profileDataPending ? (
-                  <Skeleton className="h-full w-full rounded-full" />
-                ) : hasPhoto && useDirectUrl ? (
-                  <img
-                    src={photoRaw}
-                    alt={user.name}
-                    className="h-full w-full object-cover rounded-full"
-                  />
-                ) : hasPhoto ? (
-                  <div className="relative h-full w-full">
-                    <ImageComponent
-                      media_id={photoRaw}
-                      className="object-cover rounded-full"
-                      alt={user.name}
-                    />
-                  </div>
-                ) : (
-                  <NoImageProfile
-                    className="h-20 w-20 rounded-full"
-                    iconClassName="w-10 h-10"
-                  />
-                )}
-              </div>
-            ) : (
-              <Avatar className="w-20 h-20 ring-4 ring-primary/30">
-                <AvatarImage
-                  src={
-                    typeof guestAvatar === "string"
-                      ? guestAvatar
-                      : guestAvatar?.src
-                  }
-                  alt={user.name}
+              profileDataPending ? (
+                <Skeleton className="h-20 w-20 rounded-full ring-4 ring-primary/30 shrink-0" />
+              ) : (
+                <ProfileAvatar
+                  displayName={user.name}
+                  username={user.username}
+                  profilePhoto={profilePhotoPublicId}
+                  sizeClass="h-20 w-20"
+                  ringClass="ring-4 ring-primary/30"
+                  fallbackTextClassName="text-xl"
                 />
-                <AvatarFallback className="bg-gradient-primary text-white font-bold text-xl">
-                  {user.name.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
+              )
+            ) : (
+              <ProfileAvatar
+                displayName={user.name}
+                username={user.username}
+                profilePhoto={guestPhotoSrc}
+                sizeClass="h-20 w-20"
+                ringClass="ring-4 ring-primary/30"
+                fallbackTextClassName="text-xl"
+              />
             )}
             {userId != null ? (
               <PresenceStatusDot

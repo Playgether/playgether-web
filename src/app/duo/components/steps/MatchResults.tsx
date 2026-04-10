@@ -21,7 +21,7 @@ import {
   Sunset,
   Moon,
 } from "lucide-react";
-import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { PresenceStatusDot } from "@/components/presence/PresenceStatusDot";
 import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
 import { useDuoSocket } from "../../hooks/useDuoSocket";
@@ -366,8 +366,6 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
     ? `${partner.first_name} ${partner.last_name}`.trim()
     : partner.username;
 
-  const photoSrc = resolveGameMediaUrl(partner.profile_photo);
-
   return (
     <div
       className="card-glass bg-[#0F172A] rounded-xl p-6 animate-fade-in-scale hover:scale-[1.02] transition-all duration-300"
@@ -377,17 +375,14 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
       <div className="flex items-start justify-between mb-5">
         <div className="flex items-center space-x-3">
           <div className="relative inline-block">
-            {photoSrc ? (
-              <img
-                src={photoSrc}
-                alt={displayName}
-                className="w-14 h-14 rounded-full border-2 border-primary/30 object-cover"
-              />
-            ) : (
-              <div className="w-14 h-14 rounded-full border-2 border-primary/30 bg-gradient-primary flex items-center justify-center text-xl font-bold text-primary-foreground">
-                {(partner.first_name || partner.username)[0]?.toUpperCase()}
-              </div>
-            )}
+            <ProfileAvatar
+              displayName={displayName}
+              username={partner.username}
+              profilePhoto={partner.profile_photo}
+              sizeClass="h-14 w-14"
+              ringClass="border-2 border-primary/30"
+              fallbackTextClassName="text-xl font-bold"
+            />
             <PresenceStatusDot
               userId={partner.user_id}
               sizeClass="w-3.5 h-3.5"

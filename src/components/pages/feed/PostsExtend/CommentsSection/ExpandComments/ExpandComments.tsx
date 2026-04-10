@@ -54,7 +54,8 @@ export const ExpandedComments = ({
         <div className="flex justify-between w-full">
           <div className="w-full space-y-1">
             <ProfileAndUsername
-              username={answer.created_by_user_name}
+              displayName={answer.created_by_user_name}
+              username={answer.user_username}
               profile_photo={answer.created_by_user_photo}
               timestamp={answer.timestamp}
               className="w-full"

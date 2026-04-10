@@ -2,64 +2,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bell, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { StaticImageData } from "next/image";
-
-interface Notification {
-  id: string;
-  users: {
-    name: string;
-    avatar: string | StaticImageData;
-  }[];
-  action: string;
-  content?: string;
-  time: string;
-  type: "like" | "comment" | "follow" | "mention";
-}
-
-// Import avatars
-import avatarJames from "@/assets/avatar-raymond.jpg";
-import avatarAlex from "@/assets/avatar-samuel.jpg";
-import avatarSophia from "@/assets/avatar-sophia.jpg";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { useNotifications } from "../hooks/useNotificationsWebSocket";
 import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
 import { NotificationProps } from "../types/NotificationProps";
-
-const notifications: Notification[] = [
-  {
-    id: "1",
-    users: [{ name: "James", avatar: avatarJames }],
-    action: "curtiu sua postagem",
-    content:
-      "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
-    time: "há alguns segundos",
-    type: "like",
-  },
-  {
-    id: "2",
-    users: [
-      { name: "Alex", avatar: avatarAlex },
-      { name: "Sophia", avatar: avatarSophia },
-    ],
-    action: "responderam o seu comentário 3 vezes",
-    content: "COMENTÁRIO MEU",
-    time: "há 2 horas",
-    type: "comment",
-  },
-];
-
-const getTypeIcon = (type: Notification["type"]) => {
-  switch (type) {
-    case "like":
-      return "❤️";
-    case "comment":
-      return "👥";
-    case "follow":
-      return "👤";
-    case "mention":
-      return "@";
-  }
-};
 
 export const NotificationsCard = ({
   notificationsList,
@@ -114,38 +60,17 @@ export const NotificationsCard = ({
                   {/* User Avatars */}
                   <div className="w-full flex justify-between">
                     <div className="flex -space-x-2">
-                      {notification.actors.map((user, userIndex) => (
-                        <Avatar
-                          key={userIndex}
-                          className="w-8 h-8 border-2 border-background"
-                        >
-                          <AvatarImage src={user.avatar} alt={user.name} />
-                          <AvatarFallback className="bg-gradient-primary text-white text-xs">
-                            {user.name.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        // <div className="w-8 h-8 border-2 border-background" key={notification.id}>
-                        //   {notification.profile_photo ? (
-                        //     <div className="relative w-full h-full">
-                        //       <Image
-                        //         src={getCloudinaryUrl(post.profile_photo)}
-                        //         alt={`Profile photo of the user ${post?.username}`}
-                        //         fill
-                        //         className="object-cover rounded-full"
-                        //       />
-                        //     </div>
-                        //   ) : (
-                        //     components.NoImageProfile
-                        //   )}
-                        // </div>
+                      {notification.actors.map((actor, userIndex) => (
+                        <ProfileAvatar
+                          key={`${actor.username}-${userIndex}`}
+                          displayName={actor.name}
+                          username={actor.username}
+                          profilePhoto={actor.profile_photo ?? null}
+                          sizeClass="h-8 w-8"
+                          className="border-2 border-background ring-2 ring-background"
+                          fallbackTextClassName="text-xs"
+                        />
                       ))}
-                      {/* {notification.users.length > 3 && (
-                      <div className="w-8 h-8 border-2 border-background bg-muted rounded-full flex items-center justify-center">
-                        <span className="text-xs font-medium">
-                          +{notification.users.length - 3}
-                        </span>
-                      </div>
-                    )} */}
                     </div>
                     <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
                       <DateAndHour date={notification.timestamp} />

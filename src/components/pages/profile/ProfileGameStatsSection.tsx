@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -341,8 +341,6 @@ export function ProfileGameStatsSection({
     selectedGame === "csgo"
       ? profile?.name || "Player"
       : profile?.name || "Player";
-  const profileAvatar = profile?.profile_photo || "/profile/perfil.jpg";
-
   const useRealCs2Stats =
     selectedGame === "csgo" && cs2Stats?.available && cs2Stats?.stats;
   const fpsStats = fpsStatsBySeason[season] ?? fpsStatsBySeason["s1"];
@@ -364,12 +362,14 @@ export function ProfileGameStatsSection({
       {/* Player header - profile icon + nick */}
       <div className="flex flex-wrap items-center gap-4">
         <div className="relative inline-block">
-          <Avatar className="h-14 w-14 border-2 border-border ring-2 ring-primary/20">
-            <AvatarImage src={profileAvatar} alt={profileNick} />
-            <AvatarFallback className="bg-gradient-primary text-white font-bold">
-              {profileNick.slice(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          <ProfileAvatar
+            displayName={profileNick}
+            username={profile?.username}
+            profilePhoto={profile?.profile_photo ?? null}
+            sizeClass="h-14 w-14"
+            ringClass="border-2 border-border ring-2 ring-primary/20"
+            fallbackTextClassName="text-base font-bold"
+          />
         </div>
         <div>
           <h3 className="text-lg font-semibold text-card-foreground">

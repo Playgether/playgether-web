@@ -1,12 +1,11 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
 import { apiFetch } from "@/services/apiFetch";
 import { PresenceContext } from "@/context/PresenceContext";
 import { PresenceStatusDot } from "@/components/presence/PresenceStatusDot";
@@ -182,22 +181,16 @@ export const OnlineFriends = () => {
             {user?.user_id != null ? (
               <div className="flex items-center gap-3 pb-3 mb-1 border-b border-border/50">
                 <div className="relative shrink-0">
-                  <Avatar className="w-10 h-10">
-                    <AvatarImage
-                      src={
-                        resolveGameMediaUrl(profile?.profile_photo) ||
-                        undefined
-                      }
-                      alt={user.username}
-                    />
-                    <AvatarFallback className="bg-gradient-primary text-white text-sm">
-                      {(
-                        user.first_name?.[0] ||
-                        user.username[0] ||
-                        "?"
-                      ).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  <ProfileAvatar
+                    displayName={
+                      `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() ||
+                      user.username
+                    }
+                    username={user.username}
+                    profilePhoto={profile?.profile_photo}
+                    sizeClass="h-10 w-10"
+                    fallbackTextClassName="text-sm"
+                  />
                   <PresenceStatusDot
                     userId={Number(user.user_id)}
                     allowPicker
@@ -217,16 +210,6 @@ export const OnlineFriends = () => {
 
             {slice.map((friend) => {
               const st = friendPresenceStatus(friend, presenceCtx ?? null);
-              const photoSrc = resolveGameMediaUrl(friend.profile_photo);
-              const initials =
-                friend.name
-                  ?.split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .slice(0, 2)
-                  .toUpperCase() ||
-                friend.username[0]?.toUpperCase() ||
-                "?";
 
               return (
                 <div
@@ -241,15 +224,13 @@ export const OnlineFriends = () => {
                   className="flex items-center space-x-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 hover:shadow-improved transition-all duration-200 cursor-pointer group"
                 >
                   <div className="relative shrink-0">
-                    <Avatar className="w-10 h-10">
-                      <AvatarImage
-                        src={photoSrc || undefined}
-                        alt={friend.name}
-                      />
-                      <AvatarFallback className="bg-gradient-primary text-white text-sm">
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
+                    <ProfileAvatar
+                      displayName={friend.name}
+                      username={friend.username}
+                      profilePhoto={friend.profile_photo}
+                      sizeClass="h-10 w-10"
+                      fallbackTextClassName="text-sm"
+                    />
                     <PresenceStatusDot userId={friend.user_id} />
                   </div>
 

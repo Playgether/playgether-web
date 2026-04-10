@@ -17,8 +17,9 @@ const PostHasNoMedia = ({ resource }: PostsExtendHasNoPostMediaProps) => {
       <div className="w-full">
         <div className="w-full text-black-300 h-52 bg-white-300 overflow-y-auto overflow-x-hidden mt-[100px]">
           <ProfileAndUsername
+            displayName={resource.name ?? resource.created_by_user_name}
+            username={resource.username ?? resource.created_by_user_name}
             profile_photo={resource.created_by_user_photo}
-            username={resource.created_by_user_name}
             timestamp={resource.timestamp}
             imageClassName="mt-3 ml-3 h-8 w-8"
             highlightedAchievements={resource.highlighted_achievements}

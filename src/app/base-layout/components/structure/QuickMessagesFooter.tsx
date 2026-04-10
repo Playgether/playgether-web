@@ -1,6 +1,6 @@
 "use client";
 import { useLayoutEffect, useRef } from "react";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { AnimatePresence, motion } from "framer-motion";
 import { QuickMessagesHistoryModal } from "./QuickMessagesHistoryModal";
 import { QuickMessageModal } from "./QuickMessageModal";
@@ -147,16 +147,18 @@ export const QuickMessagesFooter = () => {
                   )}`}
                   onClick={() => handleMessageClick(message)}
                 >
-                  <Avatar className="w-10 h-10 ring-2 ring-primary/30 flex-shrink-0">
-                    <AvatarImage
-                      src={
-                        typeof message.user.avatar === "string"
-                          ? message.user.avatar
-                          : message.user.avatar.src
-                      }
-                      alt={message.user.name}
-                    />
-                  </Avatar>
+                  <ProfileAvatar
+                    displayName={message.user.name}
+                    username={message.user.username}
+                    profilePhoto={
+                      typeof message.user.avatar === "string"
+                        ? message.user.avatar
+                        : message.user.avatar.src
+                    }
+                    sizeClass="h-10 w-10"
+                    ringClass="ring-2 ring-primary/30"
+                    className="flex-shrink-0"
+                  />
 
                   <div className="flex-1 min-w-0 overflow-hidden">
                     <div className="flex items-center justify-between mb-1">

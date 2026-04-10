@@ -39,8 +39,9 @@ const PostHasMedia = ({
         <div className=" text-black-300 w-full overflow-hidden bg-white-300 relative">
           <div className="h-full w-full flex flex-col relative">
             <ProfileAndUsername
+              displayName={resource.name ?? resource.created_by_user_name}
+              username={resource.username ?? resource.created_by_user_name}
               profile_photo={resource.created_by_user_photo}
-              username={resource.created_by_user_name}
               timestamp={resource.timestamp}
               imageClassName="mt-3 ml-3 h-10 w-10"
               usernameAndTimestampDiv="self-end"

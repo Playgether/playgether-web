@@ -13,8 +13,7 @@ import type { getProfileByUsernameProps } from "@/services/getProfileByUsername"
 import { ApiResponseComments } from "@/context/CommentsContext";
 import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
 import { games } from "../constants";
-import NoImageProfile from "@/components/general/NoImageProfile";
-import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
 
@@ -155,18 +154,17 @@ export function BioTab({
                 key={comment.id}
                 className="flex gap-3 p-4 bg-card/30 rounded-lg border border-border/50"
               >
-                <div className="w-10 h-10 relative rounded-full overflow-hidden ring-2 ring-primary/30 mt-1">
-                  {comment.created_by_user_photo ? (
-                    <ImageComponent
-                      media_id={comment.created_by_user_photo}
-                      className="object-cover rounded-full h-10 w-10"
-                    />
-                  ) : (
-                    <NoImageProfile
-                      className="h-10 w-10"
-                      iconClassName="w-6 h-6"
-                    />
-                  )}
+                <div className="mt-1 shrink-0">
+                  <ProfileAvatar
+                    displayName={
+                      comment.created_by_user_name ?? comment.author ?? "?"
+                    }
+                    username={comment.user_username}
+                    profilePhoto={comment.created_by_user_photo}
+                    sizeClass="h-10 w-10"
+                    ringClass="ring-2 ring-primary/30"
+                    fallbackTextClassName="text-xs"
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap gap-x-2 gap-y-1 mb-2 items-start justify-between">

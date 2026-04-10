@@ -71,6 +71,12 @@ export const PostTextPostExpand = ({
               <PhotoAndText
                 created_by_user_photo={resourceObject.created_by_user_photo}
                 created_by_user_name={resourceObject.created_by_user_name}
+                authorDisplayName={
+                  resourceObject.name ?? resourceObject.created_by_user_name
+                }
+                authorUsername={
+                  resourceObject.username ?? resourceObject.created_by_user_name
+                }
                 timestamp={resourceObject.timestamp}
                 text={resourceObject.comment}
                 highlightedAchievements={resourceObject.highlighted_achievements}
@@ -103,6 +109,12 @@ export const PostTextPostExpand = ({
               <PhotoAndText
                 created_by_user_photo={resourceObject.created_by_user_photo}
                 created_by_user_name={resourceObject.created_by_user_name}
+                authorDisplayName={
+                  resourceObject.name ?? resourceObject.created_by_user_name
+                }
+                authorUsername={
+                  resourceObject.username ?? resourceObject.created_by_user_name
+                }
                 timestamp={resourceObject.timestamp}
                 text={resourceObject.comment}
                 highlightedAchievements={resourceObject.highlighted_achievements}

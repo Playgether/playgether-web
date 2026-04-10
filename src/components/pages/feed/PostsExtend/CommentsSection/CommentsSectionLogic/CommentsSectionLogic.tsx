@@ -38,8 +38,9 @@ const CommentsSection = ({ post_id }: { post_id: number }) => {
                 <div className="w-full space-y-1">
                   <ProfileAndUsername
                     className="w-full "
+                    displayName={item.created_by_user_name}
+                    username={item.user_username}
                     profile_photo={item.created_by_user_photo}
-                    username={item.created_by_user_name}
                     timestamp={item.timestamp}
                     usernameAndTimestampDiv="flex flex-row w-full justify-between pr-4"
                     imageClassName="h-6 w-6"

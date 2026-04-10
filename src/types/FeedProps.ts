@@ -5,6 +5,10 @@ import type { HighlightedAchievementPublic } from "@/types/highlightedAchievemen
 
 export interface FeedProps {
   created_by_user: number;
+  /** Nome completo (API: `name` ou legado). */
+  name?: string;
+  /** @username para links de perfil (API). */
+  username?: string;
   created_by_user_name: string;
   created_by_user_photo: string;
   likes: PostLikes[];

@@ -17,8 +17,13 @@ function PostsExtendHasNoPostLogic({
     <>
       <div className="w-3/6 PostsExtendHasNoPostMedia-left overflow-y-auto overflow-x-hidden">
         <ProfileAndUsername
+          displayName={
+            resourceObject.name ?? resourceObject.created_by_user_name
+          }
+          username={
+            resourceObject.username ?? resourceObject.created_by_user_name
+          }
           profile_photo={resourceObject.created_by_user_photo}
-          username={resourceObject.created_by_user_name}
           timestamp={resourceObject.timestamp}
           imageClassName="mt-3 ml-3 h-8 w-8"
           highlightedAchievements={resourceObject.highlighted_achievements}

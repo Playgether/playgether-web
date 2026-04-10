@@ -18,7 +18,15 @@ const ProfileCard = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className=" ProfileCard-wrapper relative h-[400px] flex flex-col items-center justify-center space-y-2 w-[250px] 2xl:w-[250px] max-h-[350px] 2xl:max-h-[400px] rounded-2xl ">
       <div className="rounded-full h-20 w-20 flex items-center justify-center relative">
-        <ProfileImagePost username={user?.username} className="h-full w-full" />
+        <ProfileImagePost
+          username={user?.username}
+          displayName={
+            `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim() ||
+            user?.username ||
+            "?"
+          }
+          className="h-full w-full"
+        />
       </div>
       <CldUploadWidget
         signatureEndpoint="/api/signed-profile"

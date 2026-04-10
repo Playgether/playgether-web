@@ -17,6 +17,7 @@ import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
 import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
 import { ShareModal } from "./ShareModal";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import VideoComponent from "@/components/layouts/VideoComponent/VideoComponent";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -61,18 +62,15 @@ export const FeedPost = ({ post }) => {
             {/* Header */}
             <div className="flex items-center justify-between mb-4 gap-2 min-w-0">
               <div className="flex items-center space-x-3 min-w-0 flex-1">
-                <div className="w-12 h-12 shrink-0 ring-2 ring-primary/20 rounded-full overflow-hidden">
-                  {post.profile_photo ? (
-                    <div className="relative w-full h-full">
-                      <ImageComponent
-                        media_id={post.profile_photo}
-                        alt={`Profile photo of the user ${post?.username}`}
-                        className="object-cover rounded-full"
-                      />
-                    </div>
-                  ) : (
-                    components.NoImageProfile
-                  )}
+                <div className="shrink-0">
+                  <ProfileAvatar
+                    displayName={post.name}
+                    username={post.username}
+                    profilePhoto={post.profile_photo}
+                    sizeClass="h-12 w-12"
+                    ringClass="ring-2 ring-primary/20"
+                    fallbackTextClassName="text-sm"
+                  />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">

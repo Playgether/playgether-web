@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Heart, Settings, UserPlus } from "lucide-react";
 import type { getProfileByUsernameProps } from "@/services/getProfileByUsername";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
-import NoImageProfile from "@/components/general/NoImageProfile";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { useAuthContext } from "@/context/AuthContext";
 import { ProfileEditModal } from "./modals/ProfileEditModal";
 import { followProfile } from "@/services/followProfile";
@@ -199,19 +199,14 @@ export function GamesCanvasUserProfile({
             <div className="relative px-6 pb-6">
               <div className="absolute -top-10 left-6">
                 <div className="relative">
-                  <div className="relative w-20 h-20 border-4 border-card shadow-neon rounded-full overflow-hidden flex items-center justify-center shrink-0">
-                    {profile?.profile_photo ? (
-                      <ImageComponent
-                        media_id={profile?.profile_photo}
-                        className="object-cover w-full h-full rounded-full"
-                      />
-                    ) : (
-                      <NoImageProfile
-                        className="h-20 w-20"
-                        iconClassName="w-10 h-10"
-                      />
-                    )}
-                  </div>
+                  <ProfileAvatar
+                    displayName={profile?.name ?? "?"}
+                    username={profile?.username}
+                    profilePhoto={profile?.profile_photo}
+                    sizeClass="h-20 w-20"
+                    className="border-4 border-card shadow-neon"
+                    fallbackTextClassName="text-xl"
+                  />
                 </div>
               </div>
 

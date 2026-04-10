@@ -29,6 +29,7 @@ export interface PostCommentsOfCommentsProps {
   id: number;
   created_by_user_name: string;
   created_by_user_photo: string;
+  user_username?: string;
   object_id: number;
   comment: string;
   timestamp: Date;
