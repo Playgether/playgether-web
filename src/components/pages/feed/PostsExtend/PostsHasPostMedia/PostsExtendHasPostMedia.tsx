@@ -46,19 +46,21 @@ const PostsExtendHasPostMedia = ({
           />
           <div className="w-3/6 2xl:w-2/6 overflow-hidden PostsExtendHasPostMedia-right-top relative">
             <div className="h-full w-full flex flex-col relative">
-            <ProfileAndUsername
-              displayName={
-                resourceObject.name ?? resourceObject.created_by_user_name
-              }
-              username={
-                resourceObject.username ?? resourceObject.created_by_user_name
-              }
-              profile_photo={resourceObject.created_by_user_photo}
-              timestamp={resourceObject.timestamp}
-              imageClassName="mt-3 ml-3 h-10 w-10"
-              usernameAndTimestampDiv="self-end"
-              highlightedAchievements={resourceObject.highlighted_achievements}
-            />
+              <ProfileAndUsername
+                displayName={
+                  resourceObject.name ?? resourceObject.created_by_user_name
+                }
+                username={
+                  resourceObject.username ?? resourceObject.created_by_user_name
+                }
+                profile_photo={resourceObject.created_by_user_photo}
+                timestamp={resourceObject.timestamp}
+                imageClassName="mt-3 ml-3 h-10 w-10"
+                usernameAndTimestampDiv="self-end"
+                highlightedAchievements={
+                  resourceObject.highlighted_achievements
+                }
+              />
               <BorderLine />
               <PostTextPostExpand
                 text={resourceObject.comment}

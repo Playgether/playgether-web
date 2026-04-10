@@ -8,8 +8,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 
-export interface ProfileAndUsernameProps
-  extends HTMLAttributes<HTMLDivElement> {
+export interface ProfileAndUsernameProps extends HTMLAttributes<HTMLDivElement> {
   username: string;
   /** Nome exibido (geralmente nome completo) — usado nas iniciais quando não há foto. */
   displayName: string;
