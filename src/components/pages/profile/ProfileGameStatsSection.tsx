@@ -342,7 +342,8 @@ export function ProfileGameStatsSection({
       ? profile?.name || "Player"
       : profile?.name || "Player";
   const useRealCs2Stats =
-    selectedGame === "csgo" && cs2Stats?.available && cs2Stats?.stats;
+    selectedGame === "csgo" && cs2Stats?.available === true && Boolean(cs2Stats?.stats);
+  const isCs2WithoutStats = selectedGame === "csgo" && !useRealCs2Stats;
   const fpsStats = fpsStatsBySeason[season] ?? fpsStatsBySeason["s1"];
   const lolStats = lolStatsBySeason[season] ?? lolStatsBySeason["s1"];
 
@@ -388,7 +389,7 @@ export function ProfileGameStatsSection({
       </div>
 
       {/* Filters row - hide for CS2 (no seasons in Steam API) */}
-      {!useRealCs2Stats && (
+      {!useRealCs2Stats && selectedGame !== "csgo" && (
         <div className="flex flex-wrap items-center gap-3">
           <Select value={season} onValueChange={setSeason}>
             <SelectTrigger className="w-[180px] bg-card border-border">
@@ -434,47 +435,51 @@ export function ProfileGameStatsSection({
         </div>
       )}
 
-      <Tabs value={statsTab} onValueChange={setStatsTab} className="w-full">
-        <TabsList
-          className={`grid w-full bg-card border border-border ${useRealCs2Stats ? "grid-cols-1" : "grid-cols-2"}`}
-        >
-          <TabsTrigger
-            value="overview"
-            className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white"
+      {isCs2WithoutStats ? (
+        <Cs2StatsUnavailable />
+      ) : (
+        <Tabs value={statsTab} onValueChange={setStatsTab} className="w-full">
+          <TabsList
+            className={`grid w-full bg-card border border-border ${useRealCs2Stats ? "grid-cols-1" : "grid-cols-2"}`}
           >
-            Overview
-          </TabsTrigger>
-          {!useRealCs2Stats && (
             <TabsTrigger
-              value="matches"
+              value="overview"
               className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white"
             >
-              Partidas
+              Overview
             </TabsTrigger>
-          )}
-        </TabsList>
+            {!useRealCs2Stats && selectedGame !== "csgo" && (
+              <TabsTrigger
+                value="matches"
+                className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white"
+              >
+                Partidas
+              </TabsTrigger>
+            )}
+          </TabsList>
 
-        <TabsContent value="overview" className="space-y-6 mt-6">
-          {useRealCs2Stats ? (
-            <Cs2Overview stats={cs2Stats.stats!} />
-          ) : gameType === "fps" ? (
-            <FpsOverview stats={fpsStats} />
-          ) : (
-            <LolOverview stats={lolStats} />
-          )}
-        </TabsContent>
+          <TabsContent value="overview" className="space-y-6 mt-6">
+            {useRealCs2Stats ? (
+              <Cs2Overview stats={cs2Stats.stats!} />
+            ) : gameType === "fps" ? (
+              <FpsOverview stats={fpsStats} />
+            ) : (
+              <LolOverview stats={lolStats} />
+            )}
+          </TabsContent>
 
-        <TabsContent value="matches" className="space-y-4 mt-6">
-          <MatchHistory
-            matches={matchesToShow}
-            gameId={selectedGame}
-            expandedMatch={expandedMatch}
-            onToggleExpand={setExpandedMatch}
-            onLoadMore={handleLoadMore}
-            loadingMore={loadingMore}
-          />
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="matches" className="space-y-4 mt-6">
+            <MatchHistory
+              matches={matchesToShow}
+              gameId={selectedGame}
+              expandedMatch={expandedMatch}
+              onToggleExpand={setExpandedMatch}
+              onLoadMore={handleLoadMore}
+              loadingMore={loadingMore}
+            />
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   );
 }
@@ -482,6 +487,18 @@ export function ProfileGameStatsSection({
 // ---- CS2 Overview (real stats from Steam API) ----
 
 type Cs2StatsData = NonNullable<Cs2StatsResponse["stats"]>;
+
+function Cs2StatsUnavailable() {
+  return (
+    <Card className="bg-card/50 border-border">
+      <CardContent className="p-6 text-center">
+        <p className="text-sm text-muted-foreground">
+          Este usuário não possui estatísticas disponíveis no CS2 no momento.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
 
 function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
   return (

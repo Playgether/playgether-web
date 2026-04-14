@@ -41,9 +41,39 @@ interface MatchResultsProps {
 type FilterMode = "all" | "online";
 
 const PATIENT_SEARCH_MS = 50_000;
+const CS2_ROLE_OPTIONS = ["AWPer", "Entry", "Second Entry", "Support", "Lurker", "IGL"] as const;
+const CS2_PREMIER_RANGE_OPTIONS = [
+  "0-4999",
+  "5000-9999",
+  "10000-14999",
+  "15000-19999",
+  "20000-24999",
+  "25000-29999",
+  "30000+",
+] as const;
 
 function partnerLooksActive(status: string) {
   return status === "online" || status === "away" || status === "dnd";
+}
+
+function summarizeSelectionList(
+  values: unknown,
+  options: { allCount?: number; allLabel?: string; maxVisible?: number } = {}
+) {
+  if (!Array.isArray(values) || values.length === 0) return "";
+
+  const allCount = options.allCount;
+  const allLabel = options.allLabel ?? "Todas";
+  const maxVisible = options.maxVisible ?? 3;
+  const normalized = values
+    .map((value) => String(value).trim())
+    .filter((value) => value.length > 0);
+
+  if (normalized.length === 0) return "";
+  if (allCount && normalized.length >= allCount) return allLabel;
+  if (normalized.length <= maxVisible) return normalized.join(", ");
+
+  return `${normalized.slice(0, maxVisible).join(", ")} +${normalized.length - maxVisible}`;
 }
 
 export function MatchResults({ game, preferences, onEditFilters, onChooseGame }: MatchResultsProps) {
@@ -462,12 +492,20 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
                   <InfoRow label="Faixa Premier" value={prefs.own_range} />
                 ) : null}
                 {prefs.roles?.length > 0 ? (
-                  <InfoRow label="Funções" value={prefs.roles.join(", ")} />
+                  <InfoRow
+                    label="Funções"
+                    value={summarizeSelectionList(prefs.roles, {
+                      allCount: CS2_ROLE_OPTIONS.length,
+                      allLabel: "Todas",
+                    })}
+                  />
                 ) : null}
                 {prefs.favorite_weapons?.length > 0 ? (
                   <InfoRow
                     label="Armas favoritas"
-                    value={prefs.favorite_weapons.join(", ")}
+                    value={summarizeSelectionList(prefs.favorite_weapons, {
+                      maxVisible: 3,
+                    })}
                   />
                 ) : null}
               </div>
@@ -478,60 +516,58 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
                 {prefs.accepted_ranges?.length > 0 ? (
                   <InfoRow
                     label="Faixas que aceita"
-                    value={prefs.accepted_ranges.join(", ")}
+                    value={summarizeSelectionList(prefs.accepted_ranges, {
+                      allCount: CS2_PREMIER_RANGE_OPTIONS.length,
+                      allLabel: "Todas",
+                    })}
                   />
                 ) : null}
                 {prefs.desired_roles?.length > 0 ? (
                   <InfoRow
                     label="Funções no duo"
-                    value={prefs.desired_roles.join(", ")}
+                    value={summarizeSelectionList(prefs.desired_roles, {
+                      allCount: CS2_ROLE_OPTIONS.length,
+                      allLabel: "Todas",
+                    })}
                   />
                 ) : null}
               </div>
             </div>
 
-            {gs.kd != null || gs.hours_played != null || gs.hs_percent != null ? (
-              <div className="pt-3 border-t border-border/50">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                  Stats CS2
-                </p>
-                <div className="grid grid-cols-3 gap-2">
-                  {gs.kd != null ? (
-                    <div className="rounded-lg bg-muted/30 border border-border/40 p-2.5 text-center">
-                      <Target className="h-4 w-4 mx-auto mb-1 text-neon-green" />
-                      <div className="text-[10px] text-muted-foreground leading-tight">
-                        K/D
-                      </div>
-                      <div className="font-semibold text-sm text-card-foreground">
-                        {String(gs.kd)}
-                      </div>
-                    </div>
-                  ) : null}
-                  {gs.hs_percent != null ? (
-                    <div className="rounded-lg bg-muted/30 border border-border/40 p-2.5 text-center">
-                      <Crosshair className="h-4 w-4 mx-auto mb-1 text-sky-400" />
-                      <div className="text-[10px] text-muted-foreground leading-tight">
-                        HS%
-                      </div>
-                      <div className="font-semibold text-sm text-card-foreground">
-                        {gs.hs_percent}%
-                      </div>
-                    </div>
-                  ) : null}
-                  {gs.hours_played != null ? (
-                    <div className="rounded-lg bg-muted/30 border border-border/40 p-2.5 text-center">
-                      <Timer className="h-4 w-4 mx-auto mb-1 text-amber-400" />
-                      <div className="text-[10px] text-muted-foreground leading-tight">
-                        Tempo no jogo
-                      </div>
-                      <div className="font-semibold text-sm text-card-foreground">
-                        {gs.hours_played} h
-                      </div>
-                    </div>
-                  ) : null}
+            <div className="pt-3 border-t border-border/50">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                Stats CS2
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-lg bg-muted/30 border border-border/40 p-2.5 text-center">
+                  <Target className="h-4 w-4 mx-auto mb-1 text-neon-green" />
+                  <div className="text-[10px] text-muted-foreground leading-tight">
+                    K/D
+                  </div>
+                  <div className="font-semibold text-sm text-card-foreground">
+                    {gs.kd != null ? String(gs.kd) : "Sem estatísticas"}
+                  </div>
+                </div>
+                <div className="rounded-lg bg-muted/30 border border-border/40 p-2.5 text-center">
+                  <Crosshair className="h-4 w-4 mx-auto mb-1 text-sky-400" />
+                  <div className="text-[10px] text-muted-foreground leading-tight">
+                    HS%
+                  </div>
+                  <div className="font-semibold text-sm text-card-foreground">
+                    {gs.hs_percent != null ? `${gs.hs_percent}%` : "Sem estatísticas"}
+                  </div>
+                </div>
+                <div className="rounded-lg bg-muted/30 border border-border/40 p-2.5 text-center">
+                  <Timer className="h-4 w-4 mx-auto mb-1 text-amber-400" />
+                  <div className="text-[10px] text-muted-foreground leading-tight">
+                    Tempo no jogo
+                  </div>
+                  <div className="font-semibold text-sm text-card-foreground">
+                    {gs.hours_played != null ? `${gs.hours_played} h` : "Sem estatísticas"}
+                  </div>
                 </div>
               </div>
-            ) : null}
+            </div>
           </>
         )}
 
@@ -591,9 +627,11 @@ function PlayTimeChip({ slotId }: { slotId: string }) {
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="text-card-foreground font-medium">{value}</span>
+    <div className="grid grid-cols-[auto,minmax(0,1fr)] items-start gap-x-3 text-sm">
+      <span className="text-muted-foreground leading-5">{label}</span>
+      <span className="break-words text-right font-medium leading-5 text-card-foreground">
+        {value}
+      </span>
     </div>
   );
 }
