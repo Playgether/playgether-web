@@ -60,8 +60,8 @@ export function borderGradientWithAnimatedConicAngle(
 ): string {
   if (!/^conic-gradient/i.test(borderGradient.trim())) return borderGradient;
   return borderGradient.replace(
-    /\bfrom\s+0deg\b/i,
-    "from var(--achievement-conic-angle, 0deg)",
+    /\bfrom\s+([\d.]+deg)\b/i,
+    "from calc(($1) + var(--achievement-conic-angle, 0deg))",
   );
 }
 
