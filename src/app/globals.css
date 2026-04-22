@@ -65,8 +65,9 @@ All colors MUST be HSL.
     --accent-foreground: 222 47% 11%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
+    --border: 214 32% 82%;
+    --input: 214 32% 82%;
+    --tertiary-color-variant-light: #e4e8f0;
     --ring: 241 60% 66%;
     --radius: 0.75rem;
 

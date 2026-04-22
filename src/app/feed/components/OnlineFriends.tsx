@@ -127,7 +127,7 @@ export const OnlineFriends = () => {
 
   const visibleFriends = useMemo(() => {
     const q = query.trim().toLowerCase();
-    let list = [...friends];
+    let list = friends.filter((f) => f.user_id !== user?.user_id);
     list.sort((a, b) => a.name.localeCompare(b.name, "pt"));
     list = list.filter((f) => {
       const st = friendPresenceStatus(f, presenceCtx ?? null);

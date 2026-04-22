@@ -1,17 +1,33 @@
 "use client";
 
-import { createContext, useState, useContext, useEffect } from "react";
+import { createContext, useState, useContext, useEffect, useCallback } from "react";
 import { useAuthContext } from "./AuthContext";
-import { useProfileContext } from "./ProfileContext";
-import { getNotificationsProps } from "@/types/getNotificationsProps";
-import { getNotifications } from "@/actions/getNotifications";
+import { apiFetch } from "@/services/apiFetch";
+
+export interface NotificationItem {
+  id: number;
+  is_read: boolean;
+  message: string;
+  timestamp: string;
+  notification_type: string;
+  object_id: number;
+  content_type: number;
+  actors: { name: string; username: string; profile_photo: string | null }[];
+}
 
 type NotificationsContextProps = {
-  notifications: getNotificationsProps[] | undefined;
+  notifications: NotificationItem[];
+  unreadCount: number;
+  loading: boolean;
+  refetch: () => Promise<void>;
+  markAsRead: (id: number) => Promise<void>;
+  markAllAsRead: () => Promise<void>;
+  deleteNotification: (id: number) => Promise<void>;
+  clearAll: () => Promise<void>;
 };
 
 const NotificationContext = createContext<NotificationsContextProps>(
-  {} as NotificationsContextProps
+  {} as NotificationsContextProps,
 );
 
 const NotificationsContextProvider = ({
@@ -20,39 +36,98 @@ const NotificationsContextProvider = ({
   children: React.ReactNode;
 }) => {
   const { user } = useAuthContext();
-  const [notifications, setNotifications] = useState<getNotificationsProps[]>();
-  const { profile } = useProfileContext();
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  async function fetchNotifications() {
+  const refetch = useCallback(async () => {
+    if (!user?.user_id) return;
+    setLoading(true);
     try {
-      const response = await getNotifications();
-      setNotifications(response);
-      console.log(notifications);
-    } catch (err) {
-      console.error("Erro ao buscar conteúdo", err);
+      const res = await apiFetch("/api/notifications", { credentials: "include" });
+      if (!res.ok) return;
+      const data = await res.json();
+      setNotifications(Array.isArray(data) ? data : []);
+    } catch {
+      // silent
+    } finally {
+      setLoading(false);
     }
-  }
+  }, [user?.user_id]);
 
   useEffect(() => {
-    if (!notifications && user && profile?.id) {
-      fetchNotifications();
+    if (user?.user_id) void refetch();
+  }, [user?.user_id, refetch]);
+
+  const markAsRead = useCallback(async (id: number) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)),
+    );
+    try {
+      await apiFetch(`/api/notifications/${id}`, {
+        method: "PATCH",
+        credentials: "include",
+      });
+    } catch {
+      void refetch();
     }
-  }, [profile]);
+  }, [refetch]);
+
+  const markAllAsRead = useCallback(async () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+    try {
+      await apiFetch("/api/notifications", {
+        method: "PATCH",
+        credentials: "include",
+      });
+    } catch {
+      void refetch();
+    }
+  }, [refetch]);
+
+  const deleteNotification = useCallback(async (id: number) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    try {
+      await apiFetch(`/api/notifications/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+    } catch {
+      void refetch();
+    }
+  }, [refetch]);
+
+  const clearAll = useCallback(async () => {
+    setNotifications([]);
+    try {
+      await apiFetch("/api/notifications", {
+        method: "DELETE",
+        credentials: "include",
+      });
+    } catch {
+      void refetch();
+    }
+  }, [refetch]);
+
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   return (
-    <NotificationContext.Provider value={{ notifications }}>
+    <NotificationContext.Provider
+      value={{
+        notifications,
+        unreadCount,
+        loading,
+        refetch,
+        markAsRead,
+        markAllAsRead,
+        deleteNotification,
+        clearAll,
+      }}
+    >
       {children}
     </NotificationContext.Provider>
   );
 };
 
-const useNotificationContext = () => {
-  const context = useContext(NotificationContext);
-  return context;
-};
+const useNotificationContext = () => useContext(NotificationContext);
 
-export {
-  NotificationsContextProvider,
-  useNotificationContext,
-  NotificationContext,
-};
+export { NotificationsContextProvider, useNotificationContext, NotificationContext };
