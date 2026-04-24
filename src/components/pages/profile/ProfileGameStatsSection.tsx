@@ -1367,6 +1367,31 @@ function lolKdaRatioAccentClass(ratio: number): string {
   return "text-amber-400";
 }
 
+function parseSlashKda(formatted: string): { k: number; d: number; a: number } | null {
+  const m = formatted.trim().match(/^(\d+)\s*\/\s*(\d+)\s*\/\s*(\d+)$/);
+  if (!m) return null;
+  return { k: Number(m[1]), d: Number(m[2]), a: Number(m[3]) };
+}
+
+function lolKdaPerformanceTone(ratio: number | null | undefined): "bad" | "ok" | "good" {
+  if (ratio == null || Number.isNaN(ratio)) return "ok";
+  if (ratio < 1) return "bad";
+  if (ratio < 2) return "ok";
+  return "good";
+}
+
+function lolKdaToneClasses(tone: "bad" | "ok" | "good"): string {
+  if (tone === "bad") return "text-rose-400";
+  if (tone === "ok") return "text-amber-300";
+  return "text-emerald-400";
+}
+
+/** KDA agregado de campeão (temporada/geral): mesma escala do bloco KDA no histórico de partidas. */
+function lolRollupKdaRatioToneClass(ratio: number): string {
+  if (!Number.isFinite(ratio)) return "text-muted-foreground";
+  return lolKdaToneClasses(lolKdaPerformanceTone(ratio));
+}
+
 const LOL_CHAMPIONS_OVERVIEW_PREVIEW = 5;
 
 /**
@@ -1418,9 +1443,13 @@ function LolChampionOverviewRow({ champion }: { champion: LolChampionRollupRow }
         <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
           <span className="text-foreground">{champion.games} jogos</span>
           <span className="mx-1.5">·</span>
-          <span className="font-medium text-foreground">{champion.winRate}% WR</span>
+          <span className={`font-medium tabular-nums ${lolWinRateAccentClass(champion.winRate)}`}>
+            {champion.winRate}% WR
+          </span>
           <span className="mx-1.5">·</span>
-          <span className="font-medium text-foreground">KDA {champion.kda}</span>
+          <span className={`font-medium tabular-nums ${lolRollupKdaRatioToneClass(champion.kda)}`}>
+            KDA {champion.kda}
+          </span>
         </p>
       </div>
     </div>
@@ -1609,7 +1638,7 @@ function LolChampionSyncedStatsModalCard({
             </div>
             <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
               <p className="text-xs text-muted-foreground">KDA</p>
-              <p className={`text-lg font-semibold tabular-nums ${lolKdaRatioAccentClass(c.kda)}`}>{c.kda}</p>
+              <p className={`text-lg font-semibold tabular-nums ${lolRollupKdaRatioToneClass(c.kda)}`}>{c.kda}</p>
             </div>
           </div>
         </div>
@@ -1684,7 +1713,7 @@ function LolChampionGeralModalCard({
                 </div>
                 <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
                   <p className="text-xs text-muted-foreground">KDA</p>
-                  <p className={`text-lg font-semibold tabular-nums ${lolKdaRatioAccentClass(s.kda)}`}>
+                  <p className={`text-lg font-semibold tabular-nums ${lolRollupKdaRatioToneClass(s.kda)}`}>
                     {s.kda}
                   </p>
                 </div>
@@ -1692,7 +1721,7 @@ function LolChampionGeralModalCard({
             </>
           ) : (
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Sem informações de partidas sincronizadas no Playgether para este campeão em{" "}
+              Sem informações de partidas sincronizadas na Playgether para este campeão em{" "}
               <span className="font-medium">{statsQueueLabel}</span> (todas as temporadas).
             </p>
           )}
@@ -2434,25 +2463,6 @@ function formatTimeAgo(iso: string): string {
   }
   const diffWeeks = Math.floor(diffDays / 7);
   return `${diffWeeks} ${diffWeeks === 1 ? "semana" : "semanas"} atrás`;
-}
-
-function parseSlashKda(formatted: string): { k: number; d: number; a: number } | null {
-  const m = formatted.trim().match(/^(\d+)\s*\/\s*(\d+)\s*\/\s*(\d+)$/);
-  if (!m) return null;
-  return { k: Number(m[1]), d: Number(m[2]), a: Number(m[3]) };
-}
-
-function lolKdaPerformanceTone(ratio: number | null | undefined): "bad" | "ok" | "good" {
-  if (ratio == null || Number.isNaN(ratio)) return "ok";
-  if (ratio < 1) return "bad";
-  if (ratio < 2) return "ok";
-  return "good";
-}
-
-function lolKdaToneClasses(tone: "bad" | "ok" | "good"): string {
-  if (tone === "bad") return "text-rose-400";
-  if (tone === "ok") return "text-amber-300";
-  return "text-emerald-400";
 }
 
 // ---- Match History ----
