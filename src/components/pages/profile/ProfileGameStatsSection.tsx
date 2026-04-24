@@ -2060,16 +2060,22 @@ function RealLolOverview({ stats }: { stats: LolStatsResponse }) {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="bg-card/50 border-border">
-          <CardContent className="p-4">
-            <h4 className="font-semibold text-sm text-muted-foreground mb-3">
+      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
+        <Card className="flex h-full min-h-0 flex-col bg-card/50 border-border">
+          <CardContent className="flex flex-1 flex-col p-4">
+            <h4 className="mb-2 text-center font-semibold text-sm text-muted-foreground sm:text-left">
               Campeões mais jogados (Temporada)
             </h4>
+            <p className="mb-3 border-b border-border/50 pb-3 text-center text-xs leading-relaxed text-muted-foreground sm:text-left">
+              Temporada atual sincronizada na Playgether, apenas em{" "}
+              <span className="font-medium text-foreground/90">{queueFilterLabel}</span>.
+            </p>
             {seasonChampions.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center leading-relaxed">
-                {championsEmptyFilterCopy}
-              </p>
+              <div className="flex min-h-[140px] flex-1 flex-col items-center justify-center px-1">
+                <p className="max-w-sm text-center text-sm leading-relaxed text-muted-foreground">
+                  {championsEmptyFilterCopy}
+                </p>
+              </div>
             ) : (
               <>
                 <div className="space-y-1.5">
@@ -2094,34 +2100,27 @@ function RealLolOverview({ stats }: { stats: LolStatsResponse }) {
           </CardContent>
         </Card>
 
-        <Card className="bg-card/50 border-border">
-          <CardContent className="p-4">
-            <h4 className="font-semibold text-sm text-muted-foreground mb-2">
+        <Card className="flex h-full min-h-0 flex-col bg-card/50 border-border">
+          <CardContent className="flex flex-1 flex-col p-4">
+            <h4 className="mb-2 text-center font-semibold text-sm text-muted-foreground sm:text-left">
               Campeões mais jogados (Geral)
             </h4>
-            <p className="text-xs text-muted-foreground leading-relaxed mb-3 border-b border-border/50 pb-3">
+            <p className="mb-3 border-b border-border/50 pb-3 text-center text-xs leading-relaxed text-muted-foreground sm:text-left">
               Histórico plataforma: todas as temporadas sincronizadas na Playgether, apenas em{" "}
               <span className="font-medium text-foreground/90">{queueFilterLabel}</span>.
             </p>
             {!hasGeralCardContent ? (
-              <p className="text-sm text-muted-foreground py-4 text-center leading-relaxed">
-                {championsEmptyFilterCopy}
-              </p>
-            ) : overallChampions.length === 0 ? (
-              <>
-                <p className="text-sm text-muted-foreground py-4 text-center leading-relaxed">
+              <div className="flex min-h-[140px] flex-1 flex-col items-center justify-center px-1">
+                <p className="max-w-sm text-center text-sm leading-relaxed text-muted-foreground">
                   {championsEmptyFilterCopy}
                 </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="mt-3 w-full cursor-pointer"
-                  onClick={() => setChampionsDialog("overall")}
-                >
-                  Ver todos
-                </Button>
-              </>
+              </div>
+            ) : overallChampions.length === 0 ? (
+              <div className="flex min-h-[140px] flex-1 flex-col items-center justify-center px-1">
+                <p className="max-w-sm text-center text-sm leading-relaxed text-muted-foreground">
+                  {championsEmptyFilterCopy}
+                </p>
+              </div>
             ) : (
               <>
                 <div className="space-y-1.5">
@@ -2191,15 +2190,17 @@ function RealLolOverview({ stats }: { stats: LolStatsResponse }) {
           </Card>
         ) : null}
 
-        <Card className="bg-card/50 border-border">
-          <CardContent className="p-4">
-            <h4 className="font-semibold text-sm text-muted-foreground mb-3">
+        <Card className="flex h-full min-h-0 flex-col bg-card/50 border-border">
+          <CardContent className="flex flex-1 flex-col p-4">
+            <h4 className="mb-3 text-center font-semibold text-sm text-muted-foreground sm:text-left">
               Campeões com mais maestria
             </h4>
             {masteryAll.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center leading-relaxed">
-                {championsEmptyFilterCopy}
-              </p>
+              <div className="flex min-h-[140px] flex-1 flex-col items-center justify-center px-1">
+                <p className="max-w-sm text-center text-sm leading-relaxed text-muted-foreground">
+                  {championsEmptyFilterCopy}
+                </p>
+              </div>
             ) : (
               <>
                 <div className="space-y-2">
