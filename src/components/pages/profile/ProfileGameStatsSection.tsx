@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,15 @@ import {
 } from "lucide-react";
 import type { getProfileByUsernameProps } from "@/services/getProfileByUsername";
 import type { Cs2StatsResponse } from "@/services/getCs2Stats";
+import type {
+  LolMatchDetail,
+  LolMatchItem,
+  LolQueueScope,
+  LolStatsResponse,
+  LolTimeScope,
+} from "@/services/getLolStats";
+import { getLolHistory } from "@/services/getLolStats";
+import { LolMatchHistoryDetail } from "@/components/pages/profile/LolMatchHistoryDetail";
 import { Info } from "lucide-react";
 
 // ---- Types ----
@@ -96,6 +105,10 @@ interface Match {
   kda: string;
   date: string;
   duration: string;
+  lolMatchDetail?: LolMatchDetail | null;
+  lolStaticAssets?: LolStatsResponse["staticAssets"];
+  /** From API: Riot early surrender / remake flag. */
+  lolIsRemake?: boolean;
   expandedDetails?: {
     kills: number;
     deaths: number;
@@ -106,9 +119,37 @@ interface Match {
     firstBloods?: number;
     mvps?: number;
     damage?: number;
+    damageTaken?: number;
     cs?: number;
+    csPerMinute?: number;
     vision?: number;
     gold?: number;
+    kdaRatio?: number;
+  };
+  lolPreview?: {
+    championName?: string | null;
+    championImageUrl?: string | null;
+    queueLabel?: string | null;
+    roleLabel?: string | null;
+    kdaRatio?: number | null;
+    csPerMinute?: number | null;
+    summonerSpell1Url?: string | null;
+    summonerSpell2Url?: string | null;
+    primaryRuneUrl?: string | null;
+    secondaryRuneUrl?: string | null;
+    buildItems?: Array<{
+      itemId: number;
+      iconUrl: string;
+      name?: string;
+    }>;
+    blueParticipants?: Array<{
+      gameName: string;
+      championImageUrl?: string | null;
+    }>;
+    redParticipants?: Array<{
+      gameName: string;
+      championImageUrl?: string | null;
+    }>;
   };
 }
 
@@ -316,12 +357,26 @@ interface ProfileGameStatsSectionProps {
   selectedGame: GameId;
   profile: getProfileByUsernameProps | null;
   cs2Stats?: Cs2StatsResponse | null;
+  lolStats?: LolStatsResponse | null;
+  lolTimeScope?: LolTimeScope;
+  lolQueueScope?: LolQueueScope;
+  lolSeasonId?: string | null;
+  onLolTimeScopeChange?: (value: LolTimeScope) => void;
+  onLolQueueScopeChange?: (value: LolQueueScope) => void;
+  onLolSeasonIdChange?: (value: string | null) => void;
 }
 
 export function ProfileGameStatsSection({
   selectedGame,
   profile,
   cs2Stats,
+  lolStats: lolStatsResponse,
+  lolTimeScope = "platform",
+  lolQueueScope = "ranked_solo",
+  lolSeasonId = null,
+  onLolTimeScopeChange,
+  onLolQueueScopeChange,
+  onLolSeasonIdChange,
 }: ProfileGameStatsSectionProps) {
   const [statsTab, setStatsTab] = useState("overview");
   const [season, setSeason] = useState("s1");
@@ -329,6 +384,11 @@ export function ProfileGameStatsSection({
   const [expandedMatch, setExpandedMatch] = useState<string | null>(null);
   const [matchesLoaded, setMatchesLoaded] = useState(10);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [lolHistoryItems, setLolHistoryItems] = useState<LolMatchItem[]>([]);
+  const [lolHistoryCursor, setLolHistoryCursor] = useState<string | null>(null);
+  const [lolHistoryHasMore, setLolHistoryHasMore] = useState(false);
+  /** Evita resetar o histórico local quando o pai re-renderiza com novo objeto `historyPage` igual. */
+  const lolHistoryHydrateTokenRef = useRef<string>("");
 
   const gameType: GameType = selectedGame === "lol" ? "moba" : "fps";
   const displayName =
@@ -338,19 +398,76 @@ export function ProfileGameStatsSection({
         ? "League of Legends"
         : "CS2";
   const profileNick =
-    selectedGame === "csgo"
-      ? profile?.name || "Player"
+    selectedGame === "lol"
+      ? (lolStatsResponse?.account?.riotId ?? profile?.name ?? "Player")
       : profile?.name || "Player";
   const useRealCs2Stats =
     selectedGame === "csgo" && cs2Stats?.available === true && Boolean(cs2Stats?.stats);
   const isCs2WithoutStats = selectedGame === "csgo" && !useRealCs2Stats;
+  const useRealLolStats =
+    selectedGame === "lol" &&
+    lolStatsResponse?.available === true &&
+    Boolean(lolStatsResponse?.overview);
   const fpsStats = fpsStatsBySeason[season] ?? fpsStatsBySeason["s1"];
-  const lolStats = lolStatsBySeason[season] ?? lolStatsBySeason["s1"];
+  const lolMockStats = lolStatsBySeason[season] ?? lolStatsBySeason["s1"];
 
   const allMatches = generateMatches(selectedGame, matchesLoaded);
   const matchesToShow = competitiveOnly ? allMatches : allMatches; // No filtro real, só UI
+  const lolMatchesToShow = (lolStatsResponse?.recentMatches ?? []).slice(0, matchesLoaded);
+  const activeSeasonOptions = lolStatsResponse?.seasonOptions ?? [];
+  const isLolBackfillRunning =
+    selectedGame === "lol" && (lolStatsResponse?.syncStatus?.state ?? "") === "syncing_backfill";
 
-  const handleLoadMore = () => {
+  const lolHistoryFilterKey = `${profile?.id ?? ""}:${lolTimeScope}:${lolQueueScope}:${lolSeasonId ?? ""}`;
+  const lolHistoryPage = lolStatsResponse?.historyPage;
+  const lolHistorySeed =
+    lolHistoryPage != null
+      ? `${lolHistoryPage.items?.length ?? 0}:${lolHistoryPage.items?.[0]?.matchId ?? ""}:${String(
+          lolHistoryPage.nextCursor ?? "",
+        )}:${lolHistoryPage.hasMore ? 1 : 0}:${lolHistoryPage.limit ?? 0}`
+      : "";
+
+  useEffect(() => {
+    if (selectedGame !== "lol") {
+      lolHistoryHydrateTokenRef.current = "";
+      return;
+    }
+    if (!lolHistoryPage || !lolHistorySeed) return;
+    const token = `${lolHistoryFilterKey}|${lolHistorySeed}`;
+    if (lolHistoryHydrateTokenRef.current === token) return;
+    lolHistoryHydrateTokenRef.current = token;
+    setLolHistoryItems(lolHistoryPage.items ?? []);
+    setLolHistoryCursor(lolHistoryPage.nextCursor ?? null);
+    const hasMore =
+      Boolean(lolHistoryPage.nextCursor) || Boolean(lolHistoryPage.hasMore);
+    setLolHistoryHasMore(hasMore);
+    // `lolHistorySeed` já resume o conteúdo de `historyPage`; não depender do objeto inteiro evita reset por re-render.
+  }, [selectedGame, lolHistoryFilterKey, lolHistorySeed]);
+
+  const handleLoadMore = async () => {
+    if (selectedGame === "lol") {
+      if (!profile?.id || !lolHistoryHasMore || loadingMore) return;
+      setLoadingMore(true);
+      try {
+        const response = await getLolHistory(profile.id, {
+          timeScope: lolTimeScope,
+          queueScope: lolQueueScope,
+          seasonId: lolSeasonId,
+          cursor: lolHistoryCursor,
+          limit: 20,
+        });
+        const nextItems = response.historyPage?.items ?? [];
+        setLolHistoryItems((prev) => [...prev, ...nextItems]);
+        setLolHistoryCursor(response.historyPage?.nextCursor ?? null);
+        setLolHistoryHasMore(
+          Boolean(response.historyPage?.nextCursor) ||
+            Boolean(response.historyPage?.hasMore),
+        );
+      } finally {
+        setLoadingMore(false);
+      }
+      return;
+    }
     setLoadingMore(true);
     setTimeout(() => {
       setMatchesLoaded((prev) => prev + 10);
@@ -360,36 +477,60 @@ export function ProfileGameStatsSection({
 
   return (
     <div className="space-y-6">
-      {/* Player header - profile icon + nick */}
+      {/* Player header - plataforma; LoL real usa ícone + Riot ID da conta do jogo */}
       <div className="flex flex-wrap items-center gap-4">
-        <div className="relative inline-block">
-          <ProfileAvatar
-            displayName={profileNick}
-            username={profile?.username}
-            profilePhoto={profile?.profile_photo ?? null}
-            sizeClass="h-14 w-14"
-            ringClass="border-2 border-border ring-2 ring-primary/20"
-            fallbackTextClassName="text-base font-bold"
-          />
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold text-card-foreground">
-            {profileNick}
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            {selectedGame === "csgo"
-              ? "Steam"
-              : selectedGame === "valorant"
-                ? "Riot ID"
-                : "Summoner"}
-            {" · "}
-            {displayName}
-          </p>
+        <div className="flex flex-wrap items-center gap-4 min-w-0">
+          <div className="relative inline-block shrink-0">
+            {useRealLolStats && selectedGame === "lol" && lolStatsResponse?.account?.profileIconUrl ? (
+              <img
+                src={lolStatsResponse.account.profileIconUrl}
+                alt=""
+                className="h-14 w-14 rounded-md border-2 border-border ring-2 ring-primary/20 object-cover"
+              />
+            ) : (
+              <ProfileAvatar
+                displayName={profileNick}
+                username={profile?.username}
+                profilePhoto={profile?.profile_photo ?? null}
+                sizeClass="h-14 w-14"
+                ringClass="border-2 border-border ring-2 ring-primary/20"
+                fallbackTextClassName="text-base font-bold"
+              />
+            )}
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-lg font-semibold text-card-foreground truncate">
+              {profileNick}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {useRealLolStats && selectedGame === "lol" && lolStatsResponse?.account ? (
+                <>
+                  Nível {lolStatsResponse.account.summonerLevel ?? 0} · Região{" "}
+                  {(lolStatsResponse.account.platformRegion ?? "").toUpperCase()}
+                </>
+              ) : selectedGame === "csgo" ? (
+                <>
+                  Steam{" · "}
+                  {displayName}
+                </>
+              ) : selectedGame === "valorant" ? (
+                <>
+                  Riot ID{" · "}
+                  {displayName}
+                </>
+              ) : (
+                <>
+                  Summoner{" · "}
+                  {displayName}
+                </>
+              )}
+            </p>
+          </div>
         </div>
       </div>
 
       {/* Filters row - hide for CS2 (no seasons in Steam API) */}
-      {!useRealCs2Stats && selectedGame !== "csgo" && (
+      {!useRealCs2Stats && !useRealLolStats && selectedGame !== "csgo" && (
         <div className="flex flex-wrap items-center gap-3">
           <Select value={season} onValueChange={setSeason}>
             <SelectTrigger className="w-[180px] bg-card border-border">
@@ -428,6 +569,94 @@ export function ProfileGameStatsSection({
         </div>
       )}
 
+      {useRealLolStats && selectedGame === "lol" && (
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <Select
+              value={lolTimeScope}
+              onValueChange={(value) => {
+                const nextValue = value as LolTimeScope;
+                onLolTimeScopeChange?.(nextValue);
+                if (nextValue === "platform") {
+                  onLolSeasonIdChange?.(null);
+                } else if (!lolSeasonId && activeSeasonOptions[0]) {
+                  onLolSeasonIdChange?.(activeSeasonOptions[0].key);
+                }
+              }}
+            >
+              <SelectTrigger className="w-[210px] bg-card border-border cursor-pointer">
+                <SelectValue placeholder="Escopo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="platform">Gerais (Playgether)</SelectItem>
+                <SelectItem value="season">Temporada</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {lolTimeScope === "season" && (
+              activeSeasonOptions.length > 0 ? (
+                <Select
+                  value={lolSeasonId ?? activeSeasonOptions[0]?.key}
+                  onValueChange={(value) => onLolSeasonIdChange?.(value)}
+                >
+                  <SelectTrigger className="w-[180px] bg-card border-border cursor-pointer">
+                    <SelectValue placeholder="Temporada" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeSeasonOptions.map((option) => (
+                      <SelectItem key={option.key} value={option.key}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="text-sm text-muted-foreground rounded-lg border border-border bg-card/50 px-3 py-2">
+                  Nenhuma season sincronizada ainda
+                </div>
+              )
+            )}
+
+            <Select
+              value={lolQueueScope}
+              onValueChange={(value) => onLolQueueScopeChange?.(value as LolQueueScope)}
+            >
+              <SelectTrigger className="w-[220px] bg-card border-border cursor-pointer">
+                <SelectValue placeholder="Fila" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ranked_solo">Ranked Solo/Duo</SelectItem>
+                <SelectItem value="ranked_flex">Ranked Flex</SelectItem>
+                <SelectItem value="aram">ARAM</SelectItem>
+                <SelectItem value="all">Todas as filas</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {((lolStatsResponse?.disclaimers ?? []).length > 0 || isLolBackfillRunning) ? (
+            <div className="flex flex-col gap-2">
+              {(lolStatsResponse?.disclaimers ?? []).map((disclaimer) => (
+                <div
+                  key={disclaimer}
+                  className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2"
+                >
+                  <Info className="h-3.5 w-3.5 shrink-0" />
+                  <span>{disclaimer}</span>
+                </div>
+              ))}
+              {isLolBackfillRunning ? (
+                <div className="flex items-center gap-2 text-xs text-amber-200 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
+                  <Info className="h-3.5 w-3.5 shrink-0" />
+                  <span>
+                    Exibindo as partidas mais recentes. O restante da temporada ainda esta sincronizando em segundo plano.
+                  </span>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      )}
+
       {useRealCs2Stats && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2 w-fit">
           <Info className="h-3.5 w-3.5 shrink-0" />
@@ -448,7 +677,7 @@ export function ProfileGameStatsSection({
             >
               Overview
             </TabsTrigger>
-            {!useRealCs2Stats && selectedGame !== "csgo" && (
+            {(selectedGame === "lol" || (!useRealCs2Stats && selectedGame !== "csgo")) && (
               <TabsTrigger
                 value="matches"
                 className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white"
@@ -461,21 +690,33 @@ export function ProfileGameStatsSection({
           <TabsContent value="overview" className="space-y-6 mt-6">
             {useRealCs2Stats ? (
               <Cs2Overview stats={cs2Stats.stats!} />
+            ) : useRealLolStats ? (
+              <RealLolOverview stats={lolStatsResponse!} />
             ) : gameType === "fps" ? (
               <FpsOverview stats={fpsStats} />
             ) : (
-              <LolOverview stats={lolStats} />
+              <LolOverview stats={lolMockStats} />
             )}
           </TabsContent>
 
           <TabsContent value="matches" className="space-y-4 mt-6">
             <MatchHistory
-              matches={matchesToShow}
+              matches={
+                useRealLolStats && selectedGame === "lol"
+                  ? mapLolMatchesToUi(
+                      lolHistoryItems.length > 0 ? lolHistoryItems : lolMatchesToShow,
+                      lolStatsResponse?.staticAssets,
+                    )
+                  : matchesToShow
+              }
               gameId={selectedGame}
               expandedMatch={expandedMatch}
               onToggleExpand={setExpandedMatch}
               onLoadMore={handleLoadMore}
               loadingMore={loadingMore}
+              hasMore={selectedGame === "lol" ? lolHistoryHasMore : true}
+              loadMoreDisabled={isLolBackfillRunning}
+              loadMoreDisabledLabel="Aguardando sincronizacao do restante da temporada..."
             />
           </TabsContent>
         </Tabs>
@@ -1098,6 +1339,473 @@ function LolOverview({ stats }: { stats: LolStats }) {
   );
 }
 
+type LolChampionRollupRow = NonNullable<LolStatsResponse["championsSeason"]>[number];
+
+function lolWinRateAccentClass(winRate: number): string {
+  if (Math.abs(winRate - 50) < 0.001) return "text-amber-400";
+  if (winRate > 50) return "text-neon-green";
+  return "text-red-500";
+}
+
+/** Acima de 1 = positivo (verde), abaixo = negativo (vermelho), ~1 = neutro (amarelo). */
+function lolKdaRatioAccentClass(ratio: number): string {
+  if (ratio > 1.001) return "text-neon-green";
+  if (ratio < 0.999) return "text-red-500";
+  return "text-amber-400";
+}
+
+function lolRankTierTextClass(tier: string | undefined | null): string {
+  const t = (tier || "").trim().toUpperCase();
+  if (!t) return "text-muted-foreground";
+  const map: Record<string, string> = {
+    IRON: "text-[#8d9199]",
+    BRONZE: "text-[#cd7f32]",
+    SILVER: "text-[#bcc6d6]",
+    GOLD: "text-[#e4c88b]",
+    PLATINUM: "text-[#5bc9c4]",
+    EMERALD: "text-[#2ecf9f]",
+    DIAMOND: "text-[#7ebfff]",
+    MASTER: "text-[#b27dff]",
+    GRANDMASTER: "text-[#f15d5d]",
+    CHALLENGER: "text-[#f4c874]",
+  };
+  return map[t] ?? "text-muted-foreground";
+}
+
+/**
+ * Emblemas de elo (CDragon) vêm com bastante área transparente; ampliamos e cortamos no quadro.
+ */
+function LolRankEmblemFrame({
+  src,
+  alt,
+  frameClass,
+  zoomPercent = 158,
+}: {
+  src: string;
+  alt: string;
+  /** Classes de tamanho do container, ex: h-28 w-28 */
+  frameClass: string;
+  /** Largura/altura da imagem em % do container (maior = mais “zoom”) */
+  zoomPercent?: number;
+}) {
+  return (
+    <div
+      className={`relative shrink-0 overflow-hidden rounded-xl border border-border/70 bg-gradient-to-b from-muted/40 to-muted/15 shadow-inner ${frameClass}`}
+    >
+      <img
+        src={src}
+        alt={alt}
+        className="absolute left-1/2 top-1/2 max-h-none max-w-none -translate-x-1/2 -translate-y-1/2 object-cover object-center pointer-events-none"
+        style={{ width: `${zoomPercent}%`, height: `${zoomPercent}%` }}
+      />
+    </div>
+  );
+}
+
+function LolChampionOverviewRow({ champion }: { champion: LolChampionRollupRow }) {
+  const wrClass = lolWinRateAccentClass(champion.winRate);
+  const kdaClass = lolKdaRatioAccentClass(champion.kda);
+  return (
+    <div className="flex gap-3 rounded-lg border border-border/50 bg-muted/20 p-3 sm:p-3.5">
+      {champion.championImageUrl ? (
+        <img
+          src={champion.championImageUrl}
+          alt={champion.championName}
+          className="h-12 w-12 sm:h-14 sm:w-14 rounded-full border border-border/80 object-cover shrink-0 shadow-sm"
+        />
+      ) : (
+        <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-muted border border-border shrink-0 flex items-center justify-center text-sm font-bold text-muted-foreground">
+          {(champion.championName || "?").slice(0, 1)}
+        </div>
+      )}
+      <div className="min-w-0 flex-1 space-y-2">
+        <p className="font-semibold text-base sm:text-lg leading-tight break-words">
+          {champion.championName}
+        </p>
+        <div className="flex flex-col gap-2 text-sm sm:text-base">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className="text-muted-foreground text-xs uppercase tracking-wide">Jogos</span>
+            <span className="font-semibold tabular-nums text-foreground">{champion.games}</span>
+          </div>
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className="text-muted-foreground text-xs uppercase tracking-wide">WR</span>
+            <span className={`font-bold tabular-nums ${wrClass}`}>{champion.winRate}%</span>
+          </div>
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className="text-muted-foreground text-xs uppercase tracking-wide">KDA</span>
+            <span className={`font-bold tabular-nums ${kdaClass}`}>{champion.kda}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Ícone de elo em coluna fixa + texto, para alinhar verticalmente entre filas. */
+function LolRankedQueueBlock({
+  queueTitle,
+  queue,
+}: {
+  queueTitle: string;
+  queue?: {
+    label: string | null;
+    iconUrl?: string | null;
+    tier?: string;
+  } | null;
+}) {
+  const text = queue?.label ?? "Sem dados";
+  const tierClass = lolRankTierTextClass(queue?.tier ?? null);
+  return (
+    <div className="grid grid-cols-[52px_minmax(0,1fr)] gap-3 items-center text-sm">
+      <div className="flex h-full min-h-[52px] items-center justify-center self-start pt-0.5">
+        {queue?.iconUrl ? (
+          <LolRankEmblemFrame
+            src={queue.iconUrl}
+            alt={`Emblema ranqueado — ${queueTitle}`}
+            frameClass="h-11 w-11"
+            zoomPercent={154}
+          />
+        ) : (
+          <div className="h-11 w-11 shrink-0 rounded-xl border border-border/60 bg-muted/35" />
+        )}
+      </div>
+      <div className="min-w-0 space-y-0.5 py-0.5">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {queueTitle}
+        </p>
+        <p className={`text-sm sm:text-base font-semibold leading-snug break-words ${tierClass}`}>
+          {text}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function RealLolOverview({ stats }: { stats: LolStatsResponse }) {
+  const overview = stats.overview;
+  const rankedCurrent = stats.ranked?.current;
+  const selectedRanked = stats.ranked?.selectedQueueRanked ?? null;
+  const bestQueue =
+    selectedRanked ??
+    stats.ranked?.queues?.RANKED_SOLO_5x5 ??
+    stats.ranked?.queues?.RANKED_FLEX_SR ??
+    null;
+  const filterRank = stats.ranked?.selectedQueueRanked ?? bestQueue;
+  const rankDisplayLabel = filterRank?.label ?? rankedCurrent?.label ?? "Sem rank";
+  const rankLpText = filterRank
+    ? `${filterRank.leaguePoints.toLocaleString()} LP`
+    : rankedCurrent
+      ? `${rankedCurrent.leaguePoints.toLocaleString()} LP`
+      : "Sem dados ranqueados";
+  const rankEmblemUrl = filterRank?.iconUrl ?? rankedCurrent?.iconUrl ?? null;
+  const seasonChampions = stats.championsSeason ?? [];
+  const overallChampions = stats.championsOverall ?? [];
+  const last20 = stats.last20Summary;
+  const completeness = stats.dataCompleteness;
+
+  if (!overview) {
+    return (
+      <Card className="bg-card/50 border-border">
+        <CardContent className="p-6 text-center text-sm text-muted-foreground">
+          Não há dados suficientes para exibir estatísticas do League of Legends ainda.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const rankTierKey = (filterRank?.tier ?? rankedCurrent?.tier ?? "").trim();
+  const rankTitleClass = lolRankTierTextClass(rankTierKey || null);
+  const winRateAccent = lolWinRateAccentClass(overview.winRate);
+  const kdaAccent = lolKdaRatioAccentClass(overview.kdaRatio);
+  const queueScope = stats.appliedFilters?.queueScope ?? "ranked_solo";
+  const showBothRankedQueues = queueScope === "all";
+  const showRankedSoloRow = queueScope === "ranked_solo" || showBothRankedQueues;
+  const showRankedFlexRow = queueScope === "ranked_flex" || showBothRankedQueues;
+  const rankedLpSource = filterRank;
+  /** WR do card superior = rollup das partidas sincronizadas (filtro). WR do snapshot Riot (liga) costuma divergir — usamos o mesmo do overview aqui. */
+  const rankedWrDisplay = `${overview.winRate}%`;
+  const rankedWrClass = lolWinRateAccentClass(overview.winRate);
+
+  return (
+    <div className="space-y-6">
+      {completeness ? (
+        <Card className="bg-card/40 border-border">
+          <CardContent className="p-4 text-xs text-muted-foreground flex flex-wrap gap-4">
+            <span>Total sincronizadas: {completeness.totalMatchesSynced}</span>
+            <span>Temporada sincronizadas: {completeness.seasonMatchesSynced}</span>
+            <span>
+              Cobertura: {completeness.isPartial ? "Parcial (limite de API / alvo)" : "Completa"}
+            </span>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-stretch">
+        <Card className="bg-card/50 border-border overflow-hidden h-full flex flex-col">
+          <CardContent className="p-3 h-full flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 min-h-0">
+            {rankEmblemUrl ? (
+              <LolRankEmblemFrame
+                src={rankEmblemUrl}
+                alt={rankDisplayLabel}
+                frameClass="h-16 w-16 sm:h-[72px] sm:w-[72px] shrink-0 mx-auto sm:mx-0"
+                zoomPercent={172}
+              />
+            ) : (
+              <div className="h-16 w-16 sm:h-[72px] sm:w-[72px] shrink-0 mx-auto sm:mx-0 rounded-xl bg-muted/50 border border-border flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7 text-muted-foreground" />
+              </div>
+            )}
+            <div className="min-w-0 flex-1 flex flex-col justify-center text-center sm:text-left">
+              <div className="flex items-center justify-center sm:justify-start gap-2 text-muted-foreground mb-1">
+                <TrendingUp className="h-4 w-4 shrink-0" />
+                <span className="text-xs font-medium">Rank Atual</span>
+              </div>
+              <p
+                className={`text-base sm:text-lg font-bold leading-snug break-words ${rankTitleClass}`}
+              >
+                {rankDisplayLabel}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">{rankLpText}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <StatCard
+          icon={<Trophy className="h-4 w-4" />}
+          label="Win Rate"
+          value={`${overview.winRate}%`}
+          accent={winRateAccent}
+        />
+        <StatCard
+          icon={<Target className="h-4 w-4" />}
+          label="KDA"
+          value={overview.kdaFormatted}
+          accent={kdaAccent}
+        />
+        <StatCard
+          icon={<Clock className="h-4 w-4" />}
+          label="Horas"
+          value={`${overview.timePlayedHours}h`}
+          accent="text-neon-blue"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="bg-card/50 border-border">
+          <CardContent className="p-4">
+            <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
+              <Swords className="h-4 w-4" />
+              KDA e Volume
+            </h4>
+            <div className="space-y-2 text-sm">
+              <Row label="Partidas" value={overview.gamesPlayed.toLocaleString()} />
+              <Row label="Vitórias" value={overview.wins.toLocaleString()} valueClassName="text-neon-green" />
+              <Row label="Derrotas" value={overview.losses.toLocaleString()} valueClassName="text-red-500" />
+              <Row label="Kills" value={overview.totals.kills.toLocaleString()} valueClassName="text-neon-green" />
+              <Row label="Mortes" value={overview.totals.deaths.toLocaleString()} valueClassName="text-red-500" />
+              <Row
+                label="Assistências"
+                value={overview.totals.assists.toLocaleString()}
+                valueClassName="text-sky-400"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/50 border-border">
+          <CardContent className="p-4">
+            <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
+              <Crosshair className="h-4 w-4" />
+              Médias por jogo
+            </h4>
+            <div className="space-y-2 text-sm">
+              <Row label="Kills" value={String(overview.avgKills)} valueClassName="text-neon-green" />
+              <Row label="Mortes" value={String(overview.avgDeaths)} valueClassName="text-red-500" />
+              <Row label="Assistências" value={String(overview.avgAssists)} valueClassName="text-sky-400" />
+              <Row label="CS/jogo" value={String(overview.csPerGame)} valueClassName="text-cyan-300/95" />
+              <Row label="CS/min" value={String(overview.csPerMinute)} valueClassName="text-cyan-300/95" />
+              <Row
+                label="KP%"
+                value={`${overview.kpPercent}%`}
+                valueClassName={lolWinRateAccentClass(overview.kpPercent)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/50 border-border">
+          <CardContent className="p-4">
+            <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Ranked
+            </h4>
+            <div className="space-y-3 text-sm">
+              {showRankedSoloRow ? (
+                <LolRankedQueueBlock
+                  queueTitle="Solo / Duo"
+                  queue={stats.ranked?.queues?.RANKED_SOLO_5x5}
+                />
+              ) : null}
+              {showRankedFlexRow ? (
+                <LolRankedQueueBlock
+                  queueTitle="Flex"
+                  queue={stats.ranked?.queues?.RANKED_FLEX_SR}
+                />
+              ) : null}
+              {!showRankedSoloRow && !showRankedFlexRow ? (
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Solo e Flex não são exibidos para o filtro de fila atual (ex.: ARAM).
+                </p>
+              ) : null}
+              <Row
+                label="LP atual"
+                value={
+                  rankedLpSource
+                    ? `${rankedLpSource.leaguePoints.toLocaleString()} LP`
+                    : "Sem dados"
+                }
+              />
+              <Row
+                label="WR (partidas)"
+                value={overview.gamesPlayed > 0 ? rankedWrDisplay : "Sem dados"}
+                valueClassName={overview.gamesPlayed > 0 ? rankedWrClass : undefined}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/50 border-border">
+          <CardContent className="p-4">
+            <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Últimas 20
+            </h4>
+            <div className="space-y-2 text-sm">
+              <Row label="Partidas" value={String(last20?.gamesPlayed ?? 0)} />
+              <Row label="Vitórias" value={String(last20?.wins ?? 0)} valueClassName="text-neon-green" />
+              <Row label="Derrotas" value={String(last20?.losses ?? 0)} valueClassName="text-red-500" />
+              <Row
+                label="WR"
+                value={`${last20?.winRate ?? 0}%`}
+                valueClassName={lolWinRateAccentClass(last20?.winRate ?? 0)}
+              />
+              <Row
+                label="KDA"
+                value={last20?.kdaFormatted ?? "0.00:1"}
+                valueClassName={lolKdaRatioAccentClass(last20?.kdaRatio ?? 0)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card className="bg-card/50 border-border">
+          <CardContent className="p-4">
+            <h4 className="font-semibold text-sm text-muted-foreground mb-3">
+              Campeões mais jogados (Temporada)
+            </h4>
+            <div className="space-y-2">
+              {seasonChampions.map((champion) => (
+                <LolChampionOverviewRow
+                  key={`${champion.championId}-${champion.championName}`}
+                  champion={champion}
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/50 border-border">
+          <CardContent className="p-4">
+            <h4 className="font-semibold text-sm text-muted-foreground mb-3">
+              Campeões mais jogados (Geral)
+            </h4>
+            <div className="space-y-2">
+              {overallChampions.map((champion) => (
+                <LolChampionOverviewRow
+                  key={`overall-${champion.championId}-${champion.championName}`}
+                  champion={champion}
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card className="bg-card/50 border-border">
+          <CardContent className="p-4">
+            <h4 className="font-semibold text-sm text-muted-foreground mb-3">
+              Roles por filtro
+            </h4>
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                {(stats.roleDistribution ?? []).map((role) => (
+                  <Badge
+                    key={role.role}
+                    variant="outline"
+                    className="inline-flex max-w-full flex-wrap items-center rounded-full border-border/70 bg-muted/25 py-2 pl-2.5 pr-3 gap-x-2 gap-y-1 text-foreground shadow-none hover:bg-muted/40"
+                  >
+                    {role.roleIconUrl ? (
+                      <span className="relative h-5 w-5 shrink-0 overflow-hidden rounded-sm flex items-center justify-center bg-background/50">
+                        <img
+                          src={role.roleIconUrl}
+                          alt=""
+                          className="h-[118%] w-[118%] max-w-none object-cover object-center"
+                          title={role.role}
+                        />
+                      </span>
+                    ) : null}
+                    <span className="font-semibold tracking-tight">{role.role}</span>
+                    <span className="text-muted-foreground text-xs sm:text-sm">
+                      {role.games} jogos
+                    </span>
+                    <span
+                      className={`text-xs sm:text-sm font-bold tabular-nums ${lolWinRateAccentClass(role.winRate)}`}
+                    >
+                      {role.winRate}% WR
+                    </span>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/50 border-border">
+          <CardContent className="p-4">
+            <h4 className="font-semibold text-sm text-muted-foreground mb-3">
+              Maestria (global da conta)
+            </h4>
+            <div className="space-y-2">
+                {(stats.championMastery ?? []).slice(0, 4).map((mastery) => (
+                  <div
+                    key={`${mastery.championId}-${mastery.championName}`}
+                    className="flex items-center justify-between text-sm gap-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      {mastery.championImageUrl ? (
+                        <img
+                          src={mastery.championImageUrl}
+                          alt={mastery.championName}
+                          className="h-7 w-7 rounded-sm border border-border/70"
+                        />
+                      ) : null}
+                      <span className="text-muted-foreground">{mastery.championName}</span>
+                    </div>
+                    <span className="font-medium">
+                      Lv. {mastery.championLevel} · {mastery.championPoints.toLocaleString()} pts
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 // ---- Stat card helper ----
 
 function StatCard({
@@ -1114,8 +1822,8 @@ function StatCard({
   subValue?: string;
 }) {
   return (
-    <Card className="bg-card/50 border-border overflow-hidden">
-      <CardContent className="p-3">
+    <Card className="bg-card/50 border-border overflow-hidden h-full flex flex-col">
+      <CardContent className="p-3 h-full flex flex-col">
         <div className="flex items-center gap-2 text-muted-foreground mb-1">
           {icon}
           <span className="text-xs font-medium">{label}</span>
@@ -1129,6 +1837,173 @@ function StatCard({
   );
 }
 
+function Row({
+  label,
+  value,
+  valueClassName,
+}: {
+  label: string;
+  value: string;
+  valueClassName?: string;
+}) {
+  return (
+    <div className="flex justify-between gap-3 text-sm items-baseline">
+      <span className="text-muted-foreground shrink-0">{label}</span>
+      <span
+        className={`font-medium text-right tabular-nums break-all ${valueClassName ?? "text-foreground"}`}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function mapLolMatchesToUi(
+  matches: LolMatchItem[],
+  staticAssets?: LolStatsResponse["staticAssets"],
+): Match[] {
+  const championIconBase = staticAssets?.championIconBase;
+  const cdnBase = staticAssets?.cdnBase;
+  return matches.map((match) => {
+    const csPerMinute =
+      match.durationSeconds > 0
+        ? Number((match.cs / (match.durationSeconds / 60)).toFixed(1))
+        : undefined;
+
+    const expandedDetails: Match["expandedDetails"] = {
+      kills: match.kda.kills,
+      deaths: match.kda.deaths,
+      assists: match.kda.assists,
+      damage: match.damageDealt,
+      damageTaken: match.damageTaken,
+      cs: match.cs,
+      csPerMinute,
+      vision: match.visionScore,
+      gold: match.gold,
+      kdaRatio: match.kda.ratio,
+    };
+
+    const viewerParticipant =
+      match.matchDetail?.participants.find(
+        (participant) =>
+          Boolean(match.matchDetail?.viewerPuuid) &&
+          participant.puuid === match.matchDetail?.viewerPuuid,
+      ) ?? null;
+    const blueParticipants =
+      match.matchDetail?.participants
+        .filter((participant) => participant.teamId === 100)
+        .map((participant) => ({
+          gameName: participant.gameName,
+          championImageUrl:
+            championIconBase && participant.championImage
+              ? `${championIconBase}/${participant.championImage}`
+              : null,
+        })) ?? [];
+    const redParticipants =
+      match.matchDetail?.participants
+        .filter((participant) => participant.teamId === 200)
+        .map((participant) => ({
+          gameName: participant.gameName,
+          championImageUrl:
+            championIconBase && participant.championImage
+              ? `${championIconBase}/${participant.championImage}`
+              : null,
+        })) ?? [];
+    const buildItems =
+      viewerParticipant?.items
+        ?.filter((itemId) => itemId > 0)
+        .slice(0, 6)
+        .map((itemId, idx) => ({
+          itemId,
+          iconUrl: cdnBase ? `${cdnBase}/img/item/${itemId}.png` : "",
+          name: viewerParticipant.itemsDetailed?.[idx]?.name,
+        }))
+        .filter((item) => Boolean(item.iconUrl)) ?? [];
+
+    return {
+      id: match.matchId,
+      map: match.championName,
+      result: match.result,
+      lolIsRemake: Boolean(match.isRemake),
+      score:
+        match.matchDetail?.queueLabel ??
+        match.teamPositionLabel ??
+        match.teamPosition ??
+        "League of Legends",
+      kda: match.kda.formatted,
+      date: formatTimeAgo(match.gameCreation),
+      duration: formatLolDuration(match.durationSeconds),
+      lolMatchDetail: match.matchDetail ?? null,
+      lolStaticAssets: staticAssets,
+      expandedDetails,
+      lolPreview: {
+        championName: match.championName,
+        championImageUrl:
+          championIconBase && match.championImage
+            ? `${championIconBase}/${match.championImage}`
+            : null,
+        queueLabel: match.matchDetail?.queueLabel ?? null,
+        roleLabel: match.teamPositionLabel ?? match.teamPosition ?? null,
+        kdaRatio: match.kda.ratio,
+        csPerMinute: csPerMinute ?? null,
+        summonerSpell1Url: viewerParticipant?.summonerSpell1Url ?? null,
+        summonerSpell2Url: viewerParticipant?.summonerSpell2Url ?? null,
+        primaryRuneUrl: viewerParticipant?.primaryRuneUrl ?? null,
+        secondaryRuneUrl: viewerParticipant?.secondaryStyleUrl ?? null,
+        buildItems,
+        blueParticipants,
+        redParticipants,
+      },
+    };
+  });
+}
+
+function formatDuration(totalSeconds: number): string {
+  const minutes = Math.max(1, Math.round(totalSeconds / 60));
+  return `${minutes}m`;
+}
+
+function formatLolDuration(totalSeconds: number): string {
+  const s = Math.max(0, Math.floor(totalSeconds));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}m ${r}s`;
+}
+
+function formatTimeAgo(iso: string): string {
+  const date = new Date(iso);
+  const diffMs = Date.now() - date.getTime();
+  const diffHours = Math.max(1, Math.floor(diffMs / (1000 * 60 * 60)));
+  if (diffHours < 24) {
+    return `${diffHours}h atrás`;
+  }
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) {
+    return `${diffDays}d atrás`;
+  }
+  const diffWeeks = Math.floor(diffDays / 7);
+  return `${diffWeeks} ${diffWeeks === 1 ? "semana" : "semanas"} atrás`;
+}
+
+function parseSlashKda(formatted: string): { k: number; d: number; a: number } | null {
+  const m = formatted.trim().match(/^(\d+)\s*\/\s*(\d+)\s*\/\s*(\d+)$/);
+  if (!m) return null;
+  return { k: Number(m[1]), d: Number(m[2]), a: Number(m[3]) };
+}
+
+function lolKdaPerformanceTone(ratio: number | null | undefined): "bad" | "ok" | "good" {
+  if (ratio == null || Number.isNaN(ratio)) return "ok";
+  if (ratio < 1) return "bad";
+  if (ratio < 2) return "ok";
+  return "good";
+}
+
+function lolKdaToneClasses(tone: "bad" | "ok" | "good"): string {
+  if (tone === "bad") return "text-rose-400";
+  if (tone === "ok") return "text-amber-300";
+  return "text-emerald-400";
+}
+
 // ---- Match History ----
 
 function MatchHistory({
@@ -1138,6 +2013,9 @@ function MatchHistory({
   onToggleExpand,
   onLoadMore,
   loadingMore,
+  hasMore,
+  loadMoreDisabled = false,
+  loadMoreDisabledLabel,
 }: {
   matches: Match[];
   gameId: GameId;
@@ -1145,13 +2023,70 @@ function MatchHistory({
   onToggleExpand: (id: string | null) => void;
   onLoadMore: () => void;
   loadingMore: boolean;
+  hasMore: boolean;
+  loadMoreDisabled?: boolean;
+  loadMoreDisabledLabel?: string;
 }) {
+  const getLolQueueBadgeClass = (queueLabel?: string | null) => {
+    const queue = (queueLabel ?? "").toLowerCase();
+    if (queue.includes("solo")) return "bg-rose-500/15 text-rose-200 border-rose-500/40";
+    if (queue.includes("flex")) return "bg-blue-500/15 text-blue-200 border-blue-500/40";
+    if (queue.includes("aram")) return "bg-violet-500/15 text-violet-200 border-violet-500/40";
+    return "bg-muted/50 text-muted-foreground border-border/70";
+  };
+
+  const lolKdaBlock = (match: Match) => {
+    const ratio =
+      match.lolPreview?.kdaRatio ??
+      match.expandedDetails?.kdaRatio ??
+      (match.expandedDetails &&
+      match.expandedDetails.deaths > 0 &&
+      match.expandedDetails.kills != null &&
+      match.expandedDetails.assists != null
+        ? (match.expandedDetails.kills + match.expandedDetails.assists) /
+          match.expandedDetails.deaths
+        : null);
+    const toneCls = match.lolIsRemake
+      ? "text-zinc-400"
+      : lolKdaToneClasses(lolKdaPerformanceTone(ratio));
+    const parts = parseSlashKda(match.kda);
+
+    return (
+      <div className="mt-0.5 space-y-0.5">
+        {parts ? (
+          <div
+            className={`flex flex-wrap items-baseline gap-x-1 text-[15px] font-bold tabular-nums leading-tight tracking-tight sm:text-base ${toneCls}`}
+          >
+            <span>{parts.k}</span>
+            <span className="text-[0.85em] font-semibold text-muted-foreground/70">/</span>
+            <span>{parts.d}</span>
+            <span className="text-[0.85em] font-semibold text-muted-foreground/70">/</span>
+            <span>{parts.a}</span>
+          </div>
+        ) : (
+          <div
+            className={`text-[15px] font-bold tabular-nums leading-tight sm:text-base ${toneCls}`}
+          >
+            {match.kda}
+          </div>
+        )}
+        {ratio != null && Number.isFinite(ratio) ? (
+          <div className={`text-xs font-semibold tabular-nums sm:text-sm ${toneCls} opacity-95`}>
+            {ratio.toFixed(2)} KDA
+          </div>
+        ) : null}
+      </div>
+    );
+  };
+
   return (
     <Card>
       <CardContent className="p-6">
         <h3 className="text-lg font-semibold mb-4">Partidas Recentes</h3>
         <div className="space-y-2">
-          {matches.map((match) => (
+          {matches.map((match) => {
+            const isLolRemake = gameId === "lol" && Boolean(match.lolIsRemake);
+            return (
             <Collapsible
               key={match.id}
               open={expandedMatch === match.id}
@@ -1165,41 +2100,277 @@ function MatchHistory({
                 }`}
               >
                 <CollapsibleTrigger asChild>
-                  <button className="w-full flex items-center justify-between p-3 text-left">
-                    <div className="flex items-center gap-4">
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                          match.result === "win"
-                            ? "bg-green-500/20 text-green-400"
-                            : "bg-red-500/20 text-red-400"
-                        }`}
-                      >
-                        {match.result === "win" ? "V" : "D"}
-                      </div>
-                      <div>
-                        <div className="font-medium">{match.map}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {match.kda}
+                  <button className="w-full flex items-center justify-between overflow-visible p-3 text-left">
+                    {gameId === "lol" ? (
+                      <>
+                        <div className="flex min-w-0 items-start gap-3 sm:gap-4 overflow-visible">
+                          <div
+                            className={`w-2 self-stretch shrink-0 rounded-full ${
+                              isLolRemake
+                                ? "bg-zinc-500/85"
+                                : match.result === "win"
+                                  ? "bg-emerald-500/90"
+                                  : "bg-rose-500/90"
+                            }`}
+                          />
+                          <div className="flex shrink-0 flex-col items-stretch gap-1.5 self-center text-center">
+                            <div className="flex w-[5.5rem] shrink-0 flex-col items-center gap-1.5">
+                              <span
+                                className="line-clamp-2 w-full text-center text-[11px] font-bold leading-tight text-foreground sm:text-xs"
+                                title={
+                                  match.lolPreview?.championName?.trim() ||
+                                  match.map
+                                }
+                              >
+                                {match.lolPreview?.championName?.trim() ||
+                                  match.map}
+                              </span>
+                              <div className="flex justify-center">
+                                {match.lolPreview?.championImageUrl ? (
+                                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-visible rounded-md border border-border/70 bg-black/20">
+                                    <img
+                                      src={match.lolPreview.championImageUrl}
+                                      alt={
+                                        match.lolPreview?.championName?.trim() ||
+                                        match.map
+                                      }
+                                      className="max-h-10 max-w-10 object-contain"
+                                    />
+                                  </div>
+                                ) : null}
+                              </div>
+                            </div>
+                            <div className="flex justify-center gap-1">
+                              {match.lolPreview?.summonerSpell1Url ? (
+                                <img
+                                  src={match.lolPreview.summonerSpell1Url}
+                                  alt="Spell 1"
+                                  className="h-4 w-4 rounded-sm border border-border/70 object-cover"
+                                />
+                              ) : null}
+                              {match.lolPreview?.summonerSpell2Url ? (
+                                <img
+                                  src={match.lolPreview.summonerSpell2Url}
+                                  alt="Spell 2"
+                                  className="h-4 w-4 rounded-sm border border-border/70 object-cover"
+                                />
+                              ) : null}
+                            </div>
+                            <div
+                              className={`rounded-md border px-2 py-1 text-[11px] font-semibold leading-none ${
+                                isLolRemake
+                                  ? "border-zinc-600/70 bg-zinc-900/60 text-zinc-400"
+                                  : match.result === "win"
+                                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
+                                    : "border-rose-500/40 bg-rose-500/10 text-rose-200"
+                              }`}
+                            >
+                              {isLolRemake ? "Remake" : match.result === "win" ? "Vitória" : "Derrota"}
+                            </div>
+                            <div
+                              className={`h-px w-full ${
+                                isLolRemake
+                                  ? "bg-zinc-600/55"
+                                  : match.result === "win"
+                                    ? "bg-emerald-500/35"
+                                    : "bg-rose-500/35"
+                              }`}
+                              aria-hidden
+                            />
+                            <div className="flex flex-col gap-0.5 text-[10px] leading-tight">
+                              <span className="font-medium text-foreground/90">
+                                {match.date}
+                              </span>
+                              <span className="text-muted-foreground">
+                                Duração:{" "}
+                                <span className="tabular-nums text-foreground/80">
+                                  {match.duration}
+                                </span>
+                              </span>
+                            </div>
+                          </div>
+                          <div className="min-w-0">
+                            {lolKdaBlock(match)}
+                            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
+                              {match.lolPreview?.queueLabel ? (
+                                <span
+                                  className={`rounded-full border px-2 py-0.5 ${getLolQueueBadgeClass(match.lolPreview.queueLabel)}`}
+                                >
+                                  {match.lolPreview.queueLabel}
+                                </span>
+                              ) : null}
+                              {match.lolPreview?.roleLabel ? (
+                                <span className="rounded-full border border-border/70 bg-muted/50 px-2 py-0.5 text-muted-foreground">
+                                  {match.lolPreview.roleLabel}
+                                </span>
+                              ) : null}
+                            </div>
+                            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+                              {(match.lolPreview?.primaryRuneUrl || match.lolPreview?.secondaryRuneUrl) && (
+                                <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-muted/40 px-2 py-0.5">
+                                  {match.lolPreview?.primaryRuneUrl ? (
+                                    <img
+                                      src={match.lolPreview.primaryRuneUrl}
+                                      alt="Runa primária"
+                                      className="h-3.5 w-3.5 rounded-full"
+                                    />
+                                  ) : null}
+                                  {match.lolPreview?.secondaryRuneUrl ? (
+                                    <img
+                                      src={match.lolPreview.secondaryRuneUrl}
+                                      alt="Runa secundária"
+                                      className="h-3.5 w-3.5 rounded-full"
+                                    />
+                                  ) : null}
+                                  <span>Runas</span>
+                                </span>
+                              )}
+                              {match.lolPreview?.buildItems && match.lolPreview.buildItems.length > 0 ? (
+                                <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-muted/40 px-2 py-0.5">
+                                  <span>Build</span>
+                                  <span className="inline-flex items-center gap-0.5">
+                                    {match.lolPreview.buildItems.map((item) => (
+                                      <img
+                                        key={`${match.id}-item-${item.itemId}`}
+                                        src={item.iconUrl}
+                                        alt={item.name ?? `Item ${item.itemId}`}
+                                        className="h-4 w-4 rounded-[3px] border border-border/70 object-cover"
+                                      />
+                                    ))}
+                                  </span>
+                                </span>
+                              ) : null}
+                            </div>
+                            {(match.lolPreview?.blueParticipants?.length ||
+                              match.lolPreview?.redParticipants?.length) ? (
+                              <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px]">
+                                <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/40 bg-blue-500/10 px-2 py-0.5">
+                                  <span className="text-blue-200">Azul</span>
+                                  <span className="inline-flex items-center gap-1">
+                                    {match.lolPreview?.blueParticipants?.map((participant, index) => (
+                                      <span
+                                        key={`${match.id}-blue-${participant.gameName}-${index}`}
+                                        className="inline-flex items-center gap-0.5 max-w-[96px]"
+                                      >
+                                        {participant.championImageUrl ? (
+                                          <img
+                                            src={participant.championImageUrl}
+                                            alt={participant.gameName}
+                                            className="h-3.5 w-3.5 rounded-[3px] border border-blue-300/40 object-cover"
+                                          />
+                                        ) : null}
+                                        <span className="truncate text-blue-100">{participant.gameName}</span>
+                                      </span>
+                                    ))}
+                                  </span>
+                                </div>
+                                <div className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/40 bg-rose-500/10 px-2 py-0.5">
+                                  <span className="text-rose-200">Vermelho</span>
+                                  <span className="inline-flex items-center gap-1">
+                                    {match.lolPreview?.redParticipants?.map((participant, index) => (
+                                      <span
+                                        key={`${match.id}-red-${participant.gameName}-${index}`}
+                                        className="inline-flex items-center gap-0.5 max-w-[96px]"
+                                      >
+                                        {participant.championImageUrl ? (
+                                          <img
+                                            src={participant.championImageUrl}
+                                            alt={participant.gameName}
+                                            className="h-3.5 w-3.5 rounded-[3px] border border-rose-300/40 object-cover"
+                                          />
+                                        ) : null}
+                                        <span className="truncate text-rose-100">{participant.gameName}</span>
+                                      </span>
+                                    ))}
+                                  </span>
+                                </div>
+                              </div>
+                            ) : null}
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <div className="font-medium">{match.score}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {match.date} · {match.duration}
+                        <div className="flex shrink-0 items-center gap-4">
+                          <div className="hidden min-w-[190px] md:block text-right">
+                            <div className="text-xs text-muted-foreground">
+                              Dano{" "}
+                              <span className="font-medium text-foreground">
+                                {match.expandedDetails?.damage?.toLocaleString() ?? "-"}
+                              </span>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              CS{" "}
+                              <span className="font-medium text-foreground">
+                                {match.expandedDetails?.cs ?? "-"}
+                              </span>
+                              {match.lolPreview?.csPerMinute != null
+                                ? ` (${match.lolPreview.csPerMinute.toFixed(1)}/m)`
+                                : ""}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Visao{" "}
+                              <span className="font-medium text-foreground">
+                                {match.expandedDetails?.vision ?? "-"}
+                              </span>
+                            </div>
+                          </div>
+                          {expandedMatch === match.id ? (
+                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          )}
                         </div>
-                      </div>
-                      {expandedMatch === match.id ? (
-                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-4">
+                          <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                              match.result === "win"
+                                ? "bg-green-500/20 text-green-400"
+                                : "bg-red-500/20 text-red-400"
+                            }`}
+                          >
+                            {match.result === "win" ? "V" : "D"}
+                          </div>
+                          <div>
+                            <div className="font-medium">{match.map}</div>
+                            <div className="text-sm text-muted-foreground">{match.kda}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <div className="font-medium">{match.score}</div>
+                            <div className="flex flex-col gap-0.5 text-right text-xs leading-tight text-muted-foreground">
+                              <span className="font-medium text-foreground">
+                                {match.date}
+                              </span>
+                              <span>
+                                Duração:{" "}
+                                <span className="tabular-nums text-foreground/90">
+                                  {match.duration}
+                                </span>
+                              </span>
+                            </div>
+                          </div>
+                          {expandedMatch === match.id ? (
+                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </div>
+                      </>
+                    )}
                   </button>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  {match.expandedDetails && (
+                  {gameId === "lol" && match.lolMatchDetail ? (
+                    <div className="px-1 pb-2 sm:px-2">
+                      <LolMatchHistoryDetail
+                        detail={match.lolMatchDetail}
+                        staticAssets={match.lolStaticAssets}
+                      />
+                    </div>
+                  ) : null}
+                  {gameId !== "lol" && match.expandedDetails && (
                     <div className="px-3 pb-3 pt-0 border-t border-border/50 mt-0">
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 pt-3 text-sm">
                         {match.expandedDetails.headshotPct != null && (
@@ -1252,12 +2423,26 @@ function MatchHistory({
                             </p>
                           </div>
                         )}
+                        {match.expandedDetails.damageTaken != null && (
+                          <div>
+                            <span className="text-muted-foreground">Dano recebido</span>
+                            <p className="font-medium">
+                              {match.expandedDetails.damageTaken?.toLocaleString()}
+                            </p>
+                          </div>
+                        )}
                         {match.expandedDetails.cs != null && (
                           <div>
                             <span className="text-muted-foreground">CS</span>
                             <p className="font-medium">
                               {match.expandedDetails.cs}
                             </p>
+                          </div>
+                        )}
+                        {match.expandedDetails.csPerMinute != null && (
+                          <div>
+                            <span className="text-muted-foreground">CS/min</span>
+                            <p className="font-medium">{match.expandedDetails.csPerMinute.toFixed(1)}</p>
                           </div>
                         )}
                         {match.expandedDetails.vision != null && (
@@ -1276,25 +2461,76 @@ function MatchHistory({
                             </p>
                           </div>
                         )}
+                        {match.expandedDetails.kdaRatio != null && (
+                          <div>
+                            <span className="text-muted-foreground">KDA Ratio</span>
+                            <p className="font-medium">{match.expandedDetails.kdaRatio.toFixed(2)}:1</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
+                  {gameId === "lol" && !match.lolMatchDetail && match.expandedDetails ? (
+                    <div className="px-3 pb-3 pt-0 border-t border-border/50 mt-0">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 pt-3 text-sm">
+                        {match.expandedDetails.damage != null && (
+                          <div>
+                            <span className="text-muted-foreground">Dano</span>
+                            <p className="font-medium">
+                              {match.expandedDetails.damage?.toLocaleString()}
+                            </p>
+                          </div>
+                        )}
+                        {match.expandedDetails.cs != null && (
+                          <div>
+                            <span className="text-muted-foreground">CS</span>
+                            <p className="font-medium">{match.expandedDetails.cs}</p>
+                          </div>
+                        )}
+                        {match.expandedDetails.vision != null && (
+                          <div>
+                            <span className="text-muted-foreground">Visão</span>
+                            <p className="font-medium">{match.expandedDetails.vision}</p>
+                          </div>
+                        )}
+                        {match.expandedDetails.gold != null && (
+                          <div>
+                            <span className="text-muted-foreground">Ouro</span>
+                            <p className="font-medium">
+                              {match.expandedDetails.gold?.toLocaleString()}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground px-3 pb-2">
+                        Detalhe completo da partida (todos os jogadores) aparece após a próxima sincronização com a
+                        Riot.
+                      </p>
+                    </div>
+                  ) : null}
                 </CollapsibleContent>
               </div>
             </Collapsible>
-          ))}
+            );
+          })}
         </div>
-        <Button
-          variant="outline"
-          className="w-full mt-4 border-border"
-          onClick={onLoadMore}
-          disabled={loadingMore}
-        >
-          {loadingMore ? (
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-          ) : null}
-          Carregar mais
-        </Button>
+        {hasMore ? (
+          <Button
+            variant="outline"
+            className="w-full mt-4 border-border"
+            onClick={onLoadMore}
+            disabled={loadingMore || loadMoreDisabled}
+          >
+            {loadingMore ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : null}
+            {loadMoreDisabled ? (loadMoreDisabledLabel ?? "Sincronizando...") : "Carregar mais"}
+          </Button>
+        ) : (
+          <p className="text-center mt-4 text-xs text-muted-foreground">
+            Sem mais partidas para carregar neste filtro.
+          </p>
+        )}
       </CardContent>
     </Card>
   );

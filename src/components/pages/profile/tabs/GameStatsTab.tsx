@@ -17,6 +17,12 @@ import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
 import { GameHoverCardContent } from "@/components/pages/profile/components/GameHoverCardContent";
 import { getStatsGames, type StatsGame } from "@/services/getStatsGames";
 import { getCs2Stats, type Cs2StatsResponse } from "@/services/getCs2Stats";
+import {
+  getLolStats,
+  type LolQueueScope,
+  type LolStatsResponse,
+  type LolTimeScope,
+} from "@/services/getLolStats";
 
 function resolveMediaUrl(value: string | null | undefined): string {
   if (!value) return "";
@@ -30,6 +36,8 @@ const cs2StatsPromiseByProfileId = new Map<
   number,
   Promise<Cs2StatsResponse | null>
 >();
+const lolStatsCache = new Map<string, LolStatsResponse | null>();
+const lolStatsPromises = new Map<string, Promise<LolStatsResponse | null>>();
 
 const statsGamesCacheByProfileId = new Map<number, StatsGame[]>();
 const statsGamesPromiseByProfileId = new Map<number, Promise<StatsGame[]>>();
@@ -53,6 +61,17 @@ export function GameStatsTab({
   const [loadingStatsGames, setLoadingStatsGames] = useState(false);
   const [cs2Stats, setCs2Stats] = useState<Cs2StatsResponse | null>(null);
   const [cs2StatsLoading, setCs2StatsLoading] = useState(false);
+  const [lolStats, setLolStats] = useState<LolStatsResponse | null>(null);
+  const [lolStatsLoading, setLolStatsLoading] = useState(false);
+  const [lolTimeScope, setLolTimeScope] = useState<LolTimeScope>("platform");
+  const [lolQueueScope, setLolQueueScope] = useState<LolQueueScope>("ranked_solo");
+  const [lolSeasonId, setLolSeasonId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (selectedGame === "lol" && lolQueueScope === "competitive") {
+      setLolQueueScope("ranked_solo");
+    }
+  }, [lolQueueScope, selectedGame]);
 
   const toKnownSlug = (game: GameDetails): "valorant" | "lol" | "csgo" | null => {
     const acronym = (game.acronym ?? "").toLowerCase();
@@ -142,6 +161,65 @@ export function GameStatsTab({
     cs2StatsPromiseByProfileId.set(profileId, p);
     p.then(setCs2Stats).catch(() => setCs2Stats(null));
   }, [profile?.id, selectedGame]);
+
+  useEffect(() => {
+    if (!profile?.id || selectedGame !== "lol") {
+      setLolStats(null);
+      return;
+    }
+
+    const profileId = profile.id;
+    const cacheKey = `${profileId}:${lolTimeScope}:${lolQueueScope}:${lolSeasonId ?? ""}`;
+    const cached = lolStatsCache.get(cacheKey);
+    if (cached !== undefined) {
+      setLolStats(cached);
+      return;
+    }
+
+    const existingPromise = lolStatsPromises.get(cacheKey);
+    if (existingPromise) {
+      existingPromise.then(setLolStats).catch(() => setLolStats(null));
+      return;
+    }
+
+    setLolStatsLoading(true);
+    const promise = getLolStats(profileId, {
+      timeScope: lolTimeScope,
+      queueScope: lolQueueScope,
+      seasonId: lolSeasonId,
+    })
+      .then((data) => {
+        lolStatsCache.set(cacheKey, data);
+        return data;
+      })
+      .catch(() => {
+        lolStatsCache.set(cacheKey, null);
+        return null;
+      })
+      .finally(() => {
+        lolStatsPromises.delete(cacheKey);
+        setLolStatsLoading(false);
+      });
+
+    lolStatsPromises.set(cacheKey, promise);
+    promise.then(setLolStats).catch(() => setLolStats(null));
+  }, [profile?.id, selectedGame, lolQueueScope, lolSeasonId, lolTimeScope]);
+
+  useEffect(() => {
+    if (selectedGame !== "lol") {
+      return;
+    }
+    if (lolTimeScope !== "season") {
+      return;
+    }
+    if (lolSeasonId) {
+      return;
+    }
+    const firstSeason = lolStats?.seasonOptions?.[0]?.key ?? null;
+    if (firstSeason) {
+      setLolSeasonId(firstSeason);
+    }
+  }, [lolSeasonId, lolStats?.seasonOptions, lolTimeScope, selectedGame]);
 
   const selectableGames = games
     .map((g) => ({ game: g, slug: toKnownSlug(g) }))
@@ -257,6 +335,30 @@ export function GameStatsTab({
               showText
               className="min-h-[140px]"
             />
+          ) : selectedGame === "lol" && lolStatsLoading ? (
+            <LoadingComponent
+              text="Carregando estatísticas..."
+              showText
+              className="min-h-[140px]"
+            />
+          ) : selectedGame === "lol" && lolStats ? (
+            lolStats.available === false ? (
+              <div className="rounded-lg border border-border bg-card/50 p-4 text-sm text-muted-foreground">
+                Não foi possível carregar estatísticas do League of Legends no momento.
+              </div>
+            ) : (
+              <ProfileGameStatsSection
+                selectedGame="lol"
+                profile={profile}
+                lolStats={lolStats}
+                lolTimeScope={lolTimeScope}
+                lolQueueScope={lolQueueScope}
+                lolSeasonId={lolSeasonId}
+                onLolTimeScopeChange={setLolTimeScope}
+                onLolQueueScopeChange={setLolQueueScope}
+                onLolSeasonIdChange={setLolSeasonId}
+              />
+            )
           ) : selectedGame === "csgo" && cs2Stats ? (
             cs2Stats.available === false && cs2Stats.steam_profile_public === false ? (
               <div className="rounded-lg border border-border bg-card/50 p-4 text-sm text-muted-foreground">
@@ -279,6 +381,12 @@ export function GameStatsTab({
                     : "csgo"
               }
               profile={profile}
+              lolTimeScope={lolTimeScope}
+              lolQueueScope={lolQueueScope}
+              lolSeasonId={lolSeasonId}
+              onLolTimeScopeChange={setLolTimeScope}
+              onLolQueueScopeChange={setLolQueueScope}
+              onLolSeasonIdChange={setLolSeasonId}
             />
           )}
         </div>

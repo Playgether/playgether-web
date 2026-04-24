@@ -1,26 +1,23 @@
 import BaseLayout from "@/app/base-layout/components/structure/BaseLayout";
 import { Metadata } from "next";
-import { cookies } from "next/headers";
-import { jwtVerify } from "jose";
 import NotFoundPages from "@/components/elements/NotFound/NotFoundPages";
 import { getProfileByUsername } from "@/services/getProfileByUsername";
 import GamesCanvasProfile from "@/components/pages/profile/GamesCanvasProfile";
 import { getCommentsServer } from "@/services/getCommentsServer";
 import { notFound } from "next/navigation";
+import { ensureAccessTokenCookie } from "@/actions/refreshToken";
+import { decodeAccessToken } from "@/lib/decodeAccessToken";
 export const metadata: Metadata = {
   title: "Playgether - Profile",
   description: "Find people to chat with",
 };
-
-const secret = new TextEncoder().encode(process.env.JWT_SECRET);
 
 export interface Props {
   params?: { username: string };
 }
 export default async function Profile({ params }) {
   const { username } = await params;
-  const cookieStore = await cookies();
-  const token = cookieStore.get("accessToken")?.value;
+  const token = await ensureAccessTokenCookie();
 
   if (!token) {
     return (
@@ -50,11 +47,9 @@ export default async function Profile({ params }) {
 
   let usernameToFetch = username;
   if (tabSlugs.has(normalizedParam)) {
-    try {
-      const { payload: pl } = await jwtVerify(token, secret);
-      usernameToFetch = (pl as any).username;
-    } catch {
-      usernameToFetch = username;
+    const pl = decodeAccessToken(token);
+    if (pl?.username) {
+      usernameToFetch = pl.username;
     }
   }
 
