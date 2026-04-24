@@ -36,7 +36,10 @@ const cs2StatsPromiseByProfileId = new Map<
   number,
   Promise<Cs2StatsResponse | null>
 >();
-const lolStatsCache = new Map<string, LolStatsResponse | null>();
+const LOL_STATS_STALE_MS = 30 * 60 * 1000;
+
+type LolStatsCacheEntry = { data: LolStatsResponse | null; fetchedAt: number };
+const lolStatsCache = new Map<string, LolStatsCacheEntry>();
 const lolStatsPromises = new Map<string, Promise<LolStatsResponse | null>>();
 
 const statsGamesCacheByProfileId = new Map<number, StatsGame[]>();
@@ -172,8 +175,11 @@ export function GameStatsTab({
     const cacheKey = `${profileId}:${lolTimeScope}:${lolQueueScope}:${lolSeasonId ?? ""}`;
     const cached = lolStatsCache.get(cacheKey);
     if (cached !== undefined) {
-      setLolStats(cached);
-      return;
+      setLolStats(cached.data);
+      const fresh = Date.now() - cached.fetchedAt < LOL_STATS_STALE_MS;
+      if (fresh) {
+        return;
+      }
     }
 
     const existingPromise = lolStatsPromises.get(cacheKey);
@@ -182,23 +188,28 @@ export function GameStatsTab({
       return;
     }
 
-    setLolStatsLoading(true);
+    const showLoading = cached === undefined;
+    if (showLoading) {
+      setLolStatsLoading(true);
+    }
     const promise = getLolStats(profileId, {
       timeScope: lolTimeScope,
       queueScope: lolQueueScope,
       seasonId: lolSeasonId,
     })
       .then((data) => {
-        lolStatsCache.set(cacheKey, data);
+        lolStatsCache.set(cacheKey, { data, fetchedAt: Date.now() });
         return data;
       })
       .catch(() => {
-        lolStatsCache.set(cacheKey, null);
+        lolStatsCache.set(cacheKey, { data: null, fetchedAt: Date.now() });
         return null;
       })
       .finally(() => {
         lolStatsPromises.delete(cacheKey);
-        setLolStatsLoading(false);
+        if (showLoading) {
+          setLolStatsLoading(false);
+        }
       });
 
     lolStatsPromises.set(cacheKey, promise);
@@ -262,9 +273,9 @@ export function GameStatsTab({
               >
                 <CardContent className="p-6 text-center space-y-4">
                   <img
-                    src={resolveMediaUrl(game.image ?? game.icon)}
+                    src={resolveMediaUrl(game.icon ?? game.image)}
                     alt={game.name}
-                    className="w-16 h-16 mx-auto rounded-lg group-hover:scale-105 transition-transform duration-200"
+                    className="w-16 h-16 mx-auto rounded-lg object-cover group-hover:scale-105 transition-transform duration-200"
                   />
                   <HoverCard>
                     <HoverCardTrigger asChild>

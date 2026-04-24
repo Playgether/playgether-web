@@ -240,6 +240,10 @@ export type LolStatsResponse = {
     championName: string;
     games: number;
     wins: number;
+    losses?: number;
+    kills?: number;
+    deaths?: number;
+    assists?: number;
     winRate: number;
     kda: number;
     killsAvg: number;
@@ -247,12 +251,20 @@ export type LolStatsResponse = {
     assistsAvg: number;
     csAvg: number;
     championImageUrl?: string | null;
+    /** Maestria na conta Riot (0 se sem registo). */
+    championLevel?: number;
+    championPoints?: number;
   }>;
+  /** Preview resumido: mesmo recorte que championsOverallModal (plataforma, todas as temporadas, fila do filtro). */
   championsOverall?: Array<{
     championId: number;
     championName: string;
     games: number;
     wins: number;
+    losses?: number;
+    kills?: number;
+    deaths?: number;
+    assists?: number;
     winRate: number;
     kda: number;
     killsAvg: number;
@@ -260,6 +272,27 @@ export type LolStatsResponse = {
     assistsAvg: number;
     csAvg: number;
     championImageUrl?: string | null;
+    championLevel?: number;
+    championPoints?: number;
+  }>;
+  /** Modal Ver todos geral: campeões com maestria na conta e stats do histórico plataforma na fila do filtro atual (todas as temporadas) quando existirem. */
+  championsOverallModal?: Array<{
+    championId: number;
+    championName: string;
+    championLevel: number;
+    championPoints: number;
+    championImageUrl?: string | null;
+    lastPlayTime?: string | null;
+    syncedMatchStats?: {
+      games: number;
+      wins: number;
+      losses: number;
+      kills: number;
+      deaths: number;
+      assists: number;
+      winRate: number;
+      kda: number;
+    } | null;
   }>;
   roleDistribution?: Array<{
     role: string;
@@ -286,6 +319,15 @@ export type LolStatsResponse = {
     avgAssists: number;
   };
   championMastery?: Array<{
+    championId: number;
+    championName: string;
+    championImage?: string;
+    championImageUrl?: string | null;
+    championPoints: number;
+    championLevel: number;
+  }>;
+  /** Lista completa de maestrias (mesmo formato que championMastery) para o modal Ver todos. */
+  championMasteryAll?: Array<{
     championId: number;
     championName: string;
     championImage?: string;

@@ -1,15 +1,25 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -26,6 +36,7 @@ import {
   Crosshair,
   Loader2,
   Map,
+  Search,
   Swords,
   Target,
   Trophy,
@@ -42,6 +53,7 @@ import type {
 } from "@/services/getLolStats";
 import { getLolHistory } from "@/services/getLolStats";
 import { LolMatchHistoryDetail } from "@/components/pages/profile/LolMatchHistoryDetail";
+import { cn } from "@/lib/utils";
 import { Info } from "lucide-react";
 
 // ---- Types ----
@@ -1340,37 +1352,22 @@ function LolOverview({ stats }: { stats: LolStats }) {
 }
 
 type LolChampionRollupRow = NonNullable<LolStatsResponse["championsSeason"]>[number];
+type LolChampionMasteryRow = NonNullable<LolStatsResponse["championMastery"]>[number];
 
+/** WR / KDA nos cards principais do topo — único bloco com verde/vermelho forte. */
 function lolWinRateAccentClass(winRate: number): string {
   if (Math.abs(winRate - 50) < 0.001) return "text-amber-400";
   if (winRate > 50) return "text-neon-green";
   return "text-red-500";
 }
 
-/** Acima de 1 = positivo (verde), abaixo = negativo (vermelho), ~1 = neutro (amarelo). */
 function lolKdaRatioAccentClass(ratio: number): string {
   if (ratio > 1.001) return "text-neon-green";
   if (ratio < 0.999) return "text-red-500";
   return "text-amber-400";
 }
 
-function lolRankTierTextClass(tier: string | undefined | null): string {
-  const t = (tier || "").trim().toUpperCase();
-  if (!t) return "text-muted-foreground";
-  const map: Record<string, string> = {
-    IRON: "text-[#8d9199]",
-    BRONZE: "text-[#cd7f32]",
-    SILVER: "text-[#bcc6d6]",
-    GOLD: "text-[#e4c88b]",
-    PLATINUM: "text-[#5bc9c4]",
-    EMERALD: "text-[#2ecf9f]",
-    DIAMOND: "text-[#7ebfff]",
-    MASTER: "text-[#b27dff]",
-    GRANDMASTER: "text-[#f15d5d]",
-    CHALLENGER: "text-[#f4c874]",
-  };
-  return map[t] ?? "text-muted-foreground";
-}
+const LOL_CHAMPIONS_OVERVIEW_PREVIEW = 5;
 
 /**
  * Emblemas de elo (CDragon) vêm com bastante área transparente; ampliamos e cortamos no quadro.
@@ -1403,39 +1400,28 @@ function LolRankEmblemFrame({
 }
 
 function LolChampionOverviewRow({ champion }: { champion: LolChampionRollupRow }) {
-  const wrClass = lolWinRateAccentClass(champion.winRate);
-  const kdaClass = lolKdaRatioAccentClass(champion.kda);
   return (
-    <div className="flex gap-3 rounded-lg border border-border/50 bg-muted/20 p-3 sm:p-3.5">
+    <div className="flex items-center gap-2.5 rounded-lg border border-border/50 bg-muted/20 px-2.5 py-1.5">
       {champion.championImageUrl ? (
         <img
           src={champion.championImageUrl}
           alt={champion.championName}
-          className="h-12 w-12 sm:h-14 sm:w-14 rounded-full border border-border/80 object-cover shrink-0 shadow-sm"
+          className="h-9 w-9 shrink-0 rounded-md border border-border/70 object-cover"
         />
       ) : (
-        <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-muted border border-border shrink-0 flex items-center justify-center text-sm font-bold text-muted-foreground">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-xs font-bold text-muted-foreground">
           {(champion.championName || "?").slice(0, 1)}
         </div>
       )}
-      <div className="min-w-0 flex-1 space-y-2">
-        <p className="font-semibold text-base sm:text-lg leading-tight break-words">
-          {champion.championName}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold leading-tight">{champion.championName}</p>
+        <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
+          <span className="text-foreground">{champion.games} jogos</span>
+          <span className="mx-1.5">·</span>
+          <span className="font-medium text-foreground">{champion.winRate}% WR</span>
+          <span className="mx-1.5">·</span>
+          <span className="font-medium text-foreground">KDA {champion.kda}</span>
         </p>
-        <div className="flex flex-col gap-2 text-sm sm:text-base">
-          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <span className="text-muted-foreground text-xs uppercase tracking-wide">Jogos</span>
-            <span className="font-semibold tabular-nums text-foreground">{champion.games}</span>
-          </div>
-          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <span className="text-muted-foreground text-xs uppercase tracking-wide">WR</span>
-            <span className={`font-bold tabular-nums ${wrClass}`}>{champion.winRate}%</span>
-          </div>
-          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <span className="text-muted-foreground text-xs uppercase tracking-wide">KDA</span>
-            <span className={`font-bold tabular-nums ${kdaClass}`}>{champion.kda}</span>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -1451,10 +1437,12 @@ function LolRankedQueueBlock({
     label: string | null;
     iconUrl?: string | null;
     tier?: string;
+    leaguePoints?: number;
   } | null;
 }) {
   const text = queue?.label ?? "Sem dados";
-  const tierClass = lolRankTierTextClass(queue?.tier ?? null);
+  const lp =
+    typeof queue?.leaguePoints === "number" ? `${queue.leaguePoints.toLocaleString()} LP` : null;
   return (
     <div className="grid grid-cols-[52px_minmax(0,1fr)] gap-3 items-center text-sm">
       <div className="flex h-full min-h-[52px] items-center justify-center self-start pt-0.5">
@@ -1473,33 +1461,456 @@ function LolRankedQueueBlock({
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           {queueTitle}
         </p>
-        <p className={`text-sm sm:text-base font-semibold leading-snug break-words ${tierClass}`}>
+        <p className="text-sm sm:text-base font-semibold leading-snug break-words text-foreground">
           {text}
         </p>
+        {lp ? <p className="text-xs tabular-nums text-muted-foreground">{lp}</p> : null}
       </div>
     </div>
   );
 }
 
+function lolQueueFilterLabelPt(queueScope: LolQueueScope | undefined): string {
+  switch (queueScope) {
+    case "ranked_solo":
+      return "Ranked Solo/Duo";
+    case "ranked_flex":
+      return "Ranked Flex";
+    case "aram":
+      return "ARAM";
+    case "all":
+      return "Todas as filas";
+    case "competitive":
+      return "Competitivo (Solo + Flex)";
+    default:
+      return "Fila atual";
+  }
+}
+
+function seasonChampionKillsTotal(c: LolChampionRollupRow): number {
+  if (typeof c.kills === "number") return c.kills;
+  return Math.round((c.killsAvg ?? 0) * (c.games || 0));
+}
+
+function seasonChampionDeathsTotal(c: LolChampionRollupRow): number {
+  if (typeof c.deaths === "number") return c.deaths;
+  return Math.round((c.deathsAvg ?? 0) * (c.games || 0));
+}
+
+function seasonChampionAssistsTotal(c: LolChampionRollupRow): number {
+  if (typeof c.assists === "number") return c.assists;
+  return Math.round((c.assistsAvg ?? 0) * (c.games || 0));
+}
+
+function seasonChampionLosses(c: LolChampionRollupRow): number {
+  if (typeof c.losses === "number") return c.losses;
+  return Math.max(0, (c.games ?? 0) - (c.wins ?? 0));
+}
+
+/** Emblema de maestria (Community Dragon). PNGs antigos em game/assets/ux/championmastery/ devolveram 404; o asset passou para o plugin rcp-fe-lol-static-assets. */
+const LOL_CDRAGON_MASTERY_BADGE_SVG =
+  "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/champion-mastery/mastery-icon.svg";
+
+function lolChampionMasteryLevelIconUrl(_level: number): string {
+  return LOL_CDRAGON_MASTERY_BADGE_SVG;
+}
+
+function LolChampionMasteryLevelIcon({
+  level,
+  className,
+}: {
+  level: number;
+  className?: string;
+}) {
+  return (
+    <img
+      src={lolChampionMasteryLevelIconUrl(level)}
+      alt=""
+      className={cn("h-11 w-11 shrink-0 object-contain", className)}
+      loading="lazy"
+      onError={(e) => {
+        e.currentTarget.style.visibility = "hidden";
+      }}
+    />
+  );
+}
+
+function LolChampionSyncedStatsModalCard({
+  c,
+  queueLabel,
+  scopeLabel,
+  showSubtitle = true,
+}: {
+  c: LolChampionRollupRow;
+  queueLabel: string;
+  scopeLabel: string;
+  showSubtitle?: boolean;
+}) {
+  const losses = seasonChampionLosses(c);
+  const kills = seasonChampionKillsTotal(c);
+  const deaths = seasonChampionDeathsTotal(c);
+  const assists = seasonChampionAssistsTotal(c);
+  return (
+    <div className="rounded-xl border border-border/60 bg-muted/15 p-4 sm:p-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+        {c.championImageUrl ? (
+          <img
+            src={c.championImageUrl}
+            alt={c.championName}
+            className="mx-auto h-16 w-16 shrink-0 rounded-xl border border-border/70 object-cover sm:mx-0"
+          />
+        ) : (
+          <div className="mx-auto flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border border-border bg-muted text-lg font-bold text-muted-foreground sm:mx-0">
+            {(c.championName || "?").slice(0, 1)}
+          </div>
+        )}
+        <div className="min-w-0 flex-1 space-y-4">
+          <div>
+            <h3 className="text-lg font-bold leading-tight">{c.championName}</h3>
+            {showSubtitle ? (
+              <p className="text-sm text-muted-foreground">
+                {scopeLabel} · filtro do overview:{" "}
+                <span className="font-medium text-foreground/90">{queueLabel}</span>
+              </p>
+            ) : null}
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+              <p className="text-xs text-muted-foreground">Vitórias</p>
+              <p className="text-lg font-semibold tabular-nums">{c.wins}</p>
+            </div>
+            <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+              <p className="text-xs text-muted-foreground">Derrotas</p>
+              <p className="text-lg font-semibold tabular-nums">{losses}</p>
+            </div>
+            <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+              <p className="text-xs text-muted-foreground">Partidas</p>
+              <p className="text-lg font-semibold tabular-nums">{c.games}</p>
+            </div>
+            <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+              <p className="text-xs text-muted-foreground">Win rate</p>
+              <p className={`text-lg font-semibold tabular-nums ${lolWinRateAccentClass(c.winRate)}`}>
+                {c.winRate}%
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+              <p className="text-xs text-muted-foreground">Kills</p>
+              <p className="text-lg font-semibold tabular-nums">{kills}</p>
+            </div>
+            <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+              <p className="text-xs text-muted-foreground">Mortes</p>
+              <p className="text-lg font-semibold tabular-nums">{deaths}</p>
+            </div>
+            <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+              <p className="text-xs text-muted-foreground">Assistências</p>
+              <p className="text-lg font-semibold tabular-nums">{assists}</p>
+            </div>
+            <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+              <p className="text-xs text-muted-foreground">KDA</p>
+              <p className={`text-lg font-semibold tabular-nums ${lolKdaRatioAccentClass(c.kda)}`}>{c.kda}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type LolChampionGeralModalRow = NonNullable<LolStatsResponse["championsOverallModal"]>[number];
+
+function LolChampionGeralModalCard({
+  row,
+  statsQueueLabel,
+}: {
+  row: LolChampionGeralModalRow;
+  statsQueueLabel: string;
+}) {
+  const s = row.syncedMatchStats;
+  const hasSync = Boolean(s && s.games > 0);
+  return (
+    <div className="rounded-xl border border-border/60 bg-muted/15 p-4 sm:p-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+        {row.championImageUrl ? (
+          <img
+            src={row.championImageUrl}
+            alt={row.championName}
+            className="mx-auto h-16 w-16 shrink-0 rounded-xl border border-border/70 object-cover sm:mx-0"
+          />
+        ) : (
+          <div className="mx-auto flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border border-border bg-muted text-lg font-bold text-muted-foreground sm:mx-0">
+            {(row.championName || "?").slice(0, 1)}
+          </div>
+        )}
+        <div className="min-w-0 flex-1 space-y-4">
+          <div>
+            <h3 className="text-lg font-bold leading-tight">{row.championName}</h3>
+          </div>
+          {hasSync && s ? (
+            <>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">Vitórias</p>
+                  <p className="text-lg font-semibold tabular-nums">{s.wins}</p>
+                </div>
+                <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">Derrotas</p>
+                  <p className="text-lg font-semibold tabular-nums">{s.losses}</p>
+                </div>
+                <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">Partidas</p>
+                  <p className="text-lg font-semibold tabular-nums">{s.games}</p>
+                </div>
+                <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">Win rate</p>
+                  <p className={`text-lg font-semibold tabular-nums ${lolWinRateAccentClass(s.winRate)}`}>
+                    {s.winRate}%
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">Kills</p>
+                  <p className="text-lg font-semibold tabular-nums">{s.kills}</p>
+                </div>
+                <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">Mortes</p>
+                  <p className="text-lg font-semibold tabular-nums">{s.deaths}</p>
+                </div>
+                <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">Assistências</p>
+                  <p className="text-lg font-semibold tabular-nums">{s.assists}</p>
+                </div>
+                <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">KDA</p>
+                  <p className={`text-lg font-semibold tabular-nums ${lolKdaRatioAccentClass(s.kda)}`}>
+                    {s.kda}
+                  </p>
+                </div>
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Sem informações de partidas sincronizadas no Playgether para este campeão em{" "}
+              <span className="font-medium">{statsQueueLabel}</span> (todas as temporadas).
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LolChampionMasteryOnlyModalCard({ m }: { m: LolChampionMasteryRow }) {
+  return (
+    <div className="rounded-xl border border-border/60 bg-muted/15 p-4 sm:p-5">
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+        {m.championImageUrl ? (
+          <img
+            src={m.championImageUrl}
+            alt={m.championName}
+            className="h-14 w-14 shrink-0 rounded-xl border border-border/70 object-cover"
+          />
+        ) : (
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-border bg-muted text-base font-bold text-muted-foreground">
+            {(m.championName || "?").slice(0, 1)}
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <h3 className="text-base font-bold leading-tight">{m.championName}</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">Dados de maestria</p>
+        </div>
+        <LolChampionMasteryLevelIcon level={m.championLevel} className="h-10 w-10" />
+        <div className="grid w-full min-w-[200px] flex-1 grid-cols-2 gap-3 sm:w-auto sm:max-w-md">
+          <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+            <p className="text-xs text-muted-foreground">Nível</p>
+            <p className="text-lg font-semibold tabular-nums">{m.championLevel}</p>
+          </div>
+          <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+            <p className="text-xs text-muted-foreground">Pontos</p>
+            <p className="text-lg font-semibold tabular-nums">{m.championPoints.toLocaleString()}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LolChampionsExplorerDialog({
+  open,
+  onOpenChange,
+  mode,
+  seasonRows,
+  overallModalRows,
+  masteryRows,
+  queueLabel,
+  queueScope,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  mode: "season" | "overall" | "mastery";
+  seasonRows: LolChampionRollupRow[];
+  overallModalRows: LolChampionGeralModalRow[];
+  masteryRows: LolChampionMasteryRow[];
+  queueLabel: string;
+  queueScope: LolQueueScope;
+}) {
+  const [championSearch, setChampionSearch] = useState("");
+  const [onlyPlayedOverall, setOnlyPlayedOverall] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setChampionSearch("");
+      setOnlyPlayedOverall(false);
+    }
+  }, [open]);
+
+  const title =
+    mode === "season"
+      ? "Campeões — temporada"
+      : mode === "overall"
+        ? "Campeões — geral (histórico Playgether)"
+        : "Campeões — maestria (Riot)";
+  const rows =
+    mode === "season" ? seasonRows : mode === "overall" ? overallModalRows : masteryRows;
+  const q = championSearch.trim().toLowerCase();
+  const filteredSeason = q
+    ? seasonRows.filter((c) => (c.championName || "").toLowerCase().includes(q))
+    : seasonRows;
+  const sortedOverallModal = useMemo(
+    () =>
+      [...overallModalRows].sort((a, b) => {
+        const ga = a.syncedMatchStats?.games ?? 0;
+        const gb = b.syncedMatchStats?.games ?? 0;
+        if (gb !== ga) return gb - ga;
+        return (a.championName || "").localeCompare(b.championName || "", "pt");
+      }),
+    [overallModalRows],
+  );
+  const searchedOverallModal = q
+    ? sortedOverallModal.filter((r) => (r.championName || "").toLowerCase().includes(q))
+    : sortedOverallModal;
+  const displayedOverallModal = onlyPlayedOverall
+    ? searchedOverallModal.filter((r) => (r.syncedMatchStats?.games ?? 0) > 0)
+    : searchedOverallModal;
+  const filteredMastery = q
+    ? masteryRows.filter((m) => (m.championName || "").toLowerCase().includes(q))
+    : masteryRows;
+  const filteredRows =
+    mode === "season" ? filteredSeason : mode === "overall" ? displayedOverallModal : filteredMastery;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="flex max-h-[min(90vh,800px)] max-w-2xl flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+        <DialogHeader className="shrink-0 space-y-2 border-b border-border/60 px-6 pb-4 pt-6 pr-14 text-left">
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription className="text-left text-xs sm:text-sm">
+            {mode === "season" ? (
+              <>Estatísticas da temporada atual para <span className="font-medium">{queueLabel}</span>.</>
+            ) : mode === "overall" ? (
+              queueScope === "all" ? (
+                <>
+                  Histórico plataforma em todas as filas e temporadas sincronizadas. Ordenação por partidas jogadas
+                  nesse recorte.
+                </>
+              ) : (
+                <>
+                  Histórico plataforma em <span className="font-medium">{queueLabel}</span>, todas as temporadas
+                  sincronizadas. Ordenação por partidas jogadas nesse recorte.
+                </>
+              )
+            ) : (
+              <>Ordenação por pontos de maestria na conta</>
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="shrink-0 border-b border-border/60 px-6 py-3">
+          <label htmlFor="lol-champions-modal-search" className="sr-only">
+            Pesquisar campeão
+          </label>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Input
+              id="lol-champions-modal-search"
+              type="search"
+              value={championSearch}
+              onChange={(e) => setChampionSearch(e.target.value)}
+              placeholder="Pesquisar campeão…"
+              className="pl-9"
+              autoComplete="off"
+            />
+          </div>
+          {mode === "overall" ? (
+            <div className="mt-3 flex items-center gap-2">
+              <Checkbox
+                id="lol-champions-only-played"
+                checked={onlyPlayedOverall}
+                onCheckedChange={(v) => setOnlyPlayedOverall(v === true)}
+              />
+              <Label htmlFor="lol-champions-only-played" className="text-sm font-normal cursor-pointer leading-none">
+                Mostrar apenas campeões com partidas sincronizadas
+              </Label>
+            </div>
+          ) : null}
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
+          <div className="space-y-4">
+            {mode === "season"
+              ? filteredSeason.map((c) => (
+                  <LolChampionSyncedStatsModalCard
+                    key={`${c.championId}-${c.championName}`}
+                    c={c}
+                    queueLabel={queueLabel}
+                    scopeLabel="Temporada"
+                  />
+                ))
+              : mode === "overall"
+                ? displayedOverallModal.map((row) => (
+                    <LolChampionGeralModalCard
+                      key={`geral-${row.championId}-${row.championName}`}
+                      row={row}
+                      statsQueueLabel={queueLabel}
+                    />
+                  ))
+                : filteredMastery.map((m) => (
+                    <LolChampionMasteryOnlyModalCard
+                      key={`${m.championId}-${m.championName}`}
+                      m={m}
+                    />
+                  ))}
+            {rows.length === 0 ? (
+              <p className="text-center text-sm text-muted-foreground py-8">Nenhum campeão para exibir.</p>
+            ) : filteredRows.length === 0 ? (
+              <p className="text-center text-sm text-muted-foreground py-8">
+                {mode === "overall" && onlyPlayedOverall && searchedOverallModal.length > 0 ? (
+                  <>Nenhum campeão com partidas sincronizadas para o filtro atual.</>
+                ) : championSearch.trim() ? (
+                  <>Nenhum campeão encontrado para &quot;{championSearch.trim()}&quot;.</>
+                ) : (
+                  <>Nenhum resultado para o filtro atual.</>
+                )}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function RealLolOverview({ stats }: { stats: LolStatsResponse }) {
+  const [championsDialog, setChampionsDialog] = useState<null | "season" | "overall" | "mastery">(null);
+
   const overview = stats.overview;
-  const rankedCurrent = stats.ranked?.current;
-  const selectedRanked = stats.ranked?.selectedQueueRanked ?? null;
-  const bestQueue =
-    selectedRanked ??
-    stats.ranked?.queues?.RANKED_SOLO_5x5 ??
-    stats.ranked?.queues?.RANKED_FLEX_SR ??
-    null;
-  const filterRank = stats.ranked?.selectedQueueRanked ?? bestQueue;
-  const rankDisplayLabel = filterRank?.label ?? rankedCurrent?.label ?? "Sem rank";
-  const rankLpText = filterRank
-    ? `${filterRank.leaguePoints.toLocaleString()} LP`
-    : rankedCurrent
-      ? `${rankedCurrent.leaguePoints.toLocaleString()} LP`
-      : "Sem dados ranqueados";
-  const rankEmblemUrl = filterRank?.iconUrl ?? rankedCurrent?.iconUrl ?? null;
   const seasonChampions = stats.championsSeason ?? [];
   const overallChampions = stats.championsOverall ?? [];
+  const overallModalChampions = stats.championsOverallModal ?? [];
+  const masteryPreview = stats.championMastery ?? [];
+  const masteryAll = stats.championMasteryAll ?? masteryPreview;
+  const visibleSeasonChampions = seasonChampions.slice(0, LOL_CHAMPIONS_OVERVIEW_PREVIEW);
+  const visibleOverallChampions = overallChampions.slice(0, LOL_CHAMPIONS_OVERVIEW_PREVIEW);
+  const visibleMasteryChampions = masteryPreview.slice(0, 4);
   const last20 = stats.last20Summary;
   const completeness = stats.dataCompleteness;
 
@@ -1513,18 +1924,23 @@ function RealLolOverview({ stats }: { stats: LolStatsResponse }) {
     );
   }
 
-  const rankTierKey = (filterRank?.tier ?? rankedCurrent?.tier ?? "").trim();
-  const rankTitleClass = lolRankTierTextClass(rankTierKey || null);
-  const winRateAccent = lolWinRateAccentClass(overview.winRate);
-  const kdaAccent = lolKdaRatioAccentClass(overview.kdaRatio);
+  const hasOverviewMatchStats = overview.gamesPlayed > 0;
+  const winRateAccent = hasOverviewMatchStats
+    ? lolWinRateAccentClass(overview.winRate)
+    : "text-muted-foreground";
+  const kdaAccent = hasOverviewMatchStats
+    ? lolKdaRatioAccentClass(overview.kdaRatio)
+    : "text-muted-foreground";
   const queueScope = stats.appliedFilters?.queueScope ?? "ranked_solo";
-  const showBothRankedQueues = queueScope === "all";
-  const showRankedSoloRow = queueScope === "ranked_solo" || showBothRankedQueues;
-  const showRankedFlexRow = queueScope === "ranked_flex" || showBothRankedQueues;
-  const rankedLpSource = filterRank;
-  /** WR do card superior = rollup das partidas sincronizadas (filtro). WR do snapshot Riot (liga) costuma divergir — usamos o mesmo do overview aqui. */
-  const rankedWrDisplay = `${overview.winRate}%`;
-  const rankedWrClass = lolWinRateAccentClass(overview.winRate);
+  const queueFilterLabel = lolQueueFilterLabelPt(queueScope);
+  const showRankAtualCard = queueScope !== "aram";
+  const showRolesCard = queueScope !== "aram";
+  const showBothRankQueues = queueScope === "all";
+  const showSoloRankRow =
+    showBothRankQueues || queueScope === "ranked_solo" || queueScope === "competitive";
+  const showFlexRankRow = showBothRankQueues || queueScope === "ranked_flex";
+  const hasGeralCardContent = overallChampions.length > 0 || overallModalChampions.length > 0;
+  const championsEmptyFilterCopy = "Não existem registros de campeões disponíveis para este filtro.";
 
   return (
     <div className="space-y-6">
@@ -1540,56 +1956,55 @@ function RealLolOverview({ stats }: { stats: LolStatsResponse }) {
         </Card>
       ) : null}
 
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-stretch">
-        <Card className="bg-card/50 border-border overflow-hidden h-full flex flex-col">
-          <CardContent className="p-3 h-full flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 min-h-0">
-            {rankEmblemUrl ? (
-              <LolRankEmblemFrame
-                src={rankEmblemUrl}
-                alt={rankDisplayLabel}
-                frameClass="h-16 w-16 sm:h-[72px] sm:w-[72px] shrink-0 mx-auto sm:mx-0"
-                zoomPercent={172}
-              />
-            ) : (
-              <div className="h-16 w-16 sm:h-[72px] sm:w-[72px] shrink-0 mx-auto sm:mx-0 rounded-xl bg-muted/50 border border-border flex items-center justify-center">
-                <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7 text-muted-foreground" />
-              </div>
-            )}
-            <div className="min-w-0 flex-1 flex flex-col justify-center text-center sm:text-left">
-              <div className="flex items-center justify-center sm:justify-start gap-2 text-muted-foreground mb-1">
+      <div
+        className={`grid gap-3 items-stretch ${
+          showRankAtualCard
+            ? "grid-cols-2 sm:grid-cols-2 lg:grid-cols-4"
+            : "grid-cols-2 sm:grid-cols-2 lg:grid-cols-3"
+        }`}
+      >
+        {showRankAtualCard ? (
+          <Card className="bg-card/50 border-border overflow-hidden h-full flex flex-col">
+            <CardContent className="p-3 h-full flex flex-col gap-3 min-h-0">
+              <div className="flex items-center gap-2 text-muted-foreground">
                 <TrendingUp className="h-4 w-4 shrink-0" />
                 <span className="text-xs font-medium">Rank Atual</span>
               </div>
-              <p
-                className={`text-base sm:text-lg font-bold leading-snug break-words ${rankTitleClass}`}
-              >
-                {rankDisplayLabel}
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">{rankLpText}</p>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="flex flex-col gap-3 min-w-0">
+                {showSoloRankRow ? (
+                  <LolRankedQueueBlock
+                    queueTitle="Solo / Duo"
+                    queue={stats.ranked?.queues?.RANKED_SOLO_5x5}
+                  />
+                ) : null}
+                {showFlexRankRow ? (
+                  <LolRankedQueueBlock queueTitle="Flex" queue={stats.ranked?.queues?.RANKED_FLEX_SR} />
+                ) : null}
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
         <StatCard
           icon={<Trophy className="h-4 w-4" />}
-          label="Win Rate"
-          value={`${overview.winRate}%`}
+          label="Win rate (Playgether)"
+          value={hasOverviewMatchStats ? `${overview.winRate}%` : "Sem estatísticas"}
           accent={winRateAccent}
         />
         <StatCard
           icon={<Target className="h-4 w-4" />}
           label="KDA"
-          value={overview.kdaFormatted}
+          value={hasOverviewMatchStats ? overview.kdaFormatted : "Sem estatísticas"}
           accent={kdaAccent}
         />
         <StatCard
           icon={<Clock className="h-4 w-4" />}
           label="Horas"
           value={`${overview.timePlayedHours}h`}
-          accent="text-neon-blue"
+          accent="text-foreground"
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card className="bg-card/50 border-border">
           <CardContent className="p-4">
             <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
@@ -1598,15 +2013,11 @@ function RealLolOverview({ stats }: { stats: LolStatsResponse }) {
             </h4>
             <div className="space-y-2 text-sm">
               <Row label="Partidas" value={overview.gamesPlayed.toLocaleString()} />
-              <Row label="Vitórias" value={overview.wins.toLocaleString()} valueClassName="text-neon-green" />
-              <Row label="Derrotas" value={overview.losses.toLocaleString()} valueClassName="text-red-500" />
-              <Row label="Kills" value={overview.totals.kills.toLocaleString()} valueClassName="text-neon-green" />
-              <Row label="Mortes" value={overview.totals.deaths.toLocaleString()} valueClassName="text-red-500" />
-              <Row
-                label="Assistências"
-                value={overview.totals.assists.toLocaleString()}
-                valueClassName="text-sky-400"
-              />
+              <Row label="Vitórias" value={overview.wins.toLocaleString()} />
+              <Row label="Derrotas" value={overview.losses.toLocaleString()} />
+              <Row label="Kills" value={overview.totals.kills.toLocaleString()} />
+              <Row label="Mortes" value={overview.totals.deaths.toLocaleString()} />
+              <Row label="Assistências" value={overview.totals.assists.toLocaleString()} />
             </div>
           </CardContent>
         </Card>
@@ -1618,57 +2029,12 @@ function RealLolOverview({ stats }: { stats: LolStatsResponse }) {
               Médias por jogo
             </h4>
             <div className="space-y-2 text-sm">
-              <Row label="Kills" value={String(overview.avgKills)} valueClassName="text-neon-green" />
-              <Row label="Mortes" value={String(overview.avgDeaths)} valueClassName="text-red-500" />
-              <Row label="Assistências" value={String(overview.avgAssists)} valueClassName="text-sky-400" />
-              <Row label="CS/jogo" value={String(overview.csPerGame)} valueClassName="text-cyan-300/95" />
-              <Row label="CS/min" value={String(overview.csPerMinute)} valueClassName="text-cyan-300/95" />
-              <Row
-                label="KP%"
-                value={`${overview.kpPercent}%`}
-                valueClassName={lolWinRateAccentClass(overview.kpPercent)}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card/50 border-border">
-          <CardContent className="p-4">
-            <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Ranked
-            </h4>
-            <div className="space-y-3 text-sm">
-              {showRankedSoloRow ? (
-                <LolRankedQueueBlock
-                  queueTitle="Solo / Duo"
-                  queue={stats.ranked?.queues?.RANKED_SOLO_5x5}
-                />
-              ) : null}
-              {showRankedFlexRow ? (
-                <LolRankedQueueBlock
-                  queueTitle="Flex"
-                  queue={stats.ranked?.queues?.RANKED_FLEX_SR}
-                />
-              ) : null}
-              {!showRankedSoloRow && !showRankedFlexRow ? (
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Solo e Flex não são exibidos para o filtro de fila atual (ex.: ARAM).
-                </p>
-              ) : null}
-              <Row
-                label="LP atual"
-                value={
-                  rankedLpSource
-                    ? `${rankedLpSource.leaguePoints.toLocaleString()} LP`
-                    : "Sem dados"
-                }
-              />
-              <Row
-                label="WR (partidas)"
-                value={overview.gamesPlayed > 0 ? rankedWrDisplay : "Sem dados"}
-                valueClassName={overview.gamesPlayed > 0 ? rankedWrClass : undefined}
-              />
+              <Row label="Kills" value={String(overview.avgKills)} />
+              <Row label="Mortes" value={String(overview.avgDeaths)} />
+              <Row label="Assistências" value={String(overview.avgAssists)} />
+              <Row label="CS/jogo" value={String(overview.csPerGame)} />
+              <Row label="CS/min" value={String(overview.csPerMinute)} />
+              <Row label="KP%" value={`${overview.kpPercent}%`} />
             </div>
           </CardContent>
         </Card>
@@ -1681,18 +2047,14 @@ function RealLolOverview({ stats }: { stats: LolStatsResponse }) {
             </h4>
             <div className="space-y-2 text-sm">
               <Row label="Partidas" value={String(last20?.gamesPlayed ?? 0)} />
-              <Row label="Vitórias" value={String(last20?.wins ?? 0)} valueClassName="text-neon-green" />
-              <Row label="Derrotas" value={String(last20?.losses ?? 0)} valueClassName="text-red-500" />
+              <Row label="Vitórias" value={String(last20?.wins ?? 0)} />
+              <Row label="Derrotas" value={String(last20?.losses ?? 0)} />
               <Row
                 label="WR"
                 value={`${last20?.winRate ?? 0}%`}
                 valueClassName={lolWinRateAccentClass(last20?.winRate ?? 0)}
               />
-              <Row
-                label="KDA"
-                value={last20?.kdaFormatted ?? "0.00:1"}
-                valueClassName={lolKdaRatioAccentClass(last20?.kdaRatio ?? 0)}
-              />
+              <Row label="KDA" value={last20?.kdaFormatted ?? "0.00:1"} />
             </div>
           </CardContent>
         </Card>
@@ -1704,104 +2066,192 @@ function RealLolOverview({ stats }: { stats: LolStatsResponse }) {
             <h4 className="font-semibold text-sm text-muted-foreground mb-3">
               Campeões mais jogados (Temporada)
             </h4>
-            <div className="space-y-2">
-              {seasonChampions.map((champion) => (
-                <LolChampionOverviewRow
-                  key={`${champion.championId}-${champion.championName}`}
-                  champion={champion}
-                />
-              ))}
-            </div>
+            {seasonChampions.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center leading-relaxed">
+                {championsEmptyFilterCopy}
+              </p>
+            ) : (
+              <>
+                <div className="space-y-1.5">
+                  {visibleSeasonChampions.map((champion) => (
+                    <LolChampionOverviewRow
+                      key={`${champion.championId}-${champion.championName}`}
+                      champion={champion}
+                    />
+                  ))}
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 w-full cursor-pointer"
+                  onClick={() => setChampionsDialog("season")}
+                >
+                  Ver todos
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
 
         <Card className="bg-card/50 border-border">
           <CardContent className="p-4">
-            <h4 className="font-semibold text-sm text-muted-foreground mb-3">
+            <h4 className="font-semibold text-sm text-muted-foreground mb-2">
               Campeões mais jogados (Geral)
             </h4>
-            <div className="space-y-2">
-              {overallChampions.map((champion) => (
-                <LolChampionOverviewRow
-                  key={`overall-${champion.championId}-${champion.championName}`}
-                  champion={champion}
-                />
-              ))}
-            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed mb-3 border-b border-border/50 pb-3">
+              Histórico plataforma: todas as temporadas sincronizadas na Playgether, apenas em{" "}
+              <span className="font-medium text-foreground/90">{queueFilterLabel}</span>.
+            </p>
+            {!hasGeralCardContent ? (
+              <p className="text-sm text-muted-foreground py-4 text-center leading-relaxed">
+                {championsEmptyFilterCopy}
+              </p>
+            ) : overallChampions.length === 0 ? (
+              <>
+                <p className="text-sm text-muted-foreground py-4 text-center leading-relaxed">
+                  {championsEmptyFilterCopy}
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 w-full cursor-pointer"
+                  onClick={() => setChampionsDialog("overall")}
+                >
+                  Ver todos
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="space-y-1.5">
+                  {visibleOverallChampions.map((champion) => (
+                    <LolChampionOverviewRow
+                      key={`overall-${champion.championId}-${champion.championName}`}
+                      champion={champion}
+                    />
+                  ))}
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 w-full cursor-pointer"
+                  onClick={() => setChampionsDialog("overall")}
+                >
+                  Ver todos
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="bg-card/50 border-border">
-          <CardContent className="p-4">
-            <h4 className="font-semibold text-sm text-muted-foreground mb-3">
-              Roles por filtro
-            </h4>
-            <div className="space-y-3">
-              <div className="flex flex-wrap gap-2">
-                {(stats.roleDistribution ?? []).map((role) => (
-                  <Badge
-                    key={role.role}
-                    variant="outline"
-                    className="inline-flex max-w-full flex-wrap items-center rounded-full border-border/70 bg-muted/25 py-2 pl-2.5 pr-3 gap-x-2 gap-y-1 text-foreground shadow-none hover:bg-muted/40"
-                  >
-                    {role.roleIconUrl ? (
-                      <span className="relative h-5 w-5 shrink-0 overflow-hidden rounded-sm flex items-center justify-center bg-background/50">
-                        <img
-                          src={role.roleIconUrl}
-                          alt=""
-                          className="h-[118%] w-[118%] max-w-none object-cover object-center"
-                          title={role.role}
-                        />
-                      </span>
-                    ) : null}
-                    <span className="font-semibold tracking-tight">{role.role}</span>
-                    <span className="text-muted-foreground text-xs sm:text-sm">
-                      {role.games} jogos
-                    </span>
-                    <span
-                      className={`text-xs sm:text-sm font-bold tabular-nums ${lolWinRateAccentClass(role.winRate)}`}
+      <div
+        className={`grid grid-cols-1 gap-4 ${showRolesCard ? "lg:grid-cols-2" : ""}`}
+      >
+        {showRolesCard ? (
+          <Card className="bg-card/50 border-border">
+            <CardContent className="p-4">
+              <h4 className="font-semibold text-sm text-muted-foreground mb-3">
+                Roles por filtro
+              </h4>
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  {(stats.roleDistribution ?? []).map((role) => (
+                    <Badge
+                      key={role.role}
+                      variant="outline"
+                      className="inline-flex max-w-full flex-wrap items-center rounded-full border-border/70 bg-muted/25 py-2 pl-2.5 pr-3 gap-x-2 gap-y-1 text-foreground shadow-none hover:bg-muted/40"
                     >
-                      {role.winRate}% WR
-                    </span>
-                  </Badge>
-                ))}
+                      {role.roleIconUrl ? (
+                        <span className="relative h-5 w-5 shrink-0 overflow-hidden rounded-sm flex items-center justify-center bg-background/50">
+                          <img
+                            src={role.roleIconUrl}
+                            alt=""
+                            className="h-[118%] w-[118%] max-w-none object-cover object-center"
+                            title={role.role}
+                          />
+                        </span>
+                      ) : null}
+                      <span className="font-semibold tracking-tight">{role.role}</span>
+                      <span className="text-muted-foreground text-xs sm:text-sm">
+                        {role.games} jogos
+                      </span>
+                      <span
+                        className={`text-xs sm:text-sm font-bold tabular-nums ${lolWinRateAccentClass(role.winRate)}`}
+                      >
+                        {role.winRate}% WR
+                      </span>
+                    </Badge>
+                  ))}
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ) : null}
 
         <Card className="bg-card/50 border-border">
           <CardContent className="p-4">
             <h4 className="font-semibold text-sm text-muted-foreground mb-3">
-              Maestria (global da conta)
+              Campeões com mais maestria
             </h4>
-            <div className="space-y-2">
-                {(stats.championMastery ?? []).slice(0, 4).map((mastery) => (
-                  <div
-                    key={`${mastery.championId}-${mastery.championName}`}
-                    className="flex items-center justify-between text-sm gap-3"
-                  >
-                    <div className="flex items-center gap-2">
-                      {mastery.championImageUrl ? (
-                        <img
-                          src={mastery.championImageUrl}
-                          alt={mastery.championName}
-                          className="h-7 w-7 rounded-sm border border-border/70"
-                        />
-                      ) : null}
-                      <span className="text-muted-foreground">{mastery.championName}</span>
+            {masteryAll.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center leading-relaxed">
+                {championsEmptyFilterCopy}
+              </p>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  {visibleMasteryChampions.map((mastery) => (
+                    <div
+                      key={`${mastery.championId}-${mastery.championName}`}
+                      className="flex items-center justify-between text-sm gap-3"
+                    >
+                      <div className="flex min-w-0 flex-1 items-center gap-2">
+                        {mastery.championImageUrl ? (
+                          <img
+                            src={mastery.championImageUrl}
+                            alt={mastery.championName}
+                            className="h-7 w-7 shrink-0 rounded-sm border border-border/70"
+                          />
+                        ) : null}
+                        <LolChampionMasteryLevelIcon level={mastery.championLevel} className="h-6 w-6 shrink-0" />
+                        <span className="truncate text-muted-foreground">{mastery.championName}</span>
+                      </div>
+                      <span className="font-medium tabular-nums shrink-0">
+                        Lv. {mastery.championLevel} · {mastery.championPoints.toLocaleString()} pts
+                      </span>
                     </div>
-                    <span className="font-medium">
-                      Lv. {mastery.championLevel} · {mastery.championPoints.toLocaleString()} pts
-                    </span>
-                  </div>
-                ))}
-            </div>
+                  ))}
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 w-full cursor-pointer"
+                  onClick={() => setChampionsDialog("mastery")}
+                >
+                  Ver todos
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
+
+      <LolChampionsExplorerDialog
+        open={championsDialog !== null}
+        onOpenChange={(next) => {
+          if (!next) setChampionsDialog(null);
+        }}
+        mode={championsDialog ?? "season"}
+        seasonRows={seasonChampions}
+        overallModalRows={overallModalChampions}
+        masteryRows={masteryAll}
+        queueLabel={queueFilterLabel}
+        queueScope={queueScope}
+      />
     </div>
   );
 }
