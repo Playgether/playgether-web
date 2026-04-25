@@ -143,6 +143,7 @@ interface Match {
     championImageUrl?: string | null;
     queueLabel?: string | null;
     roleLabel?: string | null;
+    roleIconUrl?: string | null;
     kdaRatio?: number | null;
     csPerMinute?: number | null;
     summonerSpell1Url?: string | null;
@@ -157,10 +158,14 @@ interface Match {
     blueParticipants?: Array<{
       gameName: string;
       championImageUrl?: string | null;
+      laneIconUrl?: string | null;
+      laneLabel?: string | null;
     }>;
     redParticipants?: Array<{
       gameName: string;
       championImageUrl?: string | null;
+      laneIconUrl?: string | null;
+      laneLabel?: string | null;
     }>;
   };
 }
@@ -2206,7 +2211,7 @@ function RealLolOverview({ stats }: { stats: LolStatsResponse }) {
                       className="inline-flex max-w-full flex-wrap items-center rounded-full border-border/70 bg-muted/25 py-2 pl-2.5 pr-3 gap-x-2 gap-y-1 text-foreground shadow-none hover:bg-muted/40"
                     >
                       {role.roleIconUrl ? (
-                        <span className="relative h-5 w-5 shrink-0 overflow-hidden rounded-sm flex items-center justify-center bg-background/50">
+                        <span className="relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-transparent">
                           <img
                             src={role.roleIconUrl}
                             alt=""
@@ -2391,6 +2396,8 @@ function mapLolMatchesToUi(
             championIconBase && participant.championImage
               ? `${championIconBase}/${participant.championImage}`
               : null,
+          laneIconUrl: participant.laneIconUrl ?? null,
+          laneLabel: participant.laneLabel ?? null,
         })) ?? [];
     const redParticipants =
       match.matchDetail?.participants
@@ -2401,6 +2408,8 @@ function mapLolMatchesToUi(
             championIconBase && participant.championImage
               ? `${championIconBase}/${participant.championImage}`
               : null,
+          laneIconUrl: participant.laneIconUrl ?? null,
+          laneLabel: participant.laneLabel ?? null,
         })) ?? [];
     const buildItems =
       viewerParticipant?.items
@@ -2437,6 +2446,7 @@ function mapLolMatchesToUi(
             : null,
         queueLabel: match.matchDetail?.queueLabel ?? null,
         roleLabel: match.teamPositionLabel ?? match.teamPosition ?? null,
+        roleIconUrl: match.teamPositionIconUrl ?? null,
         kdaRatio: match.kda.ratio,
         csPerMinute: csPerMinute ?? null,
         summonerSpell1Url: viewerParticipant?.summonerSpell1Url ?? null,
@@ -2601,7 +2611,7 @@ function MatchHistory({
                               </span>
                               <div className="flex justify-center">
                                 {match.lolPreview?.championImageUrl ? (
-                                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-visible rounded-md border border-border/70 bg-black/20">
+                                  <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-visible rounded-md border border-border/70 bg-black/20">
                                     <img
                                       src={match.lolPreview.championImageUrl}
                                       alt={
@@ -2610,6 +2620,18 @@ function MatchHistory({
                                       }
                                       className="max-h-10 max-w-10 object-contain"
                                     />
+                                    {match.lolPreview?.roleIconUrl ? (
+                                      <span
+                                        className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center overflow-hidden rounded-sm bg-transparent"
+                                        title={match.lolPreview.roleLabel ?? undefined}
+                                      >
+                                        <img
+                                          src={match.lolPreview.roleIconUrl}
+                                          alt=""
+                                          className="h-[118%] w-[118%] max-w-none object-cover object-center"
+                                        />
+                                      </span>
+                                    ) : null}
                                   </div>
                                 ) : null}
                               </div>
@@ -2673,9 +2695,24 @@ function MatchHistory({
                                   {match.lolPreview.queueLabel}
                                 </span>
                               ) : null}
-                              {match.lolPreview?.roleLabel ? (
-                                <span className="rounded-full border border-border/70 bg-muted/50 px-2 py-0.5 text-muted-foreground">
-                                  {match.lolPreview.roleLabel}
+                              {match.lolPreview?.roleIconUrl ||
+                              match.lolPreview?.roleLabel ? (
+                                <span className="inline-flex max-w-full flex-wrap items-center gap-1.5 rounded-full border border-border/70 bg-muted/50 py-0.5 pl-1.5 pr-2 text-muted-foreground">
+                                  {match.lolPreview?.roleIconUrl ? (
+                                    <span className="relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-transparent">
+                                      <img
+                                        src={match.lolPreview.roleIconUrl}
+                                        alt=""
+                                        title={match.lolPreview.roleLabel ?? undefined}
+                                        className="h-[118%] w-[118%] max-w-none object-cover object-center"
+                                      />
+                                    </span>
+                                  ) : null}
+                                  {match.lolPreview?.roleLabel ? (
+                                    <span className="font-medium text-foreground/90">
+                                      {match.lolPreview.roleLabel}
+                                    </span>
+                                  ) : null}
                                 </span>
                               ) : null}
                             </div>
@@ -2726,6 +2763,18 @@ function MatchHistory({
                                         key={`${match.id}-blue-${participant.gameName}-${index}`}
                                         className="inline-flex items-center gap-0.5 max-w-[96px]"
                                       >
+                                        {participant.laneIconUrl ? (
+                                          <span
+                                            className="relative flex h-3.5 w-3.5 shrink-0 items-center justify-center overflow-hidden rounded-[2px] bg-transparent"
+                                            title={participant.laneLabel ?? undefined}
+                                          >
+                                            <img
+                                              src={participant.laneIconUrl}
+                                              alt=""
+                                              className="h-[120%] w-[120%] max-w-none object-cover object-center"
+                                            />
+                                          </span>
+                                        ) : null}
                                         {participant.championImageUrl ? (
                                           <img
                                             src={participant.championImageUrl}
@@ -2746,6 +2795,18 @@ function MatchHistory({
                                         key={`${match.id}-red-${participant.gameName}-${index}`}
                                         className="inline-flex items-center gap-0.5 max-w-[96px]"
                                       >
+                                        {participant.laneIconUrl ? (
+                                          <span
+                                            className="relative flex h-3.5 w-3.5 shrink-0 items-center justify-center overflow-hidden rounded-[2px] bg-transparent"
+                                            title={participant.laneLabel ?? undefined}
+                                          >
+                                            <img
+                                              src={participant.laneIconUrl}
+                                              alt=""
+                                              className="h-[120%] w-[120%] max-w-none object-cover object-center"
+                                            />
+                                          </span>
+                                        ) : null}
                                         {participant.championImageUrl ? (
                                           <img
                                             src={participant.championImageUrl}

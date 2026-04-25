@@ -120,6 +120,11 @@ export function LolMatchHistoryDetail({
                   ? "border-l-[3px] border-l-sky-500"
                   : "border-l-[3px] border-l-red-600";
                 const rowBg = isBlue ? "bg-sky-950/40" : "bg-red-950/40";
+                const eloText = eloLabelFromParticipant(p);
+                const laneText =
+                  p.laneLabel && p.laneLabel !== "UNKNOWN"
+                    ? p.laneLabel
+                    : "";
                 return (
                   <React.Fragment
                     key={p.puuid || `${p.riotId}-${p.championId}`}
@@ -220,10 +225,63 @@ export function LolMatchHistoryDetail({
                                 </span>
                               ) : null}
                             </span>
-                            {showRank && p.rankLine ? (
-                              <span className="block min-w-0 truncate text-left text-[10px] leading-tight text-muted-foreground">
-                                {p.rankLine}
-                              </span>
+                            {showRank &&
+                            (p.rankTierIconUrl || eloText || laneText) ? (
+                              <div className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5 text-[10px] leading-tight text-muted-foreground">
+                                <span className="inline-flex min-w-0 max-w-full items-center gap-1">
+                                  {p.rankTierIconUrl ? (
+                                    <WithTooltip
+                                      text={
+                                        eloText
+                                          ? `${eloText} — elo na época da partida (ranqueada)`
+                                          : p.rankLine ||
+                                            "Elo na época da partida"
+                                      }
+                                    >
+                                      <span className="relative mt-px flex h-4 w-4 shrink-0 overflow-hidden rounded-[3px] bg-transparent">
+                                        <img
+                                          src={p.rankTierIconUrl}
+                                          alt=""
+                                          className="absolute left-1/2 top-1/2 h-[340%] w-[340%] max-w-none -translate-x-1/2 -translate-y-1/2 object-cover object-[center_40%]"
+                                        />
+                                      </span>
+                                    </WithTooltip>
+                                  ) : null}
+                                  {eloText ? (
+                                    <span className="min-w-0 truncate font-medium text-foreground/85">
+                                      {eloText}
+                                    </span>
+                                  ) : null}
+                                </span>
+                                {laneText ? (
+                                  <>
+                                    <span
+                                      className="shrink-0 text-muted-foreground/60"
+                                      aria-hidden
+                                    >
+                                      ·
+                                    </span>
+                                    <span className="inline-flex min-w-0 max-w-full items-center gap-1">
+                                      {p.laneIconUrl ? (
+                                        <WithTooltip
+                                          text={`${laneText} — posição na partida`}
+                                        >
+                                          <span className="relative flex h-3.5 w-3.5 shrink-0 items-center justify-center overflow-hidden rounded-[2px] bg-transparent">
+                                            <img
+                                              src={p.laneIconUrl}
+                                              alt=""
+                                              className="h-[118%] w-[118%] max-w-none object-cover object-center"
+                                            />
+                                          </span>
+                                        </WithTooltip>
+                                      ) : null}
+                                      <span className="truncate font-medium text-foreground/85">
+                                        {laneText}
+                                      </span>
+                                    </span>
+                                  </>
+                                ) : null}
+                              </div>
                             ) : null}
                           </div>
                         </div>
@@ -536,6 +594,18 @@ function spellTooltip(name?: string, description?: string) {
     return (name || "").trim();
   }
   return `${name || ""} - ${cleanDesc}`.trim();
+}
+
+function eloLabelFromParticipant(p: {
+  rankDisplay?: string | null;
+  rankLine?: string | null;
+}): string {
+  const d = (p.rankDisplay ?? "").trim();
+  if (d) return d;
+  const line = (p.rankLine ?? "").trim();
+  if (!line) return "";
+  const parts = line.split(/\s*·\s*/);
+  return (parts[0] ?? line).trim();
 }
 
 function normalizeTooltipDescription(description: string): string {

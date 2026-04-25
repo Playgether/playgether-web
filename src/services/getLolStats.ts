@@ -138,6 +138,8 @@ export type LolMatchItem = {
   damageTaken: number;
   teamPosition?: string | null;
   teamPositionLabel?: string | null;
+  /** Same lane icons as role distribution (CDragon). */
+  teamPositionIconUrl?: string | null;
   gameCreation: string;
   durationSeconds: number;
   matchDetail?: LolMatchDetail | null;
