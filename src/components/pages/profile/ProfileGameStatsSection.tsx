@@ -1443,9 +1443,7 @@ function LolChampionOverviewRow({ champion }: { champion: LolChampionRollupRow }
         <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
           <span className="text-foreground">{champion.games} jogos</span>
           <span className="mx-1.5">·</span>
-          <span className={`font-medium tabular-nums ${lolWinRateAccentClass(champion.winRate)}`}>
-            {champion.winRate}% WR
-          </span>
+          <span className="font-medium text-foreground">{champion.winRate}% WR</span>
           <span className="mx-1.5">·</span>
           <span className={`font-medium tabular-nums ${lolRollupKdaRatioToneClass(champion.kda)}`}>
             KDA {champion.kda}
@@ -2096,8 +2094,17 @@ function RealLolOverview({ stats }: { stats: LolStatsResponse }) {
               Campeões mais jogados (Temporada)
             </h4>
             <p className="mb-3 border-b border-border/50 pb-3 text-center text-xs leading-relaxed text-muted-foreground sm:text-left">
-              Temporada atual sincronizada na Playgether, apenas em{" "}
-              <span className="font-medium text-foreground/90">{queueFilterLabel}</span>.
+              {queueScope === "all" ? (
+                <>
+                  Temporada atual sincronizada na Playgether,{" "}
+                  <span className="font-medium text-foreground/90">todas as filas</span>.
+                </>
+              ) : (
+                <>
+                  Temporada atual sincronizada na Playgether, apenas em{" "}
+                  <span className="font-medium text-foreground/90">{queueFilterLabel}</span>.
+                </>
+              )}
             </p>
             {seasonChampions.length === 0 ? (
               <div className="flex min-h-[140px] flex-1 flex-col items-center justify-center px-1">
@@ -2135,8 +2142,14 @@ function RealLolOverview({ stats }: { stats: LolStatsResponse }) {
               Campeões mais jogados (Geral)
             </h4>
             <p className="mb-3 border-b border-border/50 pb-3 text-center text-xs leading-relaxed text-muted-foreground sm:text-left">
-              Histórico plataforma: todas as temporadas sincronizadas na Playgether, apenas em{" "}
-              <span className="font-medium text-foreground/90">{queueFilterLabel}</span>.
+              {queueScope === "all" ? (
+                <>Histórico plataforma: todas as temporadas e filas sincronizadas na Playgether.</>
+              ) : (
+                <>
+                  Histórico plataforma: todas as temporadas sincronizadas na Playgether, apenas em{" "}
+                  <span className="font-medium text-foreground/90">{queueFilterLabel}</span>.
+                </>
+              )}
             </p>
             {!hasGeralCardContent ? (
               <div className="flex min-h-[140px] flex-1 flex-col items-center justify-center px-1">
