@@ -397,6 +397,10 @@ export function ProfileGameStatsSection({
     cs2ForceBlockedByCooldown
       ? `Atualização disponível em ${Math.ceil(cs2ForceRemainingSeconds / 60)} min. Evite spam de refresh na Steam API.`
       : "Atualiza imediatamente as estatísticas puxando da Steam.";
+  const cs2SyncedLabel = formatSyncedAt(cs2Stats?.last_updated);
+  const lolSyncedLabel = formatSyncedAt(
+    lolStatsResponse?.syncStatus?.lastSyncedAt ?? lolStatsResponse?.account?.lastSyncedAt,
+  );
   const useRealLolStats =
     selectedGame === "lol" &&
     lolStatsResponse?.available === true &&
@@ -663,27 +667,40 @@ export function ProfileGameStatsSection({
         </div>
       )}
 
+      {selectedGame === "lol" && hasLolRiotIdentity && lolSyncedLabel ? (
+        <p className="text-[11px] text-muted-foreground">
+          Última sincronização: {lolSyncedLabel}
+        </p>
+      ) : null}
+
       {useRealCs2Stats && (
-        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2 w-fit max-w-full">
-          <Info className="h-3.5 w-3.5 shrink-0" />
-          <span>Estatísticas atualizadas a cada 30 minutos</span>
-          {isOwner && onCs2ForceRefresh ? (
-            <div title={cs2ForceCooldownTitle}>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-8 border-border shrink-0"
-                disabled={cs2ForceButtonDisabled}
-                onClick={() => void onCs2ForceRefresh()}
-              >
-                {cs2ForceRefreshLoading
-                  ? "Atualizando…"
-                  : cs2ForceBlockedByCooldown
-                    ? `Disponível em ${Math.ceil(cs2ForceRemainingSeconds / 60)} min`
-                    : "Atualizar da Steam"}
-              </Button>
-            </div>
+        <div className="space-y-1.5 w-fit max-w-full">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2">
+            <Info className="h-3.5 w-3.5 shrink-0" />
+            <span>Estatísticas atualizadas a cada 30 minutos</span>
+            {isOwner && onCs2ForceRefresh ? (
+              <div title={cs2ForceCooldownTitle}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 border-border shrink-0"
+                  disabled={cs2ForceButtonDisabled}
+                  onClick={() => void onCs2ForceRefresh()}
+                >
+                  {cs2ForceRefreshLoading
+                    ? "Atualizando…"
+                    : cs2ForceBlockedByCooldown
+                      ? `Disponível em ${Math.ceil(cs2ForceRemainingSeconds / 60)} min`
+                      : "Atualizar da Steam"}
+                </Button>
+              </div>
+            ) : null}
+          </div>
+          {cs2SyncedLabel ? (
+            <p className="text-[11px] text-muted-foreground">
+              Última sincronização: {cs2SyncedLabel}
+            </p>
           ) : null}
         </div>
       )}
@@ -713,10 +730,7 @@ export function ProfileGameStatsSection({
 
           <TabsContent value="overview" className="space-y-6 mt-6">
             {useRealCs2Stats ? (
-              <Cs2Overview
-                stats={cs2Stats.stats!}
-                lastSyncedAt={cs2Stats.last_updated}
-              />
+              <Cs2Overview stats={cs2Stats.stats!} />
             ) : useRealLolStats ? (
               <RealLolOverview stats={lolStatsResponse!} />
             ) : (
@@ -1095,13 +1109,7 @@ function formatSyncedAt(iso?: string | null): string | null {
   }).format(d);
 }
 
-function Cs2Overview({
-  stats,
-  lastSyncedAt,
-}: {
-  stats: Cs2StatsData;
-  lastSyncedAt?: string;
-}) {
+function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
   const mergedFromLegacy = mergeCs2WeaponEntries([
     ...(stats.weapons ?? []),
     ...(stats.ctWeaponKills ?? []),
@@ -1113,15 +1121,9 @@ function Cs2Overview({
       : mergedFromLegacy;
   const weaponsBySide = splitWeaponsBySide(normalizedList);
   const topFavoriteWeapons = normalizedList.slice(0, 5);
-  const cs2OverviewSyncedLabel = formatSyncedAt(lastSyncedAt);
 
   return (
     <div className="space-y-6">
-      {cs2OverviewSyncedLabel ? (
-        <p className="text-[11px] text-muted-foreground">
-          Última sincronização: {cs2OverviewSyncedLabel}
-        </p>
-      ) : null}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <StatCard
           icon={<Target className="h-4 w-4" />}
@@ -2191,19 +2193,10 @@ function RealLolOverview({ stats }: { stats: LolStatsResponse }) {
   const visibleMasteryChampions = masteryPreview.slice(0, 4);
   const last20 = stats.last20Summary;
   const completeness = stats.dataCompleteness;
-  const lolSyncedAt = formatSyncedAt(
-    stats.syncStatus?.lastSyncedAt ?? stats.account?.lastSyncedAt,
-  );
-
   if (!overview) {
     return (
       <Card className="bg-card/50 border-border">
         <CardContent className="p-6 text-center text-sm text-muted-foreground space-y-2">
-          {lolSyncedAt ? (
-            <p className="text-[11px] text-muted-foreground">
-              Última sincronização: {lolSyncedAt}
-            </p>
-          ) : null}
           <p>Não há dados suficientes para exibir estatísticas do League of Legends ainda.</p>
         </CardContent>
       </Card>
@@ -2230,11 +2223,6 @@ function RealLolOverview({ stats }: { stats: LolStatsResponse }) {
 
   return (
     <div className="space-y-6">
-      {lolSyncedAt ? (
-        <p className="text-[11px] text-muted-foreground">
-          Última sincronização: {lolSyncedAt}
-        </p>
-      ) : null}
       {completeness ? (
         <Card className="bg-card/40 border-border">
           <CardContent className="p-4 text-xs text-muted-foreground flex flex-wrap gap-4">
