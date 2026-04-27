@@ -35,7 +35,7 @@ import {
   Clock,
   Crosshair,
   Loader2,
-  Map,
+  Map as MapIcon,
   Search,
   Swords,
   Target,
@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import type { getProfileByUsernameProps } from "@/services/getProfileByUsername";
 import type { Cs2StatsResponse } from "@/services/getCs2Stats";
+import type { SteamStatusResponse } from "@/services/getSteamStatus";
 import type {
   LolMatchDetail,
   LolMatchItem,
@@ -88,25 +89,6 @@ interface FpsStats {
   seasonAssists: number;
   weapons: { name: string; kills: number; pct: number }[];
   mapWinRates: { map: string; winPct: number; wins: number; losses: number }[];
-}
-
-interface LolStats {
-  kda: string;
-  winRate: number;
-  currentRank: string;
-  lp: number;
-  previousSeasonRank: string;
-  peakRank: string;
-  totalHours: number;
-  seasonHours: number;
-  totalKills: number;
-  totalDeaths: number;
-  totalAssists: number;
-  seasonKills: number;
-  seasonDeaths: number;
-  seasonAssists: number;
-  champions: { name: string; games: number; winPct: number; kda: string }[];
-  roles: { role: string; games: number; winPct: number }[];
 }
 
 interface Match {
@@ -277,41 +259,6 @@ const fpsStatsBySeason: Record<string, FpsStats> = {
   },
 };
 
-const lolStatsS1: LolStats = {
-  kda: "2.45:1",
-  winRate: 58,
-  currentRank: "Diamond 2",
-  lp: 45,
-  previousSeasonRank: "Platinum 1",
-  peakRank: "Diamond 1",
-  totalHours: 890,
-  seasonHours: 65,
-  totalKills: 3420,
-  totalDeaths: 1850,
-  totalAssists: 4120,
-  seasonKills: 245,
-  seasonDeaths: 132,
-  seasonAssists: 298,
-  champions: [
-    { name: "Aphelios", games: 45, winPct: 62, kda: "2.8:1" },
-    { name: "Ahri", games: 32, winPct: 66, kda: "2.4:1" },
-    { name: "Jinx", games: 28, winPct: 54, kda: "2.1:1" },
-    { name: "Viktor", games: 22, winPct: 50, kda: "2.6:1" },
-  ],
-  roles: [
-    { role: "ADC", games: 68, winPct: 59 },
-    { role: "Mid", games: 45, winPct: 56 },
-    { role: "Top", games: 12, winPct: 50 },
-  ],
-};
-
-const lolStatsBySeason: Record<string, LolStats> = {
-  s1: lolStatsS1,
-  s2: { ...lolStatsS1, currentRank: "Platinum 1", lp: 78 },
-  s3: { ...lolStatsS1, currentRank: "Platinum 2", lp: 32 },
-  s4: { ...lolStatsS1, currentRank: "Gold 1", lp: 95 },
-};
-
 const generateMatches = (
   gameId: GameId,
   count: number,
@@ -374,6 +321,7 @@ interface ProfileGameStatsSectionProps {
   selectedGame: GameId;
   profile: getProfileByUsernameProps | null;
   cs2Stats?: Cs2StatsResponse | null;
+  steamStatus?: SteamStatusResponse | null;
   lolStats?: LolStatsResponse | null;
   lolTimeScope?: LolTimeScope;
   lolQueueScope?: LolQueueScope;
@@ -381,12 +329,16 @@ interface ProfileGameStatsSectionProps {
   onLolTimeScopeChange?: (value: LolTimeScope) => void;
   onLolQueueScopeChange?: (value: LolQueueScope) => void;
   onLolSeasonIdChange?: (value: string | null) => void;
+  isOwner?: boolean;
+  onCs2ForceRefresh?: () => void | Promise<void>;
+  cs2ForceRefreshLoading?: boolean;
 }
 
 export function ProfileGameStatsSection({
   selectedGame,
   profile,
   cs2Stats,
+  steamStatus = null,
   lolStats: lolStatsResponse,
   lolTimeScope = "platform",
   lolQueueScope = "ranked_solo",
@@ -394,6 +346,9 @@ export function ProfileGameStatsSection({
   onLolTimeScopeChange,
   onLolQueueScopeChange,
   onLolSeasonIdChange,
+  isOwner = false,
+  onCs2ForceRefresh,
+  cs2ForceRefreshLoading = false,
 }: ProfileGameStatsSectionProps) {
   const [statsTab, setStatsTab] = useState("overview");
   const [season, setSeason] = useState("s1");
@@ -417,16 +372,40 @@ export function ProfileGameStatsSection({
   const profileNick =
     selectedGame === "lol"
       ? (lolStatsResponse?.account?.riotId ?? profile?.name ?? "Player")
-      : profile?.name || "Player";
+      : selectedGame === "csgo" && steamStatus?.nickname
+        ? steamStatus.nickname
+        : profile?.name || "Player";
+
+  const hasLolRiotIdentity = Boolean(
+    (lolStatsResponse?.account?.riotId ?? "").trim() ||
+      ((lolStatsResponse?.account?.gameName ?? "").trim() &&
+        (lolStatsResponse?.account?.tagLine ?? "").trim()),
+  );
+
   const useRealCs2Stats =
     selectedGame === "csgo" && cs2Stats?.available === true && Boolean(cs2Stats?.stats);
-  const isCs2WithoutStats = selectedGame === "csgo" && !useRealCs2Stats;
+  const cs2ForceRemainingSeconds = Math.max(
+    0,
+    Number(cs2Stats?.force_refresh?.remaining_seconds ?? 0),
+  );
+  const cs2ForceBlockedByCooldown =
+    selectedGame === "csgo" &&
+    useRealCs2Stats &&
+    cs2ForceRemainingSeconds > 0;
+  const cs2ForceButtonDisabled = cs2ForceRefreshLoading || cs2ForceBlockedByCooldown;
+  const cs2ForceCooldownTitle =
+    cs2ForceBlockedByCooldown
+      ? `Atualização disponível em ${Math.ceil(cs2ForceRemainingSeconds / 60)} min. Evite spam de refresh na Steam API.`
+      : "Atualiza imediatamente as estatísticas puxando da Steam.";
   const useRealLolStats =
     selectedGame === "lol" &&
     lolStatsResponse?.available === true &&
-    Boolean(lolStatsResponse?.overview);
+    Boolean(lolStatsResponse?.overview) &&
+    hasLolRiotIdentity;
+  const isGameStatsUnavailable =
+    (selectedGame === "csgo" && !useRealCs2Stats) ||
+    (selectedGame === "lol" && !useRealLolStats);
   const fpsStats = fpsStatsBySeason[season] ?? fpsStatsBySeason["s1"];
-  const lolMockStats = lolStatsBySeason[season] ?? lolStatsBySeason["s1"];
 
   const allMatches = generateMatches(selectedGame, matchesLoaded);
   const matchesToShow = competitiveOnly ? allMatches : allMatches; // No filtro real, só UI
@@ -504,6 +483,16 @@ export function ProfileGameStatsSection({
                 alt=""
                 className="h-14 w-14 rounded-md border-2 border-border ring-2 ring-primary/20 object-cover"
               />
+            ) : selectedGame === "csgo" && steamStatus?.avatar ? (
+              <img
+                src={steamStatus.avatar}
+                alt=""
+                className="h-14 w-14 rounded-md border-2 border-border ring-2 ring-primary/20 object-cover"
+              />
+            ) : selectedGame === "csgo" ? (
+              <div className="h-14 w-14 rounded-md border-2 border-border ring-2 ring-primary/20 bg-muted/40 flex items-center justify-center">
+                <span className="text-xs font-semibold text-muted-foreground">Steam</span>
+              </div>
             ) : (
               <ProfileAvatar
                 displayName={profileNick}
@@ -675,14 +664,32 @@ export function ProfileGameStatsSection({
       )}
 
       {useRealCs2Stats && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2 w-fit">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2 w-fit max-w-full">
           <Info className="h-3.5 w-3.5 shrink-0" />
           <span>Estatísticas atualizadas a cada 30 minutos</span>
+          {isOwner && onCs2ForceRefresh ? (
+            <div title={cs2ForceCooldownTitle}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 border-border shrink-0"
+                disabled={cs2ForceButtonDisabled}
+                onClick={() => void onCs2ForceRefresh()}
+              >
+                {cs2ForceRefreshLoading
+                  ? "Atualizando…"
+                  : cs2ForceBlockedByCooldown
+                    ? `Disponível em ${Math.ceil(cs2ForceRemainingSeconds / 60)} min`
+                    : "Atualizar da Steam"}
+              </Button>
+            </div>
+          ) : null}
         </div>
       )}
 
-      {isCs2WithoutStats ? (
-        <Cs2StatsUnavailable />
+      {isGameStatsUnavailable ? (
+        <GameStatsUnavailable game={selectedGame === "lol" ? "lol" : "cs2"} />
       ) : (
         <Tabs value={statsTab} onValueChange={setStatsTab} className="w-full">
           <TabsList
@@ -706,13 +713,14 @@ export function ProfileGameStatsSection({
 
           <TabsContent value="overview" className="space-y-6 mt-6">
             {useRealCs2Stats ? (
-              <Cs2Overview stats={cs2Stats.stats!} />
+              <Cs2Overview
+                stats={cs2Stats.stats!}
+                lastSyncedAt={cs2Stats.last_updated}
+              />
             ) : useRealLolStats ? (
               <RealLolOverview stats={lolStatsResponse!} />
-            ) : gameType === "fps" ? (
-              <FpsOverview stats={fpsStats} />
             ) : (
-              <LolOverview stats={lolMockStats} />
+              <FpsOverview stats={fpsStats} />
             )}
           </TabsContent>
 
@@ -746,22 +754,375 @@ export function ProfileGameStatsSection({
 
 type Cs2StatsData = NonNullable<Cs2StatsResponse["stats"]>;
 
-function Cs2StatsUnavailable() {
+type Cs2WeaponEntry = { name: string; kills: number; pct: number };
+
+const CS2_CT_WEAPONS = new Set([
+  "USP-S",
+  "P2000",
+  "FIVE-SEVEN",
+  "M4A1-S",
+  "M4A4",
+  "FAMAS",
+  "AUG",
+  "MAG-7",
+  "MP9",
+  "INCENDIARY GRENADE",
+  "DEFUSE KIT",
+  "SCAR-20",
+]);
+
+const CS2_T_WEAPONS = new Set([
+  "GLOCK-18",
+  "TEC-9",
+  "AK-47",
+  "GALIL AR",
+  "SG 553",
+  "SAWED-OFF",
+  "C4 EXPLOSIVE",
+  "C4",
+  "MOLOTOV",
+  "MAC-10",
+  "G3SG1",
+]);
+
+const CS2_SHARED_WEAPONS = new Set([
+  "P250",
+  "DESERT EAGLE",
+  "DEAGLE",
+  "R8 REVOLVER",
+  "DUAL BERETTAS",
+  "MP7",
+  "MP5-SD",
+  "UMP-45",
+  "P90",
+  "PP-BIZON",
+  "CZ75-AUTO",
+  "AWP",
+  "SSG 08",
+  "NOVA",
+  "XM1014",
+  "M249",
+  "NEGEV",
+  "SMOKE GRENADE",
+  "FLASHBANG",
+  "HE GRENADE",
+  "DECOY GRENADE",
+  "KNIFE",
+  "KNIFE (T)",
+  "ZEUS X27",
+]);
+
+const CS2_MAP_ICON_BASE =
+  "https://raw.githubusercontent.com/MurkyYT/cs2-map-icons/main/images";
+
+/** Arquivo sem extensão (ex.: de_mirage) — ícones completos, não thumbs. */
+const CS2_MAP_ICON_STEM: Record<string, string> = {
+  dust2: "de_dust2",
+  mirage: "de_mirage",
+  inferno: "de_inferno",
+  overpass: "de_overpass",
+  nuke: "de_nuke",
+  ancient: "de_ancient",
+  anubis: "de_anubis",
+  vertigo: "de_vertigo",
+  train: "de_train",
+  cache: "de_cache",
+  /** Cobblestone — no repo o ficheiro é de_cbble.png */
+  cobblestone: "de_cbble",
+  cbble: "de_cbble",
+  cobble: "de_cbble",
+  /** Office é mapa hostage — cs_office.png (não de_office). */
+  office: "cs_office",
+};
+
+const CS2_MAP_ICON_STEM_BY_KEY: Record<string, string> = {
+  dustii: "de_dust2",
+  dedust2: "de_dust2",
+  dustiii: "de_dust2",
+  deinferno: "de_inferno",
+  demirage: "de_mirage",
+  deanubis: "de_anubis",
+  denuke: "de_nuke",
+  deancient: "de_ancient",
+  deoverpass: "de_overpass",
+  devertigo: "de_vertigo",
+  detrain: "de_train",
+  decache: "de_cache",
+  decbble: "de_cbble",
+  decobblestone: "de_cbble",
+  de_cbble: "de_cbble",
+  csoffice: "cs_office",
+  csoffic: "cs_office",
+  cs_office: "cs_office",
+};
+
+const MAP_ICON_FALLBACK_STEM = "de_mirage";
+
+/** Nomes no repositório MurkyYT: de_*, cs_* (hostage), ar_* (arms race). */
+function isValidMapIconStem(stem: string): boolean {
+  return /^(de|cs|ar)_[a-z0-9_]+$/i.test(stem);
+}
+
+function getCs2MapIconUrl(mapName: string): string {
+  const raw = normalizeMapName(mapName);
+  const compact = raw.replace(/_/g, "");
+  let stem =
+    CS2_MAP_ICON_STEM[raw] ??
+    CS2_MAP_ICON_STEM_BY_KEY[raw] ??
+    CS2_MAP_ICON_STEM[compact] ??
+    CS2_MAP_ICON_STEM_BY_KEY[compact] ??
+    (raw.startsWith("de") || raw.startsWith("cs") || raw.startsWith("ar")
+      ? raw
+      : `de_${raw}`);
+  if (!isValidMapIconStem(stem)) {
+    stem = MAP_ICON_FALLBACK_STEM;
+  }
+  return `${CS2_MAP_ICON_BASE}/${stem}.png`;
+}
+
+/** Normaliza nomes da API/Steam para bater nos sets CT/TR/shared. */
+function weaponClassificationKey(name: string): string {
+  const upper = name.trim().toUpperCase().replace(/[—–]/g, "-");
+  const collapsed = upper.replace(/\s+/g, "");
+  const aliases: Record<string, string> = {
+    M4A1S: "M4A1-S",
+    M4A1SILENCER: "M4A1-S",
+    M4SILENCER: "M4A1-S",
+    SCAR20: "SCAR-20",
+    GLOCK: "GLOCK-18",
+    MAC10: "MAC-10",
+    GALILAR: "GALIL AR",
+    SG556: "SG 553",
+    SG553: "SG 553",
+    G3SG: "G3SG1",
+    DESERTEAGLE: "DESERT EAGLE",
+    HE: "HE GRENADE",
+    HEGRENADE: "HE GRENADE",
+    DECOYGRENADE: "DECOY GRENADE",
+    SMOKEGRENADE: "SMOKE GRENADE",
+    INCENDIARYGRENADE: "INCENDIARY GRENADE",
+    INCENDIARY: "INCENDIARY GRENADE",
+    ZEUS: "ZEUS X27",
+    ZEUSX27: "ZEUS X27",
+  };
+  if (aliases[collapsed]) return aliases[collapsed];
+  return upper.replace(/\s+/g, " ").trim();
+}
+
+function normalizeWeaponName(name: string): string {
+  return name.trim().toUpperCase();
+}
+
+function normalizeMapName(name: string): string {
+  return name.toLowerCase().replaceAll(" ", "").replaceAll("-", "");
+}
+
+function mergeCs2WeaponEntries(lists: Cs2WeaponEntry[]): Cs2WeaponEntry[] {
+  const byName = new Map<string, Cs2WeaponEntry>();
+  for (const weapon of lists) {
+    const key = normalizeWeaponName(weapon.name);
+    const existing = byName.get(key);
+    if (existing) {
+      // Mesma arma vem em mais de uma lista (ex.: top 5 + ctWeaponKills) — não somar.
+      byName.set(key, {
+        ...existing,
+        kills: Math.max(existing.kills, weapon.kills),
+        pct: Math.max(existing.pct, weapon.pct),
+      });
+    } else {
+      byName.set(key, weapon);
+    }
+  }
+  return [...byName.values()].sort((a, b) => b.kills - a.kills);
+}
+
+function splitWeaponsBySide(
+  allWeapons: Cs2WeaponEntry[],
+): {
+  ct: Cs2WeaponEntry[];
+  t: Cs2WeaponEntry[];
+  shared: Cs2WeaponEntry[];
+  other: Cs2WeaponEntry[];
+} {
+  const byName = new Map<string, Cs2WeaponEntry>();
+
+  for (const weapon of allWeapons) {
+    const key = normalizeWeaponName(weapon.name);
+    const existing = byName.get(key);
+    if (existing) {
+      byName.set(key, {
+        ...existing,
+        kills: existing.kills + weapon.kills,
+        pct: Math.max(existing.pct, weapon.pct),
+      });
+    } else {
+      byName.set(key, weapon);
+    }
+  }
+
+  const ct: Cs2WeaponEntry[] = [];
+  const t: Cs2WeaponEntry[] = [];
+  const shared: Cs2WeaponEntry[] = [];
+  const other: Cs2WeaponEntry[] = [];
+
+  for (const [, weapon] of byName) {
+    const key = weaponClassificationKey(weapon.name);
+    if (CS2_CT_WEAPONS.has(key)) {
+      ct.push(weapon);
+      continue;
+    }
+    if (CS2_T_WEAPONS.has(key)) {
+      t.push(weapon);
+      continue;
+    }
+    if (CS2_SHARED_WEAPONS.has(key)) {
+      shared.push(weapon);
+      continue;
+    }
+    other.push(weapon);
+  }
+
+  const byKillsDesc = (a: Cs2WeaponEntry, b: Cs2WeaponEntry) => b.kills - a.kills;
+  return {
+    ct: ct.sort(byKillsDesc),
+    t: t.sort(byKillsDesc),
+    shared: shared.sort(byKillsDesc),
+    other: other.sort(byKillsDesc),
+  };
+}
+
+function Cs2WeaponChip({ weapon }: { weapon: Cs2WeaponEntry }) {
+  return (
+    <div className="flex items-center justify-between rounded-md border border-border/60 bg-muted/20 px-2.5 py-1.5">
+      <span className="text-sm font-medium">{weapon.name}</span>
+      <span className="text-xs text-muted-foreground">
+        {weapon.kills.toLocaleString()} kills ({weapon.pct}%)
+      </span>
+    </div>
+  );
+}
+
+function Cs2WeaponsSideColumn({
+  title,
+  subtitle,
+  weapons,
+  previewLimit = 5,
+}: {
+  title: string;
+  subtitle: string;
+  weapons: Cs2WeaponEntry[];
+  previewLimit?: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const preview = weapons.slice(0, previewLimit);
+  const hasMore = weapons.length > previewLimit;
+
+  return (
+    <>
+      <Card className="h-fit border-border bg-card/50">
+        <CardContent className="flex flex-col p-4">
+          <h4 className="text-sm font-semibold text-foreground">{title}</h4>
+          <p className="mb-3 text-xs text-muted-foreground">{subtitle}</p>
+          <div className="space-y-2">
+            {weapons.length === 0 ? (
+              <div className="rounded-md border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
+                Sem armas relevantes nessa categoria.
+              </div>
+            ) : (
+              preview.map((weapon) => (
+                <Cs2WeaponChip key={weapon.name} weapon={weapon} />
+              ))
+            )}
+          </div>
+          {hasMore ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="mt-3 h-8 shrink-0 self-start px-2 text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => setOpen(true)}
+            >
+              Ver todos ({weapons.length})
+            </Button>
+          ) : null}
+        </CardContent>
+      </Card>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="flex max-h-[min(85vh,640px)] max-w-lg flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
+          <DialogHeader className="shrink-0 border-b border-border/60 px-6 pb-4 pt-6 pr-12 text-left">
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription className="text-left text-xs text-muted-foreground">
+              {subtitle}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="min-h-0 max-h-[min(60vh,520px)] overflow-y-auto px-6 pb-6 pt-2">
+            <div className="space-y-2">
+              {weapons.map((weapon) => (
+                <Cs2WeaponChip
+                  key={`${title}-${weapon.name}-${weapon.kills}`}
+                  weapon={weapon}
+                />
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+function GameStatsUnavailable({ game }: { game: "cs2" | "lol" }) {
+  const label = game === "lol" ? "League of Legends" : "CS2";
   return (
     <Card className="bg-card/50 border-border">
       <CardContent className="p-6 text-center">
         <p className="text-sm text-muted-foreground">
-          Este usuário não possui estatísticas disponíveis no CS2 no momento.
+          Este usuário não possui estatísticas disponíveis no {label} no momento.
         </p>
       </CardContent>
     </Card>
   );
 }
 
-function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
+function formatSyncedAt(iso?: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(d);
+}
+
+function Cs2Overview({
+  stats,
+  lastSyncedAt,
+}: {
+  stats: Cs2StatsData;
+  lastSyncedAt?: string;
+}) {
+  const mergedFromLegacy = mergeCs2WeaponEntries([
+    ...(stats.weapons ?? []),
+    ...(stats.ctWeaponKills ?? []),
+    ...(stats.alternativeWeapons ?? []),
+  ]);
+  const normalizedList =
+    stats.allWeaponKills && stats.allWeaponKills.length > 0
+      ? stats.allWeaponKills
+      : mergedFromLegacy;
+  const weaponsBySide = splitWeaponsBySide(normalizedList);
+  const topFavoriteWeapons = normalizedList.slice(0, 5);
+  const cs2OverviewSyncedLabel = formatSyncedAt(lastSyncedAt);
+
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      {cs2OverviewSyncedLabel ? (
+        <p className="text-[11px] text-muted-foreground">
+          Última sincronização: {cs2OverviewSyncedLabel}
+        </p>
+      ) : null}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <StatCard
           icon={<Target className="h-4 w-4" />}
           label="K/D"
@@ -773,12 +1134,6 @@ function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
           label="HS%"
           value={`${stats.headshotPct}%`}
           accent="text-neon-blue"
-        />
-        <StatCard
-          icon={<Trophy className="h-4 w-4" />}
-          label="Win Rate"
-          value={`${stats.winrate}%`}
-          accent="text-neon-purple"
         />
         <StatCard
           icon={<Clock className="h-4 w-4" />}
@@ -933,27 +1288,6 @@ function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
           </CardContent>
         </Card>
 
-        <Card className="bg-card/50 border-border">
-          <CardContent className="p-4">
-            <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
-              <Target className="h-4 w-4" />
-              CT vs T
-            </h4>
-            <div className="space-y-2 text-sm">
-              {(stats.ctWeaponKills ?? []).map((w) => (
-                <div key={w.name} className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    Kills com {w.name}
-                  </span>
-                  <span className="font-medium">
-                    {w.kills.toLocaleString()} kills ({w.pct}%)
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
         {stats.sniperStats && (
           <Card className="bg-card/50 border-border">
             <CardContent className="p-4">
@@ -986,24 +1320,55 @@ function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
         )}
       </div>
 
-      {(stats.alternativeWeapons ?? []).length > 0 && (
+      <div className="space-y-3">
+        <h4 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
+          <Target className="h-4 w-4" />
+          Armas por lado
+        </h4>
+        <div
+          className={cn(
+            "grid items-start grid-cols-1 gap-4",
+            weaponsBySide.other.length > 0 ? "lg:grid-cols-4" : "lg:grid-cols-3",
+          )}
+        >
+          <Cs2WeaponsSideColumn
+            title="CT"
+            subtitle="Somente Contra-Terroristas"
+            weapons={weaponsBySide.ct}
+            previewLimit={5}
+          />
+          <Cs2WeaponsSideColumn
+            title="TR"
+            subtitle="Somente Terroristas"
+            weapons={weaponsBySide.t}
+            previewLimit={5}
+          />
+          <Cs2WeaponsSideColumn
+            title="CT/TR"
+            subtitle="Disponíveis para ambos os lados"
+            weapons={weaponsBySide.shared}
+            previewLimit={5}
+          />
+          {weaponsBySide.other.length > 0 ? (
+            <Cs2WeaponsSideColumn
+              title="Outras (Steam)"
+              subtitle="Nome da estatística ainda não mapeado nos grupos acima"
+              weapons={weaponsBySide.other}
+              previewLimit={5}
+            />
+          ) : null}
+        </div>
+      </div>
+
+      {topFavoriteWeapons.length > 0 && (
         <Card className="bg-card/50 border-border">
           <CardContent className="p-4">
             <h4 className="font-semibold text-sm text-muted-foreground mb-3">
-              Armas alternativas favoritas
+              Armas favoritas (Top 5 geral)
             </h4>
-            <div className="flex flex-wrap gap-2">
-              {stats.alternativeWeapons.map((w) => (
-                <Badge
-                  key={w.name}
-                  variant="secondary"
-                  className="border border-border py-1.5 px-2 gap-1"
-                >
-                  <span className="font-medium">{w.name}</span>
-                  <span className="text-muted-foreground">
-                    {w.kills.toLocaleString()} kills ({w.pct}%)
-                  </span>
-                </Badge>
+            <div className="space-y-2">
+              {topFavoriteWeapons.map((weapon) => (
+                <Cs2WeaponChip key={`favorite-${weapon.name}`} weapon={weapon} />
               ))}
             </div>
           </CardContent>
@@ -1014,7 +1379,7 @@ function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
         <Card className="bg-card/50 border-border">
           <CardContent className="p-4">
             <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
-              <Map className="h-4 w-4" />
+              <MapIcon className="h-4 w-4" />
               Vitórias por mapa
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1023,7 +1388,17 @@ function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
                   key={m.map}
                   className="flex items-center justify-between p-2 rounded-lg bg-muted/30 border border-border/50"
                 >
-                  <span className="font-medium text-sm">{m.map}</span>
+                  <span className="font-medium text-sm inline-flex items-center gap-3 min-w-0">
+                    <span className="group relative inline-flex h-12 w-12 shrink-0 overflow-hidden rounded-md border border-border/60">
+                      <img
+                        src={getCs2MapIconUrl(m.map)}
+                        alt={`Ícone ${m.map}`}
+                        className="h-12 w-12 object-contain transition-transform duration-300 ease-out will-change-transform md:group-hover:scale-110"
+                        loading="lazy"
+                      />
+                    </span>
+                    <span className="truncate">{m.map}</span>
+                  </span>
                   <span
                     className={`text-sm font-semibold ${
                       m.winPct >= 50 ? "text-neon-green" : "text-red-500"
@@ -1201,7 +1576,7 @@ function FpsOverview({ stats }: { stats: FpsStats }) {
       <Card className="bg-card/50 border-border">
         <CardContent className="p-4">
           <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
-            <Map className="h-4 w-4" />
+            <MapIcon className="h-4 w-4" />
             Vitórias por mapa
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1219,135 +1594,6 @@ function FpsOverview({ stats }: { stats: FpsStats }) {
                   {m.winPct}% ({m.wins}V/{m.losses}D)
                 </span>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// ---- LoL Overview ----
-
-function LolOverview({ stats }: { stats: LolStats }) {
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard
-          icon={<Target className="h-4 w-4" />}
-          label="KDA"
-          value={stats.kda}
-          accent="text-neon-green"
-        />
-        <StatCard
-          icon={<Trophy className="h-4 w-4" />}
-          label="Win Rate"
-          value={`${stats.winRate}%`}
-          accent="text-neon-purple"
-        />
-        <StatCard
-          icon={<TrendingUp className="h-4 w-4" />}
-          label="Rank Atual"
-          value={stats.currentRank}
-          accent="text-neon-blue"
-          subValue={`${stats.lp} LP`}
-        />
-        <StatCard
-          icon={<Trophy className="h-4 w-4" />}
-          label="Pico"
-          value={stats.peakRank}
-          accent="text-neon-pink"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="bg-card/50 border-border">
-          <CardContent className="p-4">
-            <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
-              <Swords className="h-4 w-4" />
-              KDA Total / Season
-            </h4>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <p className="text-muted-foreground">Total</p>
-                <p className="font-semibold">
-                  {stats.totalKills} / {stats.totalDeaths} /{" "}
-                  {stats.totalAssists}
-                </p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Season</p>
-                <p className="font-semibold">
-                  {stats.seasonKills} / {stats.seasonDeaths} /{" "}
-                  {stats.seasonAssists}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card/50 border-border">
-          <CardContent className="p-4">
-            <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Horas Jogadas
-            </h4>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <p className="text-muted-foreground">Total</p>
-                <p className="font-semibold text-neon-blue">
-                  {stats.totalHours}h
-                </p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Season</p>
-                <p className="font-semibold text-neon-purple">
-                  {stats.seasonHours}h
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="bg-card/50 border-border">
-        <CardContent className="p-4">
-          <h4 className="font-semibold text-sm text-muted-foreground mb-3">
-            Personagens mais jogados
-          </h4>
-          <div className="space-y-2">
-            {stats.champions.map((c) => (
-              <div
-                key={c.name}
-                className="flex items-center justify-between p-2 rounded-lg bg-muted/30 border border-border/50"
-              >
-                <span className="font-medium text-sm">{c.name}</span>
-                <span className="text-sm text-muted-foreground">
-                  {c.games} jogos · {c.winPct}% WR · {c.kda} KDA
-                </span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-card/50 border-border">
-        <CardContent className="p-4">
-          <h4 className="font-semibold text-sm text-muted-foreground mb-3">
-            Roles mais jogadas
-          </h4>
-          <div className="flex flex-wrap gap-2">
-            {stats.roles.map((r) => (
-              <Badge
-                key={r.role}
-                variant="secondary"
-                className="border border-border py-1.5 px-2 gap-1"
-              >
-                <span className="font-medium">{r.role}</span>
-                <span className="text-muted-foreground">
-                  {r.games} jogos · {r.winPct}% WR
-                </span>
-              </Badge>
             ))}
           </div>
         </CardContent>
@@ -1945,12 +2191,20 @@ function RealLolOverview({ stats }: { stats: LolStatsResponse }) {
   const visibleMasteryChampions = masteryPreview.slice(0, 4);
   const last20 = stats.last20Summary;
   const completeness = stats.dataCompleteness;
+  const lolSyncedAt = formatSyncedAt(
+    stats.syncStatus?.lastSyncedAt ?? stats.account?.lastSyncedAt,
+  );
 
   if (!overview) {
     return (
       <Card className="bg-card/50 border-border">
-        <CardContent className="p-6 text-center text-sm text-muted-foreground">
-          Não há dados suficientes para exibir estatísticas do League of Legends ainda.
+        <CardContent className="p-6 text-center text-sm text-muted-foreground space-y-2">
+          {lolSyncedAt ? (
+            <p className="text-[11px] text-muted-foreground">
+              Última sincronização: {lolSyncedAt}
+            </p>
+          ) : null}
+          <p>Não há dados suficientes para exibir estatísticas do League of Legends ainda.</p>
         </CardContent>
       </Card>
     );
@@ -1976,6 +2230,11 @@ function RealLolOverview({ stats }: { stats: LolStatsResponse }) {
 
   return (
     <div className="space-y-6">
+      {lolSyncedAt ? (
+        <p className="text-[11px] text-muted-foreground">
+          Última sincronização: {lolSyncedAt}
+        </p>
+      ) : null}
       {completeness ? (
         <Card className="bg-card/40 border-border">
           <CardContent className="p-4 text-xs text-muted-foreground flex flex-wrap gap-4">

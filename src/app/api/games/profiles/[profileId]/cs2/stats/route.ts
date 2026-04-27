@@ -3,10 +3,12 @@ import { cookies } from "next/headers";
 import { api } from "@/services/api";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ profileId: string }> }
 ) {
   const { profileId } = await params;
+  const qs = new URL(request.url).searchParams.toString();
+  const querySuffix = qs ? `?${qs}` : "";
   const accessToken = (await cookies()).get("accessToken")?.value;
   if (!accessToken) {
     return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
@@ -18,7 +20,7 @@ export async function GET(
   }
 
   const axiosResp = await api.get(
-    `/api/games/profiles/${profileId}/cs2/stats/`,
+    `/api/games/profiles/${profileId}/cs2/stats/${querySuffix}`,
     {
       headers: { Authorization: `Bearer ${accessToken}` },
       validateStatus: () => true,
