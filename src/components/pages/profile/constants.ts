@@ -49,5 +49,5 @@ export const games = [
     name: "League of Legends",
     image: "/games/League of Legends.png",
   },
-  { id: "csgo", name: "CS:GO", image: "/games/Counter Strike 2.png" },
+  { id: "csgo", name: "CS2", image: "/games/Counter Strike 2.png" },
 ];

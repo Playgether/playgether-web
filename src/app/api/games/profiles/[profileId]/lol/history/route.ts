@@ -7,26 +7,22 @@ export async function GET(
   { params }: { params: Promise<{ profileId: string }> }
 ) {
   const { profileId } = await params;
-  const qs = new URL(request.url).searchParams.toString();
-  const querySuffix = qs ? `?${qs}` : "";
   const accessToken = (await cookies()).get("accessToken")?.value;
   if (!accessToken) {
     return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
   }
 
-  const baseUrl = process.env.baseUrl;
-  if (!baseUrl) {
-    return NextResponse.json({ detail: "Missing baseUrl" }, { status: 500 });
-  }
+  const incomingUrl = new URL(request.url);
+  const search = incomingUrl.searchParams.toString();
+  const upstreamPath = search
+    ? `/api/games/profiles/${profileId}/lol/history/?${search}`
+    : `/api/games/profiles/${profileId}/lol/history/`;
 
-  const axiosResp = await api.get(
-    `/api/games/profiles/${profileId}/cs2/stats/${querySuffix}`,
-    {
-      headers: { Authorization: `Bearer ${accessToken}` },
-      validateStatus: () => true,
-      responseType: "text",
-    }
-  );
+  const axiosResp = await api.get(upstreamPath, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    validateStatus: () => true,
+    responseType: "text",
+  });
 
   const text = axiosResp.data ?? "";
   const json = (() => {

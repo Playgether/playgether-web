@@ -1,7 +1,7 @@
 import BaseLayout from "@/app/base-layout/components/structure/BaseLayout";
 import { Metadata } from "next";
-import { cookies } from "next/headers";
 import NotFoundPages from "@/components/elements/NotFound/NotFoundPages";
+import { ensureAccessTokenCookie } from "@/actions/refreshToken";
 import { getProfileByUsername } from "@/services/getProfileByUsername";
 import GamesCanvasProfile from "@/components/pages/profile/GamesCanvasProfile";
 import { getCommentsServer } from "@/services/getCommentsServer";
@@ -30,10 +30,7 @@ export default async function ProfileWithTab({
     );
   }
 
-  const cookieStore = await cookies();
-  const token = cookieStore.get("accessToken")?.value;
-
-  if (!token) {
+  if (!(await ensureAccessTokenCookie())) {
     return (
       <BaseLayout>
         <NotFoundPages message="Token não encontrado" />

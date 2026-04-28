@@ -5,6 +5,13 @@ export type Cs2StatsResponse = {
   steam_profile_public?: boolean;
   reason?: string;
   last_updated?: string;
+  force_refresh?: {
+    cooldown_seconds: number;
+    next_allowed_at: string;
+    remaining_seconds: number;
+    allowed: boolean;
+    blocked_by_cooldown: boolean;
+  };
   stats?: {
     totalKills: number;
     totalDeaths: number;
@@ -45,12 +52,20 @@ export type Cs2StatsResponse = {
     }[];
     weaponAccuracies: Record<string, number>;
     versatility: number;
+    allWeaponKills?: { name: string; kills: number; pct: number }[];
   };
 };
 
-export async function getCs2Stats(profileId: number): Promise<Cs2StatsResponse> {
+export async function getCs2Stats(
+  profileId: number,
+  options?: { force?: boolean }
+): Promise<Cs2StatsResponse> {
+  const q =
+    options?.force === true
+      ? "?force_refresh=1"
+      : "";
   const res = await apiFetch(
-    `/api/games/profiles/${profileId}/cs2/stats/`,
+    `/api/games/profiles/${profileId}/cs2/stats/${q}`,
     { method: "GET", credentials: "include" }
   );
   if (!res.ok) {

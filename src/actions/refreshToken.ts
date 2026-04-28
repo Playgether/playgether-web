@@ -4,16 +4,13 @@ import { cookies } from "next/headers";
 import { api } from "@/services/api";
 import jwt_decode from "jwt-decode";
 
-/**
- * Atualiza o access token usando o refresh token.
- * Chamado silenciosamente em background para manter a sessão ativa.
- * Em caso de falha (ex: refresh expirado), retorna false - o frontend deve fazer logout.
- */
-export async function refreshTokenServer(): Promise<boolean> {
+type RefreshCookiesResult = { ok: true; access: string } | { ok: false };
+
+async function refreshCookiesFromRefreshToken(): Promise<RefreshCookiesResult> {
   const cookiesInstance = await cookies();
   const refreshToken = cookiesInstance.get("refreshToken")?.value;
 
-  if (!refreshToken) return false;
+  if (!refreshToken) return { ok: false };
 
   try {
     const response = await api.post("/api/token/refresh/", {
@@ -46,8 +43,30 @@ export async function refreshTokenServer(): Promise<boolean> {
     }
     cookiesInstance.set("user_id", String(decodedAccess.user_id), cookieOptions);
 
-    return true;
+    return { ok: true, access };
   } catch {
-    return false;
+    return { ok: false };
   }
+}
+
+/**
+ * Atualiza o access token usando o refresh token.
+ * Chamado silenciosamente em background para manter a sessão ativa.
+ * Em caso de falha (ex: refresh expirado), retorna false - o frontend deve fazer logout.
+ */
+export async function refreshTokenServer(): Promise<boolean> {
+  const r = await refreshCookiesFromRefreshToken();
+  return r.ok;
+}
+
+/**
+ * Para Server Components / serviços no mesmo request: devolve o access já presente no cookie
+ * ou renova com o refresh antes de desistir (alinha com o bootstrap do AuthContext no cliente).
+ */
+export async function ensureAccessTokenCookie(): Promise<string | null> {
+  const jar = await cookies();
+  const existing = jar.get("accessToken")?.value;
+  if (existing) return existing;
+  const r = await refreshCookiesFromRefreshToken();
+  return r.ok ? r.access : null;
 }
