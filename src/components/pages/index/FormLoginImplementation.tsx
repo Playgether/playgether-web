@@ -10,6 +10,7 @@ import {
   CustomToastProps,
 } from "@/error/custom-toaster/enum";
 import FormLoginButton from "./FormLoginButton";
+import PasswordInput from "@/components/layouts/PasswordInput";
 import { useState } from "react";
 import { LoginFormSchema } from "./LoginFormSchema";
 import { redirect } from "next/navigation";
@@ -105,8 +106,7 @@ export const FormLoginImplementation = ({
 
       <div className="space-y-1">
         <ErrosInput field={validationErrors.password || errors.password} />
-        <InputLayout
-          type="password"
+        <PasswordInput
           placeholder="Password"
           register={{ ...register("password") }}
           name="password"

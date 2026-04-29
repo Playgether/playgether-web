@@ -25,7 +25,6 @@ const sidebarItems: GamerSideBarItensInterface[] = [
   {
     icon: <Users className="w-6 h-6" />,
     label: "Amigos",
-    notifications: 12,
     action: "friends",
   },
   { icon: <Trophy className="w-6 h-6" />, label: "Rankings" },
