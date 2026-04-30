@@ -135,7 +135,7 @@ export function LolProfile({
                 src={stats.tier_emblem_url}
                 alt={`Emblema ranqueado — ${stats.rank ?? "elo"}`}
                 frameClass="h-11 w-11"
-                zoomPercent={154}
+                zoomPercent={182}
               />
             ) : (
               <Crown className={`h-5 w-5 shrink-0 ${rankColor}`} />

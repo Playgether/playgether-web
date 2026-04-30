@@ -8,7 +8,7 @@ export function LolRankEmblemFrame({
   src,
   alt,
   frameClass,
-  zoomPercent = 158,
+  zoomPercent = 182,
 }: {
   src: string;
   alt: string;

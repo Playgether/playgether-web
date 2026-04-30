@@ -151,7 +151,7 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
                           src={emblem}
                           alt={`Elo ${opt}`}
                           frameClass="h-11 w-11"
-                          zoomPercent={154}
+                          zoomPercent={182}
                         />
                       ) : null}
                       <span className="text-sm">{opt}</span>

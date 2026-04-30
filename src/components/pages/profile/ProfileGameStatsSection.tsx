@@ -1702,7 +1702,7 @@ function LolRankedQueueBlock({
             src={queue.iconUrl}
             alt={`Emblema ranqueado — ${queueTitle}`}
             frameClass="h-11 w-11"
-            zoomPercent={154}
+            zoomPercent={182}
           />
         ) : (
           <div className="h-11 w-11 shrink-0 rounded-xl border border-border/60 bg-muted/35" />
