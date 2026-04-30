@@ -16,8 +16,10 @@ export interface Game {
 export interface LolStats {
   username: string;
   tag: string;
-  rank: string;
+  rank: string | null;
   icon: string | null;
+  /** URL do brasão do elo (Community Dragon), quando há ranked. */
+  tier_emblem_url?: string | null;
   level: number;
   league_points: number;
   wins: number;

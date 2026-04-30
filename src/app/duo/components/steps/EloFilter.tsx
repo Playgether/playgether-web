@@ -6,6 +6,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, Clock, Filter, Trophy } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { Game, GamePreferences, GameSchema, LolSchema, CsSchema } from "../../types/duo";
+import { lolTierEmblemUrl } from "@/lib/lolRankedEmblem";
+import { LolRankEmblemFrame } from "@/components/lol/LolRankEmblemFrame";
 
 const PLAY_TIMES = [
   { id: "morning", label: "Manhã (6h – 12h)" },
@@ -132,19 +134,30 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
                 align="start"
                 className="z-[120] max-h-60 w-[var(--radix-popover-trigger-width)] min-w-[12rem] overflow-y-auto border-border p-2 shadow-lg"
               >
-                {eloOptions.map((opt) => (
-                  <div
-                    key={opt}
-                    className="flex cursor-pointer items-center gap-3 rounded-lg py-2 pl-2 pr-1 hover:bg-muted/50"
-                    onClick={() => toggleEloFn(opt)}
-                  >
-                    <Checkbox
-                      checked={selectedEloValues.includes(opt)}
-                      onCheckedChange={() => toggleEloFn(opt)}
-                    />
-                    <span className="text-sm">{opt}</span>
-                  </div>
-                ))}
+                {eloOptions.map((opt) => {
+                  const emblem = isLol ? lolTierEmblemUrl(opt) : null;
+                  return (
+                    <div
+                      key={opt}
+                      className="flex cursor-pointer items-center gap-3 rounded-lg py-2 pl-2 pr-1 hover:bg-muted/50"
+                      onClick={() => toggleEloFn(opt)}
+                    >
+                      <Checkbox
+                        checked={selectedEloValues.includes(opt)}
+                        onCheckedChange={() => toggleEloFn(opt)}
+                      />
+                      {emblem ? (
+                        <LolRankEmblemFrame
+                          src={emblem}
+                          alt={`Elo ${opt}`}
+                          frameClass="h-11 w-11"
+                          zoomPercent={154}
+                        />
+                      ) : null}
+                      <span className="text-sm">{opt}</span>
+                    </div>
+                  );
+                })}
               </PopoverContent>
             </Popover>
 

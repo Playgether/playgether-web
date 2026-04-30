@@ -1,15 +1,9 @@
 "use client";
 
-import { Crown, MapPin, Zap } from "lucide-react";
+import { Check, Crown, MapPin, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { LolRankEmblemFrame } from "@/components/lol/LolRankEmblemFrame";
+import { LolLaneRoleIcon } from "@/components/lol/LolLaneRoleIcon";
 import type { LolStats } from "../../types/duo";
 
 const LOL_ROLES = ["Top", "Jungle", "Mid", "ADC", "Support"] as const;
@@ -35,6 +29,64 @@ interface LolProfileProps {
   onSecondaryRoleChange: (role: string) => void;
 }
 
+function LaneRolePicker({
+  label,
+  hint,
+  value,
+  onChange,
+}: {
+  label: string;
+  hint: string;
+  value: string;
+  onChange: (role: string) => void;
+}) {
+  return (
+    <div>
+      <p className="mb-1.5 text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="mb-2 text-[11px] text-muted-foreground/90">{hint}</p>
+      <div className="overflow-hidden rounded-2xl border border-border/50 bg-card/25">
+        <ul className="divide-y divide-border/40" role="list">
+          {LOL_ROLES.map((role) => {
+            const isSelected = value === role;
+            return (
+              <li key={role}>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={isSelected}
+                  onClick={() => onChange(role)}
+                  className={`flex w-full items-center gap-4 px-4 py-3.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40 ${
+                    isSelected ? "bg-primary/[0.07]" : "hover:bg-muted/30 active:bg-muted/40"
+                  }`}
+                >
+                  <span
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
+                      isSelected
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-muted-foreground/25 bg-transparent"
+                    }`}
+                    aria-hidden
+                  >
+                    {isSelected ? <Check className="h-3.5 w-3.5 stroke-[3]" /> : null}
+                  </span>
+                  <LolLaneRoleIcon roleLabel={role} />
+                  <span
+                    className={`flex-1 text-sm font-medium sm:text-base ${
+                      isSelected ? "text-foreground" : "text-card-foreground"
+                    }`}
+                  >
+                    {role}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 export function LolProfile({
   stats,
   mainRole,
@@ -54,11 +106,17 @@ export function LolProfile({
 
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-primary text-2xl font-bold text-primary-foreground shadow-glow-primary ring-2 ring-primary/20">
+          <div className="relative shrink-0">
             {stats.icon ? (
-              <img src={stats.icon} alt="" className="h-full w-full object-cover" />
+              <img
+                src={stats.icon}
+                alt=""
+                className="h-14 w-14 rounded-md border-2 border-border object-cover ring-2 ring-primary/20"
+              />
             ) : (
-              stats.username?.[0]?.toUpperCase() ?? "?"
+              <div className="flex h-14 w-14 items-center justify-center rounded-md border-2 border-border bg-gradient-primary text-lg font-bold text-primary-foreground ring-2 ring-primary/20">
+                {stats.username?.[0]?.toUpperCase() ?? "?"}
+              </div>
             )}
           </div>
           <div className="min-w-0">
@@ -72,8 +130,17 @@ export function LolProfile({
 
         <div className="flex shrink-0 items-center justify-between gap-3 rounded-xl border border-border/50 bg-background/30 px-4 py-3 sm:flex-col sm:items-end sm:py-3">
           <div className="flex items-center gap-2">
-            <Crown className={`h-5 w-5 shrink-0 ${rankColor}`} />
-            <span className={`font-semibold ${rankColor}`}>{stats.rank}</span>
+            {stats.tier_emblem_url ? (
+              <LolRankEmblemFrame
+                src={stats.tier_emblem_url}
+                alt={`Emblema ranqueado — ${stats.rank ?? "elo"}`}
+                frameClass="h-11 w-11"
+                zoomPercent={154}
+              />
+            ) : (
+              <Crown className={`h-5 w-5 shrink-0 ${rankColor}`} />
+            )}
+            <span className={`font-semibold ${rankColor}`}>{stats.rank ?? "Sem ranked"}</span>
           </div>
           <Badge variant="outline" className="border-primary/25 bg-primary/5 text-xs font-semibold text-primary">
             {stats.league_points} LP
@@ -95,7 +162,9 @@ export function LolProfile({
           </p>
         </div>
         <div className="rounded-xl border border-border/40 bg-gradient-to-b from-primary/15 to-transparent px-2 py-3 text-center">
-          <p className="text-lg font-bold text-primary sm:text-xl">{stats.winrate}%</p>
+          <p className="text-lg font-bold text-primary sm:text-xl">
+            {stats.winrate != null ? `${stats.winrate}%` : "—"}
+          </p>
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:text-xs">
             Winrate
           </p>
@@ -112,42 +181,19 @@ export function LolProfile({
             <p className="text-xs text-muted-foreground">Como você aparece para outros jogadores</p>
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Lane principal</label>
-            <Select value={mainRole} onValueChange={onMainRoleChange}>
-              <SelectTrigger className="h-11 rounded-xl border-border/80 bg-input/45 transition-colors hover:border-primary/30 focus:border-primary">
-                <SelectValue placeholder="Lane" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {LOL_ROLES.map((r) => (
-                    <SelectItem key={r} value={r}>
-                      {r}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Lane secundária</label>
-            <Select value={secondaryRole} onValueChange={onSecondaryRoleChange}>
-              <SelectTrigger className="h-11 rounded-xl border-border/80 bg-input/45 transition-colors hover:border-primary/30 focus:border-primary">
-                <SelectValue placeholder="Lane" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {LOL_ROLES.map((r) => (
-                    <SelectItem key={r} value={r}>
-                      {r}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-4">
+          <LaneRolePicker
+            label="Lane principal"
+            hint="Toque na lane para selecionar."
+            value={mainRole}
+            onChange={onMainRoleChange}
+          />
+          <LaneRolePicker
+            label="Lane secundária"
+            hint="Mesmo estilo do passo de funções do parceiro."
+            value={secondaryRole}
+            onChange={onSecondaryRoleChange}
+          />
         </div>
       </div>
 

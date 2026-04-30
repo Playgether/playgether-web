@@ -54,6 +54,7 @@ import type {
 } from "@/services/getLolStats";
 import { getLolHistory } from "@/services/getLolStats";
 import { LolMatchHistoryDetail } from "@/components/pages/profile/LolMatchHistoryDetail";
+import { LolRankEmblemFrame } from "@/components/lol/LolRankEmblemFrame";
 import { cn } from "@/lib/utils";
 import { Info } from "lucide-react";
 
@@ -1646,36 +1647,6 @@ function lolRollupKdaRatioToneClass(ratio: number): string {
 }
 
 const LOL_CHAMPIONS_OVERVIEW_PREVIEW = 5;
-
-/**
- * Emblemas de elo (CDragon) vêm com bastante área transparente; ampliamos e cortamos no quadro.
- */
-function LolRankEmblemFrame({
-  src,
-  alt,
-  frameClass,
-  zoomPercent = 158,
-}: {
-  src: string;
-  alt: string;
-  /** Classes de tamanho do container, ex: h-28 w-28 */
-  frameClass: string;
-  /** Largura/altura da imagem em % do container (maior = mais “zoom”) */
-  zoomPercent?: number;
-}) {
-  return (
-    <div
-      className={`relative shrink-0 overflow-hidden rounded-xl border border-border/70 bg-gradient-to-b from-muted/40 to-muted/15 shadow-inner ${frameClass}`}
-    >
-      <img
-        src={src}
-        alt={alt}
-        className="absolute left-1/2 top-1/2 max-h-none max-w-none -translate-x-1/2 -translate-y-1/2 object-cover object-center pointer-events-none"
-        style={{ width: `${zoomPercent}%`, height: `${zoomPercent}%` }}
-      />
-    </div>
-  );
-}
 
 function LolChampionOverviewRow({ champion }: { champion: LolChampionRollupRow }) {
   return (
