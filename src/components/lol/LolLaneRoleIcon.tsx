@@ -1,21 +1,25 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { lolLaneIconUrlForDuoRole } from "./lolLaneIconUrl";
 
 /** Mesmo recorte que “Roles por filtro” no overview (h-5 w-5 + 118%). */
 export function LolLaneRoleIcon({
   roleLabel,
-  className = "",
+  className,
 }: {
   roleLabel: string;
-  /** Classes extras no wrapper (ex.: h-6 w-6 para linhas maiores) */
+  /** Sobrescreve tamanho do quadro, ex.: `h-3.5 w-3.5` para chips compactos. */
   className?: string;
 }) {
   const src = lolLaneIconUrlForDuoRole(roleLabel);
   if (!src) return null;
   return (
     <span
-      className={`relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-transparent ${className}`}
+      className={cn(
+        "relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-transparent",
+        className,
+      )}
     >
       <img
         src={src}
