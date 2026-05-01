@@ -26,6 +26,7 @@ import { PresenceStatusDot } from "@/components/presence/PresenceStatusDot";
 import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
 import { useDuoSocket } from "../../hooks/useDuoSocket";
 import { useLiveExpiryLabel } from "../../hooks/useLiveExpiryLabel";
+import { getActiveQueues } from "../../services/duoApi";
 import { usePresenceContext } from "@/context/PresenceContext";
 import type { DuoMatch, Game, GamePreferences } from "../../types/duo";
 
@@ -34,6 +35,8 @@ interface MatchResultsProps {
   preferences: Partial<GamePreferences>;
   /** Mesmo destino que «Editar preferências» em manage-queue: fluxo a partir da verificação do perfil. */
   onEditFilters: () => void;
+  /** Fila expirou (TTL) — voltar ao passo de preferências avançadas. */
+  onQueueExpired: () => void;
   /** Volta à escolha de jogos (lista inicial do Duo Finder). */
   onChooseGame: () => void;
 }
@@ -76,7 +79,13 @@ function summarizeSelectionList(
   return `${normalized.slice(0, maxVisible).join(", ")} +${normalized.length - maxVisible}`;
 }
 
-export function MatchResults({ game, preferences, onEditFilters, onChooseGame }: MatchResultsProps) {
+export function MatchResults({
+  game,
+  preferences,
+  onEditFilters,
+  onQueueExpired,
+  onChooseGame,
+}: MatchResultsProps) {
   const slug = game.acronym.toLowerCase();
   const { getPresence } = usePresenceContext();
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
@@ -88,12 +97,14 @@ export function MatchResults({ game, preferences, onEditFilters, onChooseGame }:
     [preferences]
   );
   const lastSentPrefsSigRef = useRef<string | null>(null);
+  const expiryNavigateRef = useRef(false);
 
   const {
     connected,
     queueStatus,
     expiresAt,
     isNearExpiry,
+    evictionReason,
     matches,
     error,
     startSearch,
@@ -136,6 +147,49 @@ export function MatchResults({ game, preferences, onEditFilters, onChooseGame }:
       setSearching(false);
     }
   }, [queueStatus]);
+
+  useEffect(() => {
+    if (queueStatus !== "evicted" || evictionReason !== "expired") return;
+    if (expiryNavigateRef.current) return;
+    expiryNavigateRef.current = true;
+    lastSentPrefsSigRef.current = null;
+    onQueueExpired();
+  }, [queueStatus, evictionReason, onQueueExpired]);
+
+  useEffect(() => {
+    if (!expiresAt) return;
+    const activeInQueue =
+      queueStatus === "in_queue" ||
+      queueStatus === "searching" ||
+      queueStatus === "renewed" ||
+      queueStatus === "preferences_updated";
+    if (!activeInQueue) return;
+
+    let cancelled = false;
+    const tick = async () => {
+      if (new Date(expiresAt).getTime() > Date.now()) return;
+      if (expiryNavigateRef.current) return;
+      try {
+        const queues = await getActiveQueues();
+        if (cancelled) return;
+        const still = queues.find((q) => (q.game_slug || "").toLowerCase() === slug);
+        if (!still) {
+          expiryNavigateRef.current = true;
+          lastSentPrefsSigRef.current = null;
+          onQueueExpired();
+        }
+      } catch {
+        /* ignore */
+      }
+    };
+
+    const id = window.setInterval(() => void tick(), 2000);
+    void tick();
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [expiresAt, queueStatus, slug, onQueueExpired]);
 
   useEffect(() => {
     if (!searching || matches.length > 0) {
@@ -247,7 +301,7 @@ export function MatchResults({ game, preferences, onEditFilters, onChooseGame }:
           </div>
         )}
 
-        {queueStatus === "evicted" && (
+        {queueStatus === "evicted" && evictionReason !== "expired" && (
           <div className="card-glass rounded-xl p-4 mb-6 flex items-center space-x-3 border-yellow-500/30">
             <AlertCircle className="w-5 h-5 text-yellow-400" />
             <span className="text-sm text-yellow-400">
@@ -357,7 +411,8 @@ export function MatchResults({ game, preferences, onEditFilters, onChooseGame }:
         {!bootstrapping &&
           !searching &&
           sortedMatches.length === 0 &&
-          queueStatus !== "evicted" && (
+          queueStatus !== "evicted" &&
+          evictionReason !== "expired" && (
           <div className="flex flex-col items-center justify-center py-24 space-y-4">
             <Trophy className="w-12 h-12 text-muted-foreground" />
             <p className="text-muted-foreground text-center">
@@ -443,42 +498,94 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
         </div>
       ) : null}
 
+      {typeof prefs.duo_note === "string" && prefs.duo_note.trim() ? (
+        <div className="mb-4 rounded-lg border border-primary/25 bg-primary/[0.06] p-3">
+          <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-primary">
+            <MessageSquare className="h-3 w-3 shrink-0" />
+            Recado dele
+          </p>
+          <p className="text-sm leading-relaxed text-card-foreground whitespace-pre-wrap break-words">
+            {prefs.duo_note.trim()}
+          </p>
+        </div>
+      ) : null}
+
       {/* Game-specific preferences summary */}
       <div className="space-y-4 mb-5">
         {slug === "lol" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-0">
-            <div className="space-y-2 sm:pr-4">
-              <p className="text-xs font-semibold text-primary uppercase tracking-wide">
-                Dele
-              </p>
-              {prefs.main_role ? (
-                <InfoRow label="Lane principal" value={prefs.main_role} />
-              ) : null}
-              {prefs.secondary_role ? (
-                <InfoRow label="Lane secundária" value={prefs.secondary_role} />
-              ) : null}
-              {prefs.own_elo ? (
-                <InfoRow label="Elo" value={prefs.own_elo} />
-              ) : null}
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-0">
+              <div className="space-y-2 sm:pr-4">
+                <p className="text-xs font-semibold text-primary uppercase tracking-wide">
+                  Dele
+                </p>
+                {prefs.main_role ? (
+                  <InfoRow label="Lane principal" value={prefs.main_role} />
+                ) : null}
+                {prefs.secondary_role ? (
+                  <InfoRow label="Lane secundária" value={prefs.secondary_role} />
+                ) : null}
+                {prefs.own_elo ? (
+                  <InfoRow label="Elo declarado" value={prefs.own_elo} />
+                ) : null}
+              </div>
+              <div className="space-y-2 sm:border-l sm:border-border/60 sm:pl-4">
+                <p className="text-xs font-semibold text-primary uppercase tracking-wide">
+                  O que procura
+                </p>
+                {prefs.desired_roles?.length > 0 ? (
+                  <InfoRow
+                    label="Lanes no duo"
+                    value={prefs.desired_roles.join(", ")}
+                  />
+                ) : null}
+                {prefs.accepted_elo?.length > 0 ? (
+                  <InfoRow
+                    label="Elos que aceita"
+                    value={prefs.accepted_elo.join(", ")}
+                  />
+                ) : null}
+              </div>
             </div>
-            <div className="space-y-2 sm:border-l sm:border-border/60 sm:pl-4">
-              <p className="text-xs font-semibold text-primary uppercase tracking-wide">
-                O que procura
+
+            <div className="pt-3 border-t border-border/50">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Conta ranqueada (Riot)
               </p>
-              {prefs.desired_roles?.length > 0 ? (
-                <InfoRow
-                  label="Lanes no duo"
-                  value={prefs.desired_roles.join(", ")}
-                />
-              ) : null}
-              {prefs.accepted_elo?.length > 0 ? (
-                <InfoRow
-                  label="Elos que aceita"
-                  value={prefs.accepted_elo.join(", ")}
-                />
-              ) : null}
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <div className="rounded-lg border border-border/40 bg-muted/30 p-2.5 text-center">
+                  <Trophy className="mx-auto mb-1 h-4 w-4 text-amber-400" />
+                  <div className="text-[10px] leading-tight text-muted-foreground">Elo</div>
+                  <div className="break-words text-sm font-semibold leading-tight text-card-foreground">
+                    {typeof gs.rank === "string" && gs.rank.trim() ? gs.rank : "—"}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-border/40 bg-muted/30 p-2.5 text-center">
+                  <Sun className="mx-auto mb-1 h-4 w-4 text-emerald-400" />
+                  <div className="text-[10px] leading-tight text-muted-foreground">Vitórias</div>
+                  <div className="text-sm font-semibold tabular-nums text-card-foreground">
+                    {typeof gs.wins === "number" ? gs.wins : "—"}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-border/40 bg-muted/30 p-2.5 text-center">
+                  <Moon className="mx-auto mb-1 h-4 w-4 text-rose-400" />
+                  <div className="text-[10px] leading-tight text-muted-foreground">Derrotas</div>
+                  <div className="text-sm font-semibold tabular-nums text-card-foreground">
+                    {typeof gs.losses === "number" ? gs.losses : "—"}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-border/40 bg-muted/30 p-2.5 text-center">
+                  <Target className="mx-auto mb-1 h-4 w-4 text-sky-400" />
+                  <div className="text-[10px] leading-tight text-muted-foreground">Winrate</div>
+                  <div className="text-sm font-semibold tabular-nums text-card-foreground">
+                    {gs.winrate != null && Number.isFinite(Number(gs.winrate))
+                      ? `${gs.winrate}%`
+                      : "—"}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          </>
         )}
 
         {slug === "cs2" && (

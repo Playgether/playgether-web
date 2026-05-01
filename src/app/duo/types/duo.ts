@@ -67,6 +67,8 @@ export interface LolPreferences {
   desired_roles: string[];
   accepted_elo: string[];
   play_times: string[];
+  /** Mensagem curta visível para quem te encontrar no duo (máx. ~240 caracteres no backend). */
+  duo_note?: string;
 }
 
 export interface CsPreferences {
@@ -76,6 +78,7 @@ export interface CsPreferences {
   desired_roles: string[];
   accepted_ranges: string[];
   play_times: string[];
+  duo_note?: string;
 }
 
 export type GamePreferences = LolPreferences | CsPreferences;

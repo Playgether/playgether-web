@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useLiveExpiryLabel } from "../../hooks/useLiveExpiryLabel";
 import {
@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import type { Game } from "../../types/duo";
 import type { DuoQueue } from "../../types/duo";
-import { leaveQueue, renewQueue } from "../../services/duoApi";
+import { getActiveQueues, leaveQueue, renewQueue } from "../../services/duoApi";
 
 interface QueueManagementStepProps {
   game: Game;
@@ -24,6 +24,8 @@ interface QueueManagementStepProps {
   onEditPreferences: () => void;
   /** Acesso rápido à tela de resultados com as preferências atuais da fila. */
   onGoToSearch?: () => void;
+  /** Fila expirou (TTL) — preferências já estão no estado do pai. */
+  onQueueTtlExpired?: () => void;
 }
 
 export function QueueManagementStep({
@@ -34,12 +36,45 @@ export function QueueManagementStep({
   onLeftQueue,
   onEditPreferences,
   onGoToSearch,
+  onQueueTtlExpired,
 }: QueueManagementStepProps) {
   const [busy, setBusy] = useState<"renew" | "leave" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const liveRemaining = useLiveExpiryLabel(queue.expires_at);
+  const ttlNavigateRef = useRef(false);
 
   const canRenew = queue.is_near_expiry;
+
+  useEffect(() => {
+    if (!onQueueTtlExpired || !queue.expires_at) return;
+    const slug = game.acronym.toLowerCase();
+    let cancelled = false;
+
+    const tick = async () => {
+      if (new Date(queue.expires_at).getTime() > Date.now()) return;
+      if (ttlNavigateRef.current) return;
+      try {
+        const queues = await getActiveQueues();
+        if (cancelled) return;
+        const still = queues.find(
+          (q) => q.id === queue.id && (q.game_slug || "").toLowerCase() === slug
+        );
+        if (!still) {
+          ttlNavigateRef.current = true;
+          onQueueTtlExpired();
+        }
+      } catch {
+        /* ignore */
+      }
+    };
+
+    const id = window.setInterval(() => void tick(), 2000);
+    void tick();
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [onQueueTtlExpired, queue.expires_at, queue.id, game.acronym]);
 
   async function handleRenew() {
     setError(null);

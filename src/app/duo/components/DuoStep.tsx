@@ -73,6 +73,8 @@ export default function DuoSteps({ initialStep }: { initialStep: string }) {
     [router]
   );
 
+  const onQueueExpiredToFilter = useCallback(() => changeStep("filter"), [changeStep]);
+
   const updateShared = useCallback(
     (patch: Partial<SharedState>) => setShared((s) => ({ ...s, ...patch })),
     []
@@ -151,6 +153,19 @@ export default function DuoSteps({ initialStep }: { initialStep: string }) {
               setActiveQueueForGame(null);
               changeStep("results");
             }}
+            onQueueTtlExpired={() => {
+              const q = activeQueueForGame;
+              if (q) {
+                setShared((s) => ({
+                  ...s,
+                  preferences: {
+                    ...(q.preferences as Partial<GamePreferences>),
+                  },
+                }));
+              }
+              setActiveQueueForGame(null);
+              changeStep("filter");
+            }}
           />
         );
 
@@ -218,6 +233,7 @@ export default function DuoSteps({ initialStep }: { initialStep: string }) {
               }));
               changeStep("verify");
             }}
+            onQueueExpired={onQueueExpiredToFilter}
             onChooseGame={() => {
               updateShared({ selectedGame: null });
               changeStep("game");
