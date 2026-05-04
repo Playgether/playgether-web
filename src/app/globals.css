@@ -438,7 +438,7 @@ All colors MUST be HSL.
 
   /* Universal hover effects for cards */
   .card-hover-effect {
-    @apply transition-all duration-300 hover:shadow-glow-primary/30 hover:scale-[1.02] hover:border-primary/40;
+    @apply transition-all duration-300 hover:shadow-glow-primary hover:scale-[1.02] hover:border-primary/40;
   }
 
   /* Message priority effects */
@@ -447,7 +447,7 @@ All colors MUST be HSL.
   }
 
   .message-medium-priority {
-    @apply border border-neon-blue/60 shadow-glow-primary/30;
+    @apply border border-neon-blue/60 shadow-glow-primary;
   }
 
   .message-low-priority {

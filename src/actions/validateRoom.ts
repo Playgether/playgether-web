@@ -2,8 +2,8 @@
 
 import { validateRoomService } from "@/services/validateRoom";
 
-export async function validateRoomAction(roomName: string) {
-  const res = await validateRoomService(roomName);
+export async function validateRoomAction(roomSlug: string) {
+  const res = await validateRoomService(roomSlug);
 
   if (!res.ok || !res.response?.data.ok) {
     const errorMsg =

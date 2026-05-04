@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import BaseLayout from "../components/layouts/BaseLayout";
+import BaseLayout from "./base-layout/components/structure/BaseLayout";
 
 export default function NotFound() {
   return (

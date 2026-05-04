@@ -1,4 +1,4 @@
-import BaseLayout from "../../components/layouts/BaseLayout"
+import BaseLayout from "../base-layout/components/structure/BaseLayout"
 
 export default async function Base() {
     return (

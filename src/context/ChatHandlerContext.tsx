@@ -14,6 +14,8 @@ import { useAuthContext } from "./AuthContext";
 import { ChatRoom } from "@/types/ChatRoom";
 import { OnlineUsersChatRoom } from "@/types/OnlineUsersChatRoom";
 
+export type RoomJoinNotice = { id: number; text: string };
+
 type ChatHandlerContextProps = {
   newMessage: string;
   setNewMessage: (message: string) => void;
@@ -28,6 +30,8 @@ type ChatHandlerContextProps = {
   executeScrollBottom: () => void;
   newMessageId: number;
   onlineUsers: OnlineUsersChatRoom[];
+  joinNotices: RoomJoinNotice[];
+  dismissJoinNotice: (id: number) => void;
 };
 
 const ChatHandlerContext = createContext<ChatHandlerContextProps>(
@@ -62,6 +66,11 @@ const ChatHandlerContextProvider = ({
   const [newMessageId, setNewMessageId] = useState(0);
   const [newMessageObject, setNewMessageObject] = useState<ChatRoom | {}>({});
   const [onlineUsers, setOnlineUsers] = useState<OnlineUsersChatRoom[]>([]);
+  const [joinNotices, setJoinNotices] = useState<RoomJoinNotice[]>([]);
+
+  const dismissJoinNotice = (id: number) => {
+    setJoinNotices((prev) => prev.filter((n) => n.id !== id));
+  };
 
   const eventHandlers = {
     online_users: (data) => {
@@ -83,10 +92,15 @@ const ChatHandlerContextProvider = ({
         setTimeout(() => setShouldScrollToBottom(true), 0);
       }
     },
-    // Adicione outros manipuladores de eventos conforme necessário
+    user_joined: (data: { user: { fullname: string; username: string } }) => {
+      if (data.user.username === user?.username) return;
+      const id = Date.now() + Math.floor(Math.random() * 1000);
+      const text = `${data.user.fullname} entrou na sala`;
+      setJoinNotices((prev) => [...prev.slice(-4), { id, text }]);
+    },
   };
 
-  const handleRealTimeMessages = (messages: []) => {
+  const handleRealTimeMessages = (messages: ChatRoomMessages[]) => {
     setRealTimeMessages(messages);
   };
 
@@ -117,10 +131,12 @@ const ChatHandlerContextProvider = ({
     if (lastJsonMessage && typeof lastJsonMessage === "object") {
       const eventType = (lastJsonMessage as { type: string }).type;
       if (eventType && eventHandlers[eventType]) {
-        eventHandlers[eventType](lastJsonMessage);
+        (eventHandlers as Record<string, (msg: unknown) => void>)[eventType](
+          lastJsonMessage
+        );
       }
     }
-  }, [lastJsonMessage]);
+  }, [lastJsonMessage, user?.username]);
 
   // Função para enviar mensagem
   const sendMessage = () => {
@@ -161,6 +177,8 @@ const ChatHandlerContextProvider = ({
         executeScrollBottom,
         newMessageId,
         onlineUsers,
+        joinNotices,
+        dismissJoinNotice,
       }}
     >
       {children}
