@@ -45,6 +45,8 @@ type RoomTab =
 interface RoomChatViewProps {
   room: ChatRoom;
   messages: ChatRoomMessages[];
+  /** Cursor `next` da primeira página — mais mensagens ao scrollar para cima. */
+  initialMessagesNextPageUrl?: string | null;
 }
 
 const tabs: { id: RoomTab; icon: typeof MessageSquare; label: string }[] = [
@@ -59,7 +61,11 @@ const tabs: { id: RoomTab; icon: typeof MessageSquare; label: string }[] = [
   { id: "settings", icon: Settings, label: "Config" },
 ];
 
-export default function RoomChatView({ room, messages }: RoomChatViewProps) {
+export default function RoomChatView({
+  room,
+  messages,
+  initialMessagesNextPageUrl = null,
+}: RoomChatViewProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<RoomTab>("chat");
   const [showSidebar, setShowSidebar] = useState(false);
@@ -79,10 +85,14 @@ export default function RoomChatView({ room, messages }: RoomChatViewProps) {
     switch (activeTab) {
       case "participants":
         return (
-          <div className="flex min-h-0 flex-1 overflow-hidden">
+          <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
             <RoomParticipantsPanel />
-            <div className="hidden min-h-0 flex-1 md:flex">
-              <RoomChatMessagesPanel messages={messages} room={room} />
+            <div className="hidden min-h-0 min-w-0 flex-1 flex-col md:flex">
+              <RoomChatMessagesPanel
+                messages={messages}
+                room={room}
+                initialMessagesNextPageUrl={initialMessagesNextPageUrl}
+              />
             </div>
           </div>
         );
@@ -130,12 +140,18 @@ export default function RoomChatView({ room, messages }: RoomChatViewProps) {
         );
       case "chat":
       default:
-        return <RoomChatMessagesPanel messages={messages} room={room} />;
+        return (
+          <RoomChatMessagesPanel
+            messages={messages}
+            room={room}
+            initialMessagesNextPageUrl={initialMessagesNextPageUrl}
+          />
+        );
     }
   };
 
   return (
-    <section className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/50 bg-background">
+    <section className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/50 bg-background">
       <nav className="shrink-0 border-b border-border bg-card/80 backdrop-blur-sm">
         <div className="hidden items-center justify-between gap-0.5 px-2 py-1.5 md:flex">
           <div className="min-w-0 flex-shrink-0">

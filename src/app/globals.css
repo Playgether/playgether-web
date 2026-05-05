@@ -893,4 +893,14 @@ All colors MUST be HSL.
       100dvh - var(--layout-header-height) - var(--layout-quick-messages-height)
     );
   }
+
+  /** Altura fixa da área útil — necessário para flex + overflow interno (ex.: chat da sala) */
+  .h-layout-main {
+    height: calc(
+      100dvh - var(--layout-header-height) - var(--layout-quick-messages-height)
+    );
+    max-height: calc(
+      100dvh - var(--layout-header-height) - var(--layout-quick-messages-height)
+    );
+  }
 }

@@ -30,7 +30,9 @@ export default async function Page({ params }) {
   }
 
   const payload = await getChatRoomDetailed(String(roomSlug));
-  const { room, messages } = extractRoomFromDetailedBody(payload ?? undefined);
+  const { room, messages, messagesNextPageUrl } = extractRoomFromDetailedBody(
+    payload ?? undefined
+  );
 
   if (!room) {
     notFound();
@@ -39,9 +41,13 @@ export default async function Page({ params }) {
   return (
     <ChatHandlerContextProvider chatroom={room.group_name} token={accessToken}>
       <BaseLayout>
-        <div className="flex min-h-layout-main min-w-0 flex-col bg-background pl-0 md:pl-20">
-          <div className="mx-auto flex min-h-0 w-full max-w-[88rem] flex-1 flex-col px-4 py-2 md:p-6">
-            <RoomChatView room={room} messages={messages} />
+        <div className="flex h-layout-main min-h-0 min-w-0 flex-col bg-background pl-0 md:pl-20">
+          <div className="mx-auto flex h-full min-h-0 w-full max-w-[88rem] flex-1 flex-col px-4 py-2 md:p-6">
+            <RoomChatView
+              room={room}
+              messages={messages}
+              initialMessagesNextPageUrl={messagesNextPageUrl}
+            />
           </div>
         </div>
       </BaseLayout>
