@@ -94,6 +94,24 @@ function formatMmSs(totalSeconds: number): string {
   return `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
 }
 
+/** Rótulo legível para o tempo configurado no Button Quiz (15 s – 2 min). */
+function formatAnswerWindowLabel(sec: number): string {
+  const s = Math.max(15, Math.min(120, Math.round(Number.isFinite(sec) ? sec : 60)));
+  if (s < 60) return `${s} segundos`;
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  if (r === 0) return m === 1 ? "1 minuto" : `${m} minutos`;
+  return m === 1 ? `1 min e ${r} seg` : `${m} min e ${r} seg`;
+}
+
+function pickAnswerTimeSec(rt: Record<string, unknown>, api?: number): number {
+  if (rtHas(rt, "answer_time_sec")) {
+    const n = Number(rt.answer_time_sec);
+    if (Number.isFinite(n)) return n;
+  }
+  return api ?? 60;
+}
+
 export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
   const room = _room;
   const { user } = useAuthContext();
@@ -102,6 +120,7 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
   const {
     connected,
     state: socketState,
+    notices,
     eventMessages,
     presence,
     socketError,
@@ -127,10 +146,13 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
   const [tickToken, setTickToken] = useState(0);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [finalizeDialogOpen, setFinalizeDialogOpen] = useState(false);
+  const [kickConfirm, setKickConfirm] = useState<{ user: number; label: string } | null>(null);
+  const [autoFinishMessage, setAutoFinishMessage] = useState<string | null>(null);
   const processedButtonTimeoutRef = useRef<string | null>(null);
 
   const rt = (socketState ?? {}) as Record<string, unknown>;
   const gamePhase = pickGamePhase(rt, activeEvent?.game_phase);
+  const answerTimeSec = pickAnswerTimeSec(rt, activeEvent?.answer_time_sec);
   const deadlineIso =
     pickOptionalIso(rt, "current_question_deadline_at", activeEvent?.current_question_deadline_at) ??
     activeEvent?.current_question_deadline_at;
@@ -226,6 +248,23 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
     refreshActiveEvent,
   ]);
 
+  useEffect(() => {
+    const last = notices.at(-1);
+    if (last?.code === "event_auto_finished_insufficient") {
+      setAutoFinishMessage(last.message);
+    }
+  }, [notices]);
+
+  useEffect(() => {
+    if (!activeEvent) {
+      setAutoFinishMessage(null);
+      return;
+    }
+    if (activeEvent.status === "recruiting") {
+      setAutoFinishMessage(null);
+    }
+  }, [activeEvent]);
+
   if (!activeEvent) return null;
 
   if (activeEvent.status === "finished") {
@@ -234,6 +273,14 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
     );
     return (
       <div className="mx-auto flex w-full max-w-lg flex-col gap-6 px-1 py-2">
+        {autoFinishMessage ? (
+          <div
+            role="status"
+            className="rounded-xl border border-amber-500/45 bg-amber-500/10 px-4 py-3 text-center text-sm text-amber-950 dark:text-amber-100"
+          >
+            {autoFinishMessage}
+          </div>
+        ) : null}
         <div className="rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card p-6 shadow-sm">
           <div className="mb-4 flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 text-primary">
@@ -540,7 +587,12 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
                       variant="destructive"
                       disabled={isPending}
                       type="button"
-                      onClick={() => run("kick", { user_id: p.user })}
+                      onClick={() =>
+                        setKickConfirm({
+                          user: p.user,
+                          label: p.username ?? authorName(p.user),
+                        })
+                      }
                     >
                       Expulsar
                     </Button>
@@ -661,7 +713,7 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
                       })()}
                     </p>
                     <p className="text-[10px] text-muted-foreground">
-                      Você tem um minuto para responder ou será eliminado.
+                      Você tem {formatAnswerWindowLabel(answerTimeSec)} para responder ou será eliminado.
                     </p>
                   </div>
                 ) : null}
@@ -966,6 +1018,34 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
             onClick={confirmLeaveEvent}
           >
             Sair do evento
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <AlertDialog open={Boolean(kickConfirm)} onOpenChange={(open) => !open && setKickConfirm(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Expulsar participante?</AlertDialogTitle>
+          <AlertDialogDescription>
+            {kickConfirm
+              ? `Confirma expulsar ${kickConfirm.label} deste evento? Essa pessoa deixa de participar e não recebe pontos.`
+              : null}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel type="button">Cancelar</AlertDialogCancel>
+          <Button
+            type="button"
+            variant="destructive"
+            disabled={isPending || !kickConfirm}
+            onClick={() => {
+              const uid = kickConfirm?.user;
+              setKickConfirm(null);
+              if (uid != null) run("kick", { user_id: uid });
+            }}
+          >
+            Expulsar
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

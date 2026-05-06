@@ -55,6 +55,7 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
   const [title, setTitle] = useState("");
   const [eventType, setEventType] = useState<RoomEventType>("vote_best");
   const [rounds, setRounds] = useState(5);
+  const [buttonAnswerSec, setButtonAnswerSec] = useState(60);
   const [message, setMessage] = useState<string | null>(null);
   const [recruitmentStartError, setRecruitmentStartError] = useState<string | null>(null);
   const [insufficientParticipantsMessage, setInsufficientParticipantsMessage] = useState<string | null>(null);
@@ -137,6 +138,8 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
       };
       if (eventType === "button_quiz") {
         payload.rounds_total = rounds;
+        const sec = Math.min(120, Math.max(15, Math.round(buttonAnswerSec)));
+        payload.answer_time_sec = sec;
       }
       const result = await createRoomEvent(payload);
       if (!result.ok) {
@@ -428,19 +431,43 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
               </select>
             </div>
             {eventType === "button_quiz" ? (
-              <div className="space-y-2">
-                <label htmlFor="ev-rounds" className="text-xs font-medium text-muted-foreground">
-                  Rodadas (3–10)
-                </label>
-                <input
-                  id="ev-rounds"
-                  type="number"
-                  min={3}
-                  max={10}
-                  value={rounds}
-                  onChange={(e) => setRounds(Number(e.target.value))}
-                  className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm"
-                />
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <label htmlFor="ev-rounds" className="text-xs font-medium text-muted-foreground">
+                    Rodadas (3–10)
+                  </label>
+                  <input
+                    id="ev-rounds"
+                    type="number"
+                    min={3}
+                    max={10}
+                    value={rounds}
+                    onChange={(e) => setRounds(Number(e.target.value))}
+                    className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="ev-bq-answer-sec" className="text-xs font-medium text-muted-foreground">
+                    Tempo para responder cada pergunta (15 s – 2 min)
+                  </label>
+                  <input
+                    id="ev-bq-answer-sec"
+                    type="number"
+                    min={15}
+                    max={120}
+                    step={1}
+                    value={buttonAnswerSec}
+                    onChange={(e) => {
+                      const n = Number(e.target.value);
+                      if (Number.isNaN(n)) return;
+                      setButtonAnswerSec(Math.min(120, Math.max(15, Math.round(n))));
+                    }}
+                    className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Valores fora de 15–120 não são aceitos pelo servidor.
+                  </p>
+                </div>
               </div>
             ) : null}
             <Button className="w-full" disabled={!title.trim() || isPending} onClick={handleCreate}>
