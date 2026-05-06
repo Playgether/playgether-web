@@ -95,7 +95,7 @@ function formatMmSs(totalSeconds: number): string {
 }
 
 export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
-  void _room;
+  const room = _room;
   const { user } = useAuthContext();
   const { activeEvent, refreshActiveEvent, isOrganizer, myParticipation, dismissEventResults } =
     useRoomEventSession();
@@ -127,6 +127,7 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
   const [tickToken, setTickToken] = useState(0);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [finalizeDialogOpen, setFinalizeDialogOpen] = useState(false);
+  const processedButtonTimeoutRef = useRef<string | null>(null);
 
   const rt = (socketState ?? {}) as Record<string, unknown>;
   const gamePhase = pickGamePhase(rt, activeEvent?.game_phase);
@@ -196,17 +197,23 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
       activeEvent.button_answer_deadline_at;
     const cl = pickNullableClaimedBy(rt, activeEvent.button_claimed_by);
     if (!cl || !dl) return;
+    const processKey = `${activeEvent.id}:${cl}:${dl}`;
+    if (processedButtonTimeoutRef.current === processKey) return;
+    processedButtonTimeoutRef.current = processKey;
     let cancelled = false;
     const fire = async () => {
       if (cancelled) return;
       await roomEventPostAction(activeEvent.id, "button-process-ticks");
       await refreshActiveEvent();
     };
-    const id = window.setInterval(fire, 2000);
-    void fire();
+    const deadlineMs = new Date(dl).getTime();
+    const delayMs = Math.max(0, deadlineMs - Date.now() + 150);
+    const id = window.setTimeout(() => {
+      void fire();
+    }, delayMs);
     return () => {
       cancelled = true;
-      window.clearInterval(id);
+      window.clearTimeout(id);
     };
   }, [
     activeEvent?.id,
@@ -316,6 +323,16 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
     Boolean(waitingClaimerAnswer && !isOrganizer && user?.user_id !== claimedBy);
 
   const mayUseChat = isOrganizer || canPlay;
+  const canModerateEvent = Boolean(
+    user?.user_id && (user.user_id === activeEvent.created_by || user.user_id === room.owner)
+  );
+  const kickableParticipants = (activeEvent.participants ?? []).filter(
+    (p) =>
+      p.participation_confirmed &&
+      !p.left_early &&
+      p.user !== activeEvent.created_by &&
+      p.user !== user?.user_id
+  );
 
   const chatInputDisabled =
     !mayUseChat || othersFrozenWhileClaimerAnswers || imClaimerMustAnswerFirst;
@@ -505,6 +522,32 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
                   </li>
                 ))}
             </ul>
+          </div>
+        ) : null}
+
+        {canModerateEvent ? (
+          <div className="rounded-2xl border border-border/60 bg-card/80 p-3">
+            <p className="mb-2 text-xs font-bold uppercase text-muted-foreground">Moderação do evento</p>
+            {kickableParticipants.length === 0 ? (
+              <p className="text-xs text-muted-foreground">Nenhum participante disponível para expulsão.</p>
+            ) : (
+              <ul className="space-y-2">
+                {kickableParticipants.map((p) => (
+                  <li key={p.id} className="flex items-center justify-between gap-2 rounded-lg border border-border/50 px-2 py-1.5">
+                    <span className="truncate text-xs font-medium">{p.username ?? authorName(p.user)}</span>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      disabled={isPending}
+                      type="button"
+                      onClick={() => run("kick", { user_id: p.user })}
+                    >
+                      Expulsar
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         ) : null}
 
