@@ -1,4 +1,5 @@
 import axios from "axios";
+import { cloudinaryResourceForAmbientDelete } from "@/app/utils/roomAmbientMedia";
 
 /**
  * Remove uma imagem pelo `public_id` (mesmo endpoint do perfil).
@@ -21,6 +22,34 @@ export async function deleteCloudinaryImage(
       console.error(
         `Erro ao excluir imagem no Cloudinary (tentativa ${attempt + 1}/3):`,
         error
+      );
+      if (attempt < 2) {
+        await new Promise((r) => setTimeout(r, 350 * (attempt + 1)));
+      }
+    }
+  }
+  return false;
+}
+
+/** Valor salvo em `ambient_images` (imagem ou `video:public_id`). */
+export async function deleteCloudinaryRoomAmbientAsset(
+  stored: string,
+): Promise<boolean> {
+  const { public_id, resource_type } = cloudinaryResourceForAmbientDelete(stored);
+  const id = String(public_id ?? "").trim();
+  if (!id) return true;
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await axios.post("/api/signed-delete-posts/", {
+        public_id: id,
+        resource_type,
+      });
+      return true;
+    } catch (error) {
+      console.error(
+        `Erro ao excluir mídia de ambientação (tentativa ${attempt + 1}/3):`,
+        error,
       );
       if (attempt < 2) {
         await new Promise((r) => setTimeout(r, 350 * (attempt + 1)));

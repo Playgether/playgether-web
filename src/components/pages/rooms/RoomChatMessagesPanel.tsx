@@ -1,8 +1,11 @@
 "use client";
 
 import { loadMoreChatRoomMessages } from "@/actions/loadMoreChatRoomMessages";
-import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
 import { getAmbientPeriodForNow } from "@/app/utils/roomAmbientPeriod";
+import {
+  parseAmbientMediaValue,
+  resolveAmbientAbsoluteUrl,
+} from "@/app/utils/roomAmbientMedia";
 import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
 import ProfileImagePost from "@/components/pages/feed/DesktopFeed/Middle/PostsComponents/ProfileImagePost/ProfileImagePost";
 import { useAuthContext } from "@/context/AuthContext";
@@ -82,11 +85,12 @@ export default function RoomChatMessagesPanel({
     return () => window.clearInterval(id);
   }, []);
 
-  const ambientBackgroundUrl = useMemo(() => {
+  const ambientBackground = useMemo(() => {
     const period = getAmbientPeriodForNow();
     const raw = room.ambient_images?.[period];
-    if (!raw || !String(raw).trim()) return null;
-    return resolveGameMediaUrl(String(raw));
+    const parsed = parseAmbientMediaValue(raw ? String(raw) : "");
+    if (!parsed) return null;
+    return { parsed, url: resolveAmbientAbsoluteUrl(parsed) };
   }, [room.ambient_images, timeTick]);
 
   const visibleOnlineCount = useMemo(() => {
@@ -156,13 +160,26 @@ export default function RoomChatMessagesPanel({
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
-      {ambientBackgroundUrl ? (
+      {ambientBackground ? (
         <>
-          <div
-            className="pointer-events-none absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: `url(${ambientBackgroundUrl})` }}
-            aria-hidden
-          />
+          {ambientBackground.parsed.kind === "video" ? (
+            <video
+              key={ambientBackground.url}
+              className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover"
+              src={ambientBackground.url}
+              autoPlay
+              muted
+              loop
+              playsInline
+              aria-hidden
+            />
+          ) : (
+            <div
+              className="pointer-events-none absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
+              style={{ backgroundImage: `url(${ambientBackground.url})` }}
+              aria-hidden
+            />
+          )}
           <div
             className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-background/88 via-background/72 to-background/88 backdrop-blur-[0.5px]"
             aria-hidden

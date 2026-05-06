@@ -1,8 +1,18 @@
 "use client";
 
 import { patchChatRoomSettings } from "@/actions/chatRoomMutations";
-import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
-import { deleteCloudinaryImage } from "@/services/cloudinary_requests/deletePostFile";
+import {
+  deleteCloudinaryImage,
+  deleteCloudinaryRoomAmbientAsset,
+} from "@/services/cloudinary_requests/deletePostFile";
+import {
+  AMBIENT_VIDEO_MAX_DURATION_SEC,
+  AMBIENT_VIDEO_MAX_LONG_SIDE,
+  AMBIENT_VIDEO_MAX_SHORT_SIDE,
+  parseAmbientMediaValue,
+  resolveAmbientAbsoluteUrl,
+  storedValueFromUploadResult,
+} from "@/app/utils/roomAmbientMedia";
 import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -54,6 +64,7 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
   const [expandedImage, setExpandedImage] = useState<{
     url: string;
     label: string;
+    isVideo: boolean;
   } | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [bannerPublicId, setBannerPublicId] = useState<string>(
@@ -137,10 +148,10 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
     void (async () => {
       const ok = await persistAmbientImages(next);
       if (ok) {
-        const removed = await deleteCloudinaryImage(previousId);
+        const removed = await deleteCloudinaryRoomAmbientAsset(previousId);
         if (!removed) {
           setError(
-            "A imagem foi removida da sala, mas o arquivo antigo pode não ter sido apagado do armazenamento."
+            "A mídia foi removida da sala, mas o arquivo antigo pode não ter sido apagado do armazenamento."
           );
         }
       } else {
@@ -152,34 +163,40 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
 
   const handleAmbientUploadSuccess = async (
     period: AmbientKey,
-    result: { info?: { public_id?: string; asset_id?: string } }
+    result: {
+      info?: {
+        public_id?: string;
+        asset_id?: string;
+        resource_type?: string;
+      };
+    },
   ) => {
-    const publicId = result?.info?.public_id;
-    if (!publicId || !canManage) return;
+    const stored = storedValueFromUploadResult(result?.info ?? {});
+    if (!stored || !canManage) return;
 
-    const dedupeKey = `${period}:${publicId}:${result?.info?.asset_id ?? ""}`;
+    const dedupeKey = `${period}:${stored}:${result?.info?.asset_id ?? ""}`;
     if (lastAmbientDedupe.current === dedupeKey) return;
     lastAmbientDedupe.current = dedupeKey;
 
     const previousId = ambientRef.current[period] || "";
     const snapshot = { ...ambientRef.current };
-    const next = { ...ambientRef.current, [period]: publicId };
+    const next = { ...ambientRef.current, [period]: stored };
     ambientRef.current = next;
     setAmbientBackgrounds(next);
 
     const ok = await persistAmbientImages(next);
     if (!ok) {
-      await deleteCloudinaryImage(publicId);
+      await deleteCloudinaryRoomAmbientAsset(stored);
       ambientRef.current = snapshot;
       setAmbientBackgrounds(snapshot);
       return;
     }
 
-    if (previousId && previousId !== publicId) {
-      const removed = await deleteCloudinaryImage(previousId);
+    if (previousId && previousId !== stored) {
+      const removed = await deleteCloudinaryRoomAmbientAsset(previousId);
       if (!removed) {
         setError(
-          "A nova imagem foi salva, mas a anterior não pôde ser removida do armazenamento. Tente substituir de novo."
+          "A nova mídia foi salva, mas a anterior não pôde ser removida do armazenamento. Tente substituir de novo."
         );
       }
     }
@@ -294,9 +311,15 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
           <Sunrise className="h-3.5 w-3.5" />
           Ambientação por horário
         </h3>
+        <p className="mb-2 text-[11px] text-muted-foreground">
+          Imagem ou vídeo. Vídeo: até {AMBIENT_VIDEO_MAX_DURATION_SEC / 60} min, Full HD
+          ({AMBIENT_VIDEO_MAX_LONG_SIDE}×{AMBIENT_VIDEO_MAX_SHORT_SIDE}px no máximo).
+        </p>
         <div className="grid grid-cols-2 gap-2">
           {PERIODS.map((p) => {
-            const hasImage = !!ambientBackgrounds[p.key];
+            const rawAmbient = ambientBackgrounds[p.key];
+            const parsedAmbient = parseAmbientMediaValue(rawAmbient);
+            const hasMedia = !!parsedAmbient;
             return (
               <div
                 key={p.key}
@@ -304,24 +327,35 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
               >
                 <div
                   className={`relative aspect-[16/10] overflow-hidden ${
-                    hasImage ? "cursor-pointer" : ""
+                    hasMedia ? "cursor-pointer" : ""
                   }`}
                   onClick={() => {
-                    if (hasImage) {
-                      setImageLoaded(false);
+                    if (parsedAmbient) {
+                      setImageLoaded(parsedAmbient.kind === "video");
                       setExpandedImage({
-                        url: resolveGameMediaUrl(ambientBackgrounds[p.key]),
+                        url: resolveAmbientAbsoluteUrl(parsedAmbient),
                         label: p.label,
+                        isVideo: parsedAmbient.kind === "video",
                       });
                     }
                   }}
                 >
-                  {hasImage ? (
-                    <ImageComponent
-                      media_id={ambientBackgrounds[p.key]}
-                      alt={p.label}
-                      className="transition-transform duration-300 group-hover:scale-105"
-                    />
+                  {parsedAmbient ? (
+                    parsedAmbient.kind === "video" ? (
+                      <video
+                        src={resolveAmbientAbsoluteUrl(parsedAmbient)}
+                        muted
+                        playsInline
+                        preload="metadata"
+                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <ImageComponent
+                        media_id={parsedAmbient.publicId}
+                        alt={p.label}
+                        className="transition-transform duration-300 group-hover:scale-105"
+                      />
+                    )
                   ) : (
                     <div className="flex h-full w-full items-center justify-center bg-muted/60">
                       <p.Icon className="h-6 w-6 text-muted-foreground/40" />
@@ -344,16 +378,75 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
                           sources: ["local"],
                           multiple: false,
                           maxFiles: 1,
-                          resourceType: "image",
+                          resourceType: "auto",
+                          clientAllowedFormats: ["image", "video"],
+                          maxVideoFileSize: 100 * 1024 * 1024,
                           language: "pt-br",
                           styles: { zIndex: 200000 },
+                          preBatch: (cb, data) => {
+                            const file = data?.files?.[0] as File | undefined;
+                            if (!file) {
+                              cb();
+                              return;
+                            }
+                            if (!file.type?.startsWith("video/")) {
+                              setError(null);
+                              cb();
+                              return;
+                            }
+                            const objectUrl = URL.createObjectURL(file);
+                            const video = document.createElement("video");
+                            video.preload = "metadata";
+                            video.onloadedmetadata = () => {
+                              URL.revokeObjectURL(objectUrl);
+                              const w = video.videoWidth;
+                              const h = video.videoHeight;
+                              const long = Math.max(w, h);
+                              const short = Math.min(w, h);
+                              if (
+                                !Number.isFinite(video.duration) ||
+                                video.duration >
+                                  AMBIENT_VIDEO_MAX_DURATION_SEC + 0.25
+                              ) {
+                                setError(
+                                  "Vídeo: duração máxima de 3 minutos.",
+                                );
+                                cb({ cancel: true });
+                                return;
+                              }
+                              if (
+                                long > AMBIENT_VIDEO_MAX_LONG_SIDE ||
+                                short > AMBIENT_VIDEO_MAX_SHORT_SIDE
+                              ) {
+                                setError(
+                                  "Vídeo: resolução máxima Full HD (1920×1080, qualquer orientação).",
+                                );
+                                cb({ cancel: true });
+                                return;
+                              }
+                              setError(null);
+                              cb();
+                            };
+                            video.onerror = () => {
+                              URL.revokeObjectURL(objectUrl);
+                              setError(
+                                "Não foi possível ler o vídeo. Tente outro arquivo.",
+                              );
+                              cb({ cancel: true });
+                            };
+                            video.src = objectUrl;
+                          },
                         }}
                         onSuccess={(result: unknown) =>
                           void handleAmbientUploadSuccess(
                             p.key,
                             result as {
-                              info?: { public_id?: string; asset_id?: string };
-                            }
+                              info?: {
+                                public_id?: string;
+                                asset_id?: string;
+                                resource_type?: string;
+                              };
+                            },
                           )
                         }
                       >
@@ -366,13 +459,13 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
                             }}
                             disabled={isSaving}
                             className="rounded-md bg-black/50 p-1.5 text-white transition-colors hover:bg-black/70 disabled:opacity-50"
-                            title="Trocar imagem"
+                            title="Trocar imagem ou vídeo"
                           >
                             <RefreshCw className="h-4 w-4" />
                           </button>
                         )}
                       </CldUploadWidget>
-                      {hasImage ? (
+                      {hasMedia ? (
                         <button
                           type="button"
                           onClick={(e) => {
@@ -381,7 +474,7 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
                           }}
                           disabled={isSaving}
                           className="rounded-md bg-black/50 p-1.5 text-white transition-colors hover:bg-destructive/80 disabled:opacity-50"
-                          title="Remover imagem"
+                          title="Remover mídia"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -407,22 +500,39 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
         <DialogContent className="max-w-3xl p-2">
           {expandedImage ? (
             <div className="flex min-h-[200px] flex-col items-center justify-center gap-2">
-              {!imageLoaded ? (
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              ) : null}
-              <img
-                src={expandedImage.url}
-                alt={expandedImage.label}
-                className={`h-auto max-h-[80vh] w-full rounded-lg object-contain transition-opacity ${
-                  imageLoaded ? "opacity-100" : "absolute opacity-0"
-                }`}
-                onLoad={() => setImageLoaded(true)}
-              />
-              {imageLoaded ? (
-                <span className="text-sm font-medium text-muted-foreground">
-                  {expandedImage.label}
-                </span>
-              ) : null}
+              {expandedImage.isVideo ? (
+                <>
+                  <video
+                    src={expandedImage.url}
+                    controls
+                    playsInline
+                    className="h-auto max-h-[80vh] w-full rounded-lg"
+                    onLoadedData={() => setImageLoaded(true)}
+                  />
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {expandedImage.label}
+                  </span>
+                </>
+              ) : (
+                <>
+                  {!imageLoaded ? (
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  ) : null}
+                  <img
+                    src={expandedImage.url}
+                    alt={expandedImage.label}
+                    className={`h-auto max-h-[80vh] w-full rounded-lg object-contain transition-opacity ${
+                      imageLoaded ? "opacity-100" : "absolute opacity-0"
+                    }`}
+                    onLoad={() => setImageLoaded(true)}
+                  />
+                  {imageLoaded ? (
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {expandedImage.label}
+                    </span>
+                  ) : null}
+                </>
+              )}
             </div>
           ) : null}
         </DialogContent>

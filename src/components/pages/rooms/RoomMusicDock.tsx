@@ -23,6 +23,13 @@ type YtPlayer = {
   mute: () => void;
   unMute: () => void;
   getPlayerState?: () => number;
+  getCurrentTime?: () => number;
+};
+
+type YtPlayerHandoff = {
+  videoId: string;
+  seconds: number;
+  wasPlaying: boolean;
 };
 
 const YT_PLAYING = 1;
@@ -107,6 +114,7 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
   /** Bloqueia cliques no iframe logo após trocar expand — evita “clique fantasma” no vídeo */
   const [blockIframePointer, setBlockIframePointer] = useState(false);
   const playerRef = useRef<YtPlayer | null>(null);
+  const playerHandoffRef = useRef<YtPlayerHandoff | null>(null);
   const mountRef = useRef<HTMLDivElement | null>(null);
   const localPausedRef = useRef(localPaused);
   const localVolumeRef = useRef(localVolume);
@@ -176,63 +184,123 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
       YT?: { Player: new (el: HTMLElement | string, opts: unknown) => YtPlayer };
     };
 
+    const videoId = localCurrent.video_id;
+    const showNativeControls = expanded;
+
     void loadYoutubeIframeApi().then(() => {
       if (cancelled || !mountRef.current) return;
+
+      if (mountRef.current) mountRef.current.innerHTML = "";
+
       const origin =
         typeof window !== "undefined" ? window.location.origin : "";
 
-      const initialId = localCurrent.video_id;
+      /** `controls` só pode mudar recriando o iframe. Recolhido: sem barra; expandido: barra + hover. */
+      const playerVars: Record<string, number | string> = {
+        playsinline: 1,
+        rel: 0,
+        modestbranding: 0,
+        enablejsapi: 1,
+        origin,
+        fs: showNativeControls ? 1 : 0,
+        controls: showNativeControls ? 1 : 0,
+        disablekb: showNativeControls ? 0 : 1,
+        iv_load_policy: 3,
+      };
 
-      if (!playerRef.current) {
-        /** Um único iframe: sem recriar ao expandir (evita “mini reload”). Controles nativos ficam
-         *  desativados para clique no modo recolhido via `pointer-events-none` no iframe. */
-        const playerVars: Record<string, number | string> = {
-          playsinline: 1,
-          rel: 0,
-          modestbranding: 1,
-          enablejsapi: 1,
-          origin,
-          fs: 1,
-          controls: 1,
-          disablekb: 0,
-          iv_load_policy: 3,
-        };
+      const applyInitialPlayback = (p: YtPlayer) => {
+        lastLoadVideoAtRef.current = Date.now();
+        const handoff = playerHandoffRef.current;
+        const useHandoff = handoff?.videoId === videoId;
+        const handoffWasPlaying = useHandoff ? handoff!.wasPlaying : false;
+        playerHandoffRef.current = null;
 
-        playerRef.current = new w.YT!.Player(mountRef.current, {
-          height: "100%",
-          width: "100%",
-          videoId: initialId,
-          playerVars,
-          events: {
-            onReady: () => setPlayerReady(true),
-            onStateChange: (ev: { data: number }) => {
-              if (ev.data === YT_PLAYING) {
-                setLocalPaused(false);
+        p.loadVideoById({
+          videoId,
+          startSeconds: useHandoff ? Math.max(0, handoff!.seconds) : 0,
+        });
+        p.setVolume(localVolumeRef.current);
+        if (localVolumeRef.current === 0) p.mute();
+        else p.unMute();
+
+        const shouldPlay = useHandoff
+          ? handoffWasPlaying && !localPausedRef.current
+          : !localPausedRef.current;
+
+        if (shouldPlay) {
+          p.playVideo();
+          window.setTimeout(() => {
+            if (!localPausedRef.current) p.playVideo();
+          }, 200);
+          window.setTimeout(() => {
+            if (!localPausedRef.current) p.playVideo();
+          }, 650);
+        } else {
+          p.pauseVideo();
+        }
+      };
+
+      playerRef.current = new w.YT!.Player(mountRef.current, {
+        height: "100%",
+        width: "100%",
+        videoId,
+        playerVars,
+        events: {
+          onReady: () => {
+            if (cancelled || !playerRef.current) return;
+            applyInitialPlayback(playerRef.current);
+            setPlayerReady(true);
+          },
+          onStateChange: (ev: { data: number }) => {
+            if (ev.data === YT_PLAYING) {
+              setLocalPaused(false);
+              return;
+            }
+            if (ev.data === YT_PAUSED || ev.data === 0) {
+              if (!roomMusicPlayingRef.current) {
+                setLocalPaused(true);
                 return;
               }
-              if (ev.data === YT_PAUSED || ev.data === 0) {
-                if (!roomMusicPlayingRef.current) {
-                  setLocalPaused(true);
-                  return;
-                }
-                if (Date.now() - lastLoadVideoAtRef.current < 1200) {
-                  try {
-                    playerRef.current?.playVideo();
-                  } catch {
-                    /* ignore */
-                  }
+              if (Date.now() - lastLoadVideoAtRef.current < 1200) {
+                try {
+                  playerRef.current?.playVideo();
+                } catch {
+                  /* ignore */
                 }
               }
-            },
+            }
           },
-        });
-      }
+        },
+      });
     });
 
     return () => {
       cancelled = true;
+      const p = playerRef.current;
+      const cur = localCurrent;
+      if (p && cur) {
+        try {
+          const t = p.getCurrentTime?.() ?? 0;
+          const st = p.getPlayerState?.() ?? YT_PAUSED;
+          playerHandoffRef.current = {
+            videoId: cur.video_id,
+            seconds: Math.max(0, t),
+            wasPlaying: st === YT_PLAYING,
+          };
+        } catch {
+          playerHandoffRef.current = null;
+        }
+        try {
+          p.destroy();
+        } catch {
+          /* ignore */
+        }
+      }
+      playerRef.current = null;
+      if (mountRef.current) mountRef.current.innerHTML = "";
+      setPlayerReady(false);
     };
-  }, [hasSession, localIndex, localCurrent?.video_id]);
+  }, [hasSession, localIndex, localCurrent?.video_id, expanded]);
 
   useEffect(() => {
     if (!hasSession) {
@@ -258,34 +326,6 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
       setPlayerReady(false);
     };
   }, []);
-
-  useEffect(() => {
-    if (!playerReady || !playerRef.current || !localCurrent) return;
-    const p = playerRef.current;
-    try {
-      lastLoadVideoAtRef.current = Date.now();
-      p.loadVideoById({ videoId: localCurrent.video_id, startSeconds: 0 });
-      p.setVolume(localVolumeRef.current);
-      if (localVolumeRef.current === 0) p.mute();
-      else p.unMute();
-      if (localPausedRef.current) p.pauseVideo();
-      else {
-        p.playVideo();
-        const t1 = window.setTimeout(() => {
-          if (!localPausedRef.current) p.playVideo();
-        }, 200);
-        const t2 = window.setTimeout(() => {
-          if (!localPausedRef.current) p.playVideo();
-        }, 650);
-        return () => {
-          window.clearTimeout(t1);
-          window.clearTimeout(t2);
-        };
-      }
-    } catch {
-      /* ignore */
-    }
-  }, [localCurrent?.video_id, playerReady]);
 
   useEffect(() => {
     if (!playerReady || !playerRef.current) return;
@@ -374,15 +414,7 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => openExpanded(e)}
           />
-        ) : (
-          <button
-            type="button"
-            className="absolute inset-0 z-[22] cursor-pointer border-0 bg-transparent p-0"
-            aria-label="Recolher player"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => closeExpanded(e)}
-          />
-        )}
+        ) : null}
 
         <div className="relative z-30 flex w-full min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-2 pointer-events-none">
           <div className="relative flex min-w-0 flex-1 items-center gap-2.5">
@@ -446,7 +478,7 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
             className={cn(
               "relative z-[38] shrink-0 overflow-hidden rounded-md border border-border/60 bg-black shadow-inner transition-all duration-200",
               expanded
-                ? "order-last h-[min(42vw,220px)] w-full max-w-[360px] sm:h-[200px]"
+                ? "order-last h-[min(42vw,220px)] w-full max-w-[360px] sm:h-[200px] pointer-events-auto"
                 : "h-[68px] w-[120px] pointer-events-none",
               !expanded && "[&_iframe]:pointer-events-none",
               expanded && blockIframePointer && "[&_iframe]:pointer-events-none",
@@ -460,6 +492,12 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
                 blockPlayerSurfacePointer && "pointer-events-none",
               )}
             />
+            <div
+              className="pointer-events-none absolute right-1 top-1 z-10 flex items-center rounded bg-black/55 px-1 py-0.5 shadow-sm"
+              aria-hidden
+            >
+              <YoutubeMark className="h-2 w-[11px] shrink-0 text-white" />
+            </div>
           </div>
 
           <div className="relative z-[42] flex shrink-0 items-center gap-0.5 pointer-events-auto">

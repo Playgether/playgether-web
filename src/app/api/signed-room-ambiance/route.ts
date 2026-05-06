@@ -7,7 +7,10 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-/** Upload assinado para imagens de ambientação por período (preset `rooms-ambiance`). */
+/**
+ * Upload assinado para mídia de ambientação por período (preset `rooms-ambiance`).
+ * No Cloudinary, o preset precisa aceitar imagem e vídeo (e limites desejados no painel).
+ */
 export async function POST(request: Request) {
   const body = await request.json();
   const { paramsToSign } = body;
