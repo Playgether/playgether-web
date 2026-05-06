@@ -21,6 +21,10 @@ import {
   X,
 } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
+import {
+  extractYoutubeVideoId,
+  fetchYoutubeOEmbedTitle,
+} from "@/lib/youtube";
 
 interface RoomRankingsPanelProps {
   roomName: string;
@@ -283,30 +287,48 @@ interface RoomMusicPanelProps {
   roomName: string;
 }
 
-type MusicLink = {
-  id: string;
-  title: string;
-  url: string;
-};
-
 export function RoomMusicPanel({ roomName }: RoomMusicPanelProps) {
-  const [title, setTitle] = useState("");
+  const {
+    roomMusic,
+    sendRoomMusic,
+    roomMusicError,
+    clearRoomMusicError,
+  } = useChatHandlerContext();
   const [url, setUrl] = useState("");
-  const [links, setLinks] = useState<MusicLink[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
-  const addMusic = () => {
-    if (!title.trim() || !url.trim()) return;
-    setLinks((current) => [
-      ...current,
-      { id: `${Date.now()}-${current.length}`, title: title.trim(), url: url.trim() },
-    ]);
-    setTitle("");
-    setUrl("");
+  const addMusic = async () => {
+    clearRoomMusicError();
+    const raw = url.trim();
+    if (!raw) return;
+    const videoId = extractYoutubeVideoId(raw);
+    if (!videoId) {
+      setLocalError(
+        "Cole apenas links HTTPS do YouTube (watch, youtu.be, embed ou shorts). Caminhos locais não são aceitos.",
+      );
+      return;
+    }
+    setLocalError(null);
+    setBusy(true);
+    try {
+      const title = await fetchYoutubeOEmbedTitle(videoId);
+      sendRoomMusic({ action: "add", video_id: videoId, title });
+      setUrl("");
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const removeMusic = (id: string) => {
-    setLinks((current) => current.filter((item) => item.id !== id));
+  const removeMusic = (index: number) => {
+    sendRoomMusic({ action: "remove", index });
   };
+
+  const selectTrack = (index: number) => {
+    sendRoomMusic({ action: "select", index });
+  };
+
+  const bannerError = localError || roomMusicError;
 
   return (
     <div className="h-full space-y-5 overflow-y-auto bg-muted/20 p-4">
@@ -316,29 +338,46 @@ export function RoomMusicPanel({ roomName }: RoomMusicPanelProps) {
       </h2>
 
       <p className="text-xs text-muted-foreground">
-        Adicione links de música para ambientação sonora da sala.
+        Fila compartilhada: apenas links do YouTube. Use o player fixo no rodapé da sala (visível em
+        todas as abas) para pausar, volume e trocar de faixa para todos.
       </p>
 
+      {bannerError ? (
+        <div className="flex items-start justify-between gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          <span>{bannerError}</span>
+          <button
+            type="button"
+            onClick={() => {
+              setLocalError(null);
+              clearRoomMusicError();
+            }}
+            className="shrink-0 rounded p-0.5 hover:bg-destructive/20"
+            aria-label="Fechar aviso"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ) : null}
+
       <div className="space-y-2">
-        <input
-          value={title}
-          onChange={(event) => setTitle(event.target.value)}
-          placeholder="Título da música..."
-          className="w-full rounded-lg border border-border/60 bg-muted/70 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
-        />
         <div className="flex gap-2">
           <input
             value={url}
-            onChange={(event) => setUrl(event.target.value)}
-            onKeyDown={(event) => event.key === "Enter" && addMusic()}
-            placeholder="https://..."
-            className="flex-1 rounded-lg border border-border/60 bg-muted/70 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
+            onChange={(event) => {
+              setLocalError(null);
+              setUrl(event.target.value);
+            }}
+            onKeyDown={(event) => event.key === "Enter" && !busy && void addMusic()}
+            placeholder="https://www.youtube.com/watch?v=..."
+            disabled={busy}
+            className="flex-1 rounded-lg border border-border/60 bg-muted/70 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 disabled:opacity-60"
           />
           <button
             type="button"
-            onClick={addMusic}
-            className="rounded-lg gradient-primary p-2 text-primary-foreground"
-            title="Adicionar música"
+            onClick={() => void addMusic()}
+            disabled={busy}
+            className="rounded-lg gradient-primary p-2 text-primary-foreground disabled:opacity-50"
+            title="Adicionar à fila"
           >
             <Plus className="h-4 w-4" />
           </button>
@@ -346,29 +385,46 @@ export function RoomMusicPanel({ roomName }: RoomMusicPanelProps) {
       </div>
 
       <div className="space-y-2">
-        {links.length > 0 ? (
-          links.map((link) => (
-            <div
-              key={link.id}
-              className="group flex items-center gap-3 rounded-lg border border-border/60 bg-muted/40 p-3"
-            >
-              <Disc3 className="h-5 w-5 text-neon-blue" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-foreground">{link.title}</p>
-                <p className="truncate text-[10px] text-muted-foreground">{link.url}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => removeMusic(link.id)}
-                className="rounded-md p-1.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
+        {roomMusic.queue.length > 0 ? (
+          roomMusic.queue.map((item, index) => {
+            const active = index === roomMusic.current_index;
+            return (
+              <div
+                key={`${item.video_id}-${index}`}
+                className={`group flex items-center gap-3 rounded-lg border p-3 transition-colors ${
+                  active
+                    ? "border-primary/50 bg-primary/5"
+                    : "border-border/60 bg-muted/40"
+                }`}
               >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          ))
+                <button
+                  type="button"
+                  onClick={() => selectTrack(index)}
+                  className="flex min-w-0 flex-1 items-start gap-3 text-left"
+                  title="Tocar esta faixa na sala"
+                >
+                  <Disc3
+                    className={`mt-0.5 h-5 w-5 shrink-0 ${active ? "text-primary" : "text-neon-blue"}`}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
+                    <p className="truncate text-[10px] text-muted-foreground">{item.video_id}</p>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeMusic(index)}
+                  className="rounded-md p-1.5 text-muted-foreground opacity-80 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                  title="Remover da fila"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            );
+          })
         ) : (
           <p className="py-4 text-center text-sm text-muted-foreground">
-            Nenhuma música adicionada.
+            Nenhuma música na fila. Adicione um link do YouTube acima.
           </p>
         )}
       </div>

@@ -36,6 +36,7 @@ import RoomImagesPanel from "./RoomImagesPanel";
 import RoomEventsPanel from "./RoomEventsPanel";
 import { RoomEventInviteModal } from "./RoomEventInviteModal";
 import { RoomEventLiveSession } from "./RoomEventLiveSession";
+import { RoomMusicDock } from "./RoomMusicDock";
 
 type RoomTab =
   | "chat"
@@ -204,8 +205,11 @@ export default function RoomChatView({
               <LogOut className="h-4 w-4" />
             </button>
           </header>
-          <div className="relative flex-1 overflow-x-hidden overflow-y-auto p-2 min-h-[min(70dvh,100%)] md:min-h-0 md:overflow-hidden md:p-3">
-            <RoomEventLiveSession room={room} />
+          <div className="relative flex min-h-[min(70dvh,100%)] flex-1 flex-col overflow-hidden overflow-x-hidden p-2 md:min-h-0 md:p-3">
+            <div className="min-h-0 flex-1 overflow-y-auto md:overflow-hidden">
+              <RoomEventLiveSession room={room} />
+            </div>
+            <RoomMusicDock mountSuffix={room.slug} />
           </div>
         </section>
       </>
@@ -348,7 +352,8 @@ export default function RoomChatView({
         </div>
       </nav>
 
-      <div className="relative flex min-h-0 flex-1 overflow-hidden">
+      <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="relative flex min-h-0 flex-1 overflow-hidden">
         {showSidebar ? (
           <>
             <button
@@ -363,6 +368,8 @@ export default function RoomChatView({
           </>
         ) : null}
         {renderPanel()}
+        </div>
+        <RoomMusicDock mountSuffix={room.slug} />
       </div>
     </section>
     </>

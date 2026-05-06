@@ -11,11 +11,21 @@ import {
   useCallback,
   MutableRefObject,
 } from "react";
-import useWebSocket from "react-use-websocket";
+import useWebSocket, { ReadyState } from "react-use-websocket";
 import { useAuthContext } from "./AuthContext";
 import { OnlineUsersChatRoom } from "@/types/OnlineUsersChatRoom";
+import type { RoomMusicClientAction, RoomMusicState } from "@/types/RoomMusic";
 
 export type RoomJoinNotice = { id: number; text: string };
+
+const defaultRoomMusicState = (): RoomMusicState => ({
+  queue: [],
+  current_index: -1,
+  playing: false,
+  volume: 80,
+  position_sec: 0,
+  sync_epoch_ms: 0,
+});
 
 function easeOutCubic(t: number): number {
   return 1 - (1 - t) ** 3;
@@ -74,6 +84,10 @@ type ChatHandlerContextProps = {
   clearRoomEventInvite: () => void;
   /** Quando o chat não está visível (outra aba ou tela cheia do evento), novas mensagens contam como não lidas. */
   setChatSurfaceHidden: (hidden: boolean) => void;
+  roomMusic: RoomMusicState;
+  sendRoomMusic: (payload: RoomMusicClientAction) => void;
+  roomMusicError: string | null;
+  clearRoomMusicError: () => void;
 };
 
 const ChatHandlerContext = createContext<ChatHandlerContextProps>(
@@ -116,6 +130,8 @@ const ChatHandlerContextProvider = ({
   const [joinNotices, setJoinNotices] = useState<RoomJoinNotice[]>([]);
   const [roomEventInvite, setRoomEventInvite] =
     useState<RoomEventInvitePayload | null>(null);
+  const [roomMusic, setRoomMusic] = useState<RoomMusicState>(defaultRoomMusicState);
+  const [roomMusicError, setRoomMusicError] = useState<string | null>(null);
   const chatSurfaceHiddenRef = useRef(false);
 
   const setChatSurfaceHidden = useCallback((hidden: boolean) => {
@@ -127,6 +143,16 @@ const ChatHandlerContextProvider = ({
   };
 
   const clearRoomEventInvite = () => setRoomEventInvite(null);
+
+  const clearRoomMusicError = useCallback(() => setRoomMusicError(null), []);
+
+  const sendRoomMusic = useCallback(
+    (payload: RoomMusicClientAction) => {
+      if (readyState !== ReadyState.OPEN) return;
+      sendJsonMessage({ type: "room_music", ...payload });
+    },
+    [readyState, sendJsonMessage],
+  );
 
   useEffect(() => {
     shouldScrollRef.current = shouldScrollToBottom;
@@ -184,6 +210,47 @@ const ChatHandlerContextProvider = ({
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("playgether:room-event-sync"));
       }
+    },
+    room_music_state: (data: { state?: RoomMusicState }) => {
+      const s = data.state;
+      if (!s || typeof s !== "object") return;
+      const next = defaultRoomMusicState();
+      const rawQ = Array.isArray(s.queue) ? s.queue : [];
+      next.queue = rawQ
+        .filter((x) => Boolean(x) && typeof x === "object")
+        .map((x) => {
+          const o = x as Record<string, unknown>;
+          const video_id = typeof o.video_id === "string" ? o.video_id : "";
+          const title = typeof o.title === "string" ? o.title : "YouTube";
+          const added_by =
+            typeof o.added_by === "string" ? o.added_by : undefined;
+          return { video_id, title, added_by };
+        })
+        .filter((x) => /^[a-zA-Z0-9_-]{11}$/.test(x.video_id));
+      next.current_index =
+        typeof s.current_index === "number" ? s.current_index : -1;
+      next.playing = Boolean(s.playing);
+      if (next.queue.length === 0) {
+        next.current_index = -1;
+        next.playing = false;
+        next.position_sec = 0;
+      } else if (next.current_index >= next.queue.length) {
+        next.current_index = next.queue.length - 1;
+      }
+      next.volume =
+        typeof s.volume === "number"
+          ? Math.max(0, Math.min(100, s.volume))
+          : 80;
+      next.position_sec =
+        typeof s.position_sec === "number" ? Math.max(0, s.position_sec) : 0;
+      next.sync_epoch_ms =
+        typeof s.sync_epoch_ms === "number" ? s.sync_epoch_ms : 0;
+      setRoomMusic(next);
+    },
+    room_music_error: (data: { message?: string }) => {
+      setRoomMusicError(
+        typeof data.message === "string" ? data.message : "Erro na música da sala.",
+      );
     },
     room_event_sync: (data: {
       payload?: {
@@ -376,6 +443,10 @@ const ChatHandlerContextProvider = ({
         roomEventInvite,
         clearRoomEventInvite,
         setChatSurfaceHidden,
+        roomMusic,
+        sendRoomMusic,
+        roomMusicError,
+        clearRoomMusicError,
       }}
     >
       {children}
