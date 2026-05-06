@@ -1,12 +1,14 @@
 "use client";
 
 import { ChatRoomMessages } from "@/types/ChatRoomMessages";
+import type { RoomEventInvitePayload } from "@/types/RoomEvents";
 import {
   createContext,
   useState,
   useContext,
   useEffect,
   useRef,
+  useCallback,
   MutableRefObject,
 } from "react";
 import useWebSocket from "react-use-websocket";
@@ -24,7 +26,7 @@ function animateScrollTop(
   el: HTMLElement,
   to: number,
   durationMs: number,
-  onComplete?: () => void
+  onComplete?: () => void,
 ): () => void {
   const start = el.scrollTop;
   const change = to - start;
@@ -68,10 +70,14 @@ type ChatHandlerContextProps = {
   onlineUsers: OnlineUsersChatRoom[];
   joinNotices: RoomJoinNotice[];
   dismissJoinNotice: (id: number) => void;
+  roomEventInvite: RoomEventInvitePayload | null;
+  clearRoomEventInvite: () => void;
+  /** Quando o chat não está visível (outra aba ou tela cheia do evento), novas mensagens contam como não lidas. */
+  setChatSurfaceHidden: (hidden: boolean) => void;
 };
 
 const ChatHandlerContext = createContext<ChatHandlerContextProps>(
-  {} as ChatHandlerContextProps
+  {} as ChatHandlerContextProps,
 );
 
 const ChatHandlerContextProvider = ({
@@ -88,13 +94,13 @@ const ChatHandlerContextProvider = ({
     {
       share: false,
       shouldReconnect: () => false,
-    }
+    },
   );
 
   const [messagesQuantity, setMessagesQuanity] = useState(0);
   const [newMessage, setNewMessage] = useState("");
   const [realTimeMessages, setRealTimeMessages] = useState<ChatRoomMessages[]>(
-    []
+    [],
   );
   const messagesDiv = useRef<HTMLDivElement>(null);
   const shouldScrollRef = useRef(true);
@@ -108,10 +114,19 @@ const ChatHandlerContextProvider = ({
   const [newMessageId, setNewMessageId] = useState(0);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUsersChatRoom[]>([]);
   const [joinNotices, setJoinNotices] = useState<RoomJoinNotice[]>([]);
+  const [roomEventInvite, setRoomEventInvite] =
+    useState<RoomEventInvitePayload | null>(null);
+  const chatSurfaceHiddenRef = useRef(false);
+
+  const setChatSurfaceHidden = useCallback((hidden: boolean) => {
+    chatSurfaceHiddenRef.current = hidden;
+  }, []);
 
   const dismissJoinNotice = (id: number) => {
     setJoinNotices((prev) => prev.filter((n) => n.id !== id));
   };
+
+  const clearRoomEventInvite = () => setRoomEventInvite(null);
 
   useEffect(() => {
     shouldScrollRef.current = shouldScrollToBottom;
@@ -131,6 +146,16 @@ const ChatHandlerContextProvider = ({
       const message = data.message as ChatRoomMessages;
       setRealTimeMessages((prevMessages) => [...prevMessages, message]);
       if (message.author_username !== user?.username) {
+        if (chatSurfaceHiddenRef.current) {
+          setMessagesQuanity((prev) => {
+            const next = prev + 1;
+            if (prev === 0) {
+              setNewMessageId(message.id);
+            }
+            return next;
+          });
+          return;
+        }
         if (shouldScrollRef.current) {
           setShouldScrollToBottom(false);
           setTimeout(() => setShouldScrollToBottom(true), 0);
@@ -153,6 +178,42 @@ const ChatHandlerContextProvider = ({
       const id = Date.now() + Math.floor(Math.random() * 1000);
       const text = `${data.user.fullname} entrou na sala`;
       setJoinNotices((prev) => [...prev.slice(-4), { id, text }]);
+    },
+    room_event_invite: (data: { payload: RoomEventInvitePayload }) => {
+      setRoomEventInvite(data.payload);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("playgether:room-event-sync"));
+      }
+    },
+    room_event_sync: (data: {
+      payload?: {
+        reason?: string;
+        message?: string;
+        organizer_user_id?: number;
+      };
+    }) => {
+      const reason = data?.payload?.reason;
+      const message = data?.payload?.message;
+      const organizer_user_id = data?.payload?.organizer_user_id;
+      if (
+        reason &&
+        [
+          "event_begun",
+          "event_begun_early",
+          "event_cancelled",
+          "event_cancelled_by_host",
+          "event_finished",
+        ].includes(reason)
+      ) {
+        setRoomEventInvite(null);
+      }
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("playgether:room-event-sync", {
+            detail: { reason, message, organizer_user_id },
+          }),
+        );
+      }
     },
   };
 
@@ -191,10 +252,7 @@ const ChatHandlerContextProvider = ({
     }
   };
 
-  const runSmoothScrollToBottom = (
-    durationMs: number,
-    onDone?: () => void
-  ) => {
+  const runSmoothScrollToBottom = (durationMs: number, onDone?: () => void) => {
     const el = messagesDiv.current;
     if (!el) {
       onDone?.();
@@ -203,14 +261,19 @@ const ChatHandlerContextProvider = ({
     cancelScrollAnimRef.current?.();
     const maxScroll = Math.max(0, el.scrollHeight - el.clientHeight);
     isAnimatingScrollRef.current = true;
-    cancelScrollAnimRef.current = animateScrollTop(el, maxScroll, durationMs, () => {
-      isAnimatingScrollRef.current = false;
-      cancelScrollAnimRef.current = null;
-      setShouldScrollToBottom(true);
-      resetMessagesQuantity();
-      setNewMessageId(0);
-      onDone?.();
-    });
+    cancelScrollAnimRef.current = animateScrollTop(
+      el,
+      maxScroll,
+      durationMs,
+      () => {
+        isAnimatingScrollRef.current = false;
+        cancelScrollAnimRef.current = null;
+        setShouldScrollToBottom(true);
+        resetMessagesQuantity();
+        setNewMessageId(0);
+        onDone?.();
+      },
+    );
   };
 
   const executeScrollBottom = () => {
@@ -233,18 +296,26 @@ const ChatHandlerContextProvider = ({
     const tRect = target.getBoundingClientRect();
     const scrollDelta =
       tRect.top + tRect.height / 2 - (cRect.top + cRect.height / 2);
-    const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight);
+    const maxScroll = Math.max(
+      0,
+      container.scrollHeight - container.clientHeight,
+    );
     const nextTop = Math.max(
       0,
-      Math.min(container.scrollTop + scrollDelta, maxScroll)
+      Math.min(container.scrollTop + scrollDelta, maxScroll),
     );
 
     isAnimatingScrollRef.current = true;
-    cancelScrollAnimRef.current = animateScrollTop(container, nextTop, 780, () => {
-      isAnimatingScrollRef.current = false;
-      cancelScrollAnimRef.current = null;
-      setMessagesQuanity(0);
-    });
+    cancelScrollAnimRef.current = animateScrollTop(
+      container,
+      nextTop,
+      780,
+      () => {
+        isAnimatingScrollRef.current = false;
+        cancelScrollAnimRef.current = null;
+        setMessagesQuanity(0);
+      },
+    );
   };
 
   useEffect(() => {
@@ -252,7 +323,7 @@ const ChatHandlerContextProvider = ({
       const eventType = (lastJsonMessage as { type: string }).type;
       if (eventType && eventHandlers[eventType]) {
         (eventHandlers as Record<string, (msg: unknown) => void>)[eventType](
-          lastJsonMessage
+          lastJsonMessage,
         );
       }
     }
@@ -302,6 +373,9 @@ const ChatHandlerContextProvider = ({
         onlineUsers,
         joinNotices,
         dismissJoinNotice,
+        roomEventInvite,
+        clearRoomEventInvite,
+        setChatSurfaceHidden,
       }}
     >
       {children}

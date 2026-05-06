@@ -4,7 +4,7 @@ import type { ChatRoomDetailedBody } from "./chatRoomApi";
 
 /** `roomSlug` é o slug na URL (`/rooms/[roomSlug]`); IDs numéricos ainda funcionam como legado. */
 export const getChatRoomDetailed = async (
-  roomSlug: string
+  roomSlug: string,
 ): Promise<ChatRoomDetailedBody | null> => {
   const accessToken = (await cookies()).get("accessToken")?.value;
   if (!accessToken) {
@@ -24,7 +24,7 @@ export const getChatRoomDetailed = async (
         headers: {
           Authorization: "Bearer " + String(accessToken),
         },
-      }
+      },
     );
     return response.data ?? null;
   } catch {

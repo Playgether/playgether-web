@@ -66,7 +66,7 @@ function RightChatRoomMessages({ messages }: { messages: ChatRoomMessages[] }) {
                     name={message.author_name}
                     newMessageId={newMessageId}
                   />
-                )
+                ),
               )
             ) : (
               <div className="flex-1 w-[98%] flex items-center justify-center flex-col">

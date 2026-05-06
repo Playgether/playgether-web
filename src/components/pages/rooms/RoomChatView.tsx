@@ -1,10 +1,13 @@
 "use client";
 
 import { favoriteToggleChatRoom } from "@/actions/favoriteToggleChatRoom";
+import { useChatHandlerContext } from "@/context/ChatHandlerContext";
+import { useRoomEventSession } from "@/context/RoomEventSessionContext";
 import { cn } from "@/lib/utils";
 import { ChatRoom } from "@/types/ChatRoom";
 import { ChatRoomMessages } from "@/types/ChatRoomMessages";
 import {
+  CalendarDays,
   Image as ImageIcon,
   Info,
   LogOut,
@@ -19,7 +22,7 @@ import {
   Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   RoomMusicPanel,
   RoomRankingsPanel,
@@ -30,6 +33,9 @@ import { RoomInfoPanel, RoomRulesPanel } from "./RoomDetailsPanel";
 import RoomChatMessagesPanel from "./RoomChatMessagesPanel";
 import RoomParticipantsPanel from "./RoomParticipantsPanel";
 import RoomImagesPanel from "./RoomImagesPanel";
+import RoomEventsPanel from "./RoomEventsPanel";
+import { RoomEventInviteModal } from "./RoomEventInviteModal";
+import { RoomEventLiveSession } from "./RoomEventLiveSession";
 
 type RoomTab =
   | "chat"
@@ -40,7 +46,8 @@ type RoomTab =
   | "roles"
   | "music"
   | "settings"
-  | "images";
+  | "images"
+  | "events";
 
 interface RoomChatViewProps {
   room: ChatRoom;
@@ -59,6 +66,7 @@ const tabs: { id: RoomTab; icon: typeof MessageSquare; label: string }[] = [
   { id: "roles", icon: Shield, label: "Cargos" },
   { id: "music", icon: Music, label: "Música" },
   { id: "settings", icon: Settings, label: "Config" },
+  { id: "events", icon: CalendarDays, label: "Eventos" },
 ];
 
 export default function RoomChatView({
@@ -67,10 +75,23 @@ export default function RoomChatView({
   initialMessagesNextPageUrl = null,
 }: RoomChatViewProps) {
   const router = useRouter();
+  const { eventShellOpen, activeEvent } = useRoomEventSession();
+  const { messagesQuantity, resetMessagesQuantity, setChatSurfaceHidden } = useChatHandlerContext();
   const [activeTab, setActiveTab] = useState<RoomTab>("chat");
   const [showSidebar, setShowSidebar] = useState(false);
   const [isFavorite, setIsFavorite] = useState(room.is_favorited ?? false);
   const [, startFavoriteTransition] = useTransition();
+
+  useEffect(() => {
+    setChatSurfaceHidden(activeTab !== "chat" || eventShellOpen);
+  }, [activeTab, eventShellOpen, setChatSurfaceHidden]);
+
+  const handleSelectTab = (id: RoomTab) => {
+    setActiveTab(id);
+    if (id === "chat") {
+      resetMessagesQuantity();
+    }
+  };
 
   const handleToggleFavorite = () => {
     const nextFavorite = !isFavorite;
@@ -120,6 +141,12 @@ export default function RoomChatView({
             <RoomRankingsPanel roomName={room.group_name} />
           </div>
         );
+      case "events":
+        return (
+          <div className="min-h-0 flex-1 overflow-hidden">
+            <RoomEventsPanel room={room} />
+          </div>
+        );
       case "roles":
         return (
           <div className="min-h-0 flex-1 overflow-hidden">
@@ -150,8 +177,45 @@ export default function RoomChatView({
     }
   };
 
+  if (eventShellOpen && activeEvent) {
+    const finished = activeEvent.status === "finished";
+    return (
+      <>
+        <RoomEventInviteModal roomSlug={room.slug} />
+        <section className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/50 bg-background">
+          <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-card/80 px-3 py-2 backdrop-blur-sm">
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-primary">
+                {finished ? "Evento encerrado" : "Evento ao vivo"}
+              </p>
+              <p className="truncate text-sm font-bold text-foreground">{activeEvent.title}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {finished
+                  ? "Confira a Pontuação abaixo. Use o botão para voltar ao chat da sala."
+                  : "As outras abas da sala ficam bloqueadas até o encerramento."}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => router.push("/rooms")}
+              className="shrink-0 rounded-md p-2 text-destructive transition-colors hover:bg-destructive/10"
+              title="Sair da sala"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </header>
+          <div className="relative flex-1 overflow-x-hidden overflow-y-auto p-2 min-h-[min(70dvh,100%)] md:min-h-0 md:overflow-hidden md:p-3">
+            <RoomEventLiveSession room={room} />
+          </div>
+        </section>
+      </>
+    );
+  }
+
   return (
-    <section className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/50 bg-background">
+    <>
+      <RoomEventInviteModal roomSlug={room.slug} />
+      <section className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/50 bg-background">
       <nav className="shrink-0 border-b border-border bg-card/80 backdrop-blur-sm">
         <div className="hidden items-center justify-between gap-0.5 px-2 py-1.5 md:flex">
           <div className="min-w-0 flex-shrink-0">
@@ -165,7 +229,7 @@ export default function RoomChatView({
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleSelectTab(tab.id)}
                 className={cn(
                   "relative flex-shrink-0 p-2 transition-colors",
                   activeTab === tab.id
@@ -175,6 +239,11 @@ export default function RoomChatView({
                 title={tab.label}
               >
                 <tab.icon className="h-4 w-4" />
+                {tab.id === "chat" && activeTab !== "chat" && messagesQuantity > 0 ? (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 px-1 text-[10px] font-bold leading-none text-white shadow-sm">
+                    {messagesQuantity > 99 ? "99+" : messagesQuantity}
+                  </span>
+                ) : null}
                 {activeTab === tab.id ? (
                   <span className="absolute bottom-0 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full gradient-primary" />
                 ) : null}
@@ -255,7 +324,7 @@ export default function RoomChatView({
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleSelectTab(tab.id)}
                 className={cn(
                   "relative flex-shrink-0 p-2 transition-colors",
                   activeTab === tab.id
@@ -265,6 +334,11 @@ export default function RoomChatView({
                 title={tab.label}
               >
                 <tab.icon className="h-4 w-4" />
+                {tab.id === "chat" && activeTab !== "chat" && messagesQuantity > 0 ? (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 px-1 text-[10px] font-bold leading-none text-white shadow-sm">
+                    {messagesQuantity > 99 ? "99+" : messagesQuantity}
+                  </span>
+                ) : null}
                 {activeTab === tab.id ? (
                   <span className="absolute bottom-0 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full gradient-primary" />
                 ) : null}
@@ -291,5 +365,6 @@ export default function RoomChatView({
         {renderPanel()}
       </div>
     </section>
+    </>
   );
 }

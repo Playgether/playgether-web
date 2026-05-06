@@ -72,7 +72,7 @@ export default function RoomChatMessagesPanel({
 
   const [timeTick, setTimeTick] = useState(0);
   const [nextPageUrl, setNextPageUrl] = useState<string | null>(
-    initialMessagesNextPageUrl
+    initialMessagesNextPageUrl,
   );
   const [loadingOlder, setLoadingOlder] = useState(false);
   const loadingOlderRef = useRef(false);
