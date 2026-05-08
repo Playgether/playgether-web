@@ -1,55 +1,73 @@
-import React from "react";
-import { useState } from "react";
-import { post, postCadastroProps } from "../../../services/postCadastro";
+import React, { useState, useEffect } from "react";
+import { post, postCadastroProps, CadastroError } from "../../../services/postCadastro";
 import { UseFormState } from "../../layouts/ConstFormStateLayout";
 import { RegisterFormSchema } from "./RegisterFormSchema";
-import { SubmitingForm } from "../../layouts/SubmitingFormLayout";
 import { FormRegisterImplementation } from "./FormRegisterImplementation";
 import SuccessfullyRegistered from "./SuccessfullyRegistered";
-import  HandleAvailableUsernames  from "./HandleAvailableUsername";
+import HandleAvailableUsernames from "./HandleAvailableUsername";
+import { useTermsContext } from "@/context/TermsContext";
 
 interface FormCadastroProps {
-  onClickAqui: () => void
+  onClickAqui: () => void;
 }
 
 const FormCadastro = ({ onClickAqui }: FormCadastroProps) => {
-    const [success, setSuccess] = useState('');
-    const [availableUsernameResult, setAvailableUsernameResult] = useState(<span></span>);
-    const RegisterUserSchema = RegisterFormSchema()
-    const { register, handleSubmit, errors, getValues } = UseFormState(RegisterUserSchema);
+  const [success, setSuccess] = useState("");
+  const [backendErrors, setBackendErrors] = useState<CadastroError>({});
+  const [availableUsernameResult, setAvailableUsernameResult] = useState(<span />);
+  const { documents, loadDocuments } = useTermsContext();
+  const [requiredIds, setRequiredIds] = useState<number[]>([]);
 
-    const handleAvailableUsernames = async (username : string) => {
-        HandleAvailableUsernames(username, errors, setAvailableUsernameResult)
-      };
-      
-      
-    const Submiting = (data: postCadastroProps) => {
-      SubmitingForm(() => post(data))   
-      setSuccess('O seu cadastro foi realizado com sucesso!');
-  }
+  useEffect(() => {
+    loadDocuments().then((docs) => {
+      setRequiredIds(docs.map((d) => d.id));
+    });
+  }, [loadDocuments]);
 
-  
-    return (
-      <>
-        {success ? (
-          <SuccessfullyRegistered 
-              success={success}
-              onClickAqui={onClickAqui}
-          />
-        ) : (
-          <FormRegisterImplementation 
-            handleSubmit={handleSubmit}
-            register={register}
-            errors={errors}
-            Submiting={Submiting}
-            onClickAqui={onClickAqui}
-            handleAvailableUsernames={handleAvailableUsernames}
-            availableUsernameResult={availableUsernameResult}
-            getValues={getValues}
-          />
-        )}
-      </>
-    );
+  const RegisterUserSchema = RegisterFormSchema(requiredIds);
+  const { register, handleSubmit, errors, getValues, setValue, watch } =
+    UseFormState(RegisterUserSchema, { accepted_documents: [] });
+
+  const handleAvailableUsernames = async (username: string) => {
+    HandleAvailableUsernames(username, errors, setAvailableUsernameResult);
   };
-  
+
+  const Submiting = async (data: postCadastroProps & { accepted_documents?: number[] }) => {
+    setBackendErrors({});
+    const payload: postCadastroProps = {
+      ...data,
+      accepted_documents: data.accepted_documents ?? [],
+    };
+    const result = await post(payload);
+
+    if (result.success) {
+      setSuccess("O seu cadastro foi realizado com sucesso!");
+    } else {
+      setBackendErrors(result.errors);
+    }
+  };
+
+  return (
+    <>
+      {success ? (
+        <SuccessfullyRegistered success={success} onClickAqui={onClickAqui} />
+      ) : (
+        <FormRegisterImplementation
+          handleSubmit={handleSubmit}
+          register={register}
+          errors={errors}
+          setValue={setValue}
+          watch={watch}
+          backendErrors={backendErrors}
+          Submiting={Submiting}
+          onClickAqui={onClickAqui}
+          handleAvailableUsernames={handleAvailableUsernames}
+          availableUsernameResult={availableUsernameResult}
+          getValues={getValues}
+        />
+      )}
+    </>
+  );
+};
+
 export default FormCadastro;

@@ -2,13 +2,16 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-
+import { useAuthContext } from "@/context/AuthContext";
+import { useNotificationContext } from "@/context/NotificationsContext";
 import { ConversationsModal } from "../chat/ConversationsModal";
 import { NotificationsModal } from "./NotificationsModal";
 import { SettingsModal } from "../../SettingsModal";
 import { useBaseLayoutServerContext } from "../../context/BaseLayoutServerContext";
 
 export const TopNavigation = () => {
+  const { logout } = useAuthContext();
+  const { unreadCount } = useNotificationContext();
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -71,9 +74,11 @@ export const TopNavigation = () => {
           title="Open notifications"
         >
           {icons.Bell}
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-primary rounded-full text-xs font-bold text-white flex items-center justify-center animate-glow-pulse">
-            7
-          </span>
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-primary rounded-full text-xs font-bold text-white flex items-center justify-center animate-glow-pulse">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
         </Button>
 
         <Button
@@ -90,6 +95,7 @@ export const TopNavigation = () => {
         <Button
           variant="ghost"
           size="icon"
+          onClick={() => logout()}
           className="w-11 h-11 rounded-xl hover:bg-muted/50 hover:shadow-glow-neon transition-all duration-300"
           aria-label="Log out"
           title="Log out"

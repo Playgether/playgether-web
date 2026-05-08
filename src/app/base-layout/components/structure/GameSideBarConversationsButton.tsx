@@ -1,9 +1,11 @@
 "use client";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { GamerSideBarItensInterface } from "../../types/structure/GamerSideBarItensInterface";
 import { ConversationsModal } from "../chat/ConversationsModal";
+import { FriendsModal } from "../friends/FriendsModal";
 
 export default function GamerSidbarConversationsButtons({
   item,
@@ -11,16 +13,34 @@ export default function GamerSidbarConversationsButtons({
   item: GamerSideBarItensInterface;
 }) {
   const [conversationsOpen, setConversationsOpen] = useState(false);
+  const [friendsOpen, setFriendsOpen] = useState(false);
+  const router = useRouter();
+
+  const handleClick = () => {
+    if (item.href) {
+      router.push(item.href);
+    } else if (item.action === "conversations") {
+      setConversationsOpen(true);
+    } else if (item.action === "friends") {
+      setFriendsOpen(true);
+    }
+  };
 
   return (
     <>
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => setConversationsOpen(true)}
+        onClick={handleClick}
         type="button"
-        aria-haspopup="dialog"
-        aria-expanded={conversationsOpen}
+        aria-haspopup={item.action ? "dialog" : undefined}
+        aria-expanded={
+          item.action === "conversations"
+            ? conversationsOpen
+            : item.action === "friends"
+            ? friendsOpen
+            : undefined
+        }
         aria-label={item.label}
         title={item.label}
         className={cn(
@@ -38,9 +58,14 @@ export default function GamerSidbarConversationsButtons({
           </span>
         )}
       </Button>
+
       <ConversationsModal
         open={conversationsOpen}
         onOpenChange={setConversationsOpen}
+      />
+      <FriendsModal
+        open={friendsOpen}
+        onOpenChange={setFriendsOpen}
       />
     </>
   );

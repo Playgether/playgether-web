@@ -10,6 +10,7 @@ import {
   CustomToastProps,
 } from "@/error/custom-toaster/enum";
 import FormLoginButton from "./FormLoginButton";
+import PasswordInput from "@/components/layouts/PasswordInput";
 import { useState } from "react";
 import { LoginFormSchema } from "./LoginFormSchema";
 import { redirect } from "next/navigation";
@@ -39,7 +40,7 @@ export const FormLoginImplementation = ({
 
   const clientAction = async (formData: FormData) => {
     const newUser = {
-      username: formData.get("username"),
+      email: formData.get("email"),
       password: formData.get("password"),
     };
     const result = LoginUserSchema.safeParse(newUser);
@@ -89,27 +90,27 @@ export const FormLoginImplementation = ({
       <CustomToaster />
       {unauthorized && (
         <WrongPasswordComponent
-          wrongPassword={"Username ou senha incorreto(s)"}
+          wrongPassword={"Email ou senha incorreto(s)"}
         />
       )}
       <div className="space-y-1">
-        <ErrosInput field={validationErrors.username || errors.username} />
+        <ErrosInput field={validationErrors.email || errors.email} />
         <InputLayout
-          type="text"
-          placeholder="Username"
-          register={{ ...register("username") }}
-          name="username"
+          type="email"
+          placeholder="Email"
+          register={{ ...register("email") }}
+          name="email"
           inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue focus:shadow-glow-neon transition-all duration-300 backdrop-blur-sm"
         />
       </div>
 
       <div className="space-y-1">
         <ErrosInput field={validationErrors.password || errors.password} />
-        <InputLayout
-          type="password"
+        <PasswordInput
           placeholder="Password"
           register={{ ...register("password") }}
           name="password"
+          autoComplete="off"
           inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue focus:shadow-glow-neon transition-all duration-300 backdrop-blur-sm"
         />
       </div>

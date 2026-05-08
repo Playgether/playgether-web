@@ -14,8 +14,10 @@ import ContextMenuAction from "./ContextMenuAction";
 import PostText from "./PostText";
 import PostActions from "./PostActions";
 import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
+import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
 import { ShareModal } from "./ShareModal";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import VideoComponent from "@/components/layouts/VideoComponent/VideoComponent";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -58,42 +60,41 @@ export const FeedPost = ({ post }) => {
             {/* Repost Header */}
             {post.isRepost && <RepostFlag post={post} />}
             {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 ring-2 ring-primary/20 rounded-full overflow-hidden">
-                  {post.profile_photo ? (
-                    <div className="relative w-full h-full">
-                      <ImageComponent
-                        media_id={post.profile_photo}
-                        alt={`Profile photo of the user ${post?.username}`}
-                        className="object-cover rounded-full"
-                      />
-                    </div>
-                  ) : (
-                    components.NoImageProfile
-                  )}
+            <div className="flex items-center justify-between mb-4 gap-2 min-w-0">
+              <div className="flex items-center space-x-3 min-w-0 flex-1">
+                <div className="shrink-0">
+                  <ProfileAvatar
+                    displayName={post.name}
+                    username={post.username}
+                    profilePhoto={post.profile_photo}
+                    sizeClass="h-12 w-12"
+                    ringClass="ring-2 ring-primary/20"
+                    fallbackTextClassName="text-sm"
+                  />
                 </div>
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <h3
-                      className="font-semibold text-foreground"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        router.push(`/profile/${post.username}`);
-                      }}
-                    >
-                      {/* {(post.isRepost ? post.originalPost?.user : post.user).name} */}
-                      {post.name}
-                    </h3>
-                    {/* {(post.isRepost ? post.originalPost?.user : post.user)
-                  .verified && components.VerifiedProfile} */}
-                    {post.verified && components.VerifiedProfile}
+                <div className="min-w-0 flex-1">
+                  <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                    <div className="inline-flex min-w-0 max-w-full shrink-0 items-center gap-2">
+                      <h3
+                        className="inline-block w-fit max-w-full min-w-0 font-semibold text-foreground"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/profile/${post.username}`);
+                        }}
+                      >
+                        {post.name}
+                      </h3>
+                      {post.verified && (
+                        <span className="inline-flex shrink-0">
+                          {components.VerifiedProfile}
+                        </span>
+                      )}
+                    </div>
+                    <HighlightedAchievementBadges
+                      achievements={post.highlighted_achievements}
+                      className="min-w-0"
+                    />
                   </div>
-                  {/* <p className="text-sm text-muted-foreground">
-                @
-                {(post.isRepost ? post.originalPost?.user : post.user).username}{" "}
-                • {(post.isRepost ? post.originalPost : post).timestamp}
-              </p> */}
                   <p className="text-sm text-muted-foreground">
                     @{post.username} • <DateAndHour date={post.timestamp} />
                   </p>

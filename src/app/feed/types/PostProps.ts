@@ -1,6 +1,7 @@
 import { PostLikes } from "./PostLikesProps";
 import { PostMedias } from "./PostMediaProps";
 import { PostReposts } from "./PostRepostsProps";
+import type { HighlightedAchievementPublic } from "@/types/highlightedAchievements";
 
 export interface PostProps {
   created_by_user: number;
@@ -21,4 +22,5 @@ export interface PostProps {
   user_already_like: boolean;
   verified: boolean;
   username: string;
+  highlighted_achievements?: HighlightedAchievementPublic[];
 }

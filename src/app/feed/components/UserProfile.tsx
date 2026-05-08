@@ -1,72 +1,147 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, MessageSquare, Image } from "lucide-react";
 import type { StaticImageData } from "next/image";
+import { PresenceStatusDot } from "@/components/presence/PresenceStatusDot";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
+import TextLimitComponent from "@/components/layouts/SuspenseFallBack/TextLimitComponent/TextLimitComponent";
 
 interface UserProfileProps {
   user: {
     name: string;
     username: string;
     bio: string;
-    avatar: string | StaticImageData;
     followers: number;
     following: number;
     posts: number;
   };
+  userId?: number;
+  allowStatusPicker?: boolean;
+  profilePhotoPublicId?: string | null;
+  guestAvatar?: string | StaticImageData;
+  profileDataPending?: boolean;
 }
 
-export const UserProfile = ({ user }: UserProfileProps) => {
+export const UserProfile = ({
+  user,
+  userId,
+  allowStatusPicker = false,
+  profilePhotoPublicId,
+  guestAvatar,
+  profileDataPending = false,
+}: UserProfileProps) => {
+  const isOwnerCard = userId != null;
+  const guestPhotoSrc =
+    typeof guestAvatar === "string"
+      ? guestAvatar
+      : guestAvatar?.src
+        ? String(guestAvatar.src)
+        : undefined;
+
+  const profileHref =
+    isOwnerCard && user.username && user.username !== "—"
+      ? `/profile/${encodeURIComponent(user.username)}`
+      : "/";
+
   return (
-    <Card className="bg-card border-border/50 backdrop-blur-sm hover:shadow-glow-primary/30 hover:scale-[1.02] hover:border-primary/40 transition-all duration-300 animate-fade-up">
+    <Card
+      data-feed-user-profile-card
+      className="bg-card border-border/50 backdrop-blur-sm hover:shadow-glow-primary/30 hover:scale-[1.02] hover:border-primary/40 transition-all duration-300 animate-fade-up"
+    >
       <CardContent className="p-6 text-center">
-        {/* Avatar centralizado */}
         <div className="flex justify-center mb-4">
-          <Avatar className="w-20 h-20 ring-4 ring-primary/30">
-            <AvatarImage src={typeof user.avatar === 'string' ? user.avatar : user.avatar.src} alt={user.name} />
-            <AvatarFallback className="bg-gradient-primary text-white font-bold text-xl">
-              {user.name.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative inline-block">
+            {isOwnerCard ? (
+              profileDataPending ? (
+                <Skeleton className="h-20 w-20 rounded-full ring-4 ring-primary/30 shrink-0" />
+              ) : (
+                <ProfileAvatar
+                  displayName={user.name}
+                  username={user.username}
+                  profilePhoto={profilePhotoPublicId}
+                  sizeClass="h-20 w-20"
+                  ringClass="ring-4 ring-primary/30"
+                  fallbackTextClassName="text-xl"
+                />
+              )
+            ) : (
+              <ProfileAvatar
+                displayName={user.name}
+                username={user.username}
+                profilePhoto={guestPhotoSrc}
+                sizeClass="h-20 w-20"
+                ringClass="ring-4 ring-primary/30"
+                fallbackTextClassName="text-xl"
+              />
+            )}
+            {userId != null ? (
+              <PresenceStatusDot
+                userId={userId}
+                sizeClass="w-5 h-5"
+                allowPicker={allowStatusPicker}
+              />
+            ) : null}
+          </div>
         </div>
 
-        {/* Nome e username centralizados */}
         <h3 className="font-bold text-xl text-foreground mb-1">{user.name}</h3>
         <p className="text-sm text-muted-foreground mb-4">@{user.username}</p>
 
-        {/* Bio centralizada */}
-        <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-          {user.bio}
-        </p>
+        {profileDataPending ? (
+          <div className="mb-6 space-y-2">
+            <Skeleton className="h-4 w-full mx-auto max-w-[280px]" />
+            <Skeleton className="h-4 w-4/5 mx-auto max-w-[240px]" />
+          </div>
+        ) : (
+          <TextLimitComponent
+            text={user.bio}
+            maxCharacters={40}
+            className="mb-6"
+            paragraphClassName="text-sm text-muted-foreground leading-relaxed text-center"
+          />
+        )}
 
-        {/* Botão centralizado */}
-        <Button className="w-full bg-gradient-primary hover:shadow-glow-primary text-white font-medium transition-all duration-300 hover:scale-105 mb-6">
-          Ver Perfil
+        <Button
+          asChild
+          className="w-full bg-gradient-primary hover:shadow-glow-primary text-white font-medium transition-all duration-300 hover:scale-105 mb-6"
+        >
+          <Link href={profileHref}>Ver Perfil</Link>
         </Button>
 
-        {/* Stats em linha horizontal */}
-        <div className="flex justify-between text-sm border-t border-border/50 pt-4">
-          <div className="text-center">
-            <div className="font-bold text-lg text-foreground">
-              {user.followers > 1000
-                ? `${(user.followers / 1000).toFixed(1)}K`
-                : user.followers}
-            </div>
-            <div className="text-xs text-muted-foreground">Seguidores</div>
+        {profileDataPending ? (
+          <div className="flex justify-between text-sm border-t border-border/50 pt-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="text-center space-y-1 flex-1">
+                <Skeleton className="h-7 w-10 mx-auto" />
+                <Skeleton className="h-3 w-16 mx-auto" />
+              </div>
+            ))}
           </div>
-          <div className="text-center">
-            <div className="font-bold text-lg text-foreground">
-              {user.following}
+        ) : (
+          <div className="flex justify-between text-sm border-t border-border/50 pt-4">
+            <div className="text-center">
+              <div className="font-bold text-lg text-foreground">
+                {user.followers > 1000
+                  ? `${(user.followers / 1000).toFixed(1)}K`
+                  : user.followers}
+              </div>
+              <div className="text-xs text-muted-foreground">Seguidores</div>
             </div>
-            <div className="text-xs text-muted-foreground">Seguindo</div>
-          </div>
-          <div className="text-center">
-            <div className="font-bold text-lg text-foreground">
-              {user.posts}
+            <div className="text-center">
+              <div className="font-bold text-lg text-foreground">
+                {user.following}
+              </div>
+              <div className="text-xs text-muted-foreground">Seguindo</div>
             </div>
-            <div className="text-xs text-muted-foreground">Posts</div>
+            <div className="text-center">
+              <div className="font-bold text-lg text-foreground">
+                {user.posts}
+              </div>
+              <div className="text-xs text-muted-foreground">Posts</div>
+            </div>
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );

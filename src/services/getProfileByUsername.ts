@@ -1,10 +1,14 @@
 import { api } from "./api";
 import { cookies } from "next/headers";
+import type { HighlightedAchievementPublic } from "@/types/highlightedAchievements";
 
 export interface getProfileByUsernameProps {
   id: number;
+  /** ID do User Django (enviado pela API para isOwner confiável) */
+  user_id?: number;
   bio: string;
   profile_photo: string;
+  profile_banner?: string;
   hours_played: number;
   matches_played: number;
   performance: string;
@@ -15,10 +19,15 @@ export interface getProfileByUsernameProps {
   follows: [];
   followed_by: [];
   name: string;
+  username: string;
+  quantity_posts: number;
+  user_already_like?: boolean;
+  user_already_follow?: boolean;
+  /** Follow mútuo com o visitante autenticado. */
+  is_friend?: boolean;
+  highlighted_achievements?: HighlightedAchievementPublic[];
 }
-export const getProfileByUsername = async (
-  username: string
-) => {
+export const getProfileByUsername = async (username: string) => {
   const accessToken = (await cookies()).get("accessToken")?.value;
   try {
     const response = await api.get<getProfileByUsernameProps>(
@@ -27,7 +36,7 @@ export const getProfileByUsername = async (
         headers: {
           Authorization: "Bearer " + String(accessToken),
         },
-      }
+      },
     );
     return response;
   } catch (error) {

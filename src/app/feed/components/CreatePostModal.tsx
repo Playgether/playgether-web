@@ -15,7 +15,7 @@ import { CldUploadWidget } from "next-cloudinary";
 
 // Import current user avatar
 import avatarRaymond from "@/assets/avatar-raymond.jpg";
-import { useFeedContext } from "../context/FeedContext";
+import { useCreatePostContext } from "@/context/CreatePostContext";
 import { useAuthContext } from "@/context/AuthContext";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import {
@@ -39,9 +39,11 @@ export const CreatePostModal = () => {
   const [isWidgetOpen, setIsWidgetOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const { handlePostCreated, handleCreatePostModal, createPostOpen } =
-    useFeedContext();
+  const createPostContext = useCreatePostContext();
   const { user } = useAuthContext();
+
+  const handleCreatePostModal = createPostContext?.handleCreatePostModal ?? (() => {});
+  const createPostOpen = createPostContext?.createPostOpen ?? false;
 
   // Sincronizar o estado local com o contexto
   useEffect(() => {
@@ -109,7 +111,9 @@ export const CreatePostModal = () => {
       });
 
       if (response.status === 201) {
-        handlePostCreated(response.data);
+        window.dispatchEvent(
+          new CustomEvent("post-created", { detail: response.data })
+        );
 
         CustomToast.success("Post criado com sucesso!", {
           duration: CustomToastProps.defaultDuration,

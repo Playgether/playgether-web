@@ -1,22 +1,24 @@
 import Image from "next/legacy/image";
 import { twJoin } from "tailwind-merge";
 import { ImageComponentProps } from "@/types/ImageComponentProps";
-import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
+import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
 
 function ImageComponent({
   media_id,
   objectFit = "cover",
   layout = "fill",
   alt = "Image",
+  className,
   ...rest
 }: ImageComponentProps) {
   return (
     <Image
-      src={getCloudinaryUrl(media_id)}
+      src={resolveGameMediaUrl(media_id)}
       objectFit={objectFit}
       layout={layout}
-      className={twJoin(rest.className)}
+      className={twJoin(className)}
       alt={alt}
+      {...rest}
     />
   );
 }

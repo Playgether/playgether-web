@@ -18,6 +18,7 @@ type Story = StoryObj<typeof ProfileAndUsername>
 export const Default:Story = {
     args: {
         className:"h-90 w-90",
+        displayName: "Maria Silva",
         timestamp:new Date("2024-05-25T14:23:45Z"),
         imageClassName: "h-20 w-20",
         username:"test_username",
@@ -29,16 +30,19 @@ export const Default:Story = {
 export const WithoutTimeStamp:Story = {
     args: {
         className:"h-90 w-90",
+        displayName: "Maria Silva",
         imageClassName: "h-20 w-20",
         username:"test_username",
         profile_photo:"https://images.unsplash.com/photo-1529665253569-6d01c0eaf7b6?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8cHJvZmlsZXxlbnwwfHwwfHx8MA%3D%3D"
     }
 }
 
-/** Perceba que o nome de usuário sumiu */
+/** Avatar e link usam @username; `displayName` é só para iniciais quando não há foto. */
 export const WithoutUserName:Story = {
     args: {
         className:"h-90 w-90",
+        displayName: "Maria Silva",
+        username: "maria_silva",
         timestamp:new Date("2024-05-25T14:23:45Z"),
         imageClassName: "h-20 w-20",
         profile_photo:"https://images.unsplash.com/photo-1529665253569-6d01c0eaf7b6?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8cHJvZmlsZXxlbnwwfHwwfHx8MA%3D%3D"
@@ -50,6 +54,7 @@ export const WithoutUserName:Story = {
 export const WithoutProfileImage:Story = {
     args: {
         className:"h-90 w-90",
+        displayName: "João Santos",
         timestamp:new Date("2024-05-25T14:23:45Z"),
         username:"test_username",
         imageClassName: "h-20 w-20",
@@ -60,6 +65,7 @@ export const WithoutProfileImage:Story = {
 export const WithoutImageClassName:Story = {
     args: {
         className:"h-90 w-90",
+        displayName: "Maria Silva",
         timestamp:new Date("2024-05-25T14:23:45Z"),
         username:"test_username",
         profile_photo:"https://images.unsplash.com/photo-1529665253569-6d01c0eaf7b6?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8cHJvZmlsZXxlbnwwfHwwfHx8MA%3D%3D"
@@ -70,6 +76,7 @@ export const WithoutImageClassName:Story = {
 export const WithHeightAndWidthTooShort:Story = {
     args: {
         className:"h-20 w-20",
+        displayName: "Maria Silva",
         timestamp:new Date("2024-05-25T14:23:45Z"),
         imageClassName: "h-20 w-20",
         username:"test_username",

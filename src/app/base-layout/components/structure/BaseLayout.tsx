@@ -6,6 +6,7 @@ import { TopNavigation } from "./TopNavigation";
 import { QuickMessagesFooter } from "./QuickMessagesFooter";
 import IsMobileWrapper from "./isMobileWrapper";
 import BaseLayoutProvider from "../../context/BaseLayoutProvider";
+import { CreatePostModal } from "@/app/feed/components/CreatePostModal";
 
 export default function BaseLayout({
   children,
@@ -34,7 +35,11 @@ export default function BaseLayout({
         {/* Top Navigation */}
         <TopNavigation />
 
-        {children}
+        <div className="pt-[var(--layout-header-height)] pb-[var(--layout-quick-messages-height)]">
+          {children}
+        </div>
+
+        <CreatePostModal />
 
         {/* Quick Messages Footer */}
         <QuickMessagesFooter />

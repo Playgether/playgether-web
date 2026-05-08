@@ -12,7 +12,7 @@ interface UserNameProps extends HTMLAttributes<HTMLDivElement> {
  */
 const UserNamePost = ({ username, ...rest }: UserNameProps) => {
   return (
-    <div className={twJoin("", rest.className)} {...rest}>
+    <div className={twJoin("w-fit max-w-full min-w-0", rest.className)} {...rest}>
       <h1 className="UserNamePost-wrapper text-sm lg:text-md mt-3">
         <Link href={`/profile/${username}`}>{username}</Link>
       </h1>

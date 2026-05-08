@@ -9,7 +9,7 @@ export default function LayoutTypeHandlerContainer({
 }) {
   const isMobile = useIsMobile();
   return (
-    <div className={`mb-[120px] ${isMobile ? "ml-0" : "ml-20"} pt-16`}>
+    <div className={isMobile ? "ml-0" : "ml-20"}>
       <div className="max-w-7xl mx-auto px-6 py-6">{children}</div>
     </div>
   );

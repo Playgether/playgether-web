@@ -53,10 +53,16 @@ const VirtualizedFeed = () => {
             >
               <div className="flex items-start justify-start">
                 <ProfileAndUsername
-                  username={resource.created_by_user_name}
+                  displayName={
+                    resource.name ?? resource.created_by_user_name
+                  }
+                  username={
+                    resource.username ?? resource.created_by_user_name
+                  }
                   profile_photo={resource.created_by_user_photo}
                   imageClassName="mt-3 ml-3 h-10 w-10"
                   timestamp={resource.timestamp}
+                  highlightedAchievements={resource.highlighted_achievements}
                 />
               </div>
               <div

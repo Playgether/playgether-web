@@ -27,6 +27,7 @@ export const useSecureWebSocket = (options: UseSecureWebSocketOptions) => {
   } = options;
 
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [wsToken, setWsToken] = useState<string | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [wsBaseUrl, setWsBaseUrl] = useState<string | null>(null);
   const reconnectCountRef = useRef(0);
@@ -49,7 +50,7 @@ export const useSecureWebSocket = (options: UseSecureWebSocketOptions) => {
     return null;
   }, []);
 
-  // 2. ✅ Função de autorização
+  // 2. ✅ Função de autorização (retorna token para passar na URL do WS)
   const checkAuthorization = useCallback(async (): Promise<boolean> => {
     try {
       const response = await fetch("/api/ws/authorize", {
@@ -59,6 +60,7 @@ export const useSecureWebSocket = (options: UseSecureWebSocketOptions) => {
       if (response.ok) {
         const data = await response.json();
         setIsAuthorized(data.authorized);
+        setWsToken(data.token ?? null);
 
         if (!data.authorized) {
           setConnectionError(data.error || "Não autorizado");
@@ -75,8 +77,11 @@ export const useSecureWebSocket = (options: UseSecureWebSocketOptions) => {
     }
   }, []);
 
-  // 3. ✅ URL completa do WebSocket
-  const fullWsUrl = wsBaseUrl && isAuthorized ? `${wsBaseUrl}${url}` : null;
+  // 3. ✅ URL completa do WebSocket (com token na query para autenticação)
+  const fullWsUrl =
+    wsBaseUrl && isAuthorized && wsToken
+      ? `${wsBaseUrl}${url}${url.includes("?") ? "&" : "?"}token=${encodeURIComponent(wsToken)}`
+      : null;
 
   // 4. ✅ Hook useWebSocket
   const { sendMessage, lastMessage, readyState, getWebSocket } = useWebSocket(

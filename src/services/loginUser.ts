@@ -1,7 +1,7 @@
 import { api } from "./api";
 
 export interface loginUserProps {
-  username: FormDataEntryValue | null;
+  email: FormDataEntryValue | null;
   password: FormDataEntryValue | null;
 }
 

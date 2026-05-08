@@ -7,6 +7,7 @@ import React, {
   useCallback,
   useEffect,
 } from "react";
+import { useCreatePostContext } from "@/context/CreatePostContext";
 import { PostProps } from "../types/PostProps";
 import { FeedContextType } from "./FeedContextType";
 import { ResponseFeed } from "../types/ResponseFeed";
@@ -15,7 +16,7 @@ import { useAuthContext } from "@/context/AuthContext";
 import { getFeedClient } from "../services/getFeedClient";
 
 // Criando o contexto
-const FeedContext = createContext<FeedContextType | undefined>(undefined);
+export const FeedContext = createContext<FeedContextType | undefined>(undefined);
 
 // Hook de acesso
 export const useFeedContext = () => {
@@ -59,13 +60,27 @@ export const FeedProvider = ({
     }
   }, [data]);
 
-  const handleCreatePostModal = (argument: boolean) => {
-    setCreatePostOpen(argument);
-  };
-
   const handlePostCreated = useCallback((newPost: PostProps) => {
     setPosts((prev) => [newPost, ...prev]);
   }, []);
+
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      handlePostCreated(e.detail);
+    };
+    window.addEventListener("post-created", handler as EventListener);
+    return () =>
+      window.removeEventListener("post-created", handler as EventListener);
+  }, [handlePostCreated]);
+
+  const globalCreatePost = useCreatePostContext();
+  const handleCreatePostModal = useCallback(
+    (argument: boolean) => {
+      setCreatePostOpen(argument);
+      globalCreatePost?.handleCreatePostModal(argument);
+    },
+    [globalCreatePost]
+  );
 
   const handleRepost = useCallback((postId: number, repost: PostProps) => {
     setPosts((prev) => {

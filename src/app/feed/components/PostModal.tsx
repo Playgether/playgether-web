@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useFeedServerContext } from "../context/FeedServerContext";
 import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import VideoComponent from "@/components/layouts/VideoComponent/VideoComponent";
 import { useRouter } from "next/navigation";
 import { useCommentsContext } from "@/context/CommentsContext";
@@ -27,9 +28,17 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Textarea } from "@/components/ui/textarea";
 import { updateCommentAction } from "@/actions/updateComment";
 import { CommentContentType } from "@/components/content_types/CommentContentType";
+import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
 
-export const PostModal = ({ postId }: { postId: number }) => {
+export const PostModal = ({
+  postId,
+  onClose,
+}: {
+  postId: number;
+  onClose?: () => void;
+}) => {
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  const [isCurrentMediaLoaded, setIsCurrentMediaLoaded] = useState(false);
   const [openReplies, setOpenReplies] = useState<Set<number>>(new Set());
   const [loadingReplies, setLoadingReplies] = useState<Set<number>>(new Set());
   const [showFullText, setShowFullText] = useState(true);
@@ -82,7 +91,6 @@ export const PostModal = ({ postId }: { postId: number }) => {
   const icons = Feed.ServerPostModal.icons;
   const texts = Feed.ServerPostModal.text;
   const buttons = Feed.ServerPostModal.buttons;
-  const components = Feed.ServerFeedPost.components;
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -182,6 +190,15 @@ export const PostModal = ({ postId }: { postId: number }) => {
     handleLikeAny(replyId, parentId);
     queryClient.invalidateQueries({ queryKey: ["comments", postId] });
   };
+
+  useEffect(() => {
+    setCurrentMediaIndex(0);
+    setIsCurrentMediaLoaded(false);
+  }, [postId]);
+
+  useEffect(() => {
+    setIsCurrentMediaLoaded(false);
+  }, [currentMediaIndex]);
 
   useEffect(() => {
     queryClient.invalidateQueries({
@@ -335,8 +352,14 @@ export const PostModal = ({ postId }: { postId: number }) => {
     }
   };
 
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      onClose ? onClose() : router.back();
+    }
+  };
+
   return (
-    <Dialog defaultOpen onOpenChange={() => router.back()}>
+    <Dialog defaultOpen onOpenChange={handleOpenChange}>
       <DialogContent
         className="max-w-[70vw] w-full h-[95vh] p-0 bg-background/95 backdrop-blur-xl border border-primary/20 overflow-hidden"
         aria-describedby={undefined}
@@ -352,21 +375,35 @@ export const PostModal = ({ postId }: { postId: number }) => {
                 hasMedia ? "sm:w-[55%] 2xl:w-[65%] w-full" : "w-full"
               } bg-black/50 flex items-center justify-center relative h-full`}
             >
-              {post.medias[currentMediaIndex].media_type === "image" ? (
-                <ImageComponent
-                  media_id={post.medias[currentMediaIndex].media_file || ""}
-                  alt="Post media"
-                  objectFit="contain"
-                  className="w-full transition-transform duration-300"
-                />
-              ) : (
-                <div className="relative h-full">
+              <div className="relative w-full h-full flex items-center justify-center min-h-[200px]">
+                {!isCurrentMediaLoaded && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
+                    <LoadingComponent
+                      showText={false}
+                      className="h-10 w-10 text-muted-foreground"
+                    />
+                  </div>
+                )}
+                {post.medias[currentMediaIndex].media_type === "image" ? (
+                  <ImageComponent
+                    media_id={post.medias[currentMediaIndex].media_file || ""}
+                    alt="Post media"
+                    objectFit="contain"
+                    className={`w-full transition-opacity duration-300 ${
+                      isCurrentMediaLoaded ? "opacity-100" : "opacity-0"
+                    }`}
+                    onLoad={() => setIsCurrentMediaLoaded(true)}
+                  />
+                ) : (
                   <VideoComponent
                     media_id={post.medias[currentMediaIndex].media_file || ""}
-                    className="max-h-full max-w-full h-full w-full object-cover"
+                    className={`max-h-full max-w-full h-full w-full object-cover transition-opacity duration-300 ${
+                      isCurrentMediaLoaded ? "opacity-100" : "opacity-0"
+                    }`}
+                    onLoadedData={() => setIsCurrentMediaLoaded(true)}
                   />
-                </div>
-              )}
+                )}
+              </div>
 
               {/* Media Navigation */}
               {post?.medias && post.medias.length > 1 && (
@@ -415,20 +452,26 @@ export const PostModal = ({ postId }: { postId: number }) => {
             {/* Post Header */}
             <div className="p-6 pb-2 border-b border-border/50 sticky bg-background z-10 top-0 ">
               <div className="flex items-center space-x-3 mb-2 z-20">
-                <div className="w-12 h-12 relative rounded-full overflow-hidden ring-2 ring-primary/30">
-                  {post.profile_photo ? (
-                    <ImageComponent
-                      media_id={post.profile_photo || ""}
-                      className="object-cover rounded-full h-10 w-10"
+                <ProfileAvatar
+                  displayName={post.name}
+                  username={post.username}
+                  profilePhoto={post.profile_photo}
+                  sizeClass="h-12 w-12"
+                  ringClass="ring-2 ring-primary/30"
+                  fallbackTextClassName="text-sm"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                    <div className="inline-flex min-w-0 max-w-full shrink-0 items-center gap-2">
+                      <h3 className="w-fit max-w-full shrink-0 text-lg font-bold">
+                        {post.name}
+                      </h3>
+                      {post.verified && texts.verified}
+                    </div>
+                    <HighlightedAchievementBadges
+                      achievements={post.highlighted_achievements}
+                      className="min-w-0"
                     />
-                  ) : (
-                    components.NoImageProfile
-                  )}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <h3 className="font-bold text-lg">{post.name}</h3>
-                    {post.verified && texts.verified}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     @{post.username}
@@ -439,31 +482,28 @@ export const PostModal = ({ postId }: { postId: number }) => {
               {/* Post Text Toggle */}
               {post.comment && (
                 <div className="mb-2">
-                  {showFullText ? (
-                    <div className="space-y-3">
-                      <p className="text-foreground leading-relaxed whitespace-pre-wrap">
-                        {post.comment}
-                      </p>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowFullText(false)}
-                        className="text-primary hover:text-primary/80 p-0 h-auto"
-                      >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowFullText((s) => !s)}
+                    className="text-primary hover:text-primary/80 px-3 py-1.5 rounded-md hover:bg-primary/10 -ml-2 mb-2"
+                  >
+                    {showFullText ? (
+                      <>
                         {icons.EyeOff}
                         Esconder texto
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowFullText(true)}
-                      className="text-primary hover:text-primary/80 p-0 h-auto"
-                    >
-                      {icons.Eye}
-                      Ver texto completo
-                    </Button>
+                      </>
+                    ) : (
+                      <>
+                        {icons.Eye}
+                        Ver texto completo
+                      </>
+                    )}
+                  </Button>
+                  {showFullText && (
+                    <p className="text-foreground leading-relaxed whitespace-pre-wrap">
+                      {post.comment}
+                    </p>
                   )}
                 </div>
               )}
@@ -509,27 +549,34 @@ export const PostModal = ({ postId }: { postId: number }) => {
                       <div className="space-y-4 pb-4">
                         <div key={comment.id} className="space-y-2">
                           <div className="flex items-start space-x-3 pl-1">
-                            {comment.created_by_user_photo ? (
-                              <div className="w-12 h-12 pl-2 relative rounded-full overflow-hidden ring-2 ring-primary/30 flex-shrink-0">
-                                <ImageComponent
-                                  media_id={comment.created_by_user_photo}
-                                  alt={`Profile photo of the user ${comment?.created_by_user_name}`}
-                                  className="object-cover rounded-full"
-                                />
-                              </div>
-                            ) : (
-                              components.NoImageProfile
-                            )}
+                            <div className="pl-2 flex-shrink-0">
+                              <ProfileAvatar
+                                displayName={comment.created_by_user_name}
+                                username={comment.user_username}
+                                profilePhoto={comment.created_by_user_photo}
+                                sizeClass="h-12 w-12"
+                                ringClass="ring-2 ring-primary/30"
+                                fallbackTextClassName="text-sm"
+                              />
+                            </div>
 
                             {/* Container principal do comentário */}
                             <div className="flex-1 min-w-0">
                               {/* Cabeçalho do comentário com nome, data e ações */}
-                              <div className="flex items-center justify-between mb-1">
-                                <div className="flex items-center space-x-2">
-                                  <span className="font-medium text-sm">
-                                    {comment.created_by_user_name}
-                                  </span>
-                                  <span className="text-xs text-muted-foreground">
+                              <div className="flex items-center justify-between mb-1 gap-2">
+                                <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                                  <div className="inline-flex min-w-0 max-w-full shrink-0 items-center gap-x-2 gap-y-1">
+                                    <span className="shrink-0 text-sm font-medium">
+                                      {comment.created_by_user_name}
+                                    </span>
+                                    <HighlightedAchievementBadges
+                                      achievements={
+                                        comment.highlighted_achievements
+                                      }
+                                      className="max-w-full min-w-0"
+                                    />
+                                  </div>
+                                  <span className="shrink-0 text-xs text-muted-foreground">
                                     <DateAndHour date={comment.timestamp} />
                                   </span>
                                 </div>
@@ -576,6 +623,8 @@ export const PostModal = ({ postId }: { postId: number }) => {
                                             user: comment.user,
                                             quantity_replies:
                                               comment.quantity_replies,
+                                            highlighted_achievements:
+                                              comment.highlighted_achievements,
                                           },
                                           undefined,
                                         )
@@ -767,28 +816,33 @@ export const PostModal = ({ postId }: { postId: number }) => {
                                     key={reply.id}
                                     className="flex items-start space-x-3"
                                   >
-                                    {reply.created_by_user_photo ? (
-                                      <div className="w-8 h-8 flex-shrink-0 rounded-full overflow-hidden ring-2 ring-primary/20">
-                                        <ImageComponent
-                                          media_id={reply.created_by_user_photo}
-                                          alt={`Profile photo of the user ${reply?.created_by_user_name}`}
-                                          className="object-cover w-full h-full"
-                                        />
-                                      </div>
-                                    ) : (
-                                      <div className="w-8 h-8 flex-shrink-0">
-                                        {components.NoImageReplieProfile}
-                                      </div>
-                                    )}
+                                    <div className="pl-2 flex-shrink-0">
+                                      <ProfileAvatar
+                                        displayName={reply.created_by_user_name}
+                                        username={reply.user_username}
+                                        profilePhoto={reply.created_by_user_photo}
+                                        sizeClass="h-8 w-8"
+                                        ringClass="ring-2 ring-primary/30"
+                                        fallbackTextClassName="text-xs"
+                                      />
+                                    </div>
 
                                     <div className="flex-1 min-w-0">
                                       {/* Cabeçalho da reply com nome, data e ações */}
-                                      <div className="flex items-center justify-between mb-1">
-                                        <div className="flex items-center space-x-2">
-                                          <span className="font-medium text-xs">
-                                            {reply.created_by_user_name}
-                                          </span>
-                                          <span className="text-xs text-muted-foreground">
+                                      <div className="flex items-center justify-between mb-1 gap-2">
+                                        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                                          <div className="inline-flex min-w-0 max-w-full shrink-0 items-center gap-x-2 gap-y-1">
+                                            <span className="shrink-0 text-xs font-medium">
+                                              {reply.created_by_user_name}
+                                            </span>
+                                            <HighlightedAchievementBadges
+                                              achievements={
+                                                reply.highlighted_achievements
+                                              }
+                                              className="max-w-full min-w-0"
+                                            />
+                                          </div>
+                                          <span className="shrink-0 text-xs text-muted-foreground">
                                             <DateAndHour
                                               date={reply.timestamp}
                                             />
@@ -841,6 +895,8 @@ export const PostModal = ({ postId }: { postId: number }) => {
                                                     user: reply.user,
                                                     quantity_replies:
                                                       reply.quantity_replies,
+                                                    highlighted_achievements:
+                                                      reply.highlighted_achievements,
                                                   },
                                                   comment.id,
                                                 )

@@ -5,20 +5,24 @@ import { z } from 'zod'
 
 
 export const UseFormState =(
-    Schema: ZodType<any>
+    Schema: ZodType<any>,
+    defaultValues?: Partial<z.infer<typeof Schema>>
   ) => {
     type FormData = z.infer<typeof Schema>
     const {
       register,
       handleSubmit,
       getValues,
+      setValue,
+      watch,
       reset,
       formState: { errors }
     } = useForm<FormData>({
-      resolver: zodResolver(Schema)
+      resolver: zodResolver(Schema),
+      defaultValues: defaultValues as FormData
     });
   
-    return { register, handleSubmit, errors, getValues, reset };
+    return { register, handleSubmit, errors, getValues, setValue, watch, reset };
   };
   
 

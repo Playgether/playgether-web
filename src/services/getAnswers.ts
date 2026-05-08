@@ -1,6 +1,8 @@
+import { apiFetch } from "@/services/apiFetch";
+
 export async function getAnswers(id: number, pageParam: string | null = null) {
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       `/api/replies/${id}?cursor=${pageParam || ""}`
     );
     if (!response.ok) throw new Error("Request failed");

@@ -1,6 +1,5 @@
 import React from "react";
 
-import { useAuthContext } from "../../../../context/AuthContext";
 import { useProfileLolContext } from "../../../../context/ProfileLolContext";
 import { ProfileLolProps } from "../../../../services/getProfileLol";
 import { useResource } from "../../../custom_hooks/useResource";
@@ -8,45 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const ProfileLol = ({}) => {
-  const { user } = useAuthContext();
   const { profile, fetchProfile } = useProfileLolContext();
   useResource<ProfileLolProps>(() => fetchProfile());
-
-  interface ProfileLolResponse {
-    leaguePoints: number;
-    losses: number;
-    queueType: string;
-    rank: string;
-    tier: string;
-    winRate: number;
-    wins: number;
-  }
-
-  console.log("profile", { profile });
-
-  const profile0: ProfileLolResponse | null = profile
-    ? {
-        leaguePoints: profile.data[0].leaguePoints,
-        losses: profile.data[0].losses,
-        queueType: profile.data[0].queueType,
-        rank: profile.data[0].rank,
-        tier: profile.data[0].tier,
-        winRate: profile.data[0].winRate,
-        wins: profile.data[0].wins,
-      }
-    : null;
-
-  const profile1: ProfileLolResponse | null = profile
-    ? {
-        leaguePoints: profile.data[1].leaguePoints,
-        losses: profile.data[1].losses,
-        queueType: profile.data[1].queueType,
-        rank: profile.data[1].rank,
-        tier: profile.data[1].tier,
-        winRate: profile.data[1].winRate,
-        wins: profile.data[1].wins,
-      }
-    : null;
+  const soloQueue = profile?.ranked?.queues?.RANKED_SOLO_5x5 ?? null;
+  const flexQueue = profile?.ranked?.queues?.RANKED_FLEX_SR ?? null;
 
   return (
     <>
@@ -64,8 +28,8 @@ const ProfileLol = ({}) => {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-row items-center justify-center text-xl font-extrabold gap-2">
-            <h1>{profile?.username}</h1>
-            <h1>#{profile?.tag}</h1>
+            <h1>{profile?.account?.gameName ?? "Sem conta"}</h1>
+            <h1>#{profile?.account?.tagLine ?? "-"}</h1>
           </CardContent>
         </Card>
       </div>
@@ -80,13 +44,7 @@ const ProfileLol = ({}) => {
           <div className="border-t border-zinc-700 w-full"></div>
 
           <CardContent className="flex flex-col items-center justify-center text-xl font-extrabold gap-2 mt-10">
-            <h1>
-              {profile
-                ? profile.data[0].queueType === "RANKED_SOLO_5x5"
-                  ? `${profile0?.tier} ${profile0?.rank}`
-                  : `${profile1?.tier} ${profile1?.rank}`
-                : ""}
-            </h1>
+            <h1>{soloQueue?.label ?? "Sem dados"}</h1>
 
             <Avatar className="w-[60px] h-[60px] mt-5">
               <AvatarImage src="https://github.com/shadcn.png" alt="avatar" />
@@ -94,48 +52,16 @@ const ProfileLol = ({}) => {
             </Avatar>
 
             <h1
-              className={
-                profile
-                  ? profile.data[0].queueType === "RANKED_SOLO_5x5"
-                    ? profile0?.winRate! >= 50
-                      ? "text-[#24FF00]"
-                      : "text-red-500"
-                    : profile1?.winRate! >= 50
-                    ? "text-[#24FF00]"
-                    : "text-red-500"
-                  : ""
-              }
+              className={(soloQueue?.winRate ?? 0) >= 50 ? "text-[#24FF00]" : "text-red-500"}
             >
-              {profile
-                ? profile.data[0].queueType === "RANKED_SOLO_5x5"
-                  ? `${profile0?.winRate}%`
-                  : `${profile1?.winRate}%`
-                : ""}
+              {soloQueue ? `${soloQueue.winRate}%` : "0%"}
             </h1>
 
-            <h1>
-              {profile
-                ? profile.data[0].queueType === "RANKED_SOLO_5x5"
-                  ? `${profile0?.leaguePoints} PDL`
-                  : `${profile1?.leaguePoints} PDL`
-                : ""}
-            </h1>
+            <h1>{soloQueue ? `${soloQueue.leaguePoints} PDL` : "0 PDL"}</h1>
 
             <div className="flex justify-between w-[40%] my-8">
-              <h1 className="text-[#24FF00]">
-                {profile
-                  ? profile.data[0].queueType === "RANKED_SOLO_5x5"
-                    ? `${profile0?.wins} V`
-                    : `${profile1?.wins} V`
-                  : ""}
-              </h1>
-              <h1 className="text-red-500">
-                {profile
-                  ? profile.data[0].queueType === "RANKED_SOLO_5x5"
-                    ? `${profile0?.losses} D`
-                    : `${profile1?.losses} D`
-                  : ""}
-              </h1>
+              <h1 className="text-[#24FF00]">{soloQueue ? `${soloQueue.wins} V` : "0 V"}</h1>
+              <h1 className="text-red-500">{soloQueue ? `${soloQueue.losses} D` : "0 D"}</h1>
             </div>
           </CardContent>
         </Card>
@@ -149,13 +75,7 @@ const ProfileLol = ({}) => {
           <div className="border-t border-zinc-700 w-full"></div>
 
           <CardContent className="flex flex-col items-center justify-center text-xl font-extrabold gap-2 mt-10">
-            <h1>
-              {profile
-                ? profile.data[0].queueType === "RANKED_SOLO_5x5"
-                  ? `${profile0?.tier} ${profile0?.rank}`
-                  : `${profile1?.tier} ${profile1?.rank}`
-                : ""}
-            </h1>
+            <h1>{flexQueue?.label ?? "Sem dados"}</h1>
 
             <Avatar className="w-[60px] h-[60px] mt-5">
               <AvatarImage src="https://github.com/shadcn.png" alt="avatar" />
@@ -163,48 +83,16 @@ const ProfileLol = ({}) => {
             </Avatar>
 
             <h1
-              className={
-                profile
-                  ? profile.data[0].queueType === "RANKED_SOLO_5x5"
-                    ? profile0?.winRate! >= 50
-                      ? "text-[#24FF00]"
-                      : "text-red-500"
-                    : profile1?.winRate! >= 50
-                    ? "text-[#24FF00]"
-                    : "text-red-500"
-                  : ""
-              }
+              className={(flexQueue?.winRate ?? 0) >= 50 ? "text-[#24FF00]" : "text-red-500"}
             >
-              {profile
-                ? profile.data[0].queueType === "RANKED_SOLO_5x5"
-                  ? `${profile0?.winRate}%`
-                  : `${profile1?.winRate}%`
-                : ""}
+              {flexQueue ? `${flexQueue.winRate}%` : "0%"}
             </h1>
 
-            <h1>
-              {profile
-                ? profile.data[0].queueType === "RANKED_SOLO_5x5"
-                  ? `${profile0?.leaguePoints} PDL`
-                  : `${profile1?.leaguePoints} PDL`
-                : ""}
-            </h1>
+            <h1>{flexQueue ? `${flexQueue.leaguePoints} PDL` : "0 PDL"}</h1>
 
             <div className="flex justify-between w-[40%] my-8">
-              <h1 className="text-[#24FF00]">
-                {profile
-                  ? profile.data[0].queueType === "RANKED_SOLO_5x5"
-                    ? `${profile0?.wins} V`
-                    : `${profile1?.wins} V`
-                  : ""}
-              </h1>
-              <h1 className="text-red-500">
-                {profile
-                  ? profile.data[0].queueType === "RANKED_SOLO_5x5"
-                    ? `${profile0?.losses} D`
-                    : `${profile1?.losses} D`
-                  : ""}
-              </h1>
+              <h1 className="text-[#24FF00]">{flexQueue ? `${flexQueue.wins} V` : "0 V"}</h1>
+              <h1 className="text-red-500">{flexQueue ? `${flexQueue.losses} D` : "0 D"}</h1>
             </div>
           </CardContent>
         </Card>

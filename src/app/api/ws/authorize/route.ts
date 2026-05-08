@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       authorized: true,
       message: "Autorizado com sucesso",
+      token,
     });
   } catch (error) {
     console.error("Erro na autorização WebSocket:", error);

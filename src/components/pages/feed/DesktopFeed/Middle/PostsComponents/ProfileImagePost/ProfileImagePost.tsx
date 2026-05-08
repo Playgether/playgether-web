@@ -1,53 +1,50 @@
-import { CgProfile } from "react-icons/cg";
-import Image from "next/legacy/image";
 import { twJoin } from "tailwind-merge";
 import { HTMLAttributes } from "react";
 import Link from "next/link";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 
 interface DivProps extends HTMLAttributes<HTMLDivElement> {}
 
 export type Resource = {
-  /** Esta propriedade recebe uma string, que deve ser a url da foto de perfil. */
-  link_photo?: string;
-  /** Esta propriedade recebe o username (string) para ser criado um link para seu perfil */
+  link_photo?: string | null;
   username?: string;
+  /** Nome para iniciais; se omitido, usa `username`. */
+  displayName?: string;
 };
 
 /**
- * Este componente serve para mostrar a foto de perfil do autor de algum post
- * OBS: Você precisa passar um className definindo a altura (height) e a largura (width) do container, visto que a imagem possui a propriedade "fill". Caso não passe, a imagem não aparecerá na tela.
- * Outra OBS: Tenha certeza de que o link da imagem que está sendo enviada possui o base URL configurado nas URLs de imagens do Next.js.
+ * Avatar de perfil com link para o perfil — usa `ProfileAvatar` (foto Cloudinary ou iniciais).
  */
 const ProfileImagePost = ({
   link_photo,
   username,
+  displayName,
+  className,
   ...rest
 }: Resource & DivProps) => {
   const profileHref = username ? `/profile/${username}` : "#";
+  const label = (displayName ?? username ?? "?").trim() || "?";
 
   return (
     <div
       className={twJoin(
-        " ProfilePhotoLink-wrapper rounded-full",
-        rest.className,
+        "ProfilePhotoLink-wrapper rounded-full overflow-hidden",
+        className,
       )}
+      {...rest}
     >
-      {typeof link_photo !== "string" || link_photo === "" ? (
-        <Link href={profileHref} className="h-full w-full underline ">
-          <CgProfile className="h-full w-full" />
-        </Link>
-      ) : (
-        <Link href={profileHref} className="h-full w-full underline">
-          <Image
-            src={link_photo}
-            objectFit="cover"
-            width={400}
-            height={400}
-            alt="Imagem de perfil do card profile do feed"
-            className="rounded-full"
-          />
-        </Link>
-      )}
+      <Link
+        href={profileHref}
+        className="flex h-full w-full rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      >
+        <ProfileAvatar
+          displayName={label}
+          username={username}
+          profilePhoto={link_photo}
+          sizeClass="h-full w-full"
+          fallbackTextClassName="text-sm"
+        />
+      </Link>
     </div>
   );
 };

@@ -1,12 +1,7 @@
 import { useState } from "react";
-import {
-  PostCommentsOfCommentsProps,
-  PostsCommentsProps,
-} from "../../../../../../services/getComments";
+import { PostsCommentsProps } from "../../../../../../services/getComments";
 import ProfileAndUsername from "../../../../../layouts/components/ProfileAndUsername";
-import PostPropertiersPostsExpand from "../../../DesktopFeed/Middle/PostsComponents/PostPropertiers/PostPropertiers";
 import PostPropertiersAnswer from "../../../DesktopFeed/Middle/PostsComponents/PostPropertiers/PostPropertiersAnswer";
-import EditComment from "../EditComment/EditComment";
 import {} from "../../../../../../context/AuthContext";
 import { useCommentFormSchema } from "../../../../../layouts/Forms/CommentFormSchema";
 import { UseFormState } from "../../../../../layouts/ConstFormStateLayout";
@@ -59,12 +54,14 @@ export const ExpandedComments = ({
         <div className="flex justify-between w-full">
           <div className="w-full space-y-1">
             <ProfileAndUsername
-              username={answer.created_by_user_name}
+              displayName={answer.created_by_user_name}
+              username={answer.user_username}
               profile_photo={answer.created_by_user_photo}
               timestamp={answer.timestamp}
               className="w-full"
               usernameAndTimestampDiv="w-full flex flex-row justify-between pr-4"
               imageClassName="h-6 w-6"
+              highlightedAchievements={answer.highlighted_achievements}
             />
             {answer.edited === true ? <EditedComment /> : null}
           </div>

@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Interpola suave do ângulo em conic-gradient (borda animada das conquistas). */
+@property --achievement-conic-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
@@ -50,16 +57,23 @@ All colors MUST be HSL.
     --status-offline: 0 0% 45%;
 
     /* UI colors */
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 40% 8%;
     --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
     --accent: 210 40% 96%;
     --accent-foreground: 222 47% 11%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
+    --border: 214 32% 82%;
+    --input: 214 32% 82%;
+    --tertiary-color-variant-light: #e4e8f0;
     --ring: 241 60% 66%;
     --radius: 0.75rem;
+
+    /* BaseLayout: altura do TopNavigation (h-16) + reserva para QuickMessagesFooter (medido em runtime) */
+    --layout-header-height: 4rem;
+    --layout-quick-messages-height: 5.5rem;
 
     /* Enhanced Responsive Gradients with more intense blue to purple transition */
     --gradient-primary: linear-gradient(
@@ -157,6 +171,8 @@ All colors MUST be HSL.
     --status-offline: 0 0% 55%;
 
     /* UI colors for dark mode */
+    --popover: 220 13% 12%;
+    --popover-foreground: 210 40% 98%;
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
     --accent: 217 33% 17%;
@@ -423,7 +439,7 @@ All colors MUST be HSL.
 
   /* Universal hover effects for cards */
   .card-hover-effect {
-    @apply transition-all duration-300 hover:shadow-glow-primary/30 hover:scale-[1.02] hover:border-primary/40;
+    @apply transition-all duration-300 hover:shadow-glow-primary hover:scale-[1.02] hover:border-primary/40;
   }
 
   /* Message priority effects */
@@ -432,7 +448,7 @@ All colors MUST be HSL.
   }
 
   .message-medium-priority {
-    @apply border border-neon-blue/60 shadow-glow-primary/30;
+    @apply border border-neon-blue/60 shadow-glow-primary;
   }
 
   .message-low-priority {
@@ -870,5 +886,22 @@ All colors MUST be HSL.
 
   .dark .backdrop-blur-glass {
     background: rgba(0, 0, 0, 0.2);
+  }
+
+  /** Área útil entre header fixo e footer de mensagens rápidas (scroll + flex center) */
+  .min-h-layout-main {
+    min-height: calc(
+      100dvh - var(--layout-header-height) - var(--layout-quick-messages-height)
+    );
+  }
+
+  /** Altura fixa da área útil — necessário para flex + overflow interno (ex.: chat da sala) */
+  .h-layout-main {
+    height: calc(
+      100dvh - var(--layout-header-height) - var(--layout-quick-messages-height)
+    );
+    max-height: calc(
+      100dvh - var(--layout-header-height) - var(--layout-quick-messages-height)
+    );
   }
 }

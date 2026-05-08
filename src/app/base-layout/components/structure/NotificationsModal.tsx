@@ -1,62 +1,37 @@
 "use client";
+
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-// Import avatars
-import avatarSamuel from "@/assets/avatar-samuel.jpg";
-import avatarMia from "@/assets/avatar-mia.jpg";
-import avatarSophia from "@/assets/avatar-sophia.jpg";
+import { X, CheckCheck, Trash2, Bell } from "lucide-react";
 import { notificationConfig } from "../../config/notifications/NotificationConfig";
 import { useBaseLayoutServerContext } from "../../context/BaseLayoutServerContext";
+import { useNotificationContext } from "@/context/NotificationsContext";
+import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface NotificationsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-const notifications = [
-  {
-    id: "1",
-    type: "like",
-    user: { name: "Samuel Johnson", avatar: avatarSamuel },
-    message: "curtiu seu post sobre Apex Legends",
-    time: "2 min",
-    unread: true,
-  },
-  {
-    id: "2",
-    type: "comment",
-    user: { name: "Mia Thompson", avatar: avatarMia },
-    message: "comentou em seu post",
-    time: "15 min",
-    unread: true,
-  },
-  {
-    id: "3",
-    type: "follow",
-    user: { name: "Sophia Andrade", avatar: avatarSophia },
-    message: "começou a seguir você",
-    time: "1h",
-    unread: false,
-  },
-  {
-    id: "4",
-    type: "achievement",
-    user: null,
-    message: 'Você desbloqueou a conquista "Master Gamer"',
-    time: "2h",
-    unread: false,
-  },
-];
-
-const getNotificationIcon = (type: string) => {
-  return notificationConfig[type]?.icon || notificationConfig["default"].icon;
-};
+function timeAgo(timestamp: string) {
+  try {
+    return formatDistanceToNow(new Date(timestamp), {
+      addSuffix: true,
+      locale: ptBR,
+    });
+  } catch {
+    return "";
+  }
+}
 
 export const NotificationsModal = ({
   open,
@@ -65,74 +40,158 @@ export const NotificationsModal = ({
   const { BaseLayout } = useBaseLayoutServerContext();
   const components = BaseLayout.ServerNotificationsModal.components;
   const icons = BaseLayout.ServerNotificationsModal.icons;
+
+  const {
+    notifications,
+    unreadCount,
+    loading,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    clearAll,
+  } = useNotificationContext();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md bg-card/95 backdrop-blur-xl border border-primary/20 shadow-glow-primary">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold flex items-center space-x-2">
+      <DialogContent className="max-w-md bg-card/95 backdrop-blur-xl border border-primary/20 shadow-glow-primary p-0 gap-0">
+        {/* Header */}
+        <DialogHeader className="px-5 pt-5 pb-3 border-b border-border/50">
+          <DialogTitle className="text-xl font-bold flex items-center gap-2">
             {components.NotificationsTitle}
-            <Badge
-              variant="secondary"
-              className="ml-auto bg-gradient-secondary text-white"
-            >
-              {notifications.filter((n) => n.unread).length}
-            </Badge>
+            {unreadCount > 0 && (
+              <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-bold bg-gradient-primary text-white animate-glow-pulse">
+                {unreadCount}
+              </span>
+            )}
           </DialogTitle>
+
+          {notifications.length > 0 && (
+            <div className="flex gap-2 mt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={markAllAsRead}
+                disabled={unreadCount === 0}
+                className="h-8 text-xs text-muted-foreground hover:text-foreground gap-1.5"
+              >
+                <CheckCheck className="w-3.5 h-3.5" />
+                Marcar todas como lidas
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearAll}
+                className="h-8 text-xs text-muted-foreground hover:text-destructive gap-1.5 ml-auto"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Excluir todas
+              </Button>
+            </div>
+          )}
         </DialogHeader>
 
-        <div className="space-y-3 max-h-96 overflow-y-auto">
-          {notifications.map((notification, index) => (
-            <div
-              key={notification.id}
-              className={`flex items-start space-x-3 p-3 rounded-xl transition-all duration-300 cursor-pointer hover:bg-muted/50 ${
-                notification.unread
-                  ? "bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/30"
-                  : "bg-muted/20"
-              } animate-slide-up`}
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <div className="relative">
-                {notification.user ? (
-                  <Avatar className="w-10 h-10 ring-2 ring-primary/30">
-                    <AvatarImage
-                      src={notification.user.avatar.src}
-                      alt={notification.user.name}
-                    />
-                    <AvatarFallback className="bg-gradient-primary text-white text-sm">
-                      {notification.user.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                ) : (
-                  icons.Star
-                )}
-                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-card rounded-full flex items-center justify-center border border-border">
-                  {getNotificationIcon(notification.type)}
-                </div>
+        {/* Body */}
+        <ScrollArea className="max-h-[420px]">
+          <div className="px-3 py-3 space-y-2">
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <LoadingComponent text="Carregando..." showText className="text-muted-foreground" />
               </div>
+            ) : notifications.length === 0 ? (
+              <EmptyNotifications />
+            ) : (
+              notifications.map((notification, index) => {
+                const actor = notification.actors[0];
+                const typeIcon =
+                  notificationConfig[notification.notification_type]?.icon ??
+                  notificationConfig["default"].icon;
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-sm text-foreground">
-                    <span className="font-medium text-primary">
-                      {notification.user?.name || "Sistema"}
-                    </span>{" "}
-                    {notification.message}
-                  </p>
-                  {notification.unread && (
-                    <div className="w-2 h-2 bg-gradient-primary rounded-full animate-glow-pulse" />
-                  )}
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  {notification.time}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+                return (
+                  <div
+                    key={notification.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      if (!notification.is_read) void markAsRead(notification.id);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !notification.is_read)
+                        void markAsRead(notification.id);
+                    }}
+                    className={`flex items-start gap-3 p-3 rounded-xl transition-all duration-300 cursor-pointer group animate-slide-up
+                      ${notification.is_read
+                        ? "bg-muted/20 hover:bg-muted/40"
+                        : "bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/30 hover:from-primary/15 hover:to-secondary/15"
+                      }`}
+                    style={{ animationDelay: `${index * 60}ms` }}
+                  >
+                    {/* Avatar + type icon */}
+                    <div className="relative shrink-0">
+                      {actor ? (
+                        <Avatar className="w-10 h-10 ring-2 ring-primary/30">
+                          <AvatarImage src={actor.profile_photo ?? undefined} alt={actor.name} />
+                          <AvatarFallback className="bg-gradient-primary text-white text-sm">
+                            {actor.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                      ) : (
+                        icons.Star
+                      )}
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-card rounded-full flex items-center justify-center border border-border">
+                        {typeIcon}
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-foreground leading-snug">
+                        {actor && (
+                          <span className="font-semibold text-primary">
+                            {actor.name}{" "}
+                          </span>
+                        )}
+                        {notification.message}
+                      </p>
+                      <span className="text-xs text-muted-foreground mt-0.5 block">
+                        {timeAgo(notification.timestamp)}
+                      </span>
+                    </div>
+
+                    {/* Right: unread dot + delete */}
+                    <div className="flex flex-col items-center gap-2 shrink-0">
+                      {!notification.is_read && (
+                        <div className="w-2 h-2 bg-gradient-primary rounded-full animate-glow-pulse" />
+                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void deleteNotification(notification.id);
+                        }}
+                        aria-label="Excluir notificação"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:text-destructive text-muted-foreground"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
 };
+
+function EmptyNotifications() {
+  return (
+    <div className="flex flex-col items-center justify-center py-14 gap-3 text-center">
+      <div className="p-4 rounded-2xl bg-muted/40">
+        <Bell className="w-8 h-8 text-muted-foreground/50" />
+      </div>
+      <p className="text-sm text-muted-foreground">Nenhuma notificação encontrada</p>
+    </div>
+  );
+}

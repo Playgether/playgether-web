@@ -1,203 +1,268 @@
+"use client";
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Filter, Trophy, Clock, Users } from "lucide-react";
-import { servers } from "../../constants/servers";
-import { ranks } from "../../constants/ranks";
-import { filters } from "../../constants/filters";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ChevronDown, Clock, Filter, MessageSquare, Trophy } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import type { Game, GamePreferences, GameSchema, LolSchema, CsSchema } from "../../types/duo";
+import { lolTierEmblemUrl } from "@/lib/lolRankedEmblem";
+import { LolRankEmblemFrame } from "@/components/lol/LolRankEmblemFrame";
+
+const PLAY_TIMES = [
+  { id: "morning", label: "Manhã (6h – 12h)" },
+  { id: "afternoon", label: "Tarde (12h – 18h)" },
+  { id: "evening", label: "Noite (18h – 00h)" },
+  { id: "night", label: "Madrugada (00h – 6h)" },
+] as const;
+
+// const AGES = [];     // TEMPORARIAMENTE IGNORADO
+// const SERVERS = [];  // TEMPORARIAMENTE IGNORADO
+
+const DUO_NOTE_MAX = 240;
 
 interface EloFilterProps {
-  onNext: () => void;
+  game: Game;
+  schema: GameSchema;
+  preferences: Partial<GamePreferences>;
+  onNext: (prefs: Partial<GamePreferences>) => void;
   onBack: () => void;
 }
 
-export const EloFilter = ({ onNext, onBack }: EloFilterProps) => {
-  const [selectedRanks, setSelectedRanks] = useState<string[]>(["Gold"]);
-  const [selectedServer, setSelectedServer] = useState("BR");
-  const [ageRange, setAgeRange] = useState([18]);
-  const [playTime, setPlayTime] = useState("evening");
-//   const [voiceChat, setVoiceChat] = useState(true);
-//   const [duoOnly, setDuoOnly] = useState(true);
+export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilterProps) {
+  const slug = game.acronym.toLowerCase();
+  const isLol = slug === "lol";
+  const isCs = slug === "cs2";
 
- const handleRankChange = (rank: string) => {
-  setSelectedRanks((prev) => prev.includes(rank) ? prev.filter((r) => r !== rank) : [...prev, rank]);
- } 
+  // LoL: multi-select elo tiers
+  const lolSchema = isLol ? (schema as LolSchema) : null;
+  const [selectedElos, setSelectedElos] = useState<string[]>(
+    (preferences as any).accepted_elo ?? []
+  );
+
+  // CS: multi-select premier ranges
+  const csSchema = isCs ? (schema as CsSchema) : null;
+  const [selectedRanges, setSelectedRanges] = useState<string[]>(
+    (preferences as any).accepted_ranges ?? []
+  );
+
+  // Shared: play times
+  const [selectedTimes, setSelectedTimes] = useState<string[]>(
+    (preferences as any).play_times ?? []
+  );
+
+  const [duoNote, setDuoNote] = useState<string>(
+    String((preferences as any).duo_note ?? "")
+  );
+
+  const toggleElo = (tier: string) =>
+    setSelectedElos((prev) =>
+      prev.includes(tier) ? prev.filter((t) => t !== tier) : [...prev, tier]
+    );
+
+  const toggleRange = (range: string) =>
+    setSelectedRanges((prev) =>
+      prev.includes(range) ? prev.filter((r) => r !== range) : [...prev, range]
+    );
+
+  const toggleTime = (time: string) =>
+    setSelectedTimes((prev) =>
+      prev.includes(time) ? prev.filter((t) => t !== time) : [...prev, time]
+    );
+
+  function handleSearch() {
+    const note = duoNote.trim().slice(0, DUO_NOTE_MAX);
+    const base: Partial<GamePreferences> = {
+      play_times: selectedTimes,
+      duo_note: note,
+    } as Partial<GamePreferences>;
+    if (isLol) {
+      onNext({ ...base, accepted_elo: selectedElos } as Partial<GamePreferences>);
+    } else if (isCs) {
+      onNext({ ...base, accepted_ranges: selectedRanges } as Partial<GamePreferences>);
+    } else {
+      onNext(base);
+    }
+  }
+
+  const eloLabel = isLol ? "Elo" : "Range de Pontos Premier";
+  const eloOptions: string[] = isLol
+    ? (lolSchema?.elo_tiers ?? [])
+    : (csSchema?.premier_ranges ?? []);
+  const selectedEloValues = isLol ? selectedElos : selectedRanges;
+  const toggleEloFn = isLol ? toggleElo : toggleRange;
 
   return (
-    <div className="min-h-screen w-screen flex items-center justify-center p-6">
-      <div className="w-full max-w-4xl animate-slide-in-up">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center space-x-3 mb-4">
-            <Filter className="w-8 h-8 text-primary" />
-            <h1 className="text-4xl font-bold text-card-foreground">
-              Filtre Seu Match
-            </h1>
+    <div className="min-h-layout-main w-full max-w-full flex items-center justify-center px-4 py-10 sm:px-6">
+      <div className="w-full max-w-3xl animate-slide-in-up">
+        <div className="mb-10 text-center">
+          <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-primary">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-glow-primary" aria-hidden />
+            Passo 3 · Preferências
+          </span>
+          <div className="mx-auto mt-5 flex max-w-xl flex-col items-center gap-3">
+            <div className="flex items-center gap-3">
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 text-primary ring-1 ring-primary/20">
+                <Filter className="h-6 w-6" />
+              </span>
+              <h1 className="text-balance text-left text-2xl font-bold tracking-tight text-card-foreground sm:text-3xl">
+                Preferências avançadas
+              </h1>
+            </div>
+            <p className="max-w-md text-pretty text-sm text-muted-foreground sm:text-base">
+              Refine a busca em <span className="font-medium text-card-foreground">{game.name}</span> antes de ver os duos.
+            </p>
           </div>
-          <p className="text-muted-foreground text-lg">
-            Defina suas preferências para encontrar o parceiro ideal
+        </div>
+
+        <div className="mb-10 grid gap-5 md:grid-cols-2 md:gap-6">
+          <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/35 p-6 shadow-sm backdrop-blur-sm before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-primary/35 before:to-transparent">
+            <div className="mb-4 flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/20">
+                <Trophy className="h-5 w-5" />
+              </span>
+              <div>
+                <h3 className="text-base font-semibold text-card-foreground">{eloLabel}</h3>
+                <p className="text-xs text-muted-foreground">
+                  {selectedEloValues.length === 0
+                    ? `Qualquer ${isLol ? "elo" : "range"} será considerado.`
+                    : `${selectedEloValues.length} opção(ões) selecionada(s).`}
+                </p>
+              </div>
+            </div>
+
+            <Popover>
+              <PopoverTrigger className="flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-border/80 bg-input/40 px-4 text-left text-sm font-medium text-card-foreground shadow-sm transition-colors hover:border-primary/40 hover:bg-input/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
+                <span className="truncate">
+                  {selectedEloValues.length > 0
+                    ? `${selectedEloValues.length} selecionado(s)`
+                    : `Selecionar ${isLol ? "elos" : "ranges"}`}
+                </span>
+                <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+              </PopoverTrigger>
+              <PopoverContent
+                align="start"
+                className="z-[120] max-h-60 w-[var(--radix-popover-trigger-width)] min-w-[12rem] overflow-y-auto border-border p-2 shadow-lg"
+              >
+                {eloOptions.map((opt) => {
+                  const emblem = isLol ? lolTierEmblemUrl(opt) : null;
+                  return (
+                    <div
+                      key={opt}
+                      className="flex cursor-pointer items-center gap-3 rounded-lg py-2 pl-2 pr-1 hover:bg-muted/50"
+                      onClick={() => toggleEloFn(opt)}
+                    >
+                      <Checkbox
+                        checked={selectedEloValues.includes(opt)}
+                        onCheckedChange={() => toggleEloFn(opt)}
+                      />
+                      {emblem ? (
+                        <LolRankEmblemFrame
+                          src={emblem}
+                          alt={`Elo ${opt}`}
+                          frameClass="h-11 w-11"
+                          zoomPercent={182}
+                        />
+                      ) : null}
+                      <span className="text-sm">{opt}</span>
+                    </div>
+                  );
+                })}
+              </PopoverContent>
+            </Popover>
+
+            {selectedEloValues.length > 0 ? (
+              <button
+                type="button"
+                className="mt-3 text-xs font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-primary hover:underline"
+                onClick={() => (isLol ? setSelectedElos([]) : setSelectedRanges([]))}
+              >
+                Limpar seleção
+              </button>
+            ) : null}
+          </div>
+
+          <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/35 p-6 shadow-sm backdrop-blur-sm before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-primary/35 before:to-transparent">
+            <div className="mb-4 flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/25">
+                <Clock className="h-5 w-5" />
+              </span>
+              <div>
+                <h3 className="text-base font-semibold text-card-foreground">Horário</h3>
+                <p className="text-xs text-muted-foreground">Quando você costuma jogar?</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {PLAY_TIMES.map(({ id, label }) => {
+                const on = selectedTimes.includes(id);
+                return (
+                  <button
+                    type="button"
+                    key={id}
+                    aria-pressed={on}
+                    onClick={() => toggleTime(id)}
+                    className={`rounded-full border px-3.5 py-2 text-left text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 sm:text-sm ${
+                      on
+                        ? "border-primary/70 bg-primary/20 text-primary shadow-glow-primary/30"
+                        : "border-border/70 bg-background/40 text-muted-foreground hover:border-primary/35 hover:text-card-foreground"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Idade – TEMPORARIAMENTE IGNORADO */}
+          {/* <div>Faixa de idade</div> */}
+
+          {/* Servidor – TEMPORARIAMENTE IGNORADO */}
+          {/* <div>Servidor</div> */}
+        </div>
+
+        <div className="relative mb-10 overflow-hidden rounded-2xl border border-border/60 bg-card/35 p-6 shadow-sm backdrop-blur-sm before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-primary/35 before:to-transparent">
+          <div className="mb-3 flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/12 text-primary ring-1 ring-primary/25">
+              <MessageSquare className="h-5 w-5" />
+            </span>
+            <div>
+              <h3 className="text-base font-semibold text-card-foreground">Recado para o duo</h3>
+              <p className="text-xs text-muted-foreground">
+                Opcional. Aparece para quem te encontrar (até {DUO_NOTE_MAX} caracteres).
+              </p>
+            </div>
+          </div>
+          <Textarea
+            value={duoNote}
+            onChange={(e) => setDuoNote(e.target.value.slice(0, DUO_NOTE_MAX))}
+            placeholder='Ex.: "Procuro duo tryhard à noite" ou "Só casual e diversão"'
+            className="min-h-[88px] resize-y rounded-xl border-border/80 bg-input/40 text-sm"
+            maxLength={DUO_NOTE_MAX}
+            aria-label="Mensagem para quem encontrar seu perfil no duo"
+          />
+          <p className="mt-1.5 text-right text-[10px] text-muted-foreground tabular-nums">
+            {duoNote.length}/{DUO_NOTE_MAX}
           </p>
         </div>
 
-        {/* Filter Grid */}
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
-          {/* Rank & Server */}
-          <div className="card-glass rounded-xl p-6 space-y-6">
-            <div className="flex items-center space-x-3 mb-4">
-              <Trophy className="w-6 h-6 text-accent" />
-              <h3 className="text-xl font-bold text-card-foreground">Rank & Server</h3>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                  Ranks
-                </label>
-                <Popover>
-                  <PopoverTrigger className="bg-input/50
-                    border
-                    border-border
-                    rounded-lg
-                    px-4
-                    py-2
-                    w-full
-                    text-left
-                    focus:border-primary
-                    transition-colors
-                    flex items-center justify-between"
-                  >
-                    <span>
-                      {selectedRanks.length > 0 ? selectedRanks.join(", ") : "Select Ranks"}
-                    </span>
-
-                    <svg width="20" height="20" fill="none" stroke="currentColor" className="ml-2 text-muted-foreground">
-                      <path d="M6 8l4 4 4-4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </PopoverTrigger>
-                  <PopoverContent className="bg-[#0F172A] border-border p-2">
-                    {ranks.map((rank) => (
-                      <div key={rank} className="flex items-center gap-2 py-1">
-                        <Checkbox 
-                          checked={selectedRanks.includes(rank)}
-                          onCheckedChange={() => handleRankChange(rank)}
-                        />
-
-                        <span>{rank}</span>
-                      </div>
-                    ))}
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                  Server
-                </label>
-                <Select value={selectedServer} onValueChange={setSelectedServer}>
-                  <SelectTrigger className="bg-input/50 border-border focus:border-primary transition-colors">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#0F172A] border-border">
-                    {servers.map((server) => (
-                      <SelectItem key={server} value={server}>
-                        {server}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          {/* Preferences */}
-          <div className="card-glass rounded-xl p-6 space-y-6">
-            <div className="flex items-center space-x-3 mb-4">
-              <Clock className="w-6 h-6 text-primary" />
-              <h3 className="text-xl font-bold text-card-foreground">Preferências</h3>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                  Idade: {ageRange[0]}+
-                </label>
-                <Slider
-                  value={ageRange}
-                  onValueChange={setAgeRange}
-                  max={99}
-                  min={16}
-                  step={1}
-                  className="w-full"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                  Preferred Play Time
-                </label>
-                <Select value={playTime} onValueChange={setPlayTime}>
-                  <SelectTrigger className="bg-input/50 border-border focus:border-primary transition-colors">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#0F172A] border-border">
-                    <SelectItem value="morning">Manhã (6AM - 12PM)</SelectItem>
-                    <SelectItem value="afternoon">Tarde (12PM - 6PM)</SelectItem>
-                    <SelectItem value="evening">Noite (6PM - 12AM)</SelectItem>
-                    <SelectItem value="night">Madrugada (12AM - 6AM)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Filter Tags */}
-        {/* <div className="card-glass rounded-xl p-6 mb-12">
-          <div className="flex items-center space-x-3 mb-4">
-            <Users className="w-6 h-6 text-primary" />
-            <h3 className="text-xl font-bold text-card-foreground">Match Preferences</h3>
-          </div>
-          
-          <div className="flex flex-wrap gap-3">
-            {filters.map((filter, index) => (
-              <Badge
-                key={index}
-                variant={filter.active ? "default" : "outline"}
-                className={`
-                  px-4 py-2 cursor-pointer transition-all duration-300
-                  ${filter.active 
-                    ? 'bg-primary text-primary-foreground shadow-glow-primary' 
-                    : 'text-muted-foreground hover:text-primary hover:border-primary/50'
-                  }
-                `}
-              >
-                {filter.label}
-              </Badge>
-            ))}
-          </div>
-        </div> */}
-
-        {/* Action Buttons */}
-        <div className="flex justify-center space-x-6">
+        <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center sm:gap-4">
           <Button
             variant="outline"
-            className="px-8 py-3 text-muted-foreground border-border hover:border-primary/50 hover:text-primary transition-all duration-300"
+            className="order-2 h-12 rounded-xl border-border/80 px-8 text-muted-foreground hover:border-primary/45 hover:bg-primary/5 hover:text-primary sm:order-1"
             onClick={onBack}
           >
-            Back
+            Voltar
           </Button>
           <Button
-            onClick={onNext}
-            className="bg-gradient-primary hover:shadow-glow-primary text-primary-foreground px-12 py-3 font-semibold rounded-xl transition-all duration-300 hover:scale-105"
+            onClick={handleSearch}
+            className="order-1 h-12 rounded-xl bg-gradient-primary px-12 font-semibold text-primary-foreground shadow-lg shadow-primary/15 transition-all duration-300 hover:scale-[1.02] hover:shadow-glow-primary sm:order-2 sm:min-w-[12rem]"
           >
-            Buscar Duo
+            Buscar duo
           </Button>
         </div>
       </div>
     </div>
   );
-};
+}

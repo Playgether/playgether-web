@@ -2,64 +2,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bell, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { StaticImageData } from "next/image";
-
-interface Notification {
-  id: string;
-  users: {
-    name: string;
-    avatar: string | StaticImageData;
-  }[];
-  action: string;
-  content?: string;
-  time: string;
-  type: "like" | "comment" | "follow" | "mention";
-}
-
-// Import avatars
-import avatarJames from "@/assets/avatar-raymond.jpg";
-import avatarAlex from "@/assets/avatar-samuel.jpg";
-import avatarSophia from "@/assets/avatar-sophia.jpg";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { useNotifications } from "../hooks/useNotificationsWebSocket";
+import { useFeedProfileCardHeight } from "../hooks/useFeedProfileCardHeight";
 import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
 import { NotificationProps } from "../types/NotificationProps";
-
-const notifications: Notification[] = [
-  {
-    id: "1",
-    users: [{ name: "James", avatar: avatarJames }],
-    action: "curtiu sua postagem",
-    content:
-      "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
-    time: "há alguns segundos",
-    type: "like",
-  },
-  {
-    id: "2",
-    users: [
-      { name: "Alex", avatar: avatarAlex },
-      { name: "Sophia", avatar: avatarSophia },
-    ],
-    action: "responderam o seu comentário 3 vezes",
-    content: "COMENTÁRIO MEU",
-    time: "há 2 horas",
-    type: "comment",
-  },
-];
-
-const getTypeIcon = (type: Notification["type"]) => {
-  switch (type) {
-    case "like":
-      return "❤️";
-    case "comment":
-      return "👥";
-    case "follow":
-      return "👤";
-    case "mention":
-      return "@";
-  }
-};
+import { cn } from "@/lib/utils";
 
 export const NotificationsCard = ({
   notificationsList,
@@ -75,9 +23,23 @@ export const NotificationsCard = ({
     },
     notificationsList: notificationsList,
   });
+
+  const profileCardHeightPx = useFeedProfileCardHeight();
+
   return (
-    <Card className="bg-card border-border/50 backdrop-blur-sm animate-fade-up hover:shadow-glow-primary/30 hover:scale-[1.02] hover:border-primary/40 transition-all duration-300">
-      <CardHeader className="pb-4">
+    <Card
+      className={cn(
+        "bg-card border-border/50 backdrop-blur-sm animate-fade-up hover:shadow-glow-primary/30 hover:scale-[1.02] hover:border-primary/40 transition-all duration-300",
+        "flex flex-col overflow-hidden",
+        profileCardHeightPx == null && "max-h-[min(70vh,28rem)]",
+      )}
+      style={
+        profileCardHeightPx != null
+          ? { maxHeight: profileCardHeightPx }
+          : undefined
+      }
+    >
+      <CardHeader className="shrink-0 pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-bold">
             Notificações recentes
@@ -92,7 +54,7 @@ export const NotificationsCard = ({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-5">
         <>
           {notifications.length === 0 ? (
             <div className="text-center py-8">
@@ -107,77 +69,48 @@ export const NotificationsCard = ({
             notifications.map((notification, index) => (
               <div
                 key={notification.id}
-                className="p-3 rounded-xl bg-better-contrast hover:bg-muted/50 hover:shadow-improved transition-all duration-200 cursor-pointer group animate-slide-up"
+                className={cn(
+                  "p-3 rounded-xl bg-better-contrast hover:bg-muted/50 hover:shadow-improved transition-all duration-200 cursor-pointer group animate-slide-up",
+                  index === 0 && "mt-2",
+                )}
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="flex flex-col items-start space-x-3">
+                <div className="flex w-full min-w-0 flex-col gap-2">
                   {/* User Avatars */}
-                  <div className="w-full flex justify-between">
-                    <div className="flex -space-x-2">
-                      {notification.actors.map((user, userIndex) => (
-                        <Avatar
-                          key={userIndex}
-                          className="w-8 h-8 border-2 border-background"
-                        >
-                          <AvatarImage src={user.avatar} alt={user.name} />
-                          <AvatarFallback className="bg-gradient-primary text-white text-xs">
-                            {user.name.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        // <div className="w-8 h-8 border-2 border-background" key={notification.id}>
-                        //   {notification.profile_photo ? (
-                        //     <div className="relative w-full h-full">
-                        //       <Image
-                        //         src={getCloudinaryUrl(post.profile_photo)}
-                        //         alt={`Profile photo of the user ${post?.username}`}
-                        //         fill
-                        //         className="object-cover rounded-full"
-                        //       />
-                        //     </div>
-                        //   ) : (
-                        //     components.NoImageProfile
-                        //   )}
-                        // </div>
+                  <div className="flex w-full min-w-0 justify-between gap-2">
+                    <div className="flex shrink-0 -space-x-2">
+                      {notification.actors.map((actor, userIndex) => (
+                        <ProfileAvatar
+                          key={`${actor.username}-${userIndex}`}
+                          displayName={actor.name}
+                          username={actor.username}
+                          profilePhoto={actor.profile_photo ?? null}
+                          sizeClass="h-8 w-8"
+                          className="border border-background ring-1 ring-background"
+                          fallbackTextClassName="text-xs"
+                        />
                       ))}
-                      {/* {notification.users.length > 3 && (
-                      <div className="w-8 h-8 border-2 border-background bg-muted rounded-full flex items-center justify-center">
-                        <span className="text-xs font-medium">
-                          +{notification.users.length - 3}
-                        </span>
-                      </div>
-                    )} */}
                     </div>
                     <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
                       <DateAndHour date={notification.timestamp} />
                     </span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between mb-1">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm text-foreground leading-relaxed">
-                          <span className="font-medium">
-                            {/* {notification.actors.map((u) => u.name).join(", ")} */}
-                            {/* {notification.actors.map((actor) => (
-                              <p>{actor.name}</p>
-                            ))} */}
-                          </span>{" "}
-                          {notification.message.includes(":")
-                            ? notification.message.split(":")[0].trim()
-                            : notification.message}
+                  <div className="min-w-0 w-full">
+                    <div className="min-w-0 w-full">
+                      <p className="text-sm text-foreground leading-relaxed break-words">
+                        {notification.message.includes(":")
+                          ? notification.message.split(":")[0].trim()
+                          : notification.message}
+                      </p>
+                      {notification.message.includes(":") ? (
+                        <p className="mt-1 min-w-0 truncate text-xs text-muted-foreground">
+                          {notification.message
+                            .split(":")
+                            .slice(1)
+                            .join(":")
+                            .trim()}
                         </p>
-                        {notification.message && (
-                          <p className="text-xs text-muted-foreground max-w-[200px] mt-1 truncate">
-                            {(() => {
-                              const parts = notification.message.split(":");
-                              if (parts.length > 1) {
-                                // Retorna tudo após o primeiro ":" e remove espaços em branco
-                                return parts.slice(1).join(":").trim();
-                              }
-                              // return notification.message;
-                            })()}
-                          </p>
-                        )}
-                      </div>
+                      ) : null}
                     </div>
                   </div>
                 </div>

@@ -1,5 +1,4 @@
 @import "../../components/classes/css/testPage.css";
-@import "../../components/classes/css/BaseLayout.css";
 @import "../../components/classes/css/HeaderBase.css";
 @import "../../components/classes/css/HeaderItens.css";
 @import "../../components/classes/css/IconsHeader.css";
@@ -50,12 +49,6 @@
 @import "../../components/classes/css/Cadastro.css";
 @import "../../components/classes/css/FormRegisterImplementation.css";
 @import "../../components/classes/css/AlreadyHaveAccount.css";
-@import "../../components/classes/css/Bio.css";
-@import "../../components/classes/css/BioConquists.css";
-@import "../../components/classes/css/BioPerformance.css";
-@import "../../components/classes/css/MenuProfile.css";
-@import "../../components/classes/css/TextsProfilePosts.css";
-@import "../../components/classes/css/PostsStats.css";
 @import "../../components/classes/css/CardGameMainContainer.css";
 @import "../../components/classes/css/ProfileLol.css";
 @import "../../components/classes/css/ProfileValorant.css";
@@ -65,7 +58,6 @@
 @import "../../components/classes/css/SuspensePagesStyle.css";
 @import "../../components/classes/css/EmptyData.css";
 @import "../../components/classes/css/ProfilePhotoLink.css";
-@import "../../components/classes/css/CardRoomContainer.css";
 @import "../../components/classes/css/LeftChat.css";
 @import "../../components/classes/css/HeaderChat.css";
 @import "../../components/classes/css/SearchChat.css";
@@ -83,4 +75,3 @@
 @import "../../components/classes/css/ScrollToBottonIcon.css";
 @import "../../components/classes/css/RightChatRoomMessagesContainer.css";
 @import "../../components/classes/css/RightChatRoomTop.css";
-@import "../../components/classes/css/CardRoomEnter.css";

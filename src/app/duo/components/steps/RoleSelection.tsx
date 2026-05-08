@@ -1,107 +1,154 @@
+"use client";
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { roles } from "../../constants/roles";
+import { Check, Users } from "lucide-react";
+import type { Game, GamePreferences, GameSchema } from "../../types/duo";
+import { LolLaneRoleIcon } from "@/components/lol/LolLaneRoleIcon";
 
 interface RoleSelectionProps {
-  onNext: () => void;
+  game: Game;
+  schema: GameSchema;
+  preferences: Partial<GamePreferences>;
+  onNext: (prefs: Partial<GamePreferences>) => void;
   onBack: () => void;
 }
 
-export const RoleSelection = ({ onNext, onBack }: RoleSelectionProps) => {
-  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+export function RoleSelection({ game, schema, preferences, onNext, onBack }: RoleSelectionProps) {
+  const allRoles: string[] = (schema as any).roles ?? [];
 
-  const toggleRole = (roleId: string) => {
-    setSelectedRoles(prev => 
-      prev.includes(roleId) 
-        ? prev.filter(id => id !== roleId)
-        : [...prev, roleId]
+  const [selectedRoles, setSelectedRoles] = useState<string[]>(
+    (preferences as any).desired_roles ?? []
+  );
+
+  const toggle = (role: string) => {
+    setSelectedRoles((prev) =>
+      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
     );
   };
 
+  const selectAll = () => setSelectedRoles([...allRoles]);
+  const clearAll = () => setSelectedRoles([]);
+
+  const handleNext = () => {
+    onNext({ desired_roles: selectedRoles } as any);
+  };
+
+  const slug = game.acronym.toLowerCase();
+  const roleLabel = slug === "lol" ? "lane" : "função";
+
   return (
-    <div className="min-h-screen w-screen flex items-center justify-center p-6">
-      <div className="w-full max-w-5xl animate-slide-in-up">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-card-foreground mb-4">
-            Escolha suas rotas desejadas
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            Selecione as rotas que você deseja procurar
+    <div className="min-h-layout-main flex w-full max-w-full items-center justify-center px-4 py-10 sm:px-6">
+      <div className="w-full max-w-lg animate-slide-in-up">
+        <div className="mb-8 text-center">
+          <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/20 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
+            Passo 2 · Parceiro
+          </span>
+          <div className="mx-auto mt-5 flex max-w-md flex-col items-center gap-3">
+            <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center sm:text-left">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border/50 bg-card text-primary">
+                <Users className="h-5 w-5" />
+              </span>
+              <h1 className="text-balance text-xl font-bold tracking-tight text-card-foreground sm:text-2xl">
+                Quais {roleLabel}s você quer no parceiro?
+              </h1>
+            </div>
+            <p className="max-w-sm text-pretty text-sm text-muted-foreground">
+              Toque na linha para marcar ou desmarcar. Várias opções permitidas.
+            </p>
+          </div>
+        </div>
+
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <p className="text-xs font-medium text-muted-foreground">
+            {selectedRoles.length === 0
+              ? `Nenhuma ${roleLabel} selecionada`
+              : `${selectedRoles.length} de ${allRoles.length} selecionada${selectedRoles.length !== 1 ? "s" : ""}`}
           </p>
+          <div className="flex shrink-0 gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              onClick={selectAll}
+              className="h-8 rounded-lg border-border/70 px-3 text-xs font-medium"
+            >
+              Todos
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              onClick={clearAll}
+              className="h-8 rounded-lg px-3 text-xs text-muted-foreground hover:text-foreground"
+            >
+              Limpar
+            </Button>
+          </div>
         </div>
 
-        {/* Role Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-12">
-          {roles.map((role, index) => {
-            const IconComponent = role.icon;
-            const isSelected = selectedRoles.includes(role.id);
-            
-            return (
-              <div
-                key={role.id}
-                onClick={() => toggleRole(role.id)}
-                className={`
-                  card-glass rounded-xl p-6 cursor-pointer transition-all duration-300 animate-fade-in-scale
-                  ${isSelected 
-                    ? 'border-primary shadow-glow-primary bg-primary/10' 
-                    : 'hover:border-primary/50 hover:shadow-glow-primary/50'
-                  }
-                `}
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="text-center space-y-4">
-                  <div className={`
-                    w-16 h-16 mx-auto rounded-xl flex items-center justify-center transition-all duration-300
-                    ${isSelected 
-                      ? `bg-gradient-${role.color} shadow-glow-${role.color}` 
-                      : 'bg-muted/50'
-                    }
-                  `}>
-                    <IconComponent className={`w-8 h-8 ${isSelected ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
-                  </div>
-                  
-                  <div>
-                    <h3 className={`font-bold text-lg mb-1 ${isSelected ? 'text-primary' : 'text-card-foreground'}`}>
-                      {role.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {role.description}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Selection indicator */}
-                {isSelected && (
-                  <div className="absolute top-3 right-3">
-                    <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center shadow-glow-primary">
-                      <div className="w-2 h-2 bg-primary-foreground rounded-full" />
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+        <div className="mb-10 overflow-hidden rounded-2xl border border-border/50 bg-card/25">
+          <ul className="divide-y divide-border/40" role="list">
+            {allRoles.map((role) => {
+              const isSelected = selectedRoles.includes(role);
+              return (
+                <li key={role}>
+                  <button
+                    type="button"
+                    role="checkbox"
+                    aria-checked={isSelected}
+                    onClick={() => toggle(role)}
+                    className={`flex w-full items-center gap-4 px-4 py-3.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40 ${
+                      isSelected
+                        ? "bg-primary/[0.07]"
+                        : "hover:bg-muted/30 active:bg-muted/40"
+                    }`}
+                  >
+                    <span
+                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
+                        isSelected
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-muted-foreground/25 bg-transparent"
+                      }`}
+                      aria-hidden
+                    >
+                      {isSelected ? <Check className="h-3.5 w-3.5 stroke-[3]" /> : null}
+                    </span>
+                    {slug === "lol" ? <LolLaneRoleIcon roleLabel={role} /> : null}
+                    <span
+                      className={`flex-1 text-sm font-medium sm:text-base ${
+                        isSelected ? "text-foreground" : "text-card-foreground"
+                      }`}
+                    >
+                      {role}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex justify-center space-x-6">
+        <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center sm:gap-4">
           <Button
             variant="outline"
-            className="px-8 py-3 text-muted-foreground border-border hover:border-primary/50 hover:text-primary transition-all duration-300"
+            type="button"
+            className="order-2 h-12 rounded-xl border-border/80 px-8 text-muted-foreground hover:bg-muted/30 hover:text-foreground sm:order-1"
             onClick={onBack}
           >
-            Back
+            Voltar
           </Button>
           <Button
-            onClick={onNext}
+            type="button"
+            onClick={handleNext}
             disabled={selectedRoles.length === 0}
-            className="bg-gradient-primary hover:shadow-glow-primary text-primary-foreground px-12 py-3 font-semibold rounded-xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="order-1 h-12 rounded-xl bg-gradient-primary px-10 font-semibold text-primary-foreground shadow-md shadow-primary/10 transition-opacity hover:opacity-95 disabled:pointer-events-none disabled:opacity-45 sm:order-2 sm:min-w-[16rem]"
           >
-            Continar ( {selectedRoles.length} selecionado(s) )
+            Continuar ({selectedRoles.length} selecionado{selectedRoles.length !== 1 ? "s" : ""})
           </Button>
         </div>
       </div>
     </div>
   );
-};
+}

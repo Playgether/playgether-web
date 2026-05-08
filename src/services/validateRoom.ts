@@ -1,15 +1,19 @@
 import { cookies } from "next/headers";
 import { api } from "./api";
 
-export const validateRoomService = async (roomName: string) => {
+export const validateRoomService = async (roomSlug: string) => {
     const accessToken = (await cookies()).get("accessToken")?.value;
+    const segment = encodeURIComponent(String(roomSlug).trim());
   
     try {
-      const response = await api.get(`/api/v1/chatrooms/${roomName}/validate`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      const response = await api.get(
+        `/api/v1/chatrooms/${segment}/validate/`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
   
       return {
         ok: true,

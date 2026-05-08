@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const RegisterFormSchema = () => {
+export const RegisterFormSchema = (requiredDocumentIds: number[] = []) => {
     const RegisterFormSchema = z.object({
         email: z.string()
         .nonempty('O email é obrigatório').email('Formato de e-mail inválido').max(254, 'o email só pode ter 256 caracteres'),
@@ -22,7 +22,7 @@ export const RegisterFormSchema = () => {
         repeatPassword: z.string()
         .nonempty('A senha é obrigatória').min(8, 'A senha precisa de no mínimo 8 caracteres').max(128, 'a senha deve ter no máximo 128 caracteres'),
   
-        agree: z.boolean(),
+        accepted_documents: z.array(z.number()).default([]),
   
         first_name: z.string()
         .nonempty('O nome é obrigatório').min(1, 'O nome não pode estar vazio').max(150, 'O nome pode ter no máximo 150 caracteres').transform(first_name => {
@@ -68,10 +68,18 @@ export const RegisterFormSchema = () => {
       }).refine((fields) => fields.password == fields.repeatPassword, {
         path: ['repeatPassword'],
         message: 'As senhas precisam ser iguais'
-      }).refine((fields) => fields.agree == true, {
-        path: ['agree'],
-        message: 'Você precisa aceitar os termos antes de se cadastrar'
-      });
+      }).refine(
+        (fields) => {
+          if (requiredDocumentIds.length === 0) return true;
+          return requiredDocumentIds.every((id) =>
+            fields.accepted_documents.includes(id)
+          );
+        },
+        {
+          path: ['accepted_documents'],
+          message: 'Você precisa aceitar todos os termos e políticas antes de se cadastrar',
+        }
+      );
 
       return RegisterFormSchema
 }

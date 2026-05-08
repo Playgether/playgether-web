@@ -9,7 +9,14 @@ import {
 } from "react-icons/fa";
 import { twMerge } from "tailwind-merge";
 
-const CustomSonner = ({ message, type, description, action }) => {
+interface CustomSonnerProps {
+  message: React.ReactNode;
+  type: string;
+  description?: React.ReactNode;
+  action?: { label: string; onClick: () => void };
+}
+
+const CustomSonner = ({ message, type, description, action }: CustomSonnerProps) => {
   let className: string | undefined =
     "p-4 rounded shadow-lg text-sm max-w-[23rem]";
   let icon: ReactNode = null;
@@ -30,6 +37,10 @@ const CustomSonner = ({ message, type, description, action }) => {
     case "warning":
       className += " bg-yellow-500 text-black-500";
       icon = <FaExclamationTriangle />;
+      break;
+    case "neutral":
+      className += " bg-zinc-600 text-white";
+      icon = <FaInfoCircle />;
       break;
     default:
       className += " bg-[#fff] text-black-500";
@@ -73,31 +84,48 @@ const CustomSonner = ({ message, type, description, action }) => {
   );
 };
 
+type ToastOptions = {
+  description?: React.ReactNode;
+  duration?: number;
+  action?: { label: string; onClick: () => void };
+  [key: string]: unknown;
+};
+
+const getToastOptionsWithoutDescription = (options: ToastOptions = {}) => {
+  const { description: _description, ...toastOptions } = options;
+  return toastOptions;
+};
+
 export const CustomToast = {
-  default: (message, options) =>
+  default: (message: React.ReactNode, options: ToastOptions = {}) =>
     toast.custom(
       () => <CustomSonner message={message} type="default" {...options} />,
-      options
+      getToastOptionsWithoutDescription(options)
     ),
-  success: (message, options) =>
+  success: (message: React.ReactNode, options: ToastOptions = {}) =>
     toast.custom(
       () => <CustomSonner message={message} type="success" {...options} />,
-      options
+      getToastOptionsWithoutDescription(options)
     ),
-  error: (message, options) =>
+  error: (message: React.ReactNode, options: ToastOptions = {}) =>
     toast.custom(
       () => <CustomSonner message={message} type="error" {...options} />,
-      options
+      getToastOptionsWithoutDescription(options)
     ),
-  info: (message, options) =>
+  info: (message: React.ReactNode, options: ToastOptions = {}) =>
     toast.custom(
       () => <CustomSonner message={message} type="info" {...options} />,
-      options
+      getToastOptionsWithoutDescription(options)
     ),
-  warning: (message, options) =>
+  warning: (message: React.ReactNode, options: ToastOptions = {}) =>
     toast.custom(
       () => <CustomSonner message={message} type="warning" {...options} />,
-      options
+      getToastOptionsWithoutDescription(options)
+    ),
+  neutral: (message: React.ReactNode, options: ToastOptions = {}) =>
+    toast.custom(
+      () => <CustomSonner message={message} type="neutral" {...options} />,
+      getToastOptionsWithoutDescription(options)
     ),
 };
 

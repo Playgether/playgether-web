@@ -8,10 +8,10 @@ import Link from "next/link";
 import { favoriteToggleChatRoom } from "@/actions/favoriteToggleChatRoom";
 
 function LeftRoomChatActions({
-  room_id,
+  room_slug,
   is_favorited,
 }: {
-  room_id: number;
+  room_slug: string;
   is_favorited: boolean;
 }) {
   const [favorite, setFavorite] = useState(is_favorited);
@@ -19,8 +19,8 @@ function LeftRoomChatActions({
   const handleFavorite = (action: boolean) => {
     setFavorite(action);
     action
-      ? favoriteToggleChatRoom(room_id, "POST")
-      : favoriteToggleChatRoom(room_id, "DELETE");
+      ? favoriteToggleChatRoom(room_slug, "POST")
+      : favoriteToggleChatRoom(room_slug, "DELETE");
   };
 
   return (

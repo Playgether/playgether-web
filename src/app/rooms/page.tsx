@@ -1,10 +1,10 @@
-import NotFoundPages from "@/components/elements/NotFound/NotFoundPages";
-import BaseLayout from "@/components/layouts/BaseLayout";
-import CardRoomContainer from "@/components/pages/rooms/CardRoomContainer";
+import BaseLayout from "@/app/base-layout/components/structure/BaseLayout";
+import RoomList from "@/components/pages/rooms/RoomList";
 import { getChatRooms } from "@/services/getChatRooms";
-import { ChatRoomPagination } from "@/types/ChatRoom";
 import { Metadata } from "next";
 import React from "react";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Playgether - Rooms",
@@ -12,30 +12,26 @@ export const metadata: Metadata = {
 };
 
 export default async function Room() {
-  const response = await getChatRooms();
-  const rooms: ChatRoomPagination = response.data;
+  const rooms = await getChatRooms();
+
+  const roomList = rooms?.results?.map((room) => ({
+    id: room.id,
+    slug: room.slug,
+    name: room.group_name,
+    summary: room.summary,
+    banner: room.banner,
+    capacity: room.capacity,
+    peakUsers: room.peak_users,
+    totalMessages: room.total_messages,
+    isFavorited: room.is_favorited,
+  })) ?? [];
+
   return (
     <BaseLayout>
-      <div className="mt-2 grid w-full gap-4 grid-cols-[repeat(auto-fill,minmax(300px,1fr))] justify-start">
-        {rooms && rooms.results.length > 0 ? (
-          rooms.results.map((room) => (
-            <>
-              <CardRoomContainer
-                name={room.group_name}
-                summary={room.summary}
-                banner={room.banner}
-                key={room.id}
-                id={room.id}
-              />
-            </>
-          ))
-        ) : (
-          <NotFoundPages
-            message="Não encontramos nenhuma sala disponível no momento"
-            href="/feed"
-            page="Feed"
-          />
-        )}
+      <div className="min-h-layout-main bg-background pl-0 md:pl-20">
+        <div className="mx-auto max-w-[88rem] p-4 md:p-6">
+          <RoomList rooms={roomList} />
+        </div>
       </div>
     </BaseLayout>
   );

@@ -3,9 +3,11 @@ export interface LikeProps {
   object_id: number;
 }
 
+import { apiFetch } from "@/services/apiFetch";
+
 export const postLike = async (data: LikeProps) => {
   try {
-    const response = await fetch("/api/likes", {
+    const response = await apiFetch("/api/likes", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
