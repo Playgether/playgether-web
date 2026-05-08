@@ -80,7 +80,7 @@ export function GamesCanvasContentTabs({
     value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
   const getTabFromPathname = () => {
-    const parts = pathname.split("/").filter(Boolean);
+    const parts = (pathname ?? "").split("/").filter(Boolean);
     // /profile
     if (parts.length === 1 && parts[0] === "profile") return "bio";
     // /profile/<tab>
@@ -192,7 +192,8 @@ export function GamesCanvasContentTabs({
     const params = new URLSearchParams(searchParams?.toString() ?? "");
     params.delete("steam_error");
     const newSearch = params.toString();
-    const newUrl = newSearch ? `${pathname}?${newSearch}` : pathname;
+    const basePath = pathname ?? "";
+    const newUrl = newSearch ? `${basePath}?${newSearch}` : basePath;
     router.replace(newUrl, { scroll: false });
   }, [searchParams, pathname, router]);
 
@@ -381,7 +382,7 @@ export function GamesCanvasContentTabs({
     title: string;
     description: string;
     date: string;
-    medias: { media_url: string; media_type: string; public_id: string }[];
+    medias: { media_url: string; media_type: "image" | "video"; public_id: string }[];
   }) => {
     if (!profile) return;
     setIsMilestoneSubmitting(true);

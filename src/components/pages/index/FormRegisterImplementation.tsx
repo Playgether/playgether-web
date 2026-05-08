@@ -78,7 +78,7 @@ export const FormRegisterImplementation = ({
               inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue focus:shadow-glow-neon transition-all duration-300 backdrop-blur-sm"
             />
             {availableUsernameResult}
-            <ErrosInput field={errors.username || (backendErrors.username && { message: backendErrors.username })} />
+            <ErrosInput field={errors.username || (backendErrors.username ? { message: backendErrors.username } : undefined)} />
           </div>
           <div className="col-span-1 flex items-start">
             <button
@@ -98,7 +98,7 @@ export const FormRegisterImplementation = ({
             register={{ ...register("email") }}
             inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue focus:shadow-glow-neon transition-all duration-300 backdrop-blur-sm"
           />
-          <ErrosInput field={errors.email || (backendErrors.email && { message: backendErrors.email })} />
+          <ErrosInput field={errors.email || (backendErrors.email ? { message: backendErrors.email } : undefined)} />
         </div>
 
         <div className="space-y-1">
@@ -213,9 +213,9 @@ export const FormRegisterImplementation = ({
               <ErrosInput
                 field={
                   errors.accepted_documents ||
-                  (backendErrors.accepted_documents && {
-                    message: backendErrors.accepted_documents,
-                  })
+                  (backendErrors.accepted_documents
+                    ? { message: backendErrors.accepted_documents }
+                    : undefined)
                 }
               />
             </>

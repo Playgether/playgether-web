@@ -58,6 +58,7 @@ const UserContextMock = ({ children }) => {
         logout: logout,
         isLoggedOut: false,
         setIsLoggedOut: () => {},
+        authSessionResolved: true,
       }}
     >
       {children}
