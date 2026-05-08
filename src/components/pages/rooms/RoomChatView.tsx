@@ -20,6 +20,7 @@ import {
   Star,
   Trophy,
   Users,
+  Radio,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -37,6 +38,7 @@ import RoomEventsPanel from "./RoomEventsPanel";
 import { RoomEventInviteModal } from "./RoomEventInviteModal";
 import { RoomEventLiveSession } from "./RoomEventLiveSession";
 import { RoomMusicDock } from "./RoomMusicDock";
+import RoomAmbiencePanel from "./RoomAmbiencePanel";
 
 type RoomTab =
   | "chat"
@@ -48,7 +50,8 @@ type RoomTab =
   | "music"
   | "settings"
   | "images"
-  | "events";
+  | "events"
+  | "ambience";
 
 interface RoomChatViewProps {
   room: ChatRoom;
@@ -68,6 +71,7 @@ const tabs: { id: RoomTab; icon: typeof MessageSquare; label: string }[] = [
   { id: "music", icon: Music, label: "Música" },
   { id: "settings", icon: Settings, label: "Config" },
   { id: "events", icon: CalendarDays, label: "Eventos" },
+  { id: "ambience", icon: Radio, label: "Ao vivo" },
 ];
 
 export default function RoomChatView({
@@ -77,15 +81,27 @@ export default function RoomChatView({
 }: RoomChatViewProps) {
   const router = useRouter();
   const { eventShellOpen, activeEvent } = useRoomEventSession();
-  const { messagesQuantity, resetMessagesQuantity, setChatSurfaceHidden } = useChatHandlerContext();
+  const { messagesQuantity, resetMessagesQuantity, setChatSurfaceHidden, roomAmbience } =
+    useChatHandlerContext();
   const [activeTab, setActiveTab] = useState<RoomTab>("chat");
+  /** Dentro da aba Ao vivo: após "Entrar na transmissão", esconde abas como no modo evento. */
+  const [ambienceEntered, setAmbienceEntered] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [isFavorite, setIsFavorite] = useState(room.is_favorited ?? false);
   const [, startFavoriteTransition] = useTransition();
 
+  const immersionAmbience =
+    roomAmbience.active && ambienceEntered && !eventShellOpen;
+
   useEffect(() => {
-    setChatSurfaceHidden(activeTab !== "chat" || eventShellOpen);
-  }, [activeTab, eventShellOpen, setChatSurfaceHidden]);
+    setChatSurfaceHidden(
+      activeTab !== "chat" || eventShellOpen || immersionAmbience,
+    );
+  }, [activeTab, eventShellOpen, immersionAmbience, setChatSurfaceHidden]);
+
+  useEffect(() => {
+    if (!roomAmbience.active) setAmbienceEntered(false);
+  }, [roomAmbience.active]);
 
   const handleSelectTab = (id: RoomTab) => {
     setActiveTab(id);
@@ -93,6 +109,17 @@ export default function RoomChatView({
       resetMessagesQuantity();
     }
   };
+
+  const visibleTabs = tabs.filter((tab) => {
+    if (tab.id !== "ambience") return true;
+    return roomAmbience.active;
+  });
+
+  useEffect(() => {
+    if (!roomAmbience.active && activeTab === "ambience") {
+      setActiveTab("chat");
+    }
+  }, [roomAmbience.active, activeTab]);
 
   const handleToggleFavorite = () => {
     const nextFavorite = !isFavorite;
@@ -146,6 +173,16 @@ export default function RoomChatView({
         return (
           <div className="min-h-0 flex-1 overflow-hidden">
             <RoomEventsPanel room={room} />
+          </div>
+        );
+      case "ambience":
+        return (
+          <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            <RoomAmbiencePanel
+              roomSlug={room.slug}
+              entered={ambienceEntered}
+              onEnteredChange={setAmbienceEntered}
+            />
           </div>
         );
       case "roles":
@@ -220,7 +257,33 @@ export default function RoomChatView({
     <>
       <RoomEventInviteModal roomSlug={room.slug} />
       <section className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/50 bg-background">
-      <nav className="shrink-0 border-b border-border bg-card/80 backdrop-blur-sm">
+      {immersionAmbience ? (
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-card/80 px-3 py-2 backdrop-blur-sm">
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-primary">
+              Transmissão ao vivo
+            </p>
+            <p className="truncate text-sm font-bold text-foreground">{room.group_name}</p>
+            <p className="text-[10px] text-muted-foreground">
+              Modo Ambiente — vídeo sincronizado para a sala.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => router.push("/rooms")}
+            className="shrink-0 rounded-md p-2 text-destructive transition-colors hover:bg-destructive/10"
+            title="Sair da sala"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        </header>
+      ) : null}
+      <nav
+        className={cn(
+          "shrink-0 border-b border-border bg-card/80 backdrop-blur-sm",
+          immersionAmbience && "hidden",
+        )}
+      >
         <div className="hidden items-center justify-between gap-0.5 px-2 py-1.5 md:flex">
           <div className="min-w-0 flex-shrink-0">
             <span className="truncate text-sm font-bold text-foreground hyphens-none whitespace-normal">
@@ -229,7 +292,7 @@ export default function RoomChatView({
           </div>
 
           <div className="flex min-w-0 flex-1 items-center justify-center gap-0.5 overflow-x-auto">
-            {tabs.map((tab) => (
+            {visibleTabs.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
@@ -247,6 +310,9 @@ export default function RoomChatView({
                   <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 px-1 text-[10px] font-bold leading-none text-white shadow-sm">
                     {messagesQuantity > 99 ? "99+" : messagesQuantity}
                   </span>
+                ) : null}
+                {tab.id === "ambience" ? (
+                  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-rose-500" />
                 ) : null}
                 {activeTab === tab.id ? (
                   <span className="absolute bottom-0 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full gradient-primary" />
@@ -324,7 +390,7 @@ export default function RoomChatView({
           </div>
 
           <div className="flex items-center justify-center overflow-x-auto px-2 py-1">
-            {tabs.map((tab) => (
+            {visibleTabs.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
@@ -342,6 +408,9 @@ export default function RoomChatView({
                   <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 px-1 text-[10px] font-bold leading-none text-white shadow-sm">
                     {messagesQuantity > 99 ? "99+" : messagesQuantity}
                   </span>
+                ) : null}
+                {tab.id === "ambience" ? (
+                  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-rose-500" />
                 ) : null}
                 {activeTab === tab.id ? (
                   <span className="absolute bottom-0 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full gradient-primary" />

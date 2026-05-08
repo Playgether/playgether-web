@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuthContext } from "@/context/AuthContext";
 import { useChatHandlerContext } from "@/context/ChatHandlerContext";
 import { useRoomEventSession } from "@/context/RoomEventSessionContext";
+import { extractYoutubeVideoId, fetchYoutubeOEmbedMeta } from "@/lib/youtube";
 import { ChatRoom } from "@/types/ChatRoom";
 import type { RoomEventParticipant } from "@/types/RoomEvents";
 import { RoomEventType } from "@/types/RoomEvents";
@@ -51,7 +52,13 @@ function statusLabel(status: ReturnType<typeof guestInviteStatus>): string {
 export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
   const { user } = useAuthContext();
   const { refreshActiveEvent, activeEvent, isOrganizer, myParticipation } = useRoomEventSession();
-  const { onlineUsers } = useChatHandlerContext();
+  const {
+    onlineUsers,
+    roomAmbience,
+    sendRoomAmbience,
+    roomAmbienceError,
+    clearRoomAmbienceError,
+  } = useChatHandlerContext();
   const [title, setTitle] = useState("");
   const [eventType, setEventType] = useState<RoomEventType>("vote_best");
   const [rounds, setRounds] = useState(5);
@@ -60,6 +67,8 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
   const [recruitmentStartError, setRecruitmentStartError] = useState<string | null>(null);
   const [insufficientParticipantsMessage, setInsufficientParticipantsMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [ambienceUrl, setAmbienceUrl] = useState("");
+  const [ambienceBusy, setAmbienceBusy] = useState(false);
   const [nowTick, setNowTick] = useState(() => Date.now());
 
   const hasBlockingEvent = Boolean(
@@ -150,6 +159,30 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
       setMessage("Evento criado! Todos na sala receberam o convite.");
       await refreshActiveEvent();
     });
+  };
+
+  const handleStartAmbience = async () => {
+    clearRoomAmbienceError();
+    const videoId = extractYoutubeVideoId(ambienceUrl.trim());
+    if (!videoId) {
+      return;
+    }
+    setAmbienceBusy(true);
+    try {
+      const meta = await fetchYoutubeOEmbedMeta(videoId);
+      sendRoomAmbience({
+        action: "create",
+        video_id: videoId,
+        title: meta.title,
+        channel_name: meta.channelName,
+        channel_url: meta.channelUrl,
+        channel_thumbnail: meta.channelThumbnail,
+        channel_avatar_url: meta.channelAvatarUrl,
+      });
+      setAmbienceUrl("");
+    } finally {
+      setAmbienceBusy(false);
+    }
   };
 
   const recruitingHeader =
@@ -341,6 +374,39 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
             </p>
           </div>
         ) : null}
+
+        {!roomAmbience.active ? (
+          <div className="space-y-3 rounded-2xl border border-border/60 bg-card/90 p-5 shadow-sm">
+            <div className="text-center">
+              <h3 className="text-base font-bold text-foreground">Modo Ambiente (Watchparty)</h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Inicie uma transmissão do YouTube para a sala. Apenas quem ligar controla a reprodução.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <input
+                value={ambienceUrl}
+                onChange={(e) => setAmbienceUrl(e.target.value)}
+                placeholder="https://www.youtube.com/watch?v=..."
+                className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm"
+              />
+              <Button
+                type="button"
+                disabled={ambienceBusy}
+                onClick={() => void handleStartAmbience()}
+              >
+                Iniciar
+              </Button>
+            </div>
+            {roomAmbienceError ? (
+              <p className="text-center text-xs text-destructive">{roomAmbienceError}</p>
+            ) : null}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-rose-500/35 bg-rose-500/10 px-4 py-3 text-sm text-foreground">
+            Há uma transmissão do Modo Ambiente ativa. A aba <strong>Ao vivo</strong> está disponível no topo da sala.
+          </div>
+        )}
 
         {activeEvent?.status === "recruiting" ? (
           <div className="space-y-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-foreground">
