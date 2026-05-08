@@ -2,8 +2,10 @@ import { ChatRules } from "./ChatRules";
 
 export interface ChatRoom {
   id: number;
+  /** Segmento da URL `/rooms/[slug]` (sem espaços). */
+  slug: string;
   group_name: string;
-  banner: string;
+  banner: string | null;
   summary: string;
   description: string;
   created_at: Date;
@@ -16,6 +18,8 @@ export interface ChatRoom {
   owner_username: string;
   rules: ChatRules[];
   is_favorited: boolean;
+  /** public_id Cloudinary por período (manhã, tarde, etc.) */
+  ambient_images?: Record<string, string>;
 }
 
 export interface ChatRoomPagination {

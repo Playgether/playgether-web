@@ -3,7 +3,7 @@ import { api } from "@/services/api";
 import { cookies } from "next/headers";
 
 export const favoriteToggleChatRoom = async (
-  group_id: number,
+  roomSlug: string,
   http_verb: "POST" | "DELETE"
 ) => {
   const accessToken = (await cookies()).get("accessToken")?.value;
@@ -19,8 +19,9 @@ export const favoriteToggleChatRoom = async (
   }
 
   try {
+    const segment = encodeURIComponent(String(roomSlug).trim());
     const response = await api.request({
-      url: `/api/v1/chatrooms/${group_id}/favorite/`,
+      url: `/api/v1/chatrooms/${segment}/favorite/`,
       method: http_verb, // Dinâmico: "POST" ou "DELETE"
       headers: {
         Authorization: `Bearer ${accessToken}`,

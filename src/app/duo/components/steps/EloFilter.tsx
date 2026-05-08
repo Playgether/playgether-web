@@ -3,9 +3,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronDown, Clock, Filter, Trophy } from "lucide-react";
+import { ChevronDown, Clock, Filter, MessageSquare, Trophy } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { Game, GamePreferences, GameSchema, LolSchema, CsSchema } from "../../types/duo";
+import { lolTierEmblemUrl } from "@/lib/lolRankedEmblem";
+import { LolRankEmblemFrame } from "@/components/lol/LolRankEmblemFrame";
 
 const PLAY_TIMES = [
   { id: "morning", label: "Manhã (6h – 12h)" },
@@ -16,6 +19,8 @@ const PLAY_TIMES = [
 
 // const AGES = [];     // TEMPORARIAMENTE IGNORADO
 // const SERVERS = [];  // TEMPORARIAMENTE IGNORADO
+
+const DUO_NOTE_MAX = 240;
 
 interface EloFilterProps {
   game: Game;
@@ -47,6 +52,10 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
     (preferences as any).play_times ?? []
   );
 
+  const [duoNote, setDuoNote] = useState<string>(
+    String((preferences as any).duo_note ?? "")
+  );
+
   const toggleElo = (tier: string) =>
     setSelectedElos((prev) =>
       prev.includes(tier) ? prev.filter((t) => t !== tier) : [...prev, tier]
@@ -63,11 +72,15 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
     );
 
   function handleSearch() {
-    const base: Partial<GamePreferences> = { play_times: selectedTimes } as any;
+    const note = duoNote.trim().slice(0, DUO_NOTE_MAX);
+    const base: Partial<GamePreferences> = {
+      play_times: selectedTimes,
+      duo_note: note,
+    } as Partial<GamePreferences>;
     if (isLol) {
-      onNext({ ...base, accepted_elo: selectedElos } as any);
+      onNext({ ...base, accepted_elo: selectedElos } as Partial<GamePreferences>);
     } else if (isCs) {
-      onNext({ ...base, accepted_ranges: selectedRanges } as any);
+      onNext({ ...base, accepted_ranges: selectedRanges } as Partial<GamePreferences>);
     } else {
       onNext(base);
     }
@@ -132,19 +145,30 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
                 align="start"
                 className="z-[120] max-h-60 w-[var(--radix-popover-trigger-width)] min-w-[12rem] overflow-y-auto border-border p-2 shadow-lg"
               >
-                {eloOptions.map((opt) => (
-                  <div
-                    key={opt}
-                    className="flex cursor-pointer items-center gap-3 rounded-lg py-2 pl-2 pr-1 hover:bg-muted/50"
-                    onClick={() => toggleEloFn(opt)}
-                  >
-                    <Checkbox
-                      checked={selectedEloValues.includes(opt)}
-                      onCheckedChange={() => toggleEloFn(opt)}
-                    />
-                    <span className="text-sm">{opt}</span>
-                  </div>
-                ))}
+                {eloOptions.map((opt) => {
+                  const emblem = isLol ? lolTierEmblemUrl(opt) : null;
+                  return (
+                    <div
+                      key={opt}
+                      className="flex cursor-pointer items-center gap-3 rounded-lg py-2 pl-2 pr-1 hover:bg-muted/50"
+                      onClick={() => toggleEloFn(opt)}
+                    >
+                      <Checkbox
+                        checked={selectedEloValues.includes(opt)}
+                        onCheckedChange={() => toggleEloFn(opt)}
+                      />
+                      {emblem ? (
+                        <LolRankEmblemFrame
+                          src={emblem}
+                          alt={`Elo ${opt}`}
+                          frameClass="h-11 w-11"
+                          zoomPercent={182}
+                        />
+                      ) : null}
+                      <span className="text-sm">{opt}</span>
+                    </div>
+                  );
+                })}
               </PopoverContent>
             </Popover>
 
@@ -196,6 +220,31 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
 
           {/* Servidor – TEMPORARIAMENTE IGNORADO */}
           {/* <div>Servidor</div> */}
+        </div>
+
+        <div className="relative mb-10 overflow-hidden rounded-2xl border border-border/60 bg-card/35 p-6 shadow-sm backdrop-blur-sm before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-primary/35 before:to-transparent">
+          <div className="mb-3 flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/12 text-primary ring-1 ring-primary/25">
+              <MessageSquare className="h-5 w-5" />
+            </span>
+            <div>
+              <h3 className="text-base font-semibold text-card-foreground">Recado para o duo</h3>
+              <p className="text-xs text-muted-foreground">
+                Opcional. Aparece para quem te encontrar (até {DUO_NOTE_MAX} caracteres).
+              </p>
+            </div>
+          </div>
+          <Textarea
+            value={duoNote}
+            onChange={(e) => setDuoNote(e.target.value.slice(0, DUO_NOTE_MAX))}
+            placeholder='Ex.: "Procuro duo tryhard à noite" ou "Só casual e diversão"'
+            className="min-h-[88px] resize-y rounded-xl border-border/80 bg-input/40 text-sm"
+            maxLength={DUO_NOTE_MAX}
+            aria-label="Mensagem para quem encontrar seu perfil no duo"
+          />
+          <p className="mt-1.5 text-right text-[10px] text-muted-foreground tabular-nums">
+            {duoNote.length}/{DUO_NOTE_MAX}
+          </p>
         </div>
 
         <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center sm:gap-4">

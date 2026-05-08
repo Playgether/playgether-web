@@ -179,6 +179,11 @@ export function GamesCanvasUserProfile({
   const profileCardBioNeedsToggle =
     profileCardBioText.length > PROFILE_CARD_BIO_COLLAPSE_AFTER_CHARS ||
     profileCardBioLineCount > PROFILE_CARD_BIO_COLLAPSE_AFTER_LINES;
+  const likesLabel = new Intl.NumberFormat("pt-BR", {
+    notation: likes >= 100000 ? "compact" : "standard",
+    compactDisplay: "short",
+    maximumFractionDigits: likes >= 100000 ? 1 : 0,
+  }).format(likes);
 
   return (
     <>
@@ -289,6 +294,27 @@ export function GamesCanvasUserProfile({
                     </div>
                   ))}
                 </div>
+                <div className="flex items-center justify-center pb-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isOwner}
+                    onClick={!isOwner ? handleLike : undefined}
+                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm ${
+                      isOwner
+                        ? "cursor-default border-border bg-muted/40 text-card-foreground opacity-100"
+                        : isLiked
+                          ? "text-red-500 border-red-500/30 bg-red-500/10 hover:bg-red-500/15"
+                          : "border-border text-card-foreground hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/30"
+                    }`}
+                    title={`${likes.toLocaleString("pt-BR")} curtidas`}
+                  >
+                    <Heart
+                      className={`h-4 w-4 ${isLiked ? "fill-current text-red-500" : "text-red-500"}`}
+                    />
+                    <span className="font-medium">{likesLabel} curtidas</span>
+                  </Button>
+                </div>
 
                 {!isOwner && (
                   <div className="space-y-2">
@@ -307,21 +333,6 @@ export function GamesCanvasUserProfile({
                         {isFollowing ? "Seguindo" : "Seguir"}
                       </Button>
 
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className={`${
-                          isLiked
-                            ? "text-red-500 border-red-500/30 bg-red-500/10"
-                            : "border-border text-muted-foreground hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/30"
-                        } transition-all duration-200`}
-                        onClick={handleLike}
-                      >
-                        <Heart
-                          className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`}
-                        />
-                        <span className="ml-1 text-xs">{likes}</span>
-                      </Button>
                     </div>
                   </div>
                 )}

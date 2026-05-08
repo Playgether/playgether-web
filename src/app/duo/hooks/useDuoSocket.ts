@@ -25,6 +25,8 @@ interface DuoSocketState {
   queueStatus: WsQueueStatus | null;
   expiresAt: string | null;
   isNearExpiry: boolean;
+  /** Present when `queueStatus === "evicted"` (ex.: `afk`, `expired`). */
+  evictionReason: string | null;
   matches: DuoMatch[];
   error: string | null;
 }
@@ -50,6 +52,7 @@ export function useDuoSocket({
     queueStatus: null,
     expiresAt: null,
     isNearExpiry: false,
+    evictionReason: null,
     matches: [],
     error: null,
   });
@@ -91,15 +94,29 @@ export function useDuoSocket({
 
     function handleMessage(msg: WsMessage) {
       switch (msg.type) {
-        case "duo_queue_status":
+        case "duo_queue_status": {
+          const clearsEviction =
+            msg.status === "searching" ||
+            msg.status === "in_queue" ||
+            msg.status === "renewed" ||
+            msg.status === "preferences_updated" ||
+            msg.status === "not_in_queue" ||
+            msg.status === "left";
           setState((s) => ({
             ...s,
             queueStatus: msg.status,
-            expiresAt: msg.expires_at ?? s.expiresAt,
+            expiresAt: msg.status === "evicted" ? null : (msg.expires_at ?? s.expiresAt),
             isNearExpiry: msg.is_near_expiry ?? s.isNearExpiry,
+            evictionReason:
+              msg.status === "evicted"
+                ? (msg.reason ?? "afk")
+                : clearsEviction
+                  ? null
+                  : s.evictionReason,
             error: null,
           }));
           break;
+        }
 
         case "duo_match":
           setState((s) => ({

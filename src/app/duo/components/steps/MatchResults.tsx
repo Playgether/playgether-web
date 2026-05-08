@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -13,9 +13,12 @@ import {
   Wifi,
   WifiOff,
   AlertCircle,
+  CircleCheck,
+  XCircle,
   Target,
   Crosshair,
   Timer,
+  Percent,
   Sunrise,
   Sun,
   Sunset,
@@ -26,7 +29,11 @@ import { PresenceStatusDot } from "@/components/presence/PresenceStatusDot";
 import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
 import { useDuoSocket } from "../../hooks/useDuoSocket";
 import { useLiveExpiryLabel } from "../../hooks/useLiveExpiryLabel";
+import { getActiveQueues } from "../../services/duoApi";
 import { usePresenceContext } from "@/context/PresenceContext";
+import { LolRankEmblemFrame } from "@/components/lol/LolRankEmblemFrame";
+import { LolLaneRoleIcon } from "@/components/lol/LolLaneRoleIcon";
+import { lolTierEmblemUrl } from "@/lib/lolRankedEmblem";
 import type { DuoMatch, Game, GamePreferences } from "../../types/duo";
 
 interface MatchResultsProps {
@@ -34,6 +41,8 @@ interface MatchResultsProps {
   preferences: Partial<GamePreferences>;
   /** Mesmo destino que «Editar preferências» em manage-queue: fluxo a partir da verificação do perfil. */
   onEditFilters: () => void;
+  /** Fila expirou (TTL) — voltar ao passo de preferências avançadas. */
+  onQueueExpired: () => void;
   /** Volta à escolha de jogos (lista inicial do Duo Finder). */
   onChooseGame: () => void;
 }
@@ -76,7 +85,13 @@ function summarizeSelectionList(
   return `${normalized.slice(0, maxVisible).join(", ")} +${normalized.length - maxVisible}`;
 }
 
-export function MatchResults({ game, preferences, onEditFilters, onChooseGame }: MatchResultsProps) {
+export function MatchResults({
+  game,
+  preferences,
+  onEditFilters,
+  onQueueExpired,
+  onChooseGame,
+}: MatchResultsProps) {
   const slug = game.acronym.toLowerCase();
   const { getPresence } = usePresenceContext();
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
@@ -88,12 +103,14 @@ export function MatchResults({ game, preferences, onEditFilters, onChooseGame }:
     [preferences]
   );
   const lastSentPrefsSigRef = useRef<string | null>(null);
+  const expiryNavigateRef = useRef(false);
 
   const {
     connected,
     queueStatus,
     expiresAt,
     isNearExpiry,
+    evictionReason,
     matches,
     error,
     startSearch,
@@ -136,6 +153,49 @@ export function MatchResults({ game, preferences, onEditFilters, onChooseGame }:
       setSearching(false);
     }
   }, [queueStatus]);
+
+  useEffect(() => {
+    if (queueStatus !== "evicted" || evictionReason !== "expired") return;
+    if (expiryNavigateRef.current) return;
+    expiryNavigateRef.current = true;
+    lastSentPrefsSigRef.current = null;
+    onQueueExpired();
+  }, [queueStatus, evictionReason, onQueueExpired]);
+
+  useEffect(() => {
+    if (!expiresAt) return;
+    const activeInQueue =
+      queueStatus === "in_queue" ||
+      queueStatus === "searching" ||
+      queueStatus === "renewed" ||
+      queueStatus === "preferences_updated";
+    if (!activeInQueue) return;
+
+    let cancelled = false;
+    const tick = async () => {
+      if (new Date(expiresAt).getTime() > Date.now()) return;
+      if (expiryNavigateRef.current) return;
+      try {
+        const queues = await getActiveQueues();
+        if (cancelled) return;
+        const still = queues.find((q) => (q.game_slug || "").toLowerCase() === slug);
+        if (!still) {
+          expiryNavigateRef.current = true;
+          lastSentPrefsSigRef.current = null;
+          onQueueExpired();
+        }
+      } catch {
+        /* ignore */
+      }
+    };
+
+    const id = window.setInterval(() => void tick(), 2000);
+    void tick();
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [expiresAt, queueStatus, slug, onQueueExpired]);
 
   useEffect(() => {
     if (!searching || matches.length > 0) {
@@ -247,7 +307,7 @@ export function MatchResults({ game, preferences, onEditFilters, onChooseGame }:
           </div>
         )}
 
-        {queueStatus === "evicted" && (
+        {queueStatus === "evicted" && evictionReason !== "expired" && (
           <div className="card-glass rounded-xl p-4 mb-6 flex items-center space-x-3 border-yellow-500/30">
             <AlertCircle className="w-5 h-5 text-yellow-400" />
             <span className="text-sm text-yellow-400">
@@ -357,7 +417,8 @@ export function MatchResults({ game, preferences, onEditFilters, onChooseGame }:
         {!bootstrapping &&
           !searching &&
           sortedMatches.length === 0 &&
-          queueStatus !== "evicted" && (
+          queueStatus !== "evicted" &&
+          evictionReason !== "expired" && (
           <div className="flex flex-col items-center justify-center py-24 space-y-4">
             <Trophy className="w-12 h-12 text-muted-foreground" />
             <p className="text-muted-foreground text-center">
@@ -398,7 +459,7 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
 
   return (
     <div
-      className="card-glass bg-[#0F172A] rounded-xl p-6 animate-fade-in-scale hover:scale-[1.02] transition-all duration-300"
+      className="card-glass min-w-0 bg-[#0F172A] rounded-xl p-6 animate-fade-in-scale hover:scale-[1.02] transition-all duration-300"
       style={{ animationDelay: `${index * 0.08}s` }}
     >
       {/* Header */}
@@ -443,42 +504,173 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
         </div>
       ) : null}
 
+      {typeof prefs.duo_note === "string" && prefs.duo_note.trim() ? (
+        <div className="mb-4 rounded-lg border border-primary/25 bg-primary/[0.06] p-3">
+          <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-primary">
+            <MessageSquare className="h-3 w-3 shrink-0" />
+            Recado dele
+          </p>
+          <p className="text-sm leading-relaxed text-card-foreground whitespace-pre-wrap break-words">
+            {prefs.duo_note.trim()}
+          </p>
+        </div>
+      ) : null}
+
       {/* Game-specific preferences summary */}
       <div className="space-y-4 mb-5">
         {slug === "lol" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-0">
-            <div className="space-y-2 sm:pr-4">
-              <p className="text-xs font-semibold text-primary uppercase tracking-wide">
-                Dele
-              </p>
-              {prefs.main_role ? (
-                <InfoRow label="Lane principal" value={prefs.main_role} />
-              ) : null}
-              {prefs.secondary_role ? (
-                <InfoRow label="Lane secundária" value={prefs.secondary_role} />
-              ) : null}
-              {prefs.own_elo ? (
-                <InfoRow label="Elo" value={prefs.own_elo} />
-              ) : null}
+          <>
+            <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-0">
+              <div className="min-w-0 space-y-2 sm:pr-4">
+                <p className="text-xs font-semibold text-primary uppercase tracking-wide">
+                  Dele
+                </p>
+                {prefs.main_role ? (
+                  <InfoRow
+                    label="Lane principal"
+                    value={prefs.main_role}
+                    valuePrefix={
+                      <LolLaneRoleIcon roleLabel={String(prefs.main_role)} className="h-3.5 w-3.5" />
+                    }
+                  />
+                ) : null}
+                {prefs.secondary_role ? (
+                  <InfoRow
+                    label="Lane secundária"
+                    value={prefs.secondary_role}
+                    valuePrefix={
+                      <LolLaneRoleIcon
+                        roleLabel={String(prefs.secondary_role)}
+                        className="h-3.5 w-3.5"
+                      />
+                    }
+                  />
+                ) : null}
+                {prefs.own_elo ? (
+                  <InfoRow label="Elo declarado" value={prefs.own_elo} />
+                ) : null}
+              </div>
+              <div className="min-w-0 space-y-2 sm:border-l sm:border-border/60 sm:pl-4">
+                <p className="text-xs font-semibold text-primary uppercase tracking-wide">
+                  O que procura
+                </p>
+                {prefs.desired_roles?.length > 0 ? (
+                  <div className="w-full min-w-0 space-y-1.5 text-sm">
+                    <p className="text-muted-foreground leading-5">Lanes no duo</p>
+                    <div className="flex w-full max-w-full flex-wrap content-start justify-start gap-1.5">
+                      {(prefs.desired_roles as string[]).map((lane) => (
+                        <span
+                          key={lane}
+                          className="inline-flex shrink-0 items-center gap-0.5 rounded border border-border/50 bg-muted/20 px-1.5 py-0.5"
+                        >
+                          <LolLaneRoleIcon roleLabel={lane} className="h-3.5 w-3.5" />
+                          <span className="whitespace-nowrap text-[11px] font-medium leading-none text-card-foreground">
+                            {lane}
+                          </span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                {prefs.accepted_elo?.length > 0 ? (
+                  <div className="w-full min-w-0 space-y-1.5 text-sm">
+                    <p className="text-muted-foreground leading-5">Elos que aceita</p>
+                    <div className="flex w-full max-w-full flex-wrap content-start justify-start gap-1.5">
+                      {(prefs.accepted_elo as string[]).map((tier) => {
+                        const emblem = lolTierEmblemUrl(tier);
+                        return (
+                          <span
+                            key={tier}
+                            className="inline-flex shrink-0 items-center gap-1 rounded border border-border/50 bg-muted/20 px-1.5 py-0.5"
+                          >
+                            {emblem ? (
+                              <LolRankEmblemFrame
+                                src={emblem}
+                                alt=""
+                                frameClass="h-6 w-6 shrink-0"
+                                zoomPercent={188}
+                              />
+                            ) : null}
+                            <span className="whitespace-nowrap text-[11px] font-medium leading-none text-card-foreground">
+                              {tier}
+                            </span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             </div>
-            <div className="space-y-2 sm:border-l sm:border-border/60 sm:pl-4">
-              <p className="text-xs font-semibold text-primary uppercase tracking-wide">
-                O que procura
+
+            <div className="pt-3 border-t border-border/50">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Conta ranqueada (Riot)
               </p>
-              {prefs.desired_roles?.length > 0 ? (
-                <InfoRow
-                  label="Lanes no duo"
-                  value={prefs.desired_roles.join(", ")}
-                />
-              ) : null}
-              {prefs.accepted_elo?.length > 0 ? (
-                <InfoRow
-                  label="Elos que aceita"
-                  value={prefs.accepted_elo.join(", ")}
-                />
-              ) : null}
+              <div className="grid grid-cols-2 items-stretch gap-2 sm:grid-cols-4">
+                <div className="flex min-h-[7.25rem] flex-col rounded-lg border border-border/40 bg-muted/30 p-2.5">
+                  <div className="flex flex-1 flex-col items-center justify-center">
+                    {typeof gs.tier_emblem_url === "string" && gs.tier_emblem_url.trim() ? (
+                      <LolRankEmblemFrame
+                        src={gs.tier_emblem_url}
+                        alt=""
+                        frameClass="h-10 w-10"
+                        zoomPercent={182}
+                      />
+                    ) : (
+                      <div
+                        className="flex h-10 w-10 items-center justify-center rounded-xl border border-border/60 bg-muted/50 text-[10px] text-muted-foreground"
+                        aria-hidden
+                      >
+                        —
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-auto w-full text-center">
+                    <div className="text-[10px] leading-tight text-muted-foreground">Elo</div>
+                    <div className="mt-0.5 break-words text-sm font-semibold leading-tight text-card-foreground">
+                      {typeof gs.rank === "string" && gs.rank.trim() ? gs.rank : "—"}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex min-h-[7.25rem] flex-col rounded-lg border border-border/40 bg-muted/30 p-2.5">
+                  <div className="flex flex-1 flex-col items-center justify-center">
+                    <CircleCheck className="h-5 w-5 text-emerald-400" strokeWidth={2.25} />
+                  </div>
+                  <div className="mt-auto w-full text-center">
+                    <div className="text-[10px] leading-tight text-muted-foreground">Vitórias</div>
+                    <div className="mt-0.5 text-sm font-semibold tabular-nums text-card-foreground">
+                      {typeof gs.wins === "number" ? gs.wins : "—"}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex min-h-[7.25rem] flex-col rounded-lg border border-border/40 bg-muted/30 p-2.5">
+                  <div className="flex flex-1 flex-col items-center justify-center">
+                    <XCircle className="h-5 w-5 text-rose-400" strokeWidth={2.25} />
+                  </div>
+                  <div className="mt-auto w-full text-center">
+                    <div className="text-[10px] leading-tight text-muted-foreground">Derrotas</div>
+                    <div className="mt-0.5 text-sm font-semibold tabular-nums text-card-foreground">
+                      {typeof gs.losses === "number" ? gs.losses : "—"}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex min-h-[7.25rem] flex-col rounded-lg border border-border/40 bg-muted/30 p-2.5">
+                  <div className="flex flex-1 flex-col items-center justify-center">
+                    <Percent className="h-5 w-5 text-sky-400" strokeWidth={2.25} />
+                  </div>
+                  <div className="mt-auto w-full text-center">
+                    <div className="text-[10px] leading-tight text-muted-foreground">Winrate</div>
+                    <div className="mt-0.5 text-sm font-semibold tabular-nums text-card-foreground">
+                      {gs.winrate != null && Number.isFinite(Number(gs.winrate))
+                        ? `${gs.winrate}%`
+                        : "—"}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          </>
         )}
 
         {slug === "cs2" && (
@@ -625,12 +817,21 @@ function PlayTimeChip({ slotId }: { slotId: string }) {
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
+function InfoRow({
+  label,
+  value,
+  valuePrefix,
+}: {
+  label: string;
+  value: string;
+  valuePrefix?: ReactNode;
+}) {
   return (
     <div className="grid grid-cols-[auto,minmax(0,1fr)] items-start gap-x-3 text-sm">
       <span className="text-muted-foreground leading-5">{label}</span>
-      <span className="break-words text-right font-medium leading-5 text-card-foreground">
-        {value}
+      <span className="flex items-start justify-end gap-2 text-right">
+        {valuePrefix ? <span className="shrink-0 pt-0.5">{valuePrefix}</span> : null}
+        <span className="break-words font-medium leading-5 text-card-foreground">{value}</span>
       </span>
     </div>
   );

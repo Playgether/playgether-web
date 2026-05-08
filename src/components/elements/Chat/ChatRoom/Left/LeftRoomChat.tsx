@@ -5,10 +5,10 @@ import ChatRoomPeople from "./ChatRoomPeople";
 import LeftRoomChatActions from "./LeftRoomChatActions";
 
 async function LeftRoomChat({
-  room_id,
+  room_slug,
   is_favorited,
 }: {
-  room_id: number;
+  room_slug: string;
   is_favorited: boolean;
 }) {
   return (
@@ -16,7 +16,7 @@ async function LeftRoomChat({
       <HeaderChatRoom />
       <SearchChat />
       <ChatRoomPeople />
-      <LeftRoomChatActions room_id={room_id} is_favorited={is_favorited} />
+      <LeftRoomChatActions room_slug={room_slug} is_favorited={is_favorited} />
     </div>
   );
 }
