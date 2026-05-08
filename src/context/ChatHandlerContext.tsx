@@ -121,6 +121,15 @@ const ChatHandlerContext = createContext<ChatHandlerContextProps>(
   {} as ChatHandlerContextProps,
 );
 
+function wsBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_WS_URL) return process.env.NEXT_PUBLIC_WS_URL;
+  if (typeof window !== "undefined") {
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    return `${protocol}//${window.location.hostname}:8000`;
+  }
+  return "ws://localhost:8000";
+}
+
 const ChatHandlerContextProvider = ({
   token,
   chatroom,
@@ -132,7 +141,7 @@ const ChatHandlerContextProvider = ({
 }) => {
   const encodedChatroom = encodeURIComponent(chatroom);
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
-    `ws://192.168.18.8:8000/ws/chatroom/${encodedChatroom}?token=${token}`,
+    `${wsBaseUrl()}/ws/chatroom/${encodedChatroom}?token=${token}`,
     {
       share: false,
       shouldReconnect: () => false,
