@@ -15,6 +15,11 @@ import useWebSocket, { ReadyState } from "react-use-websocket";
 import { useAuthContext } from "./AuthContext";
 import { OnlineUsersChatRoom } from "@/types/OnlineUsersChatRoom";
 import type { RoomMusicClientAction, RoomMusicState } from "@/types/RoomMusic";
+import type {
+  RoomAmbienceClientAction,
+  RoomAmbienceMessage,
+  RoomAmbienceState,
+} from "@/types/RoomAmbience";
 
 export type RoomJoinNotice = { id: number; text: string };
 
@@ -25,6 +30,23 @@ const defaultRoomMusicState = (): RoomMusicState => ({
   volume: 80,
   position_sec: 0,
   sync_epoch_ms: 0,
+});
+
+const defaultRoomAmbienceState = (): RoomAmbienceState => ({
+  active: false,
+  host_user_id: null,
+  host_username: "",
+  host_profile_photo: "",
+  video_id: "",
+  title: "",
+  channel_name: "",
+  channel_url: "",
+  channel_thumbnail: "",
+  channel_avatar_url: "",
+  playing: false,
+  position_sec: 0,
+  sync_epoch_ms: 0,
+  viewers: [],
 });
 
 function easeOutCubic(t: number): number {
@@ -88,6 +110,11 @@ type ChatHandlerContextProps = {
   sendRoomMusic: (payload: RoomMusicClientAction) => void;
   roomMusicError: string | null;
   clearRoomMusicError: () => void;
+  roomAmbience: RoomAmbienceState;
+  roomAmbienceMessages: RoomAmbienceMessage[];
+  sendRoomAmbience: (payload: RoomAmbienceClientAction) => void;
+  roomAmbienceError: string | null;
+  clearRoomAmbienceError: () => void;
 };
 
 const ChatHandlerContext = createContext<ChatHandlerContextProps>(
@@ -103,8 +130,9 @@ const ChatHandlerContextProvider = ({
   chatroom: string;
   children: React.ReactNode;
 }) => {
+  const encodedChatroom = encodeURIComponent(chatroom);
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
-    `ws://192.168.18.8:8000/ws/chatroom/${chatroom}?token=${token}`,
+    `ws://192.168.18.8:8000/ws/chatroom/${encodedChatroom}?token=${token}`,
     {
       share: false,
       shouldReconnect: () => false,
@@ -132,6 +160,13 @@ const ChatHandlerContextProvider = ({
     useState<RoomEventInvitePayload | null>(null);
   const [roomMusic, setRoomMusic] = useState<RoomMusicState>(defaultRoomMusicState);
   const [roomMusicError, setRoomMusicError] = useState<string | null>(null);
+  const [roomAmbience, setRoomAmbience] = useState<RoomAmbienceState>(
+    defaultRoomAmbienceState,
+  );
+  const [roomAmbienceMessages, setRoomAmbienceMessages] = useState<
+    RoomAmbienceMessage[]
+  >([]);
+  const [roomAmbienceError, setRoomAmbienceError] = useState<string | null>(null);
   const chatSurfaceHiddenRef = useRef(false);
 
   const setChatSurfaceHidden = useCallback((hidden: boolean) => {
@@ -145,11 +180,20 @@ const ChatHandlerContextProvider = ({
   const clearRoomEventInvite = () => setRoomEventInvite(null);
 
   const clearRoomMusicError = useCallback(() => setRoomMusicError(null), []);
+  const clearRoomAmbienceError = useCallback(() => setRoomAmbienceError(null), []);
 
   const sendRoomMusic = useCallback(
     (payload: RoomMusicClientAction) => {
       if (readyState !== ReadyState.OPEN) return;
       sendJsonMessage({ type: "room_music", ...payload });
+    },
+    [readyState, sendJsonMessage],
+  );
+
+  const sendRoomAmbience = useCallback(
+    (payload: RoomAmbienceClientAction) => {
+      if (readyState !== ReadyState.OPEN) return;
+      sendJsonMessage({ type: "room_ambience", ...payload });
     },
     [readyState, sendJsonMessage],
   );
@@ -250,6 +294,99 @@ const ChatHandlerContextProvider = ({
     room_music_error: (data: { message?: string }) => {
       setRoomMusicError(
         typeof data.message === "string" ? data.message : "Erro na música da sala.",
+      );
+    },
+    room_ambience_state: (data: {
+      state?: RoomAmbienceState;
+      messages?: RoomAmbienceMessage[];
+    }) => {
+      const s = data.state;
+      if (s && typeof s === "object") {
+        const next = defaultRoomAmbienceState();
+        next.active = Boolean(s.active);
+        next.host_user_id =
+          typeof s.host_user_id === "number" ? s.host_user_id : null;
+        next.host_username =
+          typeof s.host_username === "string" ? s.host_username : "";
+        next.host_profile_photo =
+          typeof s.host_profile_photo === "string" ? s.host_profile_photo : "";
+        next.video_id = typeof s.video_id === "string" ? s.video_id : "";
+        next.title = typeof s.title === "string" ? s.title : "";
+        next.channel_name =
+          typeof s.channel_name === "string" ? s.channel_name : "";
+        next.channel_url =
+          typeof s.channel_url === "string" ? s.channel_url : "";
+        next.channel_thumbnail =
+          typeof s.channel_thumbnail === "string" ? s.channel_thumbnail : "";
+        next.channel_avatar_url =
+          typeof s.channel_avatar_url === "string" ? s.channel_avatar_url : "";
+        next.playing = Boolean(s.playing);
+        next.position_sec =
+          typeof s.position_sec === "number" ? Math.max(0, s.position_sec) : 0;
+        next.sync_epoch_ms =
+          typeof s.sync_epoch_ms === "number" ? s.sync_epoch_ms : 0;
+        next.viewers = Array.isArray(s.viewers)
+          ? s.viewers
+              .filter((x) => Boolean(x) && typeof x === "object")
+              .map((x) => {
+                const o = x as Record<string, unknown>;
+                return {
+                  user_id: typeof o.user_id === "number" ? o.user_id : 0,
+                  username: typeof o.username === "string" ? o.username : "",
+                  fullname: typeof o.fullname === "string" ? o.fullname : "",
+                  profile_photo: typeof o.profile_photo === "string" ? o.profile_photo : "",
+                };
+              })
+              .filter((x) => x.user_id > 0)
+          : [];
+        setRoomAmbience(next);
+        if (!next.active) {
+          setRoomAmbienceMessages([]);
+        }
+      }
+      if (Array.isArray(data.messages)) {
+        const parsed = data.messages
+          .filter((x) => Boolean(x) && typeof x === "object")
+          .map((x) => {
+            const m = x as Record<string, unknown>;
+            const author_user_id =
+              typeof m.author_user_id === "number" ? m.author_user_id : 0;
+            return {
+              id: typeof m.id === "number" ? m.id : 0,
+              author_user_id,
+              author_username:
+                typeof m.author_username === "string" ? m.author_username : "",
+              author_photo:
+                typeof m.author_photo === "string" ? m.author_photo : undefined,
+              body: typeof m.body === "string" ? m.body : "",
+              created_at_ms:
+                typeof m.created_at_ms === "number" ? m.created_at_ms : 0,
+              is_system: author_user_id === 0,
+            } satisfies RoomAmbienceMessage;
+          })
+          .filter((m) => m.id > 0 && m.body);
+        setRoomAmbienceMessages(parsed);
+      }
+    },
+    room_ambience_chat_message: (data: { message?: RoomAmbienceMessage }) => {
+      const m = data.message;
+      if (!m || typeof m !== "object") return;
+      const normalized: RoomAmbienceMessage = {
+        ...m,
+        is_system:
+          m.is_system ??
+          (typeof m.author_user_id === "number" && m.author_user_id === 0),
+      };
+      setRoomAmbienceMessages((prev) => {
+        if (prev.some((x) => x.id === normalized.id)) return prev;
+        return [...prev, normalized].slice(-200);
+      });
+    },
+    room_ambience_error: (data: { message?: string }) => {
+      setRoomAmbienceError(
+        typeof data.message === "string"
+          ? data.message
+          : "Erro no modo ambiente.",
       );
     },
     room_event_sync: (data: {
@@ -447,6 +584,11 @@ const ChatHandlerContextProvider = ({
         sendRoomMusic,
         roomMusicError,
         clearRoomMusicError,
+        roomAmbience,
+        roomAmbienceMessages,
+        sendRoomAmbience,
+        roomAmbienceError,
+        clearRoomAmbienceError,
       }}
     >
       {children}

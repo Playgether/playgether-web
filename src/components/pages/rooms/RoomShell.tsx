@@ -14,7 +14,7 @@ export function RoomShell({
   children: React.ReactNode;
 }) {
   return (
-    <ChatHandlerContextProvider chatroom={room.group_name} token={token}>
+    <ChatHandlerContextProvider chatroom={room.slug || room.group_name} token={token}>
       <RoomEventSessionProvider room={room}>{children}</RoomEventSessionProvider>
     </ChatHandlerContextProvider>
   );
