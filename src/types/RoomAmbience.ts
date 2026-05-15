@@ -58,4 +58,6 @@ export type RoomAmbienceClientAction =
     }
   | { action: "send_message"; body: string }
   | { action: "viewer_join" }
-  | { action: "viewer_leave" };
+  | { action: "viewer_leave" }
+  /** Qualquer cliente pede; o host reage publicando seek com o tempo atual do iframe. */
+  | { action: "request_playback_anchor" };
