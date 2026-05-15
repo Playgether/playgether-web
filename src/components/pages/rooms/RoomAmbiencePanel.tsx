@@ -83,8 +83,15 @@ type SyncMode = "synced" | "independent";
  */
 const REMOTE_APPLY_GUARD_MS = 3200;
 
-/** |drift| estritamente menor que isto = “Ao vivo com host”; a partir daqui = independente na UI e botão Sincronizar. */
-const DRIFT_MAX_ALIGNED_SEC = 2;
+/** Janela maior ao entrar / Sincronizar (buffer do iframe costuma atrasar o seek). */
+const VIEWER_ALIGN_GUARD_MS = 6200;
+
+/** Retentativas só enquanto o seek ficou adiado por BUFFERING (evita “vários cliques” em Sincronizar). */
+const VIEWER_ALIGN_RETRY_MS = 650;
+const VIEWER_ALIGN_MAX_RETRIES = 8;
+
+/** |drift| estritamente menor que isto = “Ao vivo com host”; a partir daqui = independente na UI. */
+const DRIFT_MAX_ALIGNED_SEC = 1;
 
 /**
  * Margem (s) antes do fim da janela DVR = ponto “ao vivo” no YouTube (não recuar ~10s).
@@ -256,6 +263,47 @@ function liveViewerTargetSeconds(
     return hostTimeline;
   }
   return Math.min(hostTimeline, cap);
+}
+
+type HostPlaybackSnapshot = {
+  playing: boolean;
+  position_sec: number;
+  sync_epoch_ms: number;
+};
+
+/**
+ * Drift real viewer vs host (sem remediação de `position_sec` stale — só para UI e modo).
+ */
+function computeViewerHostDriftSec(
+  p: YtPlayer,
+  hs: HostPlaybackSnapshot,
+  actual: number,
+): number {
+  const live = isLivePlayer(p);
+  if (live) {
+    let actualForDrift = actual;
+    try {
+      const cap = liveStreamTimelineCap(p);
+      if (Number.isFinite(cap) && cap < Number.MAX_SAFE_INTEGER / 4) {
+        actualForDrift = Math.min(actual, cap + LIVE_STREAM_EDGE_EPS_SEC);
+      }
+    } catch {
+      /* ignore */
+    }
+    const hostOnTimeline = liveViewerTargetSeconds(
+      p,
+      hs.playing,
+      hs.position_sec,
+      hs.sync_epoch_ms,
+    );
+    return Number.isFinite(hostOnTimeline) ? actualForDrift - hostOnTimeline : 0;
+  }
+  const hostExpected = computeSyncedSeconds(
+    hs.playing,
+    hs.position_sec,
+    hs.sync_epoch_ms,
+  );
+  return actual - hostExpected;
 }
 
 /**
@@ -437,8 +485,10 @@ export default function RoomAmbiencePanel({
    * mudanças de estado vêm do usuário interagindo com o player.
    */
   const applyingRemoteUntilRef = useRef(0);
-  /** Um único seek após “Sincronizar” (cancela o anterior se clicar de novo). */
-  const manualSyncOnceTimerRef = useRef(0);
+  /** Espectador: alinhar com âncora do host (entrada na sala ou Sincronizar). */
+  const pendingViewerAlignRef = useRef(false);
+  const viewerAlignRetryTimerRef = useRef(0);
+  const viewerAlignRetriesLeftRef = useRef(0);
   /** Última leitura do tempo/estado do player, usada para detectar saltos (seeks). */
   const lastPlayerTickRef = useRef<{ at: number; pos: number; playing: boolean } | null>(null);
   /** Último video_id aplicado — usado para resetar syncMode quando o host troca de vídeo. */
@@ -447,6 +497,17 @@ export default function RoomAmbiencePanel({
   /** `sync_epoch_ms` anterior (para saber quando o host publicou nova linha do tempo). */
   const prevSyncEpochForJumpGraceRef = useRef(roomAmbience.sync_epoch_ms);
   const hostPlaybackEpochChangedAtMsRef = useRef(0);
+  const prevEnteredTransmissionRef = useRef(false);
+  /** Evita aplicar alinhamento pendente em rajada (PLAYING/BUFFERING + sync_epoch). */
+  const lastPendingAlignApplyAtMsRef = useRef(0);
+  /** Evita dois `request_playback_anchor` automáticos em sequência (onReady + reentrada). */
+  const lastAutoAnchorRequestAtMsRef = useRef(0);
+  /** Após “Sincronizar”: não aplicar com estado antigo do servidor até chegar o seek da âncora. */
+  const manualSyncAwaitingAnchorRef = useRef(false);
+  const lastManualSyncClickMsRef = useRef(0);
+
+  /** Debounce recuperação após onError do iframe (evita loop). */
+  const lastPlayerErrorRecoverAtMsRef = useRef(0);
 
   const syncModeRef = useRef<SyncMode>(syncMode);
   const setSyncMode = useCallback((m: SyncMode) => {
@@ -461,8 +522,12 @@ export default function RoomAmbiencePanel({
 
   const viewerAlignedMaxDriftSec = DRIFT_MAX_ALIGNED_SEC;
 
-  /** Timeline a menos de 2s do host (eixo usado para “em sincronia” na barra e nas configs). */
-  const viewerTimelineAligned = !amHost && Math.abs(driftSec) < viewerAlignedMaxDriftSec;
+  /**
+   * UI binária: “Ao vivo com host” só com drift &lt; 1s e seguindo o host; caso contrário
+   * “Modo independente” (inclui buffer pós-entrada até alinhar).
+   */
+  const viewerLiveWithHost =
+    !amHost && syncMode === "synced" && Math.abs(driftSec) < viewerAlignedMaxDriftSec;
 
   useEffect(() => {
     if (roomAmbience.sync_epoch_ms !== prevSyncEpochForJumpGraceRef.current) {
@@ -489,6 +554,13 @@ export default function RoomAmbiencePanel({
     sendRoomAmbienceRef.current = sendRoomAmbience;
   }, [sendRoomAmbience]);
 
+  const requestPlaybackAnchorAuto = useCallback(() => {
+    const now = Date.now();
+    if (now - lastAutoAnchorRequestAtMsRef.current < 500) return;
+    lastAutoAnchorRequestAtMsRef.current = now;
+    sendRoomAmbienceRef.current({ action: "request_playback_anchor" });
+  }, []);
+
   /** Marca um período curto em que ignoramos mudanças de estado do player como ações do usuário. */
   const markApplyingRemote = useCallback((durationMs = REMOTE_APPLY_GUARD_MS) => {
     applyingRemoteUntilRef.current = Date.now() + durationMs;
@@ -509,7 +581,7 @@ export default function RoomAmbiencePanel({
             const raw = t;
             if (raw >= mx - LIVE_GO_SEEK_MAX_BELOW_CAP_SEC) {
               try {
-                pl.seekTo(Number.MAX_SAFE_INTEGER, true);
+                pl.seekTo(mx, true);
               } catch {
                 /* ignore */
               }
@@ -814,7 +886,8 @@ export default function RoomAmbiencePanel({
                 cap < Number.MAX_SAFE_INTEGER / 4 &&
                 targetPos >= cap - LIVE_GO_SEEK_MAX_BELOW_CAP_SEC
               ) {
-                seekArg = Number.MAX_SAFE_INTEGER;
+                /** “Ir ao vivo”: preferir o teto numérico do DVR — `MAX_SAFE_INTEGER` raramente faz o iframe mostrar erro/recarregar. */
+                seekArg = cap;
               }
             } catch {
               /* ignore */
@@ -842,6 +915,105 @@ export default function RoomAmbiencePanel({
   useEffect(() => {
     applyPlaybackFromStateRef.current = applyPlaybackFromState;
   }, [applyPlaybackFromState]);
+
+  const clearViewerAlignRetries = useCallback(() => {
+    viewerAlignRetriesLeftRef.current = 0;
+    if (viewerAlignRetryTimerRef.current) {
+      window.clearTimeout(viewerAlignRetryTimerRef.current);
+      viewerAlignRetryTimerRef.current = 0;
+    }
+  }, []);
+
+  const scheduleViewerAlignRetry = useCallback(() => {
+    if (viewerAlignRetriesLeftRef.current <= 0) {
+      pendingViewerAlignRef.current = false;
+      return;
+    }
+    if (viewerAlignRetryTimerRef.current) {
+      window.clearTimeout(viewerAlignRetryTimerRef.current);
+    }
+    viewerAlignRetryTimerRef.current = window.setTimeout(() => {
+      viewerAlignRetryTimerRef.current = 0;
+      if (!pendingViewerAlignRef.current || amHostRef.current || syncModeRef.current !== "synced") {
+        return;
+      }
+      viewerAlignRetriesLeftRef.current -= 1;
+      if (viewerAlignRetriesLeftRef.current <= 0) {
+        pendingViewerAlignRef.current = false;
+        return;
+      }
+      markApplyingRemote(VIEWER_ALIGN_GUARD_MS);
+      lastPendingAlignApplyAtMsRef.current = Date.now();
+      applyPlaybackFromStateRef.current?.({
+        forceSeek: true,
+        deferSeekWhileBuffering: true,
+        guardMs: VIEWER_ALIGN_GUARD_MS,
+      });
+      const p = playerRef.current;
+      let stillBuffering = false;
+      try {
+        stillBuffering = (p?.getPlayerState?.() ?? -1) === YT_BUFFERING;
+      } catch {
+        /* ignore */
+      }
+      if (stillBuffering && pendingViewerAlignRef.current) {
+        scheduleViewerAlignRetry();
+      }
+    }, VIEWER_ALIGN_RETRY_MS);
+  }, [markApplyingRemote]);
+
+  /** Entrada na sala / Sincronizar: pede âncora e reaplica até o iframe estabilizar. */
+  const alignViewerToHostPlayback = useCallback(() => {
+    if (amHostRef.current) return;
+    pendingViewerAlignRef.current = true;
+    manualSyncAwaitingAnchorRef.current = false;
+    viewerAlignRetriesLeftRef.current = VIEWER_ALIGN_MAX_RETRIES;
+    markApplyingRemote(VIEWER_ALIGN_GUARD_MS);
+    lastPendingAlignApplyAtMsRef.current = Date.now();
+    applyPlaybackFromStateRef.current?.({
+      forceSeek: true,
+      deferSeekWhileBuffering: true,
+      guardMs: VIEWER_ALIGN_GUARD_MS,
+    });
+    const p = playerRef.current;
+    try {
+      if ((p?.getPlayerState?.() ?? -1) === YT_BUFFERING) {
+        scheduleViewerAlignRetry();
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [markApplyingRemote, scheduleViewerAlignRetry]);
+
+  /** Saiu da transmissão: limpa alinhamento pendente (reentrada pede âncora de novo). */
+  useEffect(() => {
+    if (entered) return;
+    prevEnteredTransmissionRef.current = false;
+    pendingViewerAlignRef.current = false;
+    manualSyncAwaitingAnchorRef.current = false;
+    clearViewerAlignRetries();
+    setDriftSec(0);
+  }, [entered, clearViewerAlignRetries]);
+
+  /**
+   * Reentrou na transmissão (Sair → voltar): mesmo fluxo da primeira entrada — âncora ao host.
+   */
+  useEffect(() => {
+    if (!entered || amHost || !roomAmbience.active || !roomAmbience.video_id) return;
+    const justEntered = !prevEnteredTransmissionRef.current;
+    prevEnteredTransmissionRef.current = true;
+    if (!justEntered) return;
+
+    setSyncMode("synced");
+    requestPlaybackAnchorAuto();
+  }, [
+    entered,
+    amHost,
+    roomAmbience.active,
+    roomAmbience.video_id,
+    setSyncMode,
+    requestPlaybackAnchorAuto,
+  ]);
 
   /**
    * Último estado play/pause que o host (próprio cliente) já comunicou ao servidor.
@@ -893,6 +1065,24 @@ export default function RoomAmbiencePanel({
           iv_load_policy: 3,
         },
         events: {
+          onError: (e: { data: number }) => {
+            /** 2 = parâmetro inválido, 5 = erro HTML5 — às vezes após seeks agressivos; 100/101/150 = vídeo indisponível ou embed bloqueado. */
+            const code = e.data;
+            if (code !== 2 && code !== 5) return;
+            const p = playerRef.current;
+            if (!p?.loadVideoById) return;
+            const vid = roomAmbienceRef.current?.video_id;
+            if (!vid || !roomAmbienceRef.current.active) return;
+            const now = Date.now();
+            if (now - lastPlayerErrorRecoverAtMsRef.current < 10_000) return;
+            lastPlayerErrorRecoverAtMsRef.current = now;
+            try {
+              markApplyingRemote(VIEWER_ALIGN_GUARD_MS);
+              p.loadVideoById(vid);
+            } catch {
+              /* ignore */
+            }
+          },
           onReady: () => {
             const p = playerRef.current;
             if (!p) return;
@@ -908,10 +1098,12 @@ export default function RoomAmbiencePanel({
              */
             lastBroadcastPlayingRef.current = roomAmbienceRef.current.playing;
             if (!amHostRef.current) {
-              applyPlaybackFromStateRef.current?.();
+              setSyncMode("synced");
+              requestPlaybackAnchorAuto();
+              alignViewerToHostPlayback();
             }
             /**
-             * Espectador: uma hidratação com o estado já na sala (sem pedir âncora ao host).
+             * Espectador: pede âncora ao host e alinha (com retentativas em BUFFERING).
              * Novos seeks do host chegam com novo `sync_epoch_ms` e disparam o useEffect.
              * Garante que o iframe possa receber foco do teclado.
              */
@@ -956,6 +1148,29 @@ export default function RoomAmbiencePanel({
               return;
             }
 
+            if (pendingViewerAlignRef.current && state === 1) {
+              if (manualSyncAwaitingAnchorRef.current) return;
+              const now = Date.now();
+              if (now - lastPendingAlignApplyAtMsRef.current < 520) return;
+              lastPendingAlignApplyAtMsRef.current = now;
+              markApplyingRemote(VIEWER_ALIGN_GUARD_MS);
+              applyPlaybackFromStateRef.current?.({
+                forceSeek: true,
+                deferSeekWhileBuffering: true,
+                guardMs: VIEWER_ALIGN_GUARD_MS,
+              });
+              try {
+                const pp = playerRef.current;
+                if ((pp?.getPlayerState?.() ?? -1) === YT_BUFFERING) {
+                  viewerAlignRetriesLeftRef.current = VIEWER_ALIGN_MAX_RETRIES;
+                  scheduleViewerAlignRetry();
+                }
+              } catch {
+                /* ignore */
+              }
+              return;
+            }
+
             // Viewer: ignora dentro da janela de guarda (estamos aplicando estado do host)…
             if (Date.now() < applyingRemoteUntilRef.current) return;
             /**
@@ -977,10 +1192,9 @@ export default function RoomAmbiencePanel({
     });
     return () => {
       cancelled = true;
-      if (manualSyncOnceTimerRef.current) {
-        window.clearTimeout(manualSyncOnceTimerRef.current);
-        manualSyncOnceTimerRef.current = 0;
-      }
+      pendingViewerAlignRef.current = false;
+      manualSyncAwaitingAnchorRef.current = false;
+      clearViewerAlignRetries();
       try {
         playerRef.current?.destroy();
       } catch {
@@ -990,8 +1204,8 @@ export default function RoomAmbiencePanel({
       if (mountRef.current) mountRef.current.innerHTML = "";
       lastPlayerTickRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Player só deve recriar quando vídeo ou estado da sala muda; `localVolume`/`markApplyingRemote`/`setSyncMode` são estáveis ou usados via ref.
-  }, [entered, roomAmbience.active, roomAmbience.video_id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Player só deve recriar quando vídeo ou estado da sala muda; handlers estáveis via ref.
+  }, [entered, roomAmbience.active, roomAmbience.video_id, alignViewerToHostPlayback, clearViewerAlignRetries, setSyncMode, requestPlaybackAnchorAuto, scheduleViewerAlignRetry]);
 
   /**
    * O host é a fonte da verdade — nunca aplicamos estado vindo do servidor no
@@ -1002,11 +1216,36 @@ export default function RoomAmbiencePanel({
   useEffect(() => {
     if (amHost) return;
     if (syncMode !== "synced") return;
-    applyPlaybackFromState();
+    if (pendingViewerAlignRef.current) {
+      try {
+        markApplyingRemote(VIEWER_ALIGN_GUARD_MS);
+        lastPendingAlignApplyAtMsRef.current = Date.now();
+        applyPlaybackFromStateRef.current?.({
+          forceSeek: true,
+          deferSeekWhileBuffering: true,
+          guardMs: VIEWER_ALIGN_GUARD_MS,
+        });
+        try {
+          const p = playerRef.current;
+          if ((p?.getPlayerState?.() ?? -1) === YT_BUFFERING) {
+            viewerAlignRetriesLeftRef.current = VIEWER_ALIGN_MAX_RETRIES;
+            scheduleViewerAlignRetry();
+          }
+        } catch {
+          /* ignore */
+        }
+      } finally {
+        manualSyncAwaitingAnchorRef.current = false;
+      }
+    } else {
+      applyPlaybackFromState();
+    }
   }, [
     amHost,
     syncMode,
     applyPlaybackFromState,
+    scheduleViewerAlignRetry,
+    markApplyingRemote,
     roomAmbience.active,
     roomAmbience.video_id,
     roomAmbience.sync_epoch_ms,
@@ -1026,7 +1265,8 @@ export default function RoomAmbiencePanel({
     lastAppliedVideoIdRef.current = currentVideoId;
     if (amHostRef.current) return;
     setSyncMode("synced");
-  }, [roomAmbience.video_id, setSyncMode]);
+    requestPlaybackAnchorAuto();
+  }, [roomAmbience.video_id, setSyncMode, requestPlaybackAnchorAuto]);
 
   useEffect(() => {
     const p = playerRef.current;
@@ -1044,7 +1284,7 @@ export default function RoomAmbiencePanel({
    * Polling do player (intervalo um pouco mais lento em tela cheia no viewer).
    *
    * 1) Seek grande no host → broadcast seek.
-   * 2) Drift para o badge (≥ 2s = fora de sincronia).
+   * 2) Drift para o badge (≥ 1s = fora de sincronia / modo independente).
    */
   useEffect(() => {
     if (!entered || !roomAmbience.active || !roomAmbience.video_id) return;
@@ -1153,52 +1393,39 @@ export default function RoomAmbiencePanel({
       }
 
       const hs = roomAmbienceRef.current;
-      const live = isLivePlayer(p);
+      const newDrift = computeViewerHostDriftSec(p, hs, actual);
+      const absDrift = Math.abs(newDrift);
+      const alignedBand = viewerAlignedMaxDriftSec;
 
-      let newDrift: number;
-      if (live) {
-        let capDrift: number | null = null;
-        try {
-          const c = liveStreamTimelineCap(p);
-          if (Number.isFinite(c) && c < Number.MAX_SAFE_INTEGER / 4) capDrift = c;
-        } catch {
-          /* ignore */
-        }
-        let actualForDrift = actual;
-        if (capDrift != null) {
-          actualForDrift = Math.min(actual, capDrift + LIVE_STREAM_EDGE_EPS_SEC);
-        }
-        let hostOnTimeline = liveViewerTargetSeconds(
-          p,
-          hs.playing,
-          hs.position_sec,
-          hs.sync_epoch_ms,
-        );
-        if (
-          hs.playing &&
-          hs.position_sec < 8 &&
-          Number.isFinite(hostOnTimeline)
-        ) {
-          hostOnTimeline = remediateLiveStaleServerSeekTarget(
-            p,
-            hs.playing,
-            hs.position_sec,
-            hostOnTimeline,
-            actualForDrift,
-          );
-        }
-        newDrift = Number.isFinite(hostOnTimeline) ? actualForDrift - hostOnTimeline : 0;
-      } else {
-        const hostExpected = computeSyncedSeconds(
-          hs.playing,
-          hs.position_sec,
-          hs.sync_epoch_ms,
-        );
-        newDrift = actual - hostExpected;
+      const driftMin =
+        absDrift >= alignedBand || playerState === YT_BUFFERING
+          ? 0.1
+          : DRIFT_UPDATE_THRESHOLD_SEC;
+      setDriftSec((prev) => {
+        const prevAligned = Math.abs(prev) < alignedBand;
+        const nextAligned = absDrift < alignedBand;
+        if (prevAligned !== nextAligned) return newDrift;
+        if (Math.abs(prev - newDrift) < driftMin) return prev;
+        return newDrift;
+      });
+
+      if (
+        !inGuard &&
+        !pendingViewerAlignRef.current &&
+        syncModeRef.current === "synced" &&
+        absDrift >= alignedBand
+      ) {
+        setSyncMode("independent");
       }
 
-      const driftMin = playerState === YT_BUFFERING ? 0.12 : DRIFT_UPDATE_THRESHOLD_SEC;
-      setDriftSec((prev) => (Math.abs(prev - newDrift) < driftMin ? prev : newDrift));
+      if (
+        pendingViewerAlignRef.current &&
+        syncModeRef.current === "synced" &&
+        absDrift < alignedBand
+      ) {
+        pendingViewerAlignRef.current = false;
+        clearViewerAlignRetries();
+      }
 
       scheduleNext(nextDelayBase);
     };
@@ -1208,7 +1435,15 @@ export default function RoomAmbiencePanel({
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [entered, roomAmbience.active, roomAmbience.video_id, setSyncMode, markApplyingRemote]);
+  }, [
+    entered,
+    roomAmbience.active,
+    roomAmbience.video_id,
+    setSyncMode,
+    markApplyingRemote,
+    clearViewerAlignRetries,
+    viewerAlignedMaxDriftSec,
+  ]);
 
   /** Fecha o popover de configurações ao clicar fora dele. */
   useEffect(() => {
@@ -1415,25 +1650,25 @@ export default function RoomAmbiencePanel({
     else if (kind === "seek") sendRoomAmbience({ action: "seek", position_sec: newPos });
   };
 
-  /** Pede âncora ao host; um único seek após a sala atualizar (evita “disco garrado”). */
+  /** Sincronizar: só um seek quando o host publicar a âncora (evita seek com estado antigo + seek novo). */
   const handleManualSync = useCallback(() => {
     if (amHostRef.current) return;
-    if (manualSyncOnceTimerRef.current) {
-      window.clearTimeout(manualSyncOnceTimerRef.current);
-      manualSyncOnceTimerRef.current = 0;
-    }
-    sendRoomAmbienceRef.current({ action: "request_playback_anchor" });
+    const now = Date.now();
+    if (now - lastManualSyncClickMsRef.current < 700) return;
+    lastManualSyncClickMsRef.current = now;
+
+    clearViewerAlignRetries();
     setSyncMode("synced");
-    manualSyncOnceTimerRef.current = window.setTimeout(() => {
-      manualSyncOnceTimerRef.current = 0;
-      markApplyingRemote(REMOTE_APPLY_GUARD_MS);
-      applyPlaybackFromStateRef.current?.({
-        forceSeek: true,
-        deferSeekWhileBuffering: true,
-        guardMs: REMOTE_APPLY_GUARD_MS,
-      });
-    }, 500);
-  }, [markApplyingRemote, setSyncMode]);
+    pendingViewerAlignRef.current = true;
+    manualSyncAwaitingAnchorRef.current = true;
+    viewerAlignRetriesLeftRef.current = VIEWER_ALIGN_MAX_RETRIES;
+    sendRoomAmbienceRef.current({ action: "request_playback_anchor" });
+    window.setTimeout(() => {
+      if (manualSyncAwaitingAnchorRef.current) {
+        manualSyncAwaitingAnchorRef.current = false;
+      }
+    }, 10_000);
+  }, [setSyncMode, clearViewerAlignRetries]);
 
   const onVolumeRange = (v: number) => {
     const next = Math.max(0, Math.min(100, Math.round(v)));
@@ -1858,44 +2093,19 @@ export default function RoomAmbiencePanel({
                 </>
               ) : (
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  {syncMode === "synced" && viewerTimelineAligned ? (
+                  {viewerLiveWithHost ? (
                     <span
                       className="inline-flex items-center gap-1.5 rounded-full border border-rose-400/60 bg-rose-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-rose-200"
-                      title="Sua posição na timeline está a menos de 2s da do host"
+                      title="Sua posição na timeline está a menos de 1s da do host"
                     >
                       <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-rose-400" />
                       Ao vivo com host
                     </span>
-                  ) : syncMode === "synced" ? (
-                    <>
-                      <span
-                        className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/55 bg-amber-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-100"
-                        title="Seguindo o host; a timeline ainda difere — use Sincronizar se quiser alinhar"
-                      >
-                        <span className="inline-block h-2 w-2 rounded-full bg-amber-300" />
-                        Acompanhando o host
-                      </span>
-                      {Math.abs(driftSec) >= 0.5 ? (
-                        <span className="hidden text-[11px] font-medium text-white/70 sm:inline">
-                          {formatDriftOffsetOnly(driftSec)}
-                        </span>
-                      ) : null}
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="h-8 gap-1.5 border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                        onClick={handleManualSync}
-                        title="Sincronizar com o tempo atual do host"
-                      >
-                        <RefreshCw className="h-3.5 w-3.5" />
-                        Sincronizar
-                      </Button>
-                    </>
                   ) : (
                     <>
                       <span
                         className="inline-flex items-center gap-1.5 rounded-full border border-white/35 bg-white/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-zinc-100"
-                        title="Controle local do player — use Sincronizar para voltar a seguir o host"
+                        title="Fora de sincronia com o host ou controlo local — use Sincronizar"
                       >
                         <span className="inline-block h-2 w-2 rounded-full bg-zinc-300" />
                         Modo independente
@@ -2031,36 +2241,33 @@ export default function RoomAmbiencePanel({
                             Sua transmissão
                           </p>
                           <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
-                            O layout da sala fica salvo neste aparelho. Ao seguir o host, o player
-                            alinha quando ele muda reprodução (seek, play ou pause).{" "}
-                            <strong className="text-foreground">Sincronizar</strong> pede ao host o
-                            tempo atual e ajusta quando a sala atualiza (sem corrigir sozinho só por
-                            drift na timeline).
+                            Ao entrar ou usar <strong className="text-foreground">Sincronizar</strong>,
+                            pedimos ao host o tempo real do vídeo. O chip{" "}
+                            <strong className="text-foreground">Ao vivo com host</strong> só aparece com
+                            menos de 1s de diferença na timeline; caso contrário,{" "}
+                            <strong className="text-foreground">Modo independente</strong>.
                           </p>
                         </div>
                         <div className="px-3 py-2 text-[11px] text-muted-foreground">
-                          {syncMode === "synced" && viewerTimelineAligned ? (
+                          {viewerLiveWithHost ? (
                             <span className="inline-flex items-center gap-1.5">
                               <span className="inline-block h-1.5 w-1.5 rounded-full bg-rose-500" />
-                              Timeline: <strong className="text-foreground">menos de 2s</strong> em relação
+                              Timeline: <strong className="text-foreground">menos de 1s</strong> em relação
                               ao host
-                            </span>
-                          ) : syncMode === "synced" ? (
-                            <span className="inline-flex flex-wrap items-center gap-1.5">
-                              <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500" />
-                              Acompanhando o host —{" "}
-                              <strong className="text-foreground">
-                                {formatDriftOffsetOnly(driftSec)}
-                              </strong>
-                              <span className="text-muted-foreground"> — use Sincronizar se quiser alinhar</span>
                             </span>
                           ) : (
                             <span className="inline-flex flex-wrap items-center gap-1.5">
                               <span className="inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground" />
-                              Modo independente —{" "}
-                              <strong className="text-foreground">
-                                {formatDriftOffsetOnly(driftSec)}
-                              </strong>
+                              Modo independente
+                              {Math.abs(driftSec) >= 0.55 ? (
+                                <>
+                                  {" "}
+                                  —{" "}
+                                  <strong className="text-foreground">
+                                    {formatDriftOffsetOnly(driftSec)}
+                                  </strong>
+                                </>
+                              ) : null}
                               <span className="text-muted-foreground"> — use Sincronizar</span>
                             </span>
                           )}
