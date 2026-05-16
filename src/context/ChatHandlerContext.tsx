@@ -398,6 +398,11 @@ const ChatHandlerContextProvider = ({
           : "Erro no modo ambiente.",
       );
     },
+    room_ambience_anchor_request: () => {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("playgether:ambience-anchor-request"));
+      }
+    },
     room_event_sync: (data: {
       payload?: {
         reason?: string;
