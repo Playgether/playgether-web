@@ -25,6 +25,11 @@ const nextConfig = {
         protocol: "https",
         hostname: "res.cloudinary.com",
       },
+      // backend (Django / Fly.io)
+      {
+        protocol: "https",
+        hostname: "playgether-api.fly.dev",
+      },
 
       // backend (Django / Railway)
       {
