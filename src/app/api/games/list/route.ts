@@ -8,11 +8,6 @@ export async function GET() {
     return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
   }
 
-  const baseUrl = process.env.baseUrl;
-  if (!baseUrl) {
-    return NextResponse.json({ detail: "Missing baseUrl" }, { status: 500 });
-  }
-
   // A API pode paginar; tentamos pegar bastante jogos para a biblioteca.
   const axiosResp = await api.get(`/api/v1/games/`, {
     params: { page_size: 50 },

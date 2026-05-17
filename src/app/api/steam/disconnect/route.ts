@@ -8,11 +8,6 @@ export async function POST() {
     return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
   }
 
-  const baseUrl = process.env.baseUrl;
-  if (!baseUrl) {
-    return NextResponse.json({ detail: "Missing baseUrl" }, { status: 500 });
-  }
-
   const axiosResp = await api.post(
     `/api/games/connections/steam/disconnect/`,
     {},

@@ -11,10 +11,6 @@ export async function GET() {
   if (!accessToken) {
     return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
   }
-  if (!process.env.baseUrl) {
-    return NextResponse.json({ detail: "Missing baseUrl" }, { status: 500 });
-  }
-
   const axiosResp = await api.get("/api/v1/duo/queue/", {
     headers: { Authorization: `Bearer ${accessToken}` },
     validateStatus: () => true,
@@ -38,10 +34,6 @@ export async function POST(request: NextRequest) {
   if (!accessToken) {
     return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
   }
-  if (!process.env.baseUrl) {
-    return NextResponse.json({ detail: "Missing baseUrl" }, { status: 500 });
-  }
-
   const body = await request.text();
 
   const axiosResp = await api.post("/api/v1/duo/queue/", body, {

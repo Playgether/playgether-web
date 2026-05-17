@@ -12,10 +12,6 @@ export async function GET(
     return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
   }
 
-  const baseUrl = process.env.baseUrl;
-  if (!baseUrl) {
-    return NextResponse.json({ detail: "Missing baseUrl" }, { status: 500 });
-  }
 
   const qs = new URL(request.url).searchParams.toString();
   const path = `/api/games/profiles/${profileId}/achievements/${qs ? `?${qs}` : ""}`;
