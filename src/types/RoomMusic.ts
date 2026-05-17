@@ -35,11 +35,16 @@ export type MediaProviders = {
 // ---------------------------------------------------------------------------
 
 export type MediaTrack = {
+  /** YouTube video ID — empty string when track originates from Spotify/Deezer without a YT match. */
   video_id: string;
   title: string;
   artist?: string;
   thumbnail?: string;
   duration_sec?: number | null;
+  /** ISRC code when available from Spotify or Deezer. */
+  isrc?: string | null;
+  /** Canonical identifier in the form "provider:id", e.g. "spotify:4uLU6h..." */
+  canonical_track_id?: string;
   providers?: MediaProviders;
   active_provider?: ProviderName;
   added_by?: string;

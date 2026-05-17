@@ -21,8 +21,8 @@ import {
   X,
 } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
-import { isSafeYoutubeHttpUrl } from "@/lib/youtube";
 import { MediaResolveError, resolveMediaTrack } from "@/lib/mediaResolver";
+import { isSupportedMediaUrl } from "@/lib/mediaUrls";
 
 interface RoomRankingsPanelProps {
   roomName: string;
@@ -301,9 +301,9 @@ export function RoomMusicPanel({ roomName }: RoomMusicPanelProps) {
     const raw = url.trim();
     if (!raw) return;
 
-    if (!isSafeYoutubeHttpUrl(raw)) {
+    if (!isSupportedMediaUrl(raw)) {
       setLocalError(
-        "Cole apenas links HTTPS do YouTube (watch, youtu.be, embed ou shorts). Caminhos locais não são aceitos.",
+        "Cole um link do YouTube, Spotify ou Deezer (HTTPS). Caminhos locais não são aceitos.",
       );
       return;
     }
@@ -343,8 +343,8 @@ export function RoomMusicPanel({ roomName }: RoomMusicPanelProps) {
       </h2>
 
       <p className="text-xs text-muted-foreground">
-        Fila compartilhada: cole um link do YouTube. O sistema busca equivalentes no Spotify e
-        Deezer automaticamente como fallback para vídeos bloqueados.
+        Fila compartilhada: cole um link do YouTube, Spotify ou Deezer. O sistema resolve
+        automaticamente nos outros providers e escolhe o melhor embed disponível.
       </p>
 
       {bannerError ? (
@@ -373,7 +373,7 @@ export function RoomMusicPanel({ roomName }: RoomMusicPanelProps) {
               setUrl(event.target.value);
             }}
             onKeyDown={(event) => event.key === "Enter" && !busy && void addMusic()}
-            placeholder="https://www.youtube.com/watch?v=..."
+            placeholder="Link do YouTube, Spotify ou Deezer…"
             disabled={busy}
             aria-label="Link do YouTube"
             className="flex-1 rounded-lg border border-border/60 bg-muted/70 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 disabled:opacity-60"

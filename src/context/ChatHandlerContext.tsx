@@ -296,9 +296,19 @@ const ChatHandlerContextProvider = ({
               ? (o.providers as import("@/types/RoomMusic").MediaProviders)
               : undefined;
 
-          return { video_id, title, added_by, artist, thumbnail, duration_sec, active_provider, providers };
+          const isrc = typeof o.isrc === "string" ? o.isrc : undefined;
+          const canonical_track_id =
+            typeof o.canonical_track_id === "string" ? o.canonical_track_id : undefined;
+
+          return { video_id, title, added_by, artist, thumbnail, duration_sec,
+                   active_provider, providers, isrc, canonical_track_id };
         })
-        .filter((x) => /^[a-zA-Z0-9_-]{11}$/.test(x.video_id));
+        .filter((x) => {
+          // Accept valid YouTube video_id OR tracks where an alternative provider exists
+          const validYt = /^[a-zA-Z0-9_-]{11}$/.test(x.video_id);
+          const hasAlt = Boolean(x.providers?.spotify || x.providers?.deezer);
+          return validYt || hasAlt;
+        });
       next.current_index =
         typeof s.current_index === "number" ? s.current_index : -1;
       next.playing = Boolean(s.playing);
