@@ -84,10 +84,12 @@ export default function RoomChatView({
   const { messagesQuantity, resetMessagesQuantity, setChatSurfaceHidden, roomAmbience } =
     useChatHandlerContext();
   const [activeTab, setActiveTab] = useState<RoomTab>("chat");
-  /** Dentro da aba Ao vivo: após "Entrar na transmissão", esconde abas como no modo evento. */
   const [ambienceEntered, setAmbienceEntered] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [isFavorite, setIsFavorite] = useState(room.is_favorited ?? false);
+  const [ambientImages, setAmbientImages] = useState<Record<string, string>>(
+    room.ambient_images ?? {}
+  );
   const [, startFavoriteTransition] = useTransition();
 
   const immersionAmbience =
@@ -139,7 +141,7 @@ export default function RoomChatView({
             <div className="hidden min-h-0 min-w-0 flex-1 flex-col md:flex">
               <RoomChatMessagesPanel
                 messages={messages}
-                room={room}
+                room={{ ...room, ambient_images: ambientImages }}
                 initialMessagesNextPageUrl={initialMessagesNextPageUrl}
               />
             </div>
@@ -160,7 +162,10 @@ export default function RoomChatView({
       case "images":
         return (
           <div className="min-h-0 flex-1 overflow-hidden">
-            <RoomImagesPanel room={room} />
+            <RoomImagesPanel
+              room={room}
+              onAmbientImagesUpdated={setAmbientImages}
+            />
           </div>
         );
       case "rankings":
@@ -208,7 +213,7 @@ export default function RoomChatView({
         return (
           <RoomChatMessagesPanel
             messages={messages}
-            room={room}
+            room={{ ...room, ambient_images: ambientImages }}
             initialMessagesNextPageUrl={initialMessagesNextPageUrl}
           />
         );

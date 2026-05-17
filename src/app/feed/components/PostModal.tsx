@@ -29,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { updateCommentAction } from "@/actions/updateComment";
 import { CommentContentType } from "@/components/content_types/CommentContentType";
 import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
+import { handleKeyDown } from "@/components/layouts/SendOnEnterKey/sendOnEnterKey";
 
 export const PostModal = ({
   postId,
@@ -735,6 +736,7 @@ export const PostModal = ({
                                     onChange={(e) =>
                                       setReplyContent(e.target.value)
                                     }
+                                    onKeyDown={(e) => handleKeyDown(e, () => handleReply(comment.id))}
                                     placeholder="Escreva uma resposta..."
                                     className="min-h-[80px] text-sm bg-muted/20 border-border/50 w-full"
                                     autoFocus
@@ -1048,6 +1050,7 @@ export const PostModal = ({
                   <Textarea
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(e, handleComment)}
                     placeholder="Adicione um comentário..."
                     className="flex-1 bg-muted/20 border-border/50 w-full pr-24 resize-none"
                     rows={1}

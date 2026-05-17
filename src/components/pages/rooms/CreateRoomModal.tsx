@@ -55,7 +55,8 @@ export default function CreateRoomModal({ open, onOpenChange }: Props) {
   const [summary, setSummary] = useState("");
   const [description, setDescription] = useState("");
   const [bannerPublicId, setBannerPublicId] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [apiError, setApiError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [isUploadWidgetOpen, setIsUploadWidgetOpen] = useState(false);
   const slugEditedByUser = useRef(false);
@@ -68,7 +69,8 @@ export default function CreateRoomModal({ open, onOpenChange }: Props) {
     setDescription("");
     setBannerPublicId("");
     pendingBannerRef.current = "";
-    setError(null);
+    setFieldErrors({});
+    setApiError(null);
     setIsUploadWidgetOpen(false);
     restoreRadixOverlayAfterCloudinary();
     slugEditedByUser.current = false;
@@ -129,16 +131,18 @@ export default function CreateRoomModal({ open, onOpenChange }: Props) {
   }, []);
 
   const submit = () => {
-    setError(null);
-    if (
-      !groupName.trim() ||
-      !summary.trim() ||
-      !description.trim() ||
-      !bannerPublicId.trim()
-    ) {
-      setError("Nome, sumário, descrição e banner são obrigatórios.");
+    setApiError(null);
+    const errors: Record<string, string> = {};
+    if (!groupName.trim()) errors.groupName = "Nome da sala é obrigatório.";
+    if (!summary.trim()) errors.summary = "Sumário é obrigatório.";
+    if (!description.trim()) errors.description = "Descrição é obrigatória.";
+    if (!bannerPublicId.trim()) errors.banner = "Banner é obrigatório.";
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
+    setFieldErrors({});
 
     startTransition(async () => {
       const res = await createChatRoom({
@@ -149,7 +153,7 @@ export default function CreateRoomModal({ open, onOpenChange }: Props) {
         slug: urlSlug.trim() || undefined,
       });
       if (!res.ok) {
-        setError(res.error);
+        setApiError(res.error);
         return;
       }
       clearFormAfterSuccess();
@@ -177,8 +181,8 @@ export default function CreateRoomModal({ open, onOpenChange }: Props) {
         </DialogHeader>
 
         <div className="space-y-4">
-          {error ? (
-            <p className="text-sm font-medium text-destructive">{error}</p>
+          {apiError ? (
+            <p className="text-sm font-medium text-red-400">{apiError}</p>
           ) : null}
 
           <div className="space-y-2">
@@ -186,15 +190,19 @@ export default function CreateRoomModal({ open, onOpenChange }: Props) {
             <Input
               id="room-name"
               value={groupName}
-              onChange={(e) =>
-                setGroupName(e.target.value.slice(0, NAME_MAX))
-              }
+              onChange={(e) => {
+                setGroupName(e.target.value.slice(0, NAME_MAX));
+                if (fieldErrors.groupName) setFieldErrors((p) => ({ ...p, groupName: "" }));
+              }}
               placeholder="Ex.: Comunidade Valorant"
               maxLength={NAME_MAX}
+              className={fieldErrors.groupName ? "border-red-400 focus-visible:ring-red-400" : ""}
             />
-            <p className="text-right text-xs text-muted-foreground">
-              {groupName.length}/{NAME_MAX}
-            </p>
+            {fieldErrors.groupName ? (
+              <p className="text-xs text-red-400">{fieldErrors.groupName}</p>
+            ) : (
+              <p className="text-right text-xs text-muted-foreground">{groupName.length}/{NAME_MAX}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -225,15 +233,19 @@ export default function CreateRoomModal({ open, onOpenChange }: Props) {
             <Input
               id="room-summary"
               value={summary}
-              onChange={(e) =>
-                setSummary(e.target.value.slice(0, SUMMARY_MAX))
-              }
+              onChange={(e) => {
+                setSummary(e.target.value.slice(0, SUMMARY_MAX));
+                if (fieldErrors.summary) setFieldErrors((p) => ({ ...p, summary: "" }));
+              }}
               placeholder="Uma linha que descreve a sala"
               maxLength={SUMMARY_MAX}
+              className={fieldErrors.summary ? "border-red-400 focus-visible:ring-red-400" : ""}
             />
-            <p className="text-right text-xs text-muted-foreground">
-              {summary.length}/{SUMMARY_MAX}
-            </p>
+            {fieldErrors.summary ? (
+              <p className="text-xs text-red-400">{fieldErrors.summary}</p>
+            ) : (
+              <p className="text-right text-xs text-muted-foreground">{summary.length}/{SUMMARY_MAX}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -241,21 +253,24 @@ export default function CreateRoomModal({ open, onOpenChange }: Props) {
             <Textarea
               id="room-desc"
               value={description}
-              onChange={(e) =>
-                setDescription(e.target.value.slice(0, DESC_MAX))
-              }
+              onChange={(e) => {
+                setDescription(e.target.value.slice(0, DESC_MAX));
+                if (fieldErrors.description) setFieldErrors((p) => ({ ...p, description: "" }));
+              }}
               placeholder="Tom da conversa, jogo, boas-vindas…"
               rows={4}
               maxLength={DESC_MAX}
-              className="resize-y"
+              className={`resize-y${fieldErrors.description ? " border-red-400 focus-visible:ring-red-400" : ""}`}
             />
-            <p className="text-right text-xs text-muted-foreground">
-              {description.length}/{DESC_MAX}
-            </p>
+            {fieldErrors.description ? (
+              <p className="text-xs text-red-400">{fieldErrors.description}</p>
+            ) : (
+              <p className="text-right text-xs text-muted-foreground">{description.length}/{DESC_MAX}</p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <span className="text-sm font-medium">Banner (obrigatório)</span>
+            <span className="text-sm font-medium">Banner</span>
             <div className="flex flex-wrap items-center gap-3">
               <CldUploadWidget
                 signatureEndpoint="/api/signed-room-banner"
@@ -295,11 +310,12 @@ export default function CreateRoomModal({ open, onOpenChange }: Props) {
                 )}
               </CldUploadWidget>
               {bannerPublicId ? (
-                <span className="text-xs text-muted-foreground">
-                  Banner selecionado ✓
-                </span>
+                <span className="text-xs text-green-500">Banner selecionado ✓</span>
               ) : null}
             </div>
+            {fieldErrors.banner ? (
+              <p className="text-xs text-red-400">{fieldErrors.banner}</p>
+            ) : null}
           </div>
 
           <div className="flex justify-end gap-2 pt-2">

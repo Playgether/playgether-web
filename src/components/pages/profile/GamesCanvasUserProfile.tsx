@@ -31,7 +31,7 @@ export function GamesCanvasUserProfile({
   profile: getProfileByUsernameProps | null;
   onProfileUpdated?: (updated: Partial<getProfileByUsernameProps>) => void;
 }) {
-  const { user } = useAuthContext();
+  const { user, authSessionResolved } = useAuthContext();
   const isOwner =
     !!user &&
     !!profile &&
@@ -63,20 +63,23 @@ export function GamesCanvasUserProfile({
 
   const userRating = 4.5;
 
+  const excludeSelf = (list: unknown[]) =>
+    list.filter((f) => f !== profile?.id).length;
+
   const [followersCount, setFollowersCount] = useState<number>(() =>
     profile?.followed_by && Array.isArray(profile.followed_by)
-      ? profile.followed_by.length
+      ? excludeSelf(profile.followed_by)
       : 0,
   );
 
   useEffect(() => {
     if (profile?.followed_by && Array.isArray(profile.followed_by)) {
-      setFollowersCount(profile.followed_by.length);
+      setFollowersCount(excludeSelf(profile.followed_by));
     }
   }, [profile?.followed_by]);
   const followingCount =
     (profile?.follows && Array.isArray(profile.follows)
-      ? profile.follows.length
+      ? excludeSelf(profile.follows)
       : 0) ?? 0;
 
   const userStats = useMemo(
@@ -316,7 +319,7 @@ export function GamesCanvasUserProfile({
                   </Button>
                 </div>
 
-                {!isOwner && (
+                {authSessionResolved && !isOwner && (
                   <div className="space-y-2">
                     <div className="flex gap-2">
                       <Button

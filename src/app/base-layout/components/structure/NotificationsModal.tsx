@@ -13,6 +13,7 @@ import { X, CheckCheck, Trash2, Bell } from "lucide-react";
 import { notificationConfig } from "../../config/notifications/NotificationConfig";
 import { useBaseLayoutServerContext } from "../../context/BaseLayoutServerContext";
 import { useNotificationContext } from "@/context/NotificationsContext";
+import { useNotifications } from "@/app/feed/hooks/useNotificationsWebSocket";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -49,7 +50,13 @@ export const NotificationsModal = ({
     markAllAsRead,
     deleteNotification,
     clearAll,
+    refetch,
   } = useNotificationContext();
+
+  useNotifications({
+    onNewNotification: () => void refetch(),
+    onNotificationRemoved: () => void refetch(),
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

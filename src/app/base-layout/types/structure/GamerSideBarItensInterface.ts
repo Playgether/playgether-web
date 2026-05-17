@@ -5,4 +5,5 @@ export interface GamerSideBarItensInterface {
   notifications?: number;
   href?: string;
   action?: "conversations" | "friends";
+  rounded?: "full";
 }

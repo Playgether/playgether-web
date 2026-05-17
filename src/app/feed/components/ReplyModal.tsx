@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { handleKeyDown } from "@/components/layouts/SendOnEnterKey/sendOnEnterKey";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -64,6 +65,7 @@ export const ReplyModal = ({ open, onOpenChange, comment, onSubmitReply }: Reply
               <Textarea
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, handleSubmit)}
                 placeholder="Escreva sua resposta..."
                 className="min-h-[100px] bg-muted/20 border-border/50 resize-none"
               />

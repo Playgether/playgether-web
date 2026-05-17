@@ -181,7 +181,7 @@ export default function RoomChatMessagesPanel({
             />
           )}
           <div
-            className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-background/88 via-background/72 to-background/88 backdrop-blur-[0.5px]"
+            className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-background/70 via-background/50 to-background/70 backdrop-blur-[0.5px]"
             aria-hidden
           />
         </>
@@ -269,7 +269,7 @@ export default function RoomChatMessagesPanel({
                         {message.body}
                       </div>
                       <span
-                        className={`mt-0.5 block text-[10px] text-muted-foreground ${
+                        className={`mt-0.5 block text-[10px] text-white/70 ${
                           isMine ? "text-right" : ""
                         }`}
                       >

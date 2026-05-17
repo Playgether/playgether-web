@@ -52,9 +52,10 @@ function ambientFromRoom(room: ChatRoom): Record<AmbientKey, string> {
 
 interface RoomImagesPanelProps {
   room: ChatRoom;
+  onAmbientImagesUpdated?: (next: Record<string, string>) => void;
 }
 
-export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
+export default function RoomImagesPanel({ room, onAmbientImagesUpdated }: RoomImagesPanelProps) {
   const { user } = useAuthContext();
   const [ambientBackgrounds, setAmbientBackgrounds] = useState<
     Record<AmbientKey, string>
@@ -148,6 +149,7 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
     void (async () => {
       const ok = await persistAmbientImages(next);
       if (ok) {
+        onAmbientImagesUpdated?.(next);
         const removed = await deleteCloudinaryRoomAmbientAsset(previousId);
         if (!removed) {
           setError(
@@ -191,6 +193,8 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
       setAmbientBackgrounds(snapshot);
       return;
     }
+
+    onAmbientImagesUpdated?.(next);
 
     if (previousId && previousId !== stored) {
       const removed = await deleteCloudinaryRoomAmbientAsset(previousId);
