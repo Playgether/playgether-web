@@ -274,10 +274,29 @@ const ChatHandlerContextProvider = ({
         .map((x) => {
           const o = x as Record<string, unknown>;
           const video_id = typeof o.video_id === "string" ? o.video_id : "";
-          const title = typeof o.title === "string" ? o.title : "YouTube";
-          const added_by =
-            typeof o.added_by === "string" ? o.added_by : undefined;
-          return { video_id, title, added_by };
+          const title = typeof o.title === "string" ? o.title : "Música";
+          const added_by = typeof o.added_by === "string" ? o.added_by : undefined;
+          const artist = typeof o.artist === "string" ? o.artist : undefined;
+          const thumbnail = typeof o.thumbnail === "string" ? o.thumbnail : undefined;
+          const duration_sec =
+            typeof o.duration_sec === "number" && o.duration_sec > 0
+              ? o.duration_sec
+              : null;
+
+          // active_provider — whitelist only known values
+          const rawProvider = o.active_provider;
+          const active_provider =
+            rawProvider === "spotify" || rawProvider === "deezer" || rawProvider === "youtube"
+              ? rawProvider
+              : "youtube";
+
+          // providers block — pass through if it is an object, else undefined
+          const providers =
+            o.providers && typeof o.providers === "object" && !Array.isArray(o.providers)
+              ? (o.providers as import("@/types/RoomMusic").MediaProviders)
+              : undefined;
+
+          return { video_id, title, added_by, artist, thumbnail, duration_sec, active_provider, providers };
         })
         .filter((x) => /^[a-zA-Z0-9_-]{11}$/.test(x.video_id));
       next.current_index =
