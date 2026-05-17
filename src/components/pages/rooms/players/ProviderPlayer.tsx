@@ -2,8 +2,10 @@
 
 import { cn } from "@/lib/utils";
 import type { MediaTrack, ProviderName } from "@/types/RoomMusic";
+import { useRuntimeFallbackTracking } from "@/hooks/useRuntimeFallbackTracking";
 import { SpotifyPlayer } from "./SpotifyPlayer";
 import { DeezerPlayer } from "./DeezerPlayer";
+import { ProviderDebugOverlay } from "./ProviderDebugOverlay";
 
 // ── Provider badge icons ─────────────────────────────────────────────────────
 
@@ -80,6 +82,8 @@ export type ProviderPlayerProps = {
   className?: string;
   /** Called when the user (or code) wants to switch to a different provider. */
   onFallback?: (next: ProviderName) => void;
+  /** Room slug for telemetry. */
+  roomSlug?: string;
 };
 
 /**
@@ -98,9 +102,16 @@ export function ProviderPlayer({
   expanded,
   blockPointer,
   className,
+  roomSlug = "",
 }: ProviderPlayerProps) {
   const provider = track.active_provider ?? "youtube";
   const providers = track.providers ?? {};
+
+  useRuntimeFallbackTracking({
+    roomSlug,
+    canonicalTrackId: track.canonical_track_id,
+    activeProvider: track.active_provider,
+  });
 
   // ── Spotify ──────────────────────────────────────────────────────────────
   if (provider === "spotify") {
@@ -114,6 +125,7 @@ export function ProviderPlayer({
             className="h-full w-full"
           />
           <ProviderBadge provider="spotify" />
+          <ProviderDebugOverlay track={track} />
         </div>
       );
     }
@@ -127,6 +139,7 @@ export function ProviderPlayer({
         <div className={cn("relative h-full w-full", className)}>
           <DeezerPlayer embedUrl={dz.embed_url} className="h-full w-full" />
           <ProviderBadge provider="deezer" />
+          <ProviderDebugOverlay track={track} />
         </div>
       );
     }
@@ -143,6 +156,7 @@ export function ProviderPlayer({
         )}
       />
       <ProviderBadge provider="youtube" />
+      <ProviderDebugOverlay track={track} />
     </div>
   );
 }

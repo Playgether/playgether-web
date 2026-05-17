@@ -2,6 +2,7 @@
 
 import { useChatHandlerContext } from "@/context/ChatHandlerContext";
 import { cn } from "@/lib/utils";
+import { usePlaybackTelemetry } from "@/hooks/usePlaybackTelemetry";
 import type { MediaTrack, ProviderName } from "@/types/RoomMusic";
 import {
   ChevronDown,
@@ -160,10 +161,22 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
   const roomMusicPlayingRef = useRef(roomMusic.playing);
   const lastLoadVideoAtRef = useRef(0);
   const reactId = useId();
+  const playbackStartedRef = useRef(false);
 
   localPausedRef.current = localPaused;
   localVolumeRef.current = localVolume;
   roomMusicPlayingRef.current = roomMusic.playing;
+
+  const localCurrent_: MediaTrack | null =
+    localIndex >= 0 && localIndex < roomMusic.queue.length
+      ? roomMusic.queue[localIndex]
+      : null;
+
+  const playbackTelemetry = usePlaybackTelemetry({
+    roomSlug: mountSuffix,
+    provider: localCurrent_?.active_provider ?? "youtube",
+    canonicalTrackId: localCurrent_?.canonical_track_id,
+  });
 
   useEffect(() => {
     try {
@@ -180,10 +193,7 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
   }, [expanded]);
 
   const hasSession = roomMusic.queue.length > 0;
-  const localCurrent: MediaTrack | null =
-    localIndex >= 0 && localIndex < roomMusic.queue.length
-      ? roomMusic.queue[localIndex]
-      : null;
+  const localCurrent: MediaTrack | null = localCurrent_;
 
   const activeProvider: ProviderName = localCurrent?.active_provider ?? "youtube";
   const isYouTube = activeProvider === "youtube";
@@ -283,6 +293,8 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
         }
       };
 
+      playbackStartedRef.current = false;
+
       playerRef.current = new w.YT!.Player(mountRef.current, {
         height: "100%",
         width: "100%",
@@ -293,9 +305,17 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
             if (cancelled || !playerRef.current) return;
             applyInitialPlayback(playerRef.current);
             setPlayerReady(true);
+            try { playbackTelemetry.onPlayerReady(); } catch { /* ignore */ }
           },
           onStateChange: (ev: { data: number }) => {
-            if (ev.data === YT_PLAYING) { setLocalPaused(false); return; }
+            if (ev.data === YT_PLAYING) {
+              setLocalPaused(false);
+              if (!playbackStartedRef.current) {
+                playbackStartedRef.current = true;
+                try { playbackTelemetry.onPlaybackStarted(); } catch { /* ignore */ }
+              }
+              return;
+            }
             if (ev.data === YT_PAUSED || ev.data === 0) {
               if (!roomMusicPlayingRef.current) { setLocalPaused(true); return; }
               if (Date.now() - lastLoadVideoAtRef.current < 1200) {
@@ -515,6 +535,7 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
               youtubeMount={mountRef}
               expanded={expanded}
               blockPointer={blockPlayerPointer}
+              roomSlug={mountSuffix}
               className="h-full w-full"
             />
           </div>
