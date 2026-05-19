@@ -13,6 +13,7 @@ export type RoomAmbienceState = {
   position_sec: number;
   sync_epoch_ms: number;
   viewers: RoomAmbienceViewer[];
+  pinned_message_id: number | null;
 };
 
 export type RoomAmbienceViewer = {
@@ -31,6 +32,9 @@ export type RoomAmbienceMessage = {
   created_at_ms: number;
   /** Mensagens do servidor (ex.: troca de vídeo), sem avatar de utilizador. */
   is_system?: boolean;
+  reply_to_id?: number;
+  reply_to_username?: string;
+  reply_to_body?: string;
 };
 
 export type RoomAmbienceClientAction =
@@ -56,7 +60,8 @@ export type RoomAmbienceClientAction =
       channel_thumbnail?: string;
       channel_avatar_url?: string;
     }
-  | { action: "send_message"; body: string }
+  | { action: "send_message"; body: string; reply_to_id?: number }
+  | { action: "pin_message"; message_id: number | null }
   | { action: "viewer_join" }
   | { action: "viewer_leave" }
   /** Qualquer cliente pede; o host reage publicando seek com o tempo atual do iframe. */

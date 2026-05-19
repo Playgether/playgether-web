@@ -29,7 +29,6 @@ import {
   MessageSquare,
   Radio,
   RefreshCw,
-  Send,
   Settings,
   Users,
   Volume2,
@@ -38,7 +37,12 @@ import {
 import { Input } from "@/components/ui/input";
 import type { RoomAmbienceMessage } from "@/types/RoomAmbience";
 import {
-  memo,
+  AmbienceChatEmptyState,
+  AmbienceChatInput,
+  AmbienceChatLine,
+  AmbiencePinnedBanner,
+} from "@/components/pages/rooms/RoomAmbienceChat";
+import {
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -353,74 +357,6 @@ function ChatFloatUnreadBadge({ count }: { count: number }) {
   );
 }
 
-function ambienceMessageIsSystem(m: RoomAmbienceMessage): boolean {
-  return Boolean(m.is_system || m.author_user_id === 0);
-}
-
-const AmbienceChatLine = memo(function AmbienceChatLine({
-  m,
-  variant = "sidebar",
-}: {
-  m: RoomAmbienceMessage;
-  variant?: "sidebar" | "float";
-}) {
-  const float = variant === "float";
-  const motion = !float
-    ? "animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
-    : "";
-  if (ambienceMessageIsSystem(m)) {
-    return (
-      <div
-        className={cn(
-          "max-w-[95%] rounded-2xl border px-3 py-2 text-sm shadow-sm [contain:content]",
-          motion,
-          float
-            ? "border-white/25 bg-black text-zinc-100 shadow-black/40"
-            : "border-border/60 bg-muted/50 text-muted-foreground",
-        )}
-      >
-        <p
-          className={cn(
-            "text-[10px] font-semibold uppercase tracking-wide",
-            float ? "text-zinc-400" : "text-muted-foreground",
-          )}
-        >
-          Sistema
-        </p>
-        <p className={cn("whitespace-pre-wrap", float ? "text-zinc-50" : "text-foreground")}>
-          {m.body}
-        </p>
-      </div>
-    );
-  }
-  return (
-    <div
-      className={cn(
-        "flex gap-2 rounded-lg border px-2 py-2 [contain:content]",
-        motion,
-        float
-          ? "border-white/20 bg-black text-zinc-50 shadow-sm shadow-black/40 ring-1 ring-white/5"
-          : "border-border/40 bg-muted/20 text-foreground",
-      )}
-    >
-      <ProfileAvatar
-        displayName={m.author_username}
-        username={m.author_username}
-        profilePhoto={m.author_photo}
-        sizeClass="h-8 w-8"
-        fallbackTextClassName="text-[10px]"
-        className={cn("mt-0.5 shrink-0 ring-1", float ? "ring-white/25" : "ring-border")}
-      />
-      <div className="min-w-0 flex-1">
-        <p className={cn("text-[11px] font-semibold", float ? "text-zinc-100" : "text-foreground")}>
-          {m.author_username}
-        </p>
-        <p className={cn("text-sm", float ? "text-zinc-50" : "text-foreground")}>{m.body}</p>
-      </div>
-    </div>
-  );
-});
-
 export default function RoomAmbiencePanel({
   roomSlug,
   entered,
@@ -443,6 +379,7 @@ export default function RoomAmbiencePanel({
   const [changeUrl, setChangeUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [chatText, setChatText] = useState("");
+  const [replyTo, setReplyTo] = useState<RoomAmbienceMessage | null>(null);
   const [localVolume, setLocalVolume] = useState(80);
   const preMuteVolumeRef = useRef(80);
   const [chatOpen, setChatOpen] = useState(true);
@@ -519,6 +456,27 @@ export default function RoomAmbiencePanel({
     user?.user_id != null &&
     roomAmbience.active &&
     roomAmbience.host_user_id === Number(user.user_id);
+
+  const pinnedMessage = useMemo(() => {
+    const pinId = roomAmbience.pinned_message_id;
+    if (!pinId) return null;
+    return roomAmbienceMessages.find((m) => m.id === pinId) ?? null;
+  }, [roomAmbience.pinned_message_id, roomAmbienceMessages]);
+
+  const handleReply = useCallback((m: RoomAmbienceMessage) => {
+    setReplyTo(m);
+  }, []);
+
+  const handlePin = useCallback(
+    (m: RoomAmbienceMessage) => {
+      sendRoomAmbience({ action: "pin_message", message_id: m.id });
+    },
+    [sendRoomAmbience],
+  );
+
+  const handleUnpin = useCallback(() => {
+    sendRoomAmbience({ action: "pin_message", message_id: null });
+  }, [sendRoomAmbience]);
 
   const viewerAlignedMaxDriftSec = DRIFT_MAX_ALIGNED_SEC;
 
@@ -664,21 +622,22 @@ export default function RoomAmbiencePanel({
     return Boolean(playerEl && document.fullscreenElement === playerEl);
   }, [layoutPulse]);
 
-  const toggleChatPanel = useCallback(() => {
+
+  const openParticipantsPanel = useCallback(() => {
     const playerEl = playerStageRef.current;
     if (playerEl && document.fullscreenElement === playerEl) {
-      setPlayerFloatChatOpen((o) => !o);
+      setPlayerFloatParticipantsOpen(true);
     } else {
-      setChatOpen((o) => !o);
+      setParticipantsOpen(true);
     }
   }, []);
 
-  const toggleParticipantsPanel = useCallback(() => {
+  const openChatPanel = useCallback(() => {
     const playerEl = playerStageRef.current;
     if (playerEl && document.fullscreenElement === playerEl) {
-      setPlayerFloatParticipantsOpen((o) => !o);
+      setPlayerFloatChatOpen(true);
     } else {
-      setParticipantsOpen((o) => !o);
+      setChatOpen(true);
     }
   }, []);
 
@@ -1594,8 +1553,13 @@ export default function RoomAmbiencePanel({
   const sendComment = () => {
     const body = chatText.trim();
     if (!body) return;
-    sendRoomAmbience({ action: "send_message", body });
+    sendRoomAmbience({
+      action: "send_message",
+      body,
+      ...(replyTo ? { reply_to_id: replyTo.id } : {}),
+    });
     setChatText("");
+    setReplyTo(null);
   };
 
   /**
@@ -1929,6 +1893,31 @@ export default function RoomAmbiencePanel({
               <YoutubeMark className="h-4 w-5 shrink-0 text-[#FF0033]" />
               <span className="text-[10px] font-bold uppercase tracking-wide text-white/90">YouTube</span>
             </div>
+            {!participantsPanelHighlighted ? (
+              <Button
+                type="button"
+                size="icon"
+                variant="outline"
+                className="pointer-events-auto absolute left-2 top-2 z-20 h-9 w-9 border-white/25 bg-black/70 text-white shadow-lg hover:bg-white/15 hover:text-white"
+                title="Abrir participantes"
+                onClick={openParticipantsPanel}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            ) : null}
+            {!chatPanelHighlighted ? (
+              <Button
+                type="button"
+                size="icon"
+                variant="outline"
+                className="pointer-events-auto absolute right-2 top-2 z-20 h-9 w-9 border-white/25 bg-black/70 text-white shadow-lg hover:bg-white/15 hover:text-white"
+                title="Abrir chat"
+                onClick={openChatPanel}
+              >
+                <MessageSquare className="h-4 w-4" />
+                {playerIsFs ? <ChatFloatUnreadBadge count={floatChatUnreadCount} /> : null}
+              </Button>
+            ) : null}
             {playerIsFs && playerFloatParticipantsOpen ? (
               <div
                 className={cn(
@@ -2011,42 +2000,41 @@ export default function RoomAmbiencePanel({
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
+                {pinnedMessage ? (
+                  <AmbiencePinnedBanner
+                    message={pinnedMessage}
+                    float
+                    amHost={amHost}
+                    onUnpin={handleUnpin}
+                  />
+                ) : null}
                 <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overflow-x-hidden bg-black px-2 py-2">
                   {floatChatMessages.length === 0 ? (
-                    <div className="flex h-full flex-col items-center justify-center gap-2 px-2 py-4 text-center">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary">
-                        <MessageSquare className="h-5 w-5" />
-                      </div>
-                      <p className="text-sm font-semibold text-zinc-50">
-                        Nenhuma mensagem ainda
-                      </p>
-                      <p className="text-xs leading-snug text-zinc-400">
-                        Quebra o gelo! Envie a primeira mensagem para começar a conversa.
-                      </p>
-                    </div>
+                    <AmbienceChatEmptyState float />
                   ) : (
                     floatChatMessages.map((m) => (
-                      <AmbienceChatLine key={m.id} m={m} variant="float" />
+                      <AmbienceChatLine
+                        key={m.id}
+                        m={m}
+                        variant="float"
+                        amHost={amHost}
+                        isPinned={roomAmbience.pinned_message_id === m.id}
+                        onReply={handleReply}
+                        onPin={handlePin}
+                        onUnpin={handleUnpin}
+                      />
                     ))
                   )}
                   <div ref={floatChatEndRef} />
                 </div>
-                <div className="flex shrink-0 gap-2 border-t border-white/10 bg-black p-2">
-                  <input
-                    value={chatText}
-                    onChange={(e) => setChatText(e.target.value)}
-                    className="min-w-0 flex-1 rounded-lg border border-white/15 bg-black px-3 py-2 text-sm text-zinc-50 placeholder:text-zinc-500 focus:border-primary/60 focus:outline-none"
-                    placeholder="Comentar…"
-                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), sendComment())}
-                  />
-                  <Button
-                    size="icon"
-                    className="shrink-0 border border-white/15 bg-black text-zinc-100 hover:bg-white/10 hover:text-white"
-                    onClick={sendComment}
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
+                <AmbienceChatInput
+                  float
+                  value={chatText}
+                  onChange={setChatText}
+                  onSend={sendComment}
+                  replyTo={replyTo}
+                  onCancelReply={() => setReplyTo(null)}
+                />
               </div>
             ) : null}
           </div>
@@ -2132,81 +2120,6 @@ export default function RoomAmbiencePanel({
             </div>
             <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
               <div className="flex flex-wrap items-center justify-end gap-1">
-                <div className="flex gap-0.5 md:hidden">
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="outline"
-                    title={
-                      participantsPanelHighlighted ? "Ocultar participantes" : "Participantes na transmissão"
-                    }
-                    className={cn(
-                      "relative h-8 w-8 border-white/25 bg-black/40 text-white hover:bg-white/15 hover:text-white",
-                      participantsPanelHighlighted && "border-primary/60 bg-primary/25",
-                    )}
-                    onClick={toggleParticipantsPanel}
-                  >
-                    <Users className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="outline"
-                    title={
-                      playerIsFs
-                        ? playerFloatChatOpen
-                          ? "Ocultar chat"
-                          : "Chat flutuante"
-                        : chatOpen
-                          ? "Ocultar chat"
-                          : "Mostrar chat"
-                    }
-                    className={cn(
-                      "relative h-8 w-8 border-white/25 bg-black/40 text-white hover:bg-white/15 hover:text-white",
-                      chatPanelHighlighted && "border-primary/60 bg-primary/25",
-                    )}
-                    onClick={toggleChatPanel}
-                  >
-                    <MessageSquare className="h-3.5 w-3.5" />
-                    {playerIsFs ? <ChatFloatUnreadBadge count={floatChatUnreadCount} /> : null}
-                  </Button>
-                </div>
-                {playerIsFs ? (
-                  <>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className={cn(
-                        "relative hidden h-8 gap-1 border-white/25 bg-black/40 px-2 text-xs text-white hover:bg-white/15 hover:text-white md:inline-flex",
-                        playerFloatParticipantsOpen && "border-primary/60 bg-primary/25",
-                      )}
-                      title="Participantes flutuante sobre o vídeo"
-                      onClick={toggleParticipantsPanel}
-                    >
-                      <Users className="h-3.5 w-3.5" />
-                      Participantes
-                      <span className="ml-1 rounded-md bg-white/15 px-1 py-0.5 text-[10px] font-semibold tabular-nums">
-                        {roomAmbience.viewers.length}
-                      </span>
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className={cn(
-                        "relative hidden h-8 gap-1 border-white/25 bg-black/40 px-2 text-xs text-white hover:bg-white/15 hover:text-white md:inline-flex",
-                        playerFloatChatOpen && "border-primary/60 bg-primary/25",
-                      )}
-                      title="Chat flutuante sobre o vídeo"
-                      onClick={toggleChatPanel}
-                    >
-                      <MessageSquare className="h-3.5 w-3.5" />
-                      Chat
-                      <ChatFloatUnreadBadge count={floatChatUnreadCount} />
-                    </Button>
-                  </>
-                ) : null}
                 {!amHost ? (
                   <div className="relative">
                     <Button
@@ -2347,59 +2260,6 @@ export default function RoomAmbiencePanel({
           </div>
         </div>
 
-        <div className="pointer-events-none absolute left-0 top-1/2 z-20 hidden -translate-y-1/2 md:flex">
-          <div className="pointer-events-auto ml-0.5 flex flex-col gap-1 rounded-xl border border-white/20 bg-black/85 p-1 shadow-lg ring-1 ring-white/10 backdrop-blur-sm">
-            <Button
-              type="button"
-              size="icon"
-              variant="outline"
-              title={participantsPanelHighlighted ? "Recolher lista" : "Quem está assistindo"}
-              className={cn(
-                "h-9 w-9 border-white/25 bg-black/50 text-white hover:bg-white/15 hover:text-white",
-                participantsPanelHighlighted && "border-primary/60 bg-primary/30 text-white",
-              )}
-              onClick={toggleParticipantsPanel}
-            >
-              {participantsPanelHighlighted ? <ChevronLeft className="h-4 w-4" /> : <Users className="h-4 w-4" />}
-            </Button>
-          </div>
-        </div>
-        <div className="pointer-events-none absolute right-0 top-1/2 z-20 hidden -translate-y-1/2 md:flex">
-          <div className="pointer-events-auto mr-0.5 flex flex-col gap-1 rounded-xl border border-white/20 bg-black/85 p-1 shadow-lg ring-1 ring-white/10 backdrop-blur-sm">
-            <Button
-              type="button"
-              size="icon"
-              variant="outline"
-              title={
-                playerIsFs
-                  ? playerFloatChatOpen
-                    ? "Recolher chat"
-                    : "Chat flutuante"
-                  : chatOpen
-                    ? "Recolher chat"
-                    : "Abrir chat"
-              }
-              className={cn(
-                "relative h-9 w-9 border-white/25 bg-black/50 text-white hover:bg-white/15 hover:text-white",
-                chatPanelHighlighted && "border-primary/60 bg-primary/30 text-white",
-              )}
-              onClick={toggleChatPanel}
-            >
-              {playerIsFs ? (
-                playerFloatChatOpen ? (
-                  <ChevronRight className="h-4 w-4" />
-                ) : (
-                  <MessageSquare className="h-4 w-4" />
-                )
-              ) : chatOpen ? (
-                <ChevronRight className="h-4 w-4" />
-              ) : (
-                <MessageSquare className="h-4 w-4" />
-              )}
-              {playerIsFs ? <ChatFloatUnreadBadge count={floatChatUnreadCount} /> : null}
-            </Button>
-          </div>
-        </div>
 
         {participantsOpen && !playerIsFs ? (
           <div className="order-1 flex min-h-0 w-full shrink-0 flex-col rounded-xl border border-border/60 bg-card/95 shadow-sm md:order-none md:w-[260px]">
@@ -2487,38 +2347,38 @@ export default function RoomAmbiencePanel({
                 </Link>
               ) : null}
             </div>
+            {pinnedMessage ? (
+              <AmbiencePinnedBanner
+                message={pinnedMessage}
+                amHost={amHost}
+                onUnpin={handleUnpin}
+              />
+            ) : null}
             <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-2">
               {roomAmbienceMessages.length === 0 ? (
-                <div className="flex h-full flex-col items-center justify-center gap-2 px-2 py-6 text-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <MessageSquare className="h-6 w-6" />
-                  </div>
-                  <p className="text-sm font-semibold text-foreground">
-                    Nenhuma mensagem ainda
-                  </p>
-                  <p className="text-xs leading-snug text-muted-foreground">
-                    Quebra o gelo! Envie a primeira mensagem para começar a conversa.
-                  </p>
-                </div>
+                <AmbienceChatEmptyState />
               ) : (
                 roomAmbienceMessages.map((m) => (
-                  <AmbienceChatLine key={m.id} m={m} />
+                  <AmbienceChatLine
+                    key={m.id}
+                    m={m}
+                    amHost={amHost}
+                    isPinned={roomAmbience.pinned_message_id === m.id}
+                    onReply={handleReply}
+                    onPin={handlePin}
+                    onUnpin={handleUnpin}
+                  />
                 ))
               )}
               <div ref={chatEndRef} />
             </div>
-            <div className="shrink-0 flex gap-2 border-t border-border/60 p-2">
-              <input
-                value={chatText}
-                onChange={(e) => setChatText(e.target.value)}
-                className="flex-1 rounded-lg border border-border/70 bg-background px-3 py-2 text-sm"
-                placeholder="Comentar..."
-                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), sendComment())}
-              />
-              <Button size="icon" onClick={sendComment}>
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
+            <AmbienceChatInput
+              value={chatText}
+              onChange={setChatText}
+              onSend={sendComment}
+              replyTo={replyTo}
+              onCancelReply={() => setReplyTo(null)}
+            />
           </div>
         ) : null}
       </div>

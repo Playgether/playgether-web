@@ -47,6 +47,7 @@ const defaultRoomAmbienceState = (): RoomAmbienceState => ({
   position_sec: 0,
   sync_epoch_ms: 0,
   viewers: [],
+  pinned_message_id: null,
 });
 
 function easeOutCubic(t: number): number {
@@ -339,6 +340,9 @@ const ChatHandlerContextProvider = ({
               })
               .filter((x) => x.user_id > 0)
           : [];
+        const rawPin = (s as { pinned_message_id?: unknown }).pinned_message_id;
+        next.pinned_message_id =
+          typeof rawPin === "number" && rawPin > 0 ? rawPin : null;
         setRoomAmbience(next);
         if (!next.active) {
           setRoomAmbienceMessages([]);
@@ -351,6 +355,10 @@ const ChatHandlerContextProvider = ({
             const m = x as Record<string, unknown>;
             const author_user_id =
               typeof m.author_user_id === "number" ? m.author_user_id : 0;
+            const replyToId =
+              typeof m.reply_to_id === "number" && m.reply_to_id > 0
+                ? m.reply_to_id
+                : undefined;
             return {
               id: typeof m.id === "number" ? m.id : 0,
               author_user_id,
@@ -362,6 +370,13 @@ const ChatHandlerContextProvider = ({
               created_at_ms:
                 typeof m.created_at_ms === "number" ? m.created_at_ms : 0,
               is_system: author_user_id === 0,
+              reply_to_id: replyToId,
+              reply_to_username:
+                typeof m.reply_to_username === "string"
+                  ? m.reply_to_username
+                  : undefined,
+              reply_to_body:
+                typeof m.reply_to_body === "string" ? m.reply_to_body : undefined,
             } satisfies RoomAmbienceMessage;
           })
           .filter((m) => m.id > 0 && m.body);
@@ -376,6 +391,14 @@ const ChatHandlerContextProvider = ({
         is_system:
           m.is_system ??
           (typeof m.author_user_id === "number" && m.author_user_id === 0),
+        reply_to_id:
+          typeof m.reply_to_id === "number" && m.reply_to_id > 0
+            ? m.reply_to_id
+            : undefined,
+        reply_to_username:
+          typeof m.reply_to_username === "string" ? m.reply_to_username : undefined,
+        reply_to_body:
+          typeof m.reply_to_body === "string" ? m.reply_to_body : undefined,
       };
       setRoomAmbienceMessages((prev) => {
         if (prev.some((x) => x.id === normalized.id)) return prev;
