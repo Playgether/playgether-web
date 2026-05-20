@@ -20,6 +20,19 @@ import type {
   RoomAmbienceMessage,
   RoomAmbienceState,
 } from "@/types/RoomAmbience";
+import { fetchAmbienceChatHistory } from "@/actions/ambienceChatActions";
+
+function mergeAmbienceMessages(
+  older: RoomAmbienceMessage[],
+  newer: RoomAmbienceMessage[],
+): RoomAmbienceMessage[] {
+  const byId = new Map<number, RoomAmbienceMessage>();
+  for (const m of older) byId.set(m.id, m);
+  for (const m of newer) byId.set(m.id, m);
+  return [...byId.values()]
+    .sort((a, b) => a.created_at_ms - b.created_at_ms)
+    .slice(-200);
+}
 
 export type RoomJoinNotice = { id: number; text: string };
 
@@ -169,6 +182,24 @@ const ChatHandlerContextProvider = ({
   >([]);
   const [roomAmbienceError, setRoomAmbienceError] = useState<string | null>(null);
   const chatSurfaceHiddenRef = useRef(false);
+  const ambienceHistoryLoadedRef = useRef(false);
+
+  useEffect(() => {
+    if (!roomAmbience.active) {
+      ambienceHistoryLoadedRef.current = false;
+      return;
+    }
+    if (ambienceHistoryLoadedRef.current) return;
+    ambienceHistoryLoadedRef.current = true;
+    let cancelled = false;
+    void fetchAmbienceChatHistory(chatroom).then((res) => {
+      if (cancelled || !res.ok) return;
+      setRoomAmbienceMessages((prev) => mergeAmbienceMessages(res.data, prev));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [roomAmbience.active, chatroom]);
 
   const setChatSurfaceHidden = useCallback((hidden: boolean) => {
     chatSurfaceHiddenRef.current = hidden;
@@ -380,7 +411,7 @@ const ChatHandlerContextProvider = ({
             } satisfies RoomAmbienceMessage;
           })
           .filter((m) => m.id > 0 && m.body);
-        setRoomAmbienceMessages(parsed);
+        setRoomAmbienceMessages((prev) => mergeAmbienceMessages(parsed, prev));
       }
     },
     room_ambience_chat_message: (data: { message?: RoomAmbienceMessage }) => {
