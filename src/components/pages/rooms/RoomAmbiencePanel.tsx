@@ -1914,7 +1914,7 @@ export default function RoomAmbiencePanel({
                 title="Abrir chat"
                 onClick={openChatPanel}
               >
-                <MessageSquare className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4" />
                 {playerIsFs ? <ChatFloatUnreadBadge count={floatChatUnreadCount} /> : null}
               </Button>
             ) : null}
