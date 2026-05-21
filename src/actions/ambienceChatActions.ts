@@ -51,14 +51,17 @@ function normalizeAmbienceMessage(raw: Record<string, unknown>): RoomAmbienceMes
 /** Carrega até `limit` mensagens recentes do histórico persistido da transmissão. */
 export async function fetchAmbienceChatHistory(
   roomSlug: string,
+  sessionId: string,
   limit = 200,
 ): Promise<{ ok: true; data: RoomAmbienceMessage[] } | { ok: false; error: string }> {
   const headers = await authHeaders();
   if (!headers) return { ok: false, error: "Não autenticado." };
   const segment = encodeURIComponent(roomSlug);
+  const session = sessionId.trim();
+  if (!session) return { ok: true, data: [] };
   const collected: RoomAmbienceMessage[] = [];
   let url: string | null =
-    `/api/v1/chatrooms/${segment}/ambience-messages/?page_size=${Math.min(limit, 50)}`;
+    `/api/v1/chatrooms/${segment}/ambience-messages/?page_size=${Math.min(limit, 50)}&session_id=${encodeURIComponent(session)}`;
 
   try {
     while (url && collected.length < limit) {

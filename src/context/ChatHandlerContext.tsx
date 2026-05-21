@@ -59,8 +59,10 @@ const defaultRoomAmbienceState = (): RoomAmbienceState => ({
   playing: false,
   position_sec: 0,
   sync_epoch_ms: 0,
+  playback_command: null,
   viewers: [],
   pinned_message_id: null,
+  session_id: "",
 });
 
 function easeOutCubic(t: number): number {
@@ -182,24 +184,33 @@ const ChatHandlerContextProvider = ({
   >([]);
   const [roomAmbienceError, setRoomAmbienceError] = useState<string | null>(null);
   const chatSurfaceHiddenRef = useRef(false);
-  const ambienceHistoryLoadedRef = useRef(false);
+  const ambienceHistoryLoadedRef = useRef<string | null>(null);
+  const roomAmbienceSessionRef = useRef("");
+
+  useEffect(() => {
+    roomAmbienceSessionRef.current = roomAmbience.session_id;
+  }, [roomAmbience.session_id]);
 
   useEffect(() => {
     if (!roomAmbience.active) {
-      ambienceHistoryLoadedRef.current = false;
+      ambienceHistoryLoadedRef.current = null;
       return;
     }
-    if (ambienceHistoryLoadedRef.current) return;
-    ambienceHistoryLoadedRef.current = true;
+    const sessionId = roomAmbience.session_id.trim();
+    if (!sessionId) return;
+    if (ambienceHistoryLoadedRef.current === sessionId) return;
+    ambienceHistoryLoadedRef.current = sessionId;
     let cancelled = false;
-    void fetchAmbienceChatHistory(chatroom).then((res) => {
+    setRoomAmbienceMessages([]);
+    void fetchAmbienceChatHistory(chatroom, sessionId).then((res) => {
       if (cancelled || !res.ok) return;
+      if (roomAmbienceSessionRef.current !== sessionId) return;
       setRoomAmbienceMessages((prev) => mergeAmbienceMessages(res.data, prev));
     });
     return () => {
       cancelled = true;
     };
-  }, [roomAmbience.active, chatroom]);
+  }, [roomAmbience.active, roomAmbience.session_id, chatroom]);
 
   const setChatSurfaceHidden = useCallback((hidden: boolean) => {
     chatSurfaceHiddenRef.current = hidden;
@@ -333,6 +344,7 @@ const ChatHandlerContextProvider = ({
       messages?: RoomAmbienceMessage[];
     }) => {
       const s = data.state;
+      let snapshotSessionId = roomAmbienceSessionRef.current;
       if (s && typeof s === "object") {
         const next = defaultRoomAmbienceState();
         next.active = Boolean(s.active);
@@ -357,6 +369,9 @@ const ChatHandlerContextProvider = ({
           typeof s.position_sec === "number" ? Math.max(0, s.position_sec) : 0;
         next.sync_epoch_ms =
           typeof s.sync_epoch_ms === "number" ? s.sync_epoch_ms : 0;
+        const rawCmd = (s as { playback_command?: unknown }).playback_command;
+        next.playback_command =
+          rawCmd === "go_live" ? "go_live" : null;
         next.viewers = Array.isArray(s.viewers)
           ? s.viewers
               .filter((x) => Boolean(x) && typeof x === "object")
@@ -374,12 +389,31 @@ const ChatHandlerContextProvider = ({
         const rawPin = (s as { pinned_message_id?: unknown }).pinned_message_id;
         next.pinned_message_id =
           typeof rawPin === "number" && rawPin > 0 ? rawPin : null;
-        setRoomAmbience(next);
+        next.session_id =
+          typeof (s as { session_id?: unknown }).session_id === "string"
+            ? (s as { session_id: string }).session_id
+            : "";
+        snapshotSessionId = next.session_id;
+        roomAmbienceSessionRef.current = next.session_id;
+        setRoomAmbience((prev) => {
+          if (
+            next.active &&
+            next.session_id &&
+            prev.session_id &&
+            prev.session_id !== next.session_id
+          ) {
+            setRoomAmbienceMessages([]);
+            ambienceHistoryLoadedRef.current = null;
+          }
+          return next;
+        });
         if (!next.active) {
           setRoomAmbienceMessages([]);
+          ambienceHistoryLoadedRef.current = null;
         }
       }
       if (Array.isArray(data.messages)) {
+        const sessionFilter = snapshotSessionId.trim();
         const parsed = data.messages
           .filter((x) => Boolean(x) && typeof x === "object")
           .map((x) => {
@@ -389,6 +423,10 @@ const ChatHandlerContextProvider = ({
             const replyToId =
               typeof m.reply_to_id === "number" && m.reply_to_id > 0
                 ? m.reply_to_id
+                : undefined;
+            const msgSession =
+              typeof m.transmission_session_id === "string"
+                ? m.transmission_session_id
                 : undefined;
             return {
               id: typeof m.id === "number" ? m.id : 0,
@@ -408,15 +446,29 @@ const ChatHandlerContextProvider = ({
                   : undefined,
               reply_to_body:
                 typeof m.reply_to_body === "string" ? m.reply_to_body : undefined,
+              transmission_session_id: msgSession,
             } satisfies RoomAmbienceMessage;
           })
-          .filter((m) => m.id > 0 && m.body);
+          .filter((m) => {
+            if (!m.id || !m.body) return false;
+            if (!sessionFilter) return true;
+            const sid = (m.transmission_session_id || "").trim();
+            return !sid || sid === sessionFilter;
+          });
         setRoomAmbienceMessages((prev) => mergeAmbienceMessages(parsed, prev));
       }
     },
     room_ambience_chat_message: (data: { message?: RoomAmbienceMessage }) => {
       const m = data.message;
       if (!m || typeof m !== "object") return;
+      const currentSession = roomAmbienceSessionRef.current.trim();
+      const msgSession = (
+        typeof (m as { transmission_session_id?: string }).transmission_session_id ===
+        "string"
+          ? (m as { transmission_session_id: string }).transmission_session_id
+          : ""
+      ).trim();
+      if (currentSession && msgSession && msgSession !== currentSession) return;
       const normalized: RoomAmbienceMessage = {
         ...m,
         is_system:
@@ -430,6 +482,7 @@ const ChatHandlerContextProvider = ({
           typeof m.reply_to_username === "string" ? m.reply_to_username : undefined,
         reply_to_body:
           typeof m.reply_to_body === "string" ? m.reply_to_body : undefined,
+        transmission_session_id: msgSession || undefined,
       };
       setRoomAmbienceMessages((prev) => {
         if (prev.some((x) => x.id === normalized.id)) return prev;

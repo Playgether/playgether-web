@@ -61,7 +61,9 @@ type YtVideoData = {
 
 type YtPlayer = {
   destroy: () => void;
-  loadVideoById: (arg: { videoId: string; startSeconds?: number } | string) => void;
+  loadVideoById: (
+    arg: { videoId: string; startSeconds?: number } | string,
+  ) => void;
   playVideo: () => void;
   pauseVideo: () => void;
   seekTo: (seconds: number, allowSeekAhead: boolean) => void;
@@ -94,8 +96,15 @@ const VIEWER_ALIGN_GUARD_MS = 6200;
 const VIEWER_ALIGN_RETRY_MS = 650;
 const VIEWER_ALIGN_MAX_RETRIES = 8;
 
-/** |drift| estritamente menor que isto = “Ao vivo com host”; a partir daqui = independente na UI. */
-const DRIFT_MAX_ALIGNED_SEC = 1;
+/** VOD: |drift| abaixo disto = alinhado na timeline. */
+const DRIFT_MAX_ALIGNED_SEC_VOD = 1;
+
+/** Live DVR: margem mais apertada (segundos absolutos variam entre iframes). */
+const DRIFT_MAX_ALIGNED_SEC_LIVE = 0.65;
+
+/** Leituras consecutivas estáveis antes do chip “Ao vivo com host”. */
+const LIVE_ALIGNED_STABLE_POLLS = 3;
+const VOD_ALIGNED_STABLE_POLLS = 2;
 
 /**
  * Margem (s) antes do fim da janela DVR = ponto “ao vivo” no YouTube (não recuar ~10s).
@@ -131,8 +140,18 @@ const DRIFT_UPDATE_THRESHOLD_SEC = 0.55;
 /** Estados YouTube IFrame API (trecho usado em `applyPlaybackFromState`). */
 const YT_BUFFERING = 3;
 
-/** Saltos internos da timeline em live (DVR) não devem derrubar o modo synced. */
+/**
+ * Saltos enormes em live (DVR) após seek do host — só para ignorar na janela de graça
+ * (`VIEWER_JUMP_IGNORE_INDEP_MS_AFTER_SYNC_EPOCH`), não para deteção de controlo do utilizador.
+ */
 const LIVE_VIEWER_JUMP_THRESHOLD_SEC = 22;
+
+/** Salto na timeline do viewer que indica controlo local (barra, ±10s, etc.). */
+const VIEWER_USER_CONTROL_JUMP_SEC = 1;
+
+/** Host em live: republica âncora se o iframe divergir do estado extrapolado no servidor. */
+const HOST_LIVE_HEARTBEAT_MIN_INTERVAL_MS = 2800;
+const HOST_LIVE_HEARTBEAT_DRIFT_SEC = 0.45;
 
 /** Só chama `seekTo` se estivermos mais longe que isto do alvo (VOD e live estável). */
 const APPLY_SEEK_THRESHOLD_SEC = 1.15;
@@ -150,6 +169,7 @@ function isLivePlayer(p: YtPlayer | null): boolean {
   return false;
 }
 
+/** Distância (s) do ponto atual à borda “ao vivo” do DVR neste iframe. */
 /** Teto de `currentTime` em live (borda “ao vivo”, não vários segundos atrás). */
 function liveStreamTimelineCap(p: YtPlayer | null): number {
   if (!p) return Number.MAX_SAFE_INTEGER;
@@ -285,22 +305,22 @@ function computeViewerHostDriftSec(
 ): number {
   const live = isLivePlayer(p);
   if (live) {
-    let actualForDrift = actual;
+    // Cap viewer's actual to live edge + eps so it doesn't appear "ahead" of DVR end.
+    let actualCapped = actual;
     try {
       const cap = liveStreamTimelineCap(p);
       if (Number.isFinite(cap) && cap < Number.MAX_SAFE_INTEGER / 4) {
-        actualForDrift = Math.min(actual, cap + LIVE_STREAM_EDGE_EPS_SEC);
+        actualCapped = Math.min(actual, cap + LIVE_STREAM_EDGE_EPS_SEC);
       }
-    } catch {
-      /* ignore */
-    }
+    } catch { /* ignore */ }
     const hostOnTimeline = liveViewerTargetSeconds(
       p,
       hs.playing,
       hs.position_sec,
       hs.sync_epoch_ms,
     );
-    return Number.isFinite(hostOnTimeline) ? actualForDrift - hostOnTimeline : 0;
+    // positive = viewer ahead; negative = viewer behind (same sign as VOD)
+    return Number.isFinite(hostOnTimeline) ? actualCapped - hostOnTimeline : 0;
   }
   const hostExpected = computeSyncedSeconds(
     hs.playing,
@@ -308,6 +328,28 @@ function computeViewerHostDriftSec(
     hs.sync_epoch_ms,
   );
   return actual - hostExpected;
+}
+
+/** Executa o equivalente ao botão “Ir ao vivo” do YouTube neste iframe. */
+function applyGoLiveOnPlayer(
+  p: YtPlayer,
+  desiredPlaying: boolean,
+): void {
+  const cap = liveStreamTimelineCap(p);
+  const seekArg =
+    Number.isFinite(cap) && cap < Number.MAX_SAFE_INTEGER / 4
+      ? cap
+      : Number.MAX_SAFE_INTEGER;
+  p.seekTo(seekArg, true);
+  if (desiredPlaying) p.playVideo();
+  else p.pauseVideo();
+}
+
+function hostNearLiveEdge(p: YtPlayer | null, positionSec: number): boolean {
+  if (!p || !isLivePlayer(p)) return false;
+  const mx = liveMaxSeekSeconds(p);
+  if (mx == null) return false;
+  return positionSec >= mx - LIVE_GO_SEEK_MAX_BELOW_CAP_SEC;
 }
 
 /**
@@ -332,7 +374,8 @@ function remediateLiveStaleServerSeekTarget(
   }
   if (!Number.isFinite(dur) || dur < 120) return serverDerivedTimeline;
   const cap = liveStreamTimelineCap(p);
-  if (!Number.isFinite(cap) || cap >= Number.MAX_SAFE_INTEGER / 4) return serverDerivedTimeline;
+  if (!Number.isFinite(cap) || cap >= Number.MAX_SAFE_INTEGER / 4)
+    return serverDerivedTimeline;
   if (
     serverDerivedTimeline < 85 &&
     viewerCurrent > dur * 0.12 &&
@@ -387,13 +430,17 @@ export default function RoomAmbiencePanel({
   const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
   const [changeVideoOpen, setChangeVideoOpen] = useState(false);
   const [playerFloatChatOpen, setPlayerFloatChatOpen] = useState(false);
-  const [playerFloatParticipantsOpen, setPlayerFloatParticipantsOpen] = useState(false);
+  const [playerFloatParticipantsOpen, setPlayerFloatParticipantsOpen] =
+    useState(false);
   const [floatChatLastSeenId, setFloatChatLastSeenId] = useState(0);
   const [layoutPulse, setLayoutPulse] = useState(0);
   const [dialogPortal, setDialogPortal] = useState<HTMLElement | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>(() => readStoredViewMode(roomSlug));
+  const [viewMode, setViewMode] = useState<ViewMode>(() =>
+    readStoredViewMode(roomSlug),
+  );
   const [syncMode, setSyncModeState] = useState<SyncMode>("synced");
   const [driftSec, setDriftSec] = useState(0);
+  const [alignedStableTicks, setAlignedStableTicks] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const panelLoadRef = useRef({
     chatOpen: true,
@@ -427,7 +474,11 @@ export default function RoomAmbiencePanel({
   const viewerAlignRetryTimerRef = useRef(0);
   const viewerAlignRetriesLeftRef = useRef(0);
   /** Última leitura do tempo/estado do player, usada para detectar saltos (seeks). */
-  const lastPlayerTickRef = useRef<{ at: number; pos: number; playing: boolean } | null>(null);
+  const lastPlayerTickRef = useRef<{
+    at: number;
+    pos: number;
+    playing: boolean;
+  } | null>(null);
   /** Último video_id aplicado — usado para resetar syncMode quando o host troca de vídeo. */
   const lastAppliedVideoIdRef = useRef<string>("");
 
@@ -445,6 +496,10 @@ export default function RoomAmbiencePanel({
 
   /** Debounce recuperação após onError do iframe (evita loop). */
   const lastPlayerErrorRecoverAtMsRef = useRef(0);
+  /** Host: último estado do iframe (heartbeat live + fim de BUFFERING). */
+  const prevHostPlayerStateRef = useRef(-1);
+  const lastHostLiveHeartbeatAtMsRef = useRef(0);
+  const lastHostAnchorBroadcastAtMsRef = useRef(0);
 
   const syncModeRef = useRef<SyncMode>(syncMode);
   const setSyncMode = useCallback((m: SyncMode) => {
@@ -478,14 +533,26 @@ export default function RoomAmbiencePanel({
     sendRoomAmbience({ action: "pin_message", message_id: null });
   }, [sendRoomAmbience]);
 
-  const viewerAlignedMaxDriftSec = DRIFT_MAX_ALIGNED_SEC;
+  const viewerAlignedMaxDriftSec = useMemo(() => {
+    const p = playerRef.current;
+    if (p && isLivePlayer(p)) return DRIFT_MAX_ALIGNED_SEC_LIVE;
+    return DRIFT_MAX_ALIGNED_SEC_VOD;
+  }, [driftSec, roomAmbience.video_id, entered]);
+
+  const viewerAlignedStablePollsRequired = useMemo(() => {
+    const p = playerRef.current;
+    if (p && isLivePlayer(p)) return LIVE_ALIGNED_STABLE_POLLS;
+    return VOD_ALIGNED_STABLE_POLLS;
+  }, [driftSec, roomAmbience.video_id, entered]);
 
   /**
-   * UI binária: “Ao vivo com host” só com drift &lt; 1s e seguindo o host; caso contrário
-   * “Modo independente” (inclui buffer pós-entrada até alinhar).
+   * UI binária: “Ao vivo com host” só após drift estável por vários ticks (evita falso
+   * positivo logo após seek/buffer). Independente de `syncMode`.
    */
   const viewerLiveWithHost =
-    !amHost && syncMode === "synced" && Math.abs(driftSec) < viewerAlignedMaxDriftSec;
+    !amHost &&
+    alignedStableTicks >= viewerAlignedStablePollsRequired &&
+    Math.abs(driftSec) < viewerAlignedMaxDriftSec;
 
   useEffect(() => {
     if (roomAmbience.sync_epoch_ms !== prevSyncEpochForJumpGraceRef.current) {
@@ -520,33 +587,32 @@ export default function RoomAmbiencePanel({
   }, []);
 
   /** Marca um período curto em que ignoramos mudanças de estado do player como ações do usuário. */
-  const markApplyingRemote = useCallback((durationMs = REMOTE_APPLY_GUARD_MS) => {
-    applyingRemoteUntilRef.current = Date.now() + durationMs;
-  }, []);
+  const markApplyingRemote = useCallback(
+    (durationMs = REMOTE_APPLY_GUARD_MS) => {
+      applyingRemoteUntilRef.current = Date.now() + durationMs;
+    },
+    [],
+  );
 
-  /** Host: qualquer pedido de âncora publica o tempo atual do iframe (fonte da verdade). */
+  /**
+   * Host: pedidos de âncora só LEEM o iframe e publicam estado — nunca movem o player do host
+   * (evita que “Sincronizar” de espectadores altere a transmissão).
+   */
   useEffect(() => {
     const onAnchorRequest = () => {
       if (!amHostRef.current) return;
       const pl = playerRef.current;
       if (!pl?.getCurrentTime) return;
+      const now = Date.now();
+      if (now - lastHostAnchorBroadcastAtMsRef.current < 380) return;
+      lastHostAnchorBroadcastAtMsRef.current = now;
       try {
-        let t = pl.getCurrentTime();
+        let t = pl.getCurrentTime() ?? 0;
         const live = isLivePlayer(pl);
         if (live) {
           const mx = liveMaxSeekSeconds(pl);
           if (mx != null) {
-            const raw = t;
-            if (raw >= mx - LIVE_GO_SEEK_MAX_BELOW_CAP_SEC) {
-              try {
-                pl.seekTo(mx, true);
-              } catch {
-                /* ignore */
-              }
-              t = mx;
-            } else {
-              t = Math.min(Math.max(0, raw), mx);
-            }
+            t = Math.min(Math.max(0, t), mx);
           } else {
             t = Math.max(0, t);
           }
@@ -554,17 +620,35 @@ export default function RoomAmbiencePanel({
           t = Math.max(0, t);
         }
         markApplyingRemote(REMOTE_APPLY_GUARD_MS);
-        sendRoomAmbienceRef.current({ action: "seek", position_sec: t });
+        lastPlayerTickRef.current = {
+          at: now,
+          pos: t,
+          playing: roomAmbienceRef.current.playing,
+        };
+        if (live && hostNearLiveEdge(pl, t)) {
+          sendRoomAmbienceRef.current({
+            action: "go_live",
+            position_sec: t,
+          });
+        } else {
+          sendRoomAmbienceRef.current({ action: "seek", position_sec: t });
+        }
       } catch {
         /* ignore */
       }
     };
-    window.addEventListener("playgether:ambience-anchor-request", onAnchorRequest);
-    return () => window.removeEventListener("playgether:ambience-anchor-request", onAnchorRequest);
+    window.addEventListener(
+      "playgether:ambience-anchor-request",
+      onAnchorRequest,
+    );
+    return () =>
+      window.removeEventListener(
+        "playgether:ambience-anchor-request",
+        onAnchorRequest,
+      );
   }, [markApplyingRemote]);
 
-  const channelLabel =
-    roomAmbience.channel_name?.trim() || "Canal do YouTube";
+  const channelLabel = roomAmbience.channel_name?.trim() || "Canal do YouTube";
   const channelHref =
     roomAmbience.channel_url?.trim() || "https://www.youtube.com/";
 
@@ -588,11 +672,18 @@ export default function RoomAmbiencePanel({
 
   useEffect(() => {
     if (!roomAmbience.active || !entered) return;
-    sendRoomAmbience({ action: "viewer_join" });
+    let cancelled = false;
+    const joinTimer = window.setTimeout(() => {
+      if (!cancelled) sendRoomAmbienceRef.current({ action: "viewer_join" });
+    }, 80);
     return () => {
-      sendRoomAmbience({ action: "viewer_leave" });
+      cancelled = true;
+      window.clearTimeout(joinTimer);
+      window.setTimeout(() => {
+        sendRoomAmbienceRef.current({ action: "viewer_leave" });
+      }, 350);
     };
-  }, [roomAmbience.active, entered, sendRoomAmbience]);
+  }, [roomAmbience.active, entered]);
 
   useEffect(() => {
     try {
@@ -622,7 +713,6 @@ export default function RoomAmbiencePanel({
     return Boolean(playerEl && document.fullscreenElement === playerEl);
   }, [layoutPulse]);
 
-
   const openParticipantsPanel = useCallback(() => {
     const playerEl = playerStageRef.current;
     if (playerEl && document.fullscreenElement === playerEl) {
@@ -645,12 +735,19 @@ export default function RoomAmbiencePanel({
     (playerIsFs && playerFloatChatOpen) || (!playerIsFs && chatOpen);
 
   const participantsPanelHighlighted =
-    (playerIsFs && playerFloatParticipantsOpen) || (!playerIsFs && participantsOpen);
+    (playerIsFs && playerFloatParticipantsOpen) ||
+    (!playerIsFs && participantsOpen);
 
   const floatChatUnreadCount = useMemo(() => {
     if (!playerIsFs || playerFloatChatOpen) return 0;
-    return roomAmbienceMessages.filter((m) => m.id > floatChatLastSeenId).length;
-  }, [playerIsFs, playerFloatChatOpen, roomAmbienceMessages, floatChatLastSeenId]);
+    return roomAmbienceMessages.filter((m) => m.id > floatChatLastSeenId)
+      .length;
+  }, [
+    playerIsFs,
+    playerFloatChatOpen,
+    roomAmbienceMessages,
+    floatChatLastSeenId,
+  ]);
 
   const floatChatMessages = useMemo(
     () => roomAmbienceMessages.slice(-80),
@@ -702,7 +799,13 @@ export default function RoomAmbiencePanel({
       playerFloatParticipantsOpen,
       settingsOpen,
     };
-  }, [chatOpen, playerFloatChatOpen, participantsOpen, playerFloatParticipantsOpen, settingsOpen]);
+  }, [
+    chatOpen,
+    playerFloatChatOpen,
+    participantsOpen,
+    playerFloatParticipantsOpen,
+    settingsOpen,
+  ]);
 
   useEffect(() => {
     const onFs = () => {
@@ -721,7 +824,8 @@ export default function RoomAmbiencePanel({
         }
         if (fsEl) {
           if (fsEl === shellRef.current) lastFsKindRef.current = "shell";
-          else if (fsEl === playerStageRef.current) lastFsKindRef.current = "player";
+          else if (fsEl === playerStageRef.current)
+            lastFsKindRef.current = "player";
         }
         return;
       }
@@ -729,7 +833,8 @@ export default function RoomAmbiencePanel({
       const el = fsEl;
       if (el) {
         if (el === shellRef.current) lastFsKindRef.current = "shell";
-        else if (el === playerStageRef.current) lastFsKindRef.current = "player";
+        else if (el === playerStageRef.current)
+          lastFsKindRef.current = "player";
         return;
       }
       if (programmaticModeTargetRef.current) {
@@ -800,20 +905,64 @@ export default function RoomAmbiencePanel({
       deferSeekWhileBuffering?: boolean;
       guardMs?: number;
     }) => {
+      if (amHostRef.current) return; // host is the source of truth, never apply to own player
       const p = playerRef.current;
       const ra = roomAmbienceRef.current;
       if (!p || !ra.active || !ra.video_id) return;
 
       const live = isLivePlayer(p);
       const desiredPlaying = ra.playing;
+
+      if (!amHostRef.current && ra.playback_command === "go_live") {
+        markApplyingRemote(opts?.guardMs ?? VIEWER_ALIGN_GUARD_MS);
+        // Clear pending alignment so subsequent heartbeats don't trigger
+        // repeated go-live seeks while the player is still buffering.
+        pendingViewerAlignRef.current = false;
+        viewerAlignRetriesLeftRef.current = 0;
+        if (viewerAlignRetryTimerRef.current) {
+          window.clearTimeout(viewerAlignRetryTimerRef.current);
+          viewerAlignRetryTimerRef.current = 0;
+        }
+        try {
+          applyGoLiveOnPlayer(p, desiredPlaying);
+          const cap = liveStreamTimelineCap(p);
+          const pos =
+            Number.isFinite(cap) && cap < Number.MAX_SAFE_INTEGER / 4
+              ? cap
+              : p.getCurrentTime?.() ?? 0;
+          lastPlayerTickRef.current = {
+            at: Date.now(),
+            pos,
+            playing: desiredPlaying,
+          };
+        } catch {
+          /* ignore */
+        }
+        return;
+      }
+
       let targetPos = live
-        ? liveViewerTargetSeconds(p, desiredPlaying, ra.position_sec, ra.sync_epoch_ms)
-        : computeSyncedSeconds(desiredPlaying, ra.position_sec, ra.sync_epoch_ms);
+        ? liveViewerTargetSeconds(
+            p,
+            desiredPlaying,
+            ra.position_sec,
+            ra.sync_epoch_ms,
+          )
+        : computeSyncedSeconds(
+            desiredPlaying,
+            ra.position_sec,
+            ra.sync_epoch_ms,
+          );
 
       try {
         const currentTime = p.getCurrentTime?.() ?? 0;
         const currentState = p.getPlayerState?.() ?? -1;
-        if (live && Number.isFinite(targetPos) && desiredPlaying && ra.position_sec < 8) {
+        if (
+          live &&
+          Number.isFinite(targetPos) &&
+          desiredPlaying &&
+          ra.position_sec < 8
+        ) {
           targetPos = remediateLiveStaleServerSeekTarget(
             p,
             desiredPlaying,
@@ -824,11 +973,21 @@ export default function RoomAmbiencePanel({
         }
         const isCurrentlyPlaying = currentState === 1;
         const targetFinite = Number.isFinite(targetPos);
-        const diff = targetFinite ? Math.abs(currentTime - targetPos) : Number.POSITIVE_INFINITY;
+        const diff = targetFinite
+          ? Math.abs(currentTime - targetPos)
+          : Number.POSITIVE_INFINITY;
         const seekThreshold = opts?.forceSeek ? 0.12 : APPLY_SEEK_THRESHOLD_SEC;
         const needSeek = diff > seekThreshold;
-        const deferSeek = needSeek && opts?.deferSeekWhileBuffering && currentState === YT_BUFFERING;
-        const needPlay = desiredPlaying && !isCurrentlyPlaying && currentState !== YT_BUFFERING;
+        // Always defer a seek while buffering (unless forceSeek) to avoid
+        // the second redundant seek that fires right after a go_live seek.
+        const deferSeek =
+          needSeek &&
+          !opts?.forceSeek &&
+          currentState === YT_BUFFERING;
+        const needPlay =
+          desiredPlaying &&
+          !isCurrentlyPlaying &&
+          currentState !== YT_BUFFERING;
         const needPause = !desiredPlaying && isCurrentlyPlaying;
 
         if ((!needSeek || deferSeek) && !needPlay && !needPause) return;
@@ -836,7 +995,9 @@ export default function RoomAmbiencePanel({
         markApplyingRemote(opts?.guardMs);
         const didSeek = needSeek && !deferSeek;
         if (didSeek) {
-          let seekArg: number = targetFinite ? targetPos : Number.MAX_SAFE_INTEGER;
+          let seekArg: number = targetFinite
+            ? targetPos
+            : Number.MAX_SAFE_INTEGER;
           if (targetFinite && live && desiredPlaying) {
             try {
               const cap = liveStreamTimelineCap(p);
@@ -845,8 +1006,13 @@ export default function RoomAmbiencePanel({
                 cap < Number.MAX_SAFE_INTEGER / 4 &&
                 targetPos >= cap - LIVE_GO_SEEK_MAX_BELOW_CAP_SEC
               ) {
-                /** “Ir ao vivo”: preferir o teto numérico do DVR — `MAX_SAFE_INTEGER` raramente faz o iframe mostrar erro/recarregar. */
-                seekArg = cap;
+                applyGoLiveOnPlayer(p, desiredPlaying);
+                lastPlayerTickRef.current = {
+                  at: Date.now(),
+                  pos: cap,
+                  playing: desiredPlaying,
+                };
+                return;
               }
             } catch {
               /* ignore */
@@ -883,6 +1049,15 @@ export default function RoomAmbiencePanel({
     }
   }, []);
 
+  /** Viewer saiu do seguimento automático (controlo local ou drift ≥ 1s). */
+  const markViewerIndependent = useCallback(() => {
+    pendingViewerAlignRef.current = false;
+    manualSyncAwaitingAnchorRef.current = false;
+    clearViewerAlignRetries();
+    setAlignedStableTicks(0);
+    setSyncMode("independent");
+  }, [clearViewerAlignRetries, setSyncMode]);
+
   const scheduleViewerAlignRetry = useCallback(() => {
     if (viewerAlignRetriesLeftRef.current <= 0) {
       pendingViewerAlignRef.current = false;
@@ -893,7 +1068,11 @@ export default function RoomAmbiencePanel({
     }
     viewerAlignRetryTimerRef.current = window.setTimeout(() => {
       viewerAlignRetryTimerRef.current = 0;
-      if (!pendingViewerAlignRef.current || amHostRef.current || syncModeRef.current !== "synced") {
+      if (
+        !pendingViewerAlignRef.current ||
+        amHostRef.current ||
+        syncModeRef.current !== "synced"
+      ) {
         return;
       }
       viewerAlignRetriesLeftRef.current -= 1;
@@ -952,13 +1131,15 @@ export default function RoomAmbiencePanel({
     manualSyncAwaitingAnchorRef.current = false;
     clearViewerAlignRetries();
     setDriftSec(0);
+    setAlignedStableTicks(0);
   }, [entered, clearViewerAlignRetries]);
 
   /**
    * Reentrou na transmissão (Sair → voltar): mesmo fluxo da primeira entrada — âncora ao host.
    */
   useEffect(() => {
-    if (!entered || amHost || !roomAmbience.active || !roomAmbience.video_id) return;
+    if (!entered || amHost || !roomAmbience.active || !roomAmbience.video_id)
+      return;
     const justEntered = !prevEnteredTransmissionRef.current;
     prevEnteredTransmissionRef.current = true;
     if (!justEntered) return;
@@ -988,7 +1169,10 @@ export default function RoomAmbiencePanel({
   useEffect(() => {
     if (!playerFloatChatOpen) return;
     const id = requestAnimationFrame(() => {
-      floatChatEndRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
+      floatChatEndRef.current?.scrollIntoView({
+        behavior: "auto",
+        block: "end",
+      });
     });
     return () => cancelAnimationFrame(id);
   }, [roomAmbienceMessages.length, playerFloatChatOpen]);
@@ -1000,9 +1184,12 @@ export default function RoomAmbiencePanel({
       if (cancelled || !mountRef.current) return;
       mountRef.current.innerHTML = "";
       const w = window as Window & {
-        YT?: { Player: new (el: HTMLElement | string, opts: unknown) => YtPlayer };
+        YT?: {
+          Player: new (el: HTMLElement | string, opts: unknown) => YtPlayer;
+        };
       };
-      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const origin =
+        typeof window !== "undefined" ? window.location.origin : "";
       playerRef.current = new w.YT!.Player(mountRef.current, {
         height: "100%",
         width: "100%",
@@ -1028,6 +1215,9 @@ export default function RoomAmbiencePanel({
             /** 2 = parâmetro inválido, 5 = erro HTML5 — às vezes após seeks agressivos; 100/101/150 = vídeo indisponível ou embed bloqueado. */
             const code = e.data;
             if (code !== 2 && code !== 5) return;
+            // Never reload the host's video on error — YouTube will self-recover and
+            // loadVideoById would restart the stream from position 0.
+            if (amHostRef.current) return;
             const p = playerRef.current;
             if (!p?.loadVideoById) return;
             const vid = roomAmbienceRef.current?.video_id;
@@ -1067,9 +1257,11 @@ export default function RoomAmbiencePanel({
              * Garante que o iframe possa receber foco do teclado.
              */
             try {
-              const iframe = p.getIframe?.() ?? mountRef.current?.querySelector("iframe");
+              const iframe =
+                p.getIframe?.() ?? mountRef.current?.querySelector("iframe");
               if (iframe instanceof HTMLIFrameElement) {
-                if (!iframe.hasAttribute("tabindex")) iframe.setAttribute("tabindex", "0");
+                if (!iframe.hasAttribute("tabindex"))
+                  iframe.setAttribute("tabindex", "0");
               }
             } catch {
               /* ignore */
@@ -1087,11 +1279,42 @@ export default function RoomAmbiencePanel({
             const isPlaying = state === 1;
 
             if (isHost) {
+              const prevTick = lastPlayerTickRef.current;
               /**
                * Mantemos o tick atualizado sempre — assim o polling não enxerga
                * "salto" quando o iframe re-emite PLAYING depois de um buffering pós-seek.
                */
-              lastPlayerTickRef.current = { at: Date.now(), pos: cur, playing: isPlaying };
+              lastPlayerTickRef.current = {
+                at: Date.now(),
+                pos: cur,
+                playing: isPlaying,
+              };
+
+              /**
+               * Detecção imediata de seek nativo (setas/barra do YouTube):
+               * Se o player voltou a PLAYING e a posição saltou mais do que o
+               * threshold, broadcastamos seek agora sem esperar o polling (520ms).
+               * Só dispara fora da janela de guarda para não duplicar com polls.
+               */
+              if (
+                isPlaying &&
+                prevTick &&
+                prevTick.playing &&
+                Date.now() >= applyingRemoteUntilRef.current
+              ) {
+                const elapsed = (Date.now() - prevTick.at) / 1000;
+                const expected = prevTick.pos + elapsed;
+                const jump = Math.abs(cur - expected);
+                if (jump > SEEK_JUMP_THRESHOLD_SEC) {
+                  lastBroadcastPlayingRef.current = true;
+                  sendRoomAmbienceRef.current({
+                    action: "seek",
+                    position_sec: cur,
+                  });
+                  return;
+                }
+              }
+
               /**
                * Só broadcasta quando o play/pause realmente flipou desde o último
                * broadcast. Isso evita duplicações com `hostControl`/teclado (que já
@@ -1109,6 +1332,19 @@ export default function RoomAmbiencePanel({
 
             if (pendingViewerAlignRef.current && state === 1) {
               if (manualSyncAwaitingAnchorRef.current) return;
+              try {
+                const driftHere = computeViewerHostDriftSec(p, roomAmbienceRef.current, cur);
+                const maxDrift =
+                  isLivePlayer(p)
+                    ? DRIFT_MAX_ALIGNED_SEC_LIVE
+                    : DRIFT_MAX_ALIGNED_SEC_VOD;
+                if (Math.abs(driftHere) >= maxDrift) {
+                  markViewerIndependent();
+                  return;
+                }
+              } catch {
+                /* ignore */
+              }
               const now = Date.now();
               if (now - lastPendingAlignApplyAtMsRef.current < 520) return;
               lastPendingAlignApplyAtMsRef.current = now;
@@ -1133,18 +1369,27 @@ export default function RoomAmbiencePanel({
             // Viewer: ignora dentro da janela de guarda (estamos aplicando estado do host)…
             if (Date.now() < applyingRemoteUntilRef.current) return;
             /**
-             * …ou se o estado já casa com o que o host quer. Esse fallback cobre o caso
-             * de buffering longo em que a guarda expirou antes do iframe terminar de
-             * processar a aplicação remota.
+             * …ou se play/pause já casa com o host e a timeline está a &lt; 1s. Com drift maior,
+             * não retornamos cedo — evita “Ao vivo com host” falso e deixa o polling marcar
+             * independente ao interagir com a barra do YouTube.
              */
             const hostState = roomAmbienceRef.current;
-            if (
+            const playPauseMatchesHost =
               (state === 1 && hostState.playing) ||
-              (state === 2 && !hostState.playing)
-            ) {
-              return;
+              (state === 2 && !hostState.playing);
+            if (playPauseMatchesHost) {
+              try {
+                const driftHere = computeViewerHostDriftSec(p, hostState, cur);
+                const maxDrift =
+                  isLivePlayer(p)
+                    ? DRIFT_MAX_ALIGNED_SEC_LIVE
+                    : DRIFT_MAX_ALIGNED_SEC_VOD;
+                if (Math.abs(driftHere) < maxDrift) return;
+              } catch {
+                return;
+              }
             }
-            if (syncModeRef.current === "synced") setSyncMode("independent");
+            if (syncModeRef.current === "synced") markViewerIndependent();
           },
         },
       });
@@ -1162,9 +1407,20 @@ export default function RoomAmbiencePanel({
       playerRef.current = null;
       if (mountRef.current) mountRef.current.innerHTML = "";
       lastPlayerTickRef.current = null;
+      prevHostPlayerStateRef.current = -1;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Player só deve recriar quando vídeo ou estado da sala muda; handlers estáveis via ref.
-  }, [entered, roomAmbience.active, roomAmbience.video_id, alignViewerToHostPlayback, clearViewerAlignRetries, setSyncMode, requestPlaybackAnchorAuto, scheduleViewerAlignRetry]);
+  }, [
+    entered,
+    roomAmbience.active,
+    roomAmbience.video_id,
+    alignViewerToHostPlayback,
+    clearViewerAlignRetries,
+    setSyncMode,
+    requestPlaybackAnchorAuto,
+    scheduleViewerAlignRetry,
+    markViewerIndependent,
+  ]);
 
   /**
    * O host é a fonte da verdade — nunca aplicamos estado vindo do servidor no
@@ -1174,7 +1430,15 @@ export default function RoomAmbiencePanel({
    */
   useEffect(() => {
     if (amHost) return;
-    if (syncMode !== "synced") return;
+    // go_live bypasses independent mode: host pressed "Ao vivo" and everyone must follow.
+    // We trust the server — no need to check isLivePlayer locally (it may return false on
+    // viewer's player while the stream IS live, silently dropping the command).
+    const isGoLive = roomAmbience.playback_command === "go_live";
+    if (syncMode !== "synced" && !isGoLive) return;
+    if (isGoLive && syncMode !== "synced") {
+      setSyncMode("synced");
+      setAlignedStableTicks(0);
+    }
     if (pendingViewerAlignRef.current) {
       try {
         markApplyingRemote(VIEWER_ALIGN_GUARD_MS);
@@ -1208,6 +1472,7 @@ export default function RoomAmbiencePanel({
     roomAmbience.active,
     roomAmbience.video_id,
     roomAmbience.sync_epoch_ms,
+    roomAmbience.playback_command,
   ]);
 
   /**
@@ -1263,17 +1528,7 @@ export default function RoomAmbiencePanel({
 
     const tick = () => {
       if (cancelled) return;
-      const nextDelayBaseRaw =
-        !amHostRef.current && isBrowserFullscreenHeavy() ? 1250 : 520;
-      const ui = panelLoadRef.current;
-      const overlayHeavy =
-        !amHostRef.current &&
-        (ui.chatOpen ||
-          ui.playerFloatChatOpen ||
-          ui.participantsOpen ||
-          ui.playerFloatParticipantsOpen ||
-          ui.settingsOpen);
-      const nextDelayBase = Math.round(nextDelayBaseRaw * (overlayHeavy ? 2 : 1));
+      const nextDelayBase = 520;
 
       const p = playerRef.current;
       if (!p?.getCurrentTime || !p.getPlayerState) {
@@ -1307,7 +1562,21 @@ export default function RoomAmbiencePanel({
             last.pos < mx - LIVE_HOST_EDGE_JUMP_BACK_MIN_SEC &&
             actual >= mx - LIVE_HOST_EDGE_JUMP_TOLERANCE_SEC;
 
-          if (Math.abs(jump) > SEEK_JUMP_THRESHOLD_SEC || jumpedToLiveEdge) {
+          if (jumpedToLiveEdge) {
+            let pos = Math.max(0, actual);
+            const mx2 = liveMaxSeekSeconds(p);
+            if (mx2 != null) pos = Math.min(pos, mx2);
+            markApplyingRemote(REMOTE_APPLY_GUARD_MS);
+            lastPlayerTickRef.current = {
+              at: now,
+              pos,
+              playing: roomAmbienceRef.current.playing,
+            };
+            sendRoomAmbienceRef.current({
+              action: "go_live",
+              position_sec: pos,
+            });
+          } else if (Math.abs(jump) > SEEK_JUMP_THRESHOLD_SEC) {
             let pos = Math.max(0, actual);
             if (isLivePlayer(p)) {
               const mx2 = liveMaxSeekSeconds(p);
@@ -1326,18 +1595,72 @@ export default function RoomAmbiencePanel({
               position_sec: pos,
             });
           }
+
+          const liveHost = isLivePlayer(p);
+          const raHost = roomAmbienceRef.current;
+          if (
+            liveHost &&
+            raHost.active &&
+            raHost.playing &&
+            playerState === 1
+          ) {
+            const extrapolated = computeSyncedSeconds(
+              raHost.playing,
+              raHost.position_sec,
+              raHost.sync_epoch_ms,
+            );
+            let broadcastPos = Math.max(0, actual);
+            const mxHb = liveMaxSeekSeconds(p);
+            if (mxHb != null) broadcastPos = Math.min(broadcastPos, mxHb);
+            const iframeDrift = Math.abs(broadcastPos - extrapolated);
+            const leftBuffering =
+              prevHostPlayerStateRef.current === YT_BUFFERING;
+            const heartbeatDue =
+              now - lastHostLiveHeartbeatAtMsRef.current >=
+              HOST_LIVE_HEARTBEAT_MIN_INTERVAL_MS;
+            if (
+              leftBuffering ||
+              (heartbeatDue &&
+                iframeDrift >= HOST_LIVE_HEARTBEAT_DRIFT_SEC)
+            ) {
+              lastHostLiveHeartbeatAtMsRef.current = now;
+              markApplyingRemote(REMOTE_APPLY_GUARD_MS);
+              lastPlayerTickRef.current = {
+                at: now,
+                pos: broadcastPos,
+                playing: true,
+              };
+              // Heartbeat always broadcasts seek (not go_live) to keep the
+              // server position accurate without forcing independent viewers
+              // back to the live edge against their will. go_live is reserved
+              // for the explicit "jump to live edge" detection below.
+              sendRoomAmbienceRef.current({
+                action: "seek",
+                position_sec: broadcastPos,
+              });
+            }
+          }
+          prevHostPlayerStateRef.current = playerState;
         } else if (!inGuard) {
           const liveForJump = isLivePlayer(p);
-          const jumpTh = liveForJump ? LIVE_VIEWER_JUMP_THRESHOLD_SEC : SEEK_JUMP_THRESHOLD_SEC;
-          if (Math.abs(jump) > jumpTh && syncModeRef.current === "synced") {
-            const sinceEpoch = Date.now() - hostPlaybackEpochChangedAtMsRef.current;
+          const jumpTh = liveForJump
+            ? LIVE_VIEWER_JUMP_THRESHOLD_SEC
+            : SEEK_JUMP_THRESHOLD_SEC;
+          const sinceEpoch =
+            Date.now() - hostPlaybackEpochChangedAtMsRef.current;
+          const inHostApplyGrace =
+            hostPlaybackEpochChangedAtMsRef.current > 0 &&
+            sinceEpoch < VIEWER_JUMP_IGNORE_INDEP_MS_AFTER_SYNC_EPOCH;
+          const absJump = Math.abs(jump);
+
+          if (syncModeRef.current === "synced" && absJump > VIEWER_USER_CONTROL_JUMP_SEC) {
             if (
-              hostPlaybackEpochChangedAtMsRef.current > 0 &&
-              sinceEpoch < VIEWER_JUMP_IGNORE_INDEP_MS_AFTER_SYNC_EPOCH
+              inHostApplyGrace &&
+              absJump > jumpTh
             ) {
-              /* salto provável do host / Sincronizar — não forçar modo independente */
+              /* salto grande do host em live (DVR) — não marcar independente */
             } else {
-              setSyncMode("independent");
+              markViewerIndependent();
             }
           }
         }
@@ -1352,19 +1675,51 @@ export default function RoomAmbiencePanel({
       }
 
       const hs = roomAmbienceRef.current;
-      const newDrift = computeViewerHostDriftSec(p, hs, actual);
+      const liveViewer = isLivePlayer(p);
+      // On live streams, if the server has not yet published a real anchor
+      // (position_sec still near 0 but DVR window is large), the drift
+      // formula gives a meaningless huge value like "7667 s". Show 0 instead.
+      const liveStale = liveViewer && hs.position_sec < 8 && (() => {
+        try { const d = p.getDuration?.() ?? 0; return d > 120; } catch { return false; }
+      })();
+      const newDrift = liveStale ? 0 : computeViewerHostDriftSec(p, hs, actual);
       const absDrift = Math.abs(newDrift);
-      const alignedBand = viewerAlignedMaxDriftSec;
+      const alignedBand = liveViewer
+        ? DRIFT_MAX_ALIGNED_SEC_LIVE
+        : DRIFT_MAX_ALIGNED_SEC_VOD;
+      const stableRequired = liveViewer
+        ? LIVE_ALIGNED_STABLE_POLLS
+        : VOD_ALIGNED_STABLE_POLLS;
 
-      const driftMin =
-        absDrift >= alignedBand || playerState === YT_BUFFERING
-          ? 0.1
-          : DRIFT_UPDATE_THRESHOLD_SEC;
+      setAlignedStableTicks((prev) => {
+        // Reset while seek is still in flight; inGuard alone is too conservative (6 s)
+        if (pendingViewerAlignRef.current) return 0;
+        if (absDrift < alignedBand) {
+          return Math.min(prev + 1, stableRequired);
+        }
+        return 0;
+      });
+
       setDriftSec((prev) => {
         const prevAligned = Math.abs(prev) < alignedBand;
         const nextAligned = absDrift < alignedBand;
+        // Flip between aligned/unaligned immediately
         if (prevAligned !== nextAligned) return newDrift;
-        if (Math.abs(prev - newDrift) < driftMin) return prev;
+        // When aligned: suppress micro-jitter
+        if (nextAligned) {
+          if (Math.abs(prev - newDrift) < DRIFT_UPDATE_THRESHOLD_SEC) return prev;
+          return newDrift;
+        }
+        const delta = Math.abs(newDrift - prev);
+        // Big jump (e.g. seek, or stale-state resolving): update immediately
+        if (delta > 8 || playerState === YT_BUFFERING) return newDrift;
+        if (delta < 0.06) return prev;
+        // Both playing: the drift is physically constant (both streams advance
+        // at 1 s/s). Freeze the display with a very slow EMA correction only.
+        if (hs.playing && playing) {
+          return prev + (newDrift - prev) * 0.04;
+        }
+        // One side is paused: drift changes at ~1 s/s — update promptly
         return newDrift;
       });
 
@@ -1374,7 +1729,7 @@ export default function RoomAmbiencePanel({
         syncModeRef.current === "synced" &&
         absDrift >= alignedBand
       ) {
-        setSyncMode("independent");
+        markViewerIndependent();
       }
 
       if (
@@ -1398,10 +1753,9 @@ export default function RoomAmbiencePanel({
     entered,
     roomAmbience.active,
     roomAmbience.video_id,
-    setSyncMode,
     markApplyingRemote,
     clearViewerAlignRetries,
-    viewerAlignedMaxDriftSec,
+    markViewerIndependent,
   ]);
 
   /** Fecha o popover de configurações ao clicar fora dele. */
@@ -1449,7 +1803,8 @@ export default function RoomAmbiencePanel({
       else if (e.key === "ArrowRight") seekDelta = 5;
       else if (e.key === "j" || e.key === "J") seekDelta = -10;
       else if (e.key === "l" || e.key === "L") seekDelta = 10;
-      else if (e.key === " " || e.key === "k" || e.key === "K") togglePlay = true;
+      else if (e.key === " " || e.key === "k" || e.key === "K")
+        togglePlay = true;
       if (seekDelta === null && !togglePlay) return;
       e.preventDefault();
 
@@ -1472,9 +1827,18 @@ export default function RoomAmbiencePanel({
               pos: newPos,
               playing: lastPlayerTickRef.current?.playing ?? false,
             };
-            sendRoomAmbienceRef.current({ action: "seek", position_sec: newPos });
+            sendRoomAmbienceRef.current({
+              action: "seek",
+              position_sec: newPos,
+            });
           } else {
+            markViewerIndependent();
             p.seekTo(newPos, true);
+            lastPlayerTickRef.current = {
+              at: Date.now(),
+              pos: newPos,
+              playing: lastPlayerTickRef.current?.playing ?? false,
+            };
           }
         } else if (togglePlay) {
           const state = p.getPlayerState?.() ?? -1;
@@ -1494,8 +1858,14 @@ export default function RoomAmbiencePanel({
               position_sec: cur,
             });
           } else {
+            markViewerIndependent();
             if (wantPlay) p.playVideo();
             else p.pauseVideo();
+            lastPlayerTickRef.current = {
+              at: Date.now(),
+              pos: cur,
+              playing: wantPlay,
+            };
           }
         }
       } catch {
@@ -1504,7 +1874,13 @@ export default function RoomAmbiencePanel({
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [entered, roomAmbience.active, roomAmbience.video_id, markApplyingRemote]);
+  }, [
+    entered,
+    roomAmbience.active,
+    roomAmbience.video_id,
+    markApplyingRemote,
+    markViewerIndependent,
+  ]);
 
   const createTransmission = async () => {
     clearRoomAmbienceError();
@@ -1609,9 +1985,12 @@ export default function RoomAmbiencePanel({
     } catch {
       /* ignore */
     }
-    if (kind === "play") sendRoomAmbience({ action: "play", position_sec: cur });
-    else if (kind === "pause") sendRoomAmbience({ action: "pause", position_sec: cur });
-    else if (kind === "seek") sendRoomAmbience({ action: "seek", position_sec: newPos });
+    if (kind === "play")
+      sendRoomAmbience({ action: "play", position_sec: cur });
+    else if (kind === "pause")
+      sendRoomAmbience({ action: "pause", position_sec: cur });
+    else if (kind === "seek")
+      sendRoomAmbience({ action: "seek", position_sec: newPos });
   };
 
   /** Sincronizar: só um seek quando o host publicar a âncora (evita seek com estado antigo + seek novo). */
@@ -1622,6 +2001,7 @@ export default function RoomAmbiencePanel({
     lastManualSyncClickMsRef.current = now;
 
     clearViewerAlignRetries();
+    setAlignedStableTicks(0);
     setSyncMode("synced");
     pendingViewerAlignRef.current = true;
     manualSyncAwaitingAnchorRef.current = true;
@@ -1645,7 +2025,9 @@ export default function RoomAmbiencePanel({
       preMuteVolumeRef.current = localVolume;
       setLocalVolume(0);
     } else {
-      setLocalVolume(preMuteVolumeRef.current > 0 ? preMuteVolumeRef.current : 80);
+      setLocalVolume(
+        preMuteVolumeRef.current > 0 ? preMuteVolumeRef.current : 80,
+      );
     }
   };
 
@@ -1683,7 +2065,11 @@ export default function RoomAmbiencePanel({
 
   /** Já em Cinema (ex.: após Esc no player): voltar a fullscreen do painel sem mudar o estado. */
   const enterCinemaLayout = () => {
-    if (viewMode === "cinema" && document.fullscreenElement === shellRef.current) return;
+    if (
+      viewMode === "cinema" &&
+      document.fullscreenElement === shellRef.current
+    )
+      return;
     if (viewMode === "cinema" && !document.fullscreenElement) {
       void shellRef.current?.requestFullscreen().catch(() => {});
       return;
@@ -1692,7 +2078,11 @@ export default function RoomAmbiencePanel({
   };
 
   const enterFullPlayerLayout = () => {
-    if (viewMode === "fullplayer" && document.fullscreenElement === playerStageRef.current) return;
+    if (
+      viewMode === "fullplayer" &&
+      document.fullscreenElement === playerStageRef.current
+    )
+      return;
     if (viewMode === "fullplayer" && !document.fullscreenElement) {
       void playerStageRef.current?.requestFullscreen().catch(() => {});
       return;
@@ -1703,7 +2093,9 @@ export default function RoomAmbiencePanel({
   if (!roomAmbience.active) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4 p-6">
-        <h2 className="text-xl font-bold">Modo Ambiente (Watchparty YouTube)</h2>
+        <h2 className="text-xl font-bold">
+          Modo Ambiente (Watchparty YouTube)
+        </h2>
         <p className="max-w-xl text-center text-sm text-muted-foreground">
           Inicie uma transmissão com link do YouTube. Apenas quem iniciar poderá
           controlar reprodução; espectadores controlam apenas volume local.
@@ -1719,7 +2111,9 @@ export default function RoomAmbiencePanel({
             Iniciar
           </Button>
         </div>
-        {roomAmbienceError ? <p className="text-sm text-destructive">{roomAmbienceError}</p> : null}
+        {roomAmbienceError ? (
+          <p className="text-sm text-destructive">{roomAmbienceError}</p>
+        ) : null}
       </div>
     );
   }
@@ -1734,7 +2128,9 @@ export default function RoomAmbiencePanel({
         <span className="inline-flex items-center gap-1 rounded-full border border-rose-500/40 bg-rose-500/10 px-3 py-1 text-xs font-bold text-rose-500">
           <Radio className="h-3.5 w-3.5" /> Ao vivo
         </span>
-        <h2 className="max-w-2xl text-center text-xl font-bold">{roomAmbience.title || "Transmissão ao vivo"}</h2>
+        <h2 className="max-w-2xl text-center text-xl font-bold">
+          {roomAmbience.title || "Transmissão ao vivo"}
+        </h2>
         <a
           href={channelHref}
           target="_blank"
@@ -1750,12 +2146,18 @@ export default function RoomAmbiencePanel({
           <span className="max-w-[220px] truncate">{channelLabel}</span>
         </a>
         <p className="text-sm text-muted-foreground">
-          {roomAmbience.host_username ? `Host da sala: ${roomAmbience.host_username}` : "Modo Ambiente"}
+          {roomAmbience.host_username
+            ? `Host da sala: ${roomAmbience.host_username}`
+            : "Modo Ambiente"}
         </p>
         <p className="text-sm font-medium text-foreground">
           {watchingNowLabel(roomAmbience.viewers.length)}
         </p>
-        <Button size="lg" className="px-5" onClick={() => onEnteredChange(true)}>
+        <Button
+          size="lg"
+          className="px-5"
+          onClick={() => onEnteredChange(true)}
+        >
           Entrar na transmissão
         </Button>
       </div>
@@ -1873,7 +2275,9 @@ export default function RoomAmbiencePanel({
             />
             <span>
               Host da sala:{" "}
-              <span className="font-semibold text-foreground">{roomAmbience.host_username}</span>
+              <span className="font-semibold text-foreground">
+                {roomAmbience.host_username}
+              </span>
             </span>
           </Link>
         ) : null}
@@ -1882,16 +2286,15 @@ export default function RoomAmbiencePanel({
       <div className={cn(mainRowClass, "relative")}>
         <div ref={playerStageRef} className={cn(playerStageClass, "order-2")}>
           <div className="relative min-h-0 flex-1 overflow-hidden [contain:layout_paint] [isolation:isolate]">
-            <div
-              ref={mountRef}
-              className="absolute inset-0 h-full w-full"
-            />
+            <div ref={mountRef} className="absolute inset-0 h-full w-full" />
             <div
               className="pointer-events-none absolute bottom-3 right-3 z-10 flex items-center gap-1 rounded-md bg-black/70 px-2 py-1 shadow-md ring-1 ring-white/15"
               aria-hidden
             >
               <YoutubeMark className="h-4 w-5 shrink-0 text-[#FF0033]" />
-              <span className="text-[10px] font-bold uppercase tracking-wide text-white/90">YouTube</span>
+              <span className="text-[10px] font-bold uppercase tracking-wide text-white/90">
+                YouTube
+              </span>
             </div>
             {!participantsPanelHighlighted ? (
               <Button
@@ -1915,7 +2318,9 @@ export default function RoomAmbiencePanel({
                 onClick={openChatPanel}
               >
                 <ChevronLeft className="h-4 w-4" />
-                {playerIsFs ? <ChatFloatUnreadBadge count={floatChatUnreadCount} /> : null}
+                {playerIsFs ? (
+                  <ChatFloatUnreadBadge count={floatChatUnreadCount} />
+                ) : null}
               </Button>
             ) : null}
             {playerIsFs && playerFloatParticipantsOpen ? (
@@ -1954,7 +2359,9 @@ export default function RoomAmbiencePanel({
                         className="flex items-center gap-2 rounded-lg border border-white/20 bg-black px-2 py-2 shadow-sm shadow-black/40 ring-1 ring-white/5 [contain:content]"
                       >
                         <ProfileAvatar
-                          displayName={participant.fullname || participant.username}
+                          displayName={
+                            participant.fullname || participant.username
+                          }
                           username={participant.username}
                           profilePhoto={participant.profile_photo}
                           sizeClass="h-8 w-8"
@@ -1965,12 +2372,16 @@ export default function RoomAmbiencePanel({
                           <p className="truncate text-xs font-semibold text-zinc-50">
                             {participant.fullname || participant.username}
                           </p>
-                          <p className="truncate text-[11px] text-zinc-400">@{participant.username}</p>
+                          <p className="truncate text-[11px] text-zinc-400">
+                            @{participant.username}
+                          </p>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <p className="text-xs text-zinc-400">Ninguém na transmissão agora.</p>
+                    <p className="text-xs text-zinc-400">
+                      Ninguém na transmissão agora.
+                    </p>
                   )}
                 </div>
               </div>
@@ -2084,7 +2495,7 @@ export default function RoomAmbiencePanel({
                   {viewerLiveWithHost ? (
                     <span
                       className="inline-flex items-center gap-1.5 rounded-full border border-rose-400/60 bg-rose-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-rose-200"
-                      title="Sua posição na timeline está a menos de 1s da do host"
+                      title="Sua posição está alinhada com a do host (live: margem &lt; 0,7s da borda ao vivo)"
                     >
                       <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-rose-400" />
                       Ao vivo com host
@@ -2129,7 +2540,8 @@ export default function RoomAmbiencePanel({
                       variant="outline"
                       className={cn(
                         "h-8 w-8 border-white/25 bg-black/40 text-white hover:bg-white/15 hover:text-white",
-                        settingsOpen && "border-primary/60 bg-primary/25 text-white",
+                        settingsOpen &&
+                          "border-primary/60 bg-primary/25 text-white",
                       )}
                       title="Configurações da transmissão"
                       aria-haspopup="dialog"
@@ -2154,19 +2566,31 @@ export default function RoomAmbiencePanel({
                             Sua transmissão
                           </p>
                           <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
-                            Ao entrar ou usar <strong className="text-foreground">Sincronizar</strong>,
-                            pedimos ao host o tempo real do vídeo. O chip{" "}
-                            <strong className="text-foreground">Ao vivo com host</strong> só aparece com
-                            menos de 1s de diferença na timeline; caso contrário,{" "}
-                            <strong className="text-foreground">Modo independente</strong>.
+                            Ao entrar ou usar{" "}
+                            <strong className="text-foreground">
+                              Sincronizar
+                            </strong>
+                            , pedimos ao host o tempo real do vídeo. O chip{" "}
+                            <strong className="text-foreground">
+                              Ao vivo com host
+                            </strong>{" "}
+                            só aparece após várias leituras estáveis com drift mínimo (live: &lt; 0,7s da borda ao vivo);
+                            caso contrário,{" "}
+                            <strong className="text-foreground">
+                              Modo independente
+                            </strong>
+                            .
                           </p>
                         </div>
                         <div className="px-3 py-2 text-[11px] text-muted-foreground">
                           {viewerLiveWithHost ? (
                             <span className="inline-flex items-center gap-1.5">
                               <span className="inline-block h-1.5 w-1.5 rounded-full bg-rose-500" />
-                              Timeline: <strong className="text-foreground">menos de 1s</strong> em relação
-                              ao host
+                              Timeline:{" "}
+                              <strong className="text-foreground">
+                                alinhada
+                              </strong>{" "}
+                              em relação ao host
                             </span>
                           ) : (
                             <span className="inline-flex flex-wrap items-center gap-1.5">
@@ -2181,7 +2605,10 @@ export default function RoomAmbiencePanel({
                                   </strong>
                                 </>
                               ) : null}
-                              <span className="text-muted-foreground"> — use Sincronizar</span>
+                              <span className="text-muted-foreground">
+                                {" "}
+                                — use Sincronizar
+                              </span>
                             </span>
                           )}
                         </div>
@@ -2195,7 +2622,8 @@ export default function RoomAmbiencePanel({
                   variant="outline"
                   className={cn(
                     "h-8 gap-1 border-white/25 bg-black/40 px-2 text-xs text-white hover:bg-white/15 hover:text-white",
-                    layoutHighlight === "small" && "border-primary/60 bg-primary/25 text-white",
+                    layoutHighlight === "small" &&
+                      "border-primary/60 bg-primary/25 text-white",
                   )}
                   onClick={() => setLayoutMode("small")}
                   title="Pequena"
@@ -2209,7 +2637,8 @@ export default function RoomAmbiencePanel({
                   variant="outline"
                   className={cn(
                     "h-8 gap-1 border-white/25 bg-black/40 px-2 text-xs text-white hover:bg-white/15 hover:text-white",
-                    layoutHighlight === "cinema" && "border-primary/60 bg-primary/25 text-white",
+                    layoutHighlight === "cinema" &&
+                      "border-primary/60 bg-primary/25 text-white",
                   )}
                   onClick={enterCinemaLayout}
                   title="Cinema"
@@ -2223,7 +2652,8 @@ export default function RoomAmbiencePanel({
                   variant="outline"
                   className={cn(
                     "h-8 gap-1 border-white/25 bg-black/40 px-2 text-xs text-white hover:bg-white/15 hover:text-white",
-                    layoutHighlight === "fullplayer" && "border-primary/60 bg-primary/25 text-white",
+                    layoutHighlight === "fullplayer" &&
+                      "border-primary/60 bg-primary/25 text-white",
                   )}
                   onClick={enterFullPlayerLayout}
                   title="Tela cheia"
@@ -2238,7 +2668,9 @@ export default function RoomAmbiencePanel({
                   onClick={toggleMuteIcon}
                   className="shrink-0 cursor-pointer rounded-md p-1.5 text-white/90 outline-none ring-offset-background transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-primary/50"
                   title={localVolume === 0 ? "Restaurar volume" : "Silenciar"}
-                  aria-label={localVolume === 0 ? "Restaurar volume" : "Silenciar"}
+                  aria-label={
+                    localVolume === 0 ? "Restaurar volume" : "Silenciar"
+                  }
                 >
                   {localVolume === 0 ? (
                     <VolumeX className="h-4 w-4" />
@@ -2259,7 +2691,6 @@ export default function RoomAmbiencePanel({
             </div>
           </div>
         </div>
-
 
         {participantsOpen && !playerIsFs ? (
           <div className="order-1 flex min-h-0 w-full shrink-0 flex-col rounded-xl border border-border/60 bg-card/95 shadow-sm md:order-none md:w-[260px]">
@@ -2286,7 +2717,10 @@ export default function RoomAmbiencePanel({
             <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-2">
               {roomAmbience.viewers.length > 0 ? (
                 roomAmbience.viewers.map((participant) => (
-                  <div key={participant.user_id} className="flex items-center gap-2 rounded-lg border border-border/40 bg-muted/20 px-2 py-2">
+                  <div
+                    key={participant.user_id}
+                    className="flex items-center gap-2 rounded-lg border border-border/40 bg-muted/20 px-2 py-2"
+                  >
                     <ProfileAvatar
                       displayName={participant.fullname || participant.username}
                       username={participant.username}
@@ -2299,12 +2733,16 @@ export default function RoomAmbiencePanel({
                       <p className="truncate text-xs font-semibold text-foreground">
                         {participant.fullname || participant.username}
                       </p>
-                      <p className="truncate text-[11px] text-muted-foreground">@{participant.username}</p>
+                      <p className="truncate text-[11px] text-muted-foreground">
+                        @{participant.username}
+                      </p>
                     </div>
                   </div>
                 ))
               ) : (
-                <p className="text-xs text-muted-foreground">Ninguém está assistindo a transmissão agora.</p>
+                <p className="text-xs text-muted-foreground">
+                  Ninguém está assistindo a transmissão agora.
+                </p>
               )}
             </div>
           </div>
@@ -2316,7 +2754,9 @@ export default function RoomAmbiencePanel({
               <div className="flex items-center justify-between gap-2 px-2 py-2 md:px-3">
                 <div className="flex min-w-0 items-center gap-2">
                   <MessageSquare className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                  <span className="text-xs font-semibold uppercase text-muted-foreground">Chat</span>
+                  <span className="text-xs font-semibold uppercase text-muted-foreground">
+                    Chat
+                  </span>
                 </div>
                 <Button
                   variant="ghost"
@@ -2342,7 +2782,9 @@ export default function RoomAmbiencePanel({
                   />
                   <span className="min-w-0 leading-snug">
                     Host da sala:{" "}
-                    <span className="font-semibold text-foreground">{roomAmbience.host_username}</span>
+                    <span className="font-semibold text-foreground">
+                      {roomAmbience.host_username}
+                    </span>
                   </span>
                 </Link>
               ) : null}
@@ -2382,7 +2824,9 @@ export default function RoomAmbiencePanel({
           </div>
         ) : null}
       </div>
-      {roomAmbienceError ? <p className="text-sm text-destructive">{roomAmbienceError}</p> : null}
+      {roomAmbienceError ? (
+        <p className="text-sm text-destructive">{roomAmbienceError}</p>
+      ) : null}
       <AlertDialog open={confirmCloseOpen} onOpenChange={setConfirmCloseOpen}>
         <AlertDialogContent portalContainer={dialogPortal ?? undefined}>
           <AlertDialogHeader>
@@ -2418,7 +2862,10 @@ export default function RoomAmbiencePanel({
             <AlertDialogTitle>Trocar vídeo da transmissão</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-3 pt-1 text-sm text-muted-foreground">
-                <p>O vídeo atual será substituído para todos que estão na transmissão.</p>
+                <p>
+                  O vídeo atual será substituído para todos que estão na
+                  transmissão.
+                </p>
                 <Input
                   value={changeUrl}
                   onChange={(e) => setChangeUrl(e.target.value)}
