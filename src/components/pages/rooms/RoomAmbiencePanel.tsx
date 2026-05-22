@@ -156,6 +156,13 @@ const HOST_LIVE_HEARTBEAT_DRIFT_SEC = 0.45;
 /** Só chama `seekTo` se estivermos mais longe que isto do alvo (VOD e live estável). */
 const APPLY_SEEK_THRESHOLD_SEC = 1.15;
 
+/**
+ * Viewer a menos de N segundos do próprio live edge: drift positivo residual (< 1 s)
+ * é suprimido — DVR offsets entre iframes geram jitter espúrio nessa faixa mínima.
+ * Somente valores muito pequenos; para o comando go_live usa-se drift relativo ao edge.
+ */
+const LIVE_EDGE_AHEAD_CLAMP_SEC = 1;
+
 /** Detecta vídeos ao vivo via campos não-documentados do iframe API. */
 function isLivePlayer(p: YtPlayer | null): boolean {
   if (!p) return false;
@@ -293,6 +300,8 @@ type HostPlaybackSnapshot = {
   playing: boolean;
   position_sec: number;
   sync_epoch_ms: number;
+  /** Presente quando o servidor propagou um comando go_live do host. */
+  playback_command?: "go_live" | null;
 };
 
 /**
@@ -307,20 +316,38 @@ function computeViewerHostDriftSec(
   if (live) {
     // Cap viewer's actual to live edge + eps so it doesn't appear "ahead" of DVR end.
     let actualCapped = actual;
+    let capVal = Number.MAX_SAFE_INTEGER;
     try {
       const cap = liveStreamTimelineCap(p);
       if (Number.isFinite(cap) && cap < Number.MAX_SAFE_INTEGER / 4) {
+        capVal = cap;
         actualCapped = Math.min(actual, cap + LIVE_STREAM_EDGE_EPS_SEC);
       }
     } catch { /* ignore */ }
+
+    // Para go_live: o host estava no live edge. O drift significativo é
+    // quantos segundos o viewer está ATRÁS do próprio live edge — não a
+    // comparação de posições absolutas entre dois iframes (que diferem).
+    // Resultado negativo = viewer atrás do live; 0 = viewer ao vivo.
+    if (hs.playback_command === "go_live" && capVal < Number.MAX_SAFE_INTEGER / 4) {
+      return actualCapped - capVal;
+    }
+
     const hostOnTimeline = liveViewerTargetSeconds(
       p,
       hs.playing,
       hs.position_sec,
       hs.sync_epoch_ms,
     );
+    const rawDrift = Number.isFinite(hostOnTimeline) ? actualCapped - hostOnTimeline : 0;
+    // Suprime falso "à frente" apenas quando viewer está praticamente no live edge
+    // (< 1 s). DVR offsets entre iframes causam drift positivo espúrio nessa faixa.
+    if (rawDrift > 0 && capVal < Number.MAX_SAFE_INTEGER / 4) {
+      const distFromEdge = capVal - actualCapped;
+      if (distFromEdge < LIVE_EDGE_AHEAD_CLAMP_SEC) return 0;
+    }
     // positive = viewer ahead; negative = viewer behind (same sign as VOD)
-    return Number.isFinite(hostOnTimeline) ? actualCapped - hostOnTimeline : 0;
+    return rawDrift;
   }
   const hostExpected = computeSyncedSeconds(
     hs.playing,
@@ -335,12 +362,10 @@ function applyGoLiveOnPlayer(
   p: YtPlayer,
   desiredPlaying: boolean,
 ): void {
-  const cap = liveStreamTimelineCap(p);
-  const seekArg =
-    Number.isFinite(cap) && cap < Number.MAX_SAFE_INTEGER / 4
-      ? cap
-      : Number.MAX_SAFE_INTEGER;
-  p.seekTo(seekArg, true);
+  // Usar Number.MAX_SAFE_INTEGER e mais confiavel que calcular cap = getDuration() - eps:
+  // a API do YouTube trata qualquer seek alem do fim como "ir ao live edge real",
+  // evitando a imprecisao de getDuration() que fica alguns segundos atras do edge.
+  p.seekTo(Number.MAX_SAFE_INTEGER, true);
   if (desiredPlaying) p.playVideo();
   else p.pauseVideo();
 }
@@ -500,6 +525,12 @@ export default function RoomAmbiencePanel({
   const prevHostPlayerStateRef = useRef(-1);
   const lastHostLiveHeartbeatAtMsRef = useRef(0);
   const lastHostAnchorBroadcastAtMsRef = useRef(0);
+  /**
+   * Viewer: timestamp do último `applyGoLiveOnPlayer` executado.
+   * Usado para evitar seeks redundantes enquanto o player ainda está em BUFFERING
+   * por causa de um go_live anterior (múltiplos cliques em "Sincronizar").
+   */
+  const lastGoLiveAppliedAtMsRef = useRef(0);
 
   const syncModeRef = useRef<SyncMode>(syncMode);
   const setSyncMode = useCallback((m: SyncMode) => {
@@ -924,17 +955,29 @@ export default function RoomAmbiencePanel({
           viewerAlignRetryTimerRef.current = 0;
         }
         try {
-          applyGoLiveOnPlayer(p, desiredPlaying);
-          const cap = liveStreamTimelineCap(p);
-          const pos =
-            Number.isFinite(cap) && cap < Number.MAX_SAFE_INTEGER / 4
-              ? cap
-              : p.getCurrentTime?.() ?? 0;
-          lastPlayerTickRef.current = {
-            at: Date.now(),
-            pos,
-            playing: desiredPlaying,
-          };
+          const currentState = p.getPlayerState?.() ?? -1;
+          const playerIsBuffering = currentState === YT_BUFFERING;
+          const timeSinceLastGoLive = Date.now() - lastGoLiveAppliedAtMsRef.current;
+          // Se o player ainda está em BUFFERING por causa de um seek go_live
+          // recente, não interrompemos com outro seek — deixamos o buffer completar.
+          // Isso evita que múltiplos cliques em "Sincronizar" reiniciem
+          // repetidamente o buffering e deixem o player cada vez mais atrás do live.
+          if (playerIsBuffering && timeSinceLastGoLive < VIEWER_ALIGN_GUARD_MS) {
+            // Seek já em andamento — ignorar esta repetição
+          } else {
+            applyGoLiveOnPlayer(p, desiredPlaying);
+            lastGoLiveAppliedAtMsRef.current = Date.now();
+            const cap = liveStreamTimelineCap(p);
+            const pos =
+              Number.isFinite(cap) && cap < Number.MAX_SAFE_INTEGER / 4
+                ? cap
+                : p.getCurrentTime?.() ?? 0;
+            lastPlayerTickRef.current = {
+              at: Date.now(),
+              pos,
+              playing: desiredPlaying,
+            };
+          }
         } catch {
           /* ignore */
         }
@@ -1528,11 +1571,13 @@ export default function RoomAmbiencePanel({
 
     const tick = () => {
       if (cancelled) return;
-      const nextDelayBase = 520;
 
       const p = playerRef.current;
+      // Em live, poll mais rápido para detectar o "Ir ao vivo" do host com menos atraso.
+      const nextDelayBase = p && isLivePlayer(p) ? 280 : 520;
+
       if (!p?.getCurrentTime || !p.getPlayerState) {
-        scheduleNext(nextDelayBase);
+        scheduleNext(520);
         return;
       }
 
