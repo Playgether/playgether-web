@@ -8,6 +8,7 @@ import { NotificationsModal } from "./NotificationsModal";
 import { SettingsModal } from "../../SettingsModal";
 import { useBaseLayoutServerContext } from "../../context/BaseLayoutServerContext";
 import { useRouter } from "next/navigation";
+import { useDMUnread } from "@/context/DMUnreadContext";
 
 export const TopNavigation = () => {
   const { logout } = useAuthContext();
@@ -18,6 +19,7 @@ export const TopNavigation = () => {
   const { BaseLayout } = useBaseLayoutServerContext();
   const router = useRouter();
   const icons = BaseLayout?.ServerTopNavigation.icons;
+  const { unreadCount: dmUnreadCount } = useDMUnread();
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
@@ -60,9 +62,11 @@ export const TopNavigation = () => {
           title="Open chat"
         >
           {icons.MessageSquare}
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-secondary rounded-full text-xs font-bold text-white flex items-center justify-center animate-glow-pulse">
-            3
-          </span>
+          {dmUnreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-secondary rounded-full text-xs font-bold text-white flex items-center justify-center animate-glow-pulse">
+              {dmUnreadCount > 99 ? "99+" : dmUnreadCount}
+            </span>
+          )}
         </Button>
 
         <Button

@@ -62,7 +62,7 @@ export default function LeftColumn() {
     <div className="col-span-3 space-y-6 sticky-container">
       <UserProfile
         user={display}
-        userId={user?.user_id != null ? Number(user.user_id) : undefined}
+        userId={user?.user_id ?? undefined}
         allowStatusPicker={Boolean(user?.user_id)}
         profilePhotoPublicId={
           user

@@ -5,7 +5,7 @@ import type { RoomEventMessage } from "@/types/RoomEvents";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export type RoomEventPresenceViewer = {
-  user_id: number;
+  user_id: string | number;
   username: string;
   is_active_player: boolean;
   is_eliminated: boolean;

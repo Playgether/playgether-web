@@ -4,6 +4,7 @@ import { WrongPasswordComponent } from "./WrongPassword";
 import NoHaveAccount from "./NoHaveAccount";
 import { UseFormHandleSubmit, FieldErrors } from "react-hook-form";
 import { loginAction } from "@/actions/auth";
+import { unlockE2EKeys } from "@/context/E2ECryptoContext";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import {
   CustomToastErrorMessages,
@@ -58,6 +59,12 @@ export const FormLoginImplementation = ({
       return;
     } else {
       setUnauthorized(false);
+    }
+
+    // Unlock and cache the E2E private key while we still have the plaintext password
+    if (!error) {
+      const password = formData.get("password") as string;
+      await unlockE2EKeys(password);
     }
 
     if (error && error !== "wrong_password") {

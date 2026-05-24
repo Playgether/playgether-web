@@ -463,7 +463,7 @@ export function RoomSettingsPanel({ room }: RoomSettingsPanelProps) {
   const [isPending, startTransition] = useTransition();
 
   const canManage =
-    user?.user_id != null && Number(user.user_id) === room.owner;
+    user?.user_id != null && String(user.user_id) === String(room.owner);
 
   const startEdit = (key: "name" | "summary") => {
     if (!canManage) return;

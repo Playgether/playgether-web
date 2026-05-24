@@ -20,14 +20,14 @@ export default function RoomParticipantsPanel({
   const presenceCtx = usePresenceContext();
   const [search, setSearch] = useState("");
 
-  const selfId = user?.user_id != null ? Number(user.user_id) : null;
+  const selfId = user?.user_id ?? null;
 
   const presenceFiltered = useMemo(() => {
     if (!presenceCtx.isPresenceConnected) {
       return onlineUsers;
     }
     return onlineUsers.filter((u) => {
-      if (selfId != null && u.id === selfId) return true;
+      if (selfId != null && String(u.id) === String(selfId)) return true;
       const st = presenceCtx.getPresence(u.id).status;
       return st !== "offline";
     });

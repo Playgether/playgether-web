@@ -34,7 +34,16 @@ export async function createChatRoom(input: CreateChatRoomInput) {
   }
 
   try {
-    const res = await api.post<{ id: number; slug: string }>(
+    const res = await api.post<{
+      id: number;
+      slug: string;
+      group_name: string;
+      summary: string;
+      banner: string | null;
+      capacity: number;
+      peak_users: number;
+      total_messages: number;
+    }>(
       "/api/v1/chatrooms/",
       body,
       {
@@ -47,7 +56,21 @@ export async function createChatRoom(input: CreateChatRoomInput) {
     if (typeof slug !== "string" || !slug) {
       return { ok: false as const, error: "Resposta inválida do servidor." };
     }
-    return { ok: true as const, slug };
+    return {
+      ok: true as const,
+      slug,
+      room: {
+        id: res.data.id,
+        slug: res.data.slug,
+        name: res.data.group_name ?? input.group_name,
+        summary: res.data.summary ?? input.summary,
+        banner: res.data.banner ?? null,
+        capacity: res.data.capacity ?? 100,
+        peakUsers: res.data.peak_users ?? 0,
+        totalMessages: res.data.total_messages ?? 0,
+        isFavorited: false,
+      },
+    };
   } catch (e: unknown) {
     const err = e as {
       response?: { data?: Record<string, string[] | string | unknown> };

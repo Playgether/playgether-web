@@ -16,7 +16,7 @@ interface UserProfileProps {
     following: number;
     posts: number;
   };
-  userId?: number;
+  userId?: string | number;
   allowStatusPicker?: boolean;
   profilePhotoPublicId?: string | null;
   guestAvatar?: string | StaticImageData;

@@ -79,7 +79,7 @@ export const useSecureWebSocket = (options: UseSecureWebSocketOptions) => {
 
   // 3. ✅ URL completa do WebSocket (com token na query para autenticação)
   const fullWsUrl =
-    wsBaseUrl && isAuthorized && wsToken
+    wsBaseUrl && isAuthorized && wsToken && url
       ? `${wsBaseUrl}${url}${url.includes("?") ? "&" : "?"}token=${encodeURIComponent(wsToken)}`
       : null;
 

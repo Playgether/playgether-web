@@ -1,6 +1,7 @@
 "use client";
 
 import { createChatRoom } from "@/actions/createChatRoom";
+import type { RoomCardData } from "./RoomCard";
 import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
 import { deleteCloudinaryImage } from "@/services/cloudinary_requests/deletePostFile";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onRoomCreated?: (room: RoomCardData) => void;
 };
 
 const NAME_MAX = 56;
@@ -48,7 +50,7 @@ function restoreRadixOverlayAfterCloudinary() {
   });
 }
 
-export default function CreateRoomModal({ open, onOpenChange }: Props) {
+export default function CreateRoomModal({ open, onOpenChange, onRoomCreated }: Props) {
   const router = useRouter();
   const [groupName, setGroupName] = useState("");
   const [urlSlug, setUrlSlug] = useState("");
@@ -158,7 +160,7 @@ export default function CreateRoomModal({ open, onOpenChange }: Props) {
       }
       clearFormAfterSuccess();
       onOpenChange(false);
-      router.refresh();
+      onRoomCreated?.(res.room);
       router.push(`/rooms/${res.slug}`);
     });
   };

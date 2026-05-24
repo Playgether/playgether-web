@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Heart, Settings, UserPlus } from "lucide-react";
+import { Heart, MessageCircle, Settings, UserPlus } from "lucide-react";
 import type { getProfileByUsernameProps } from "@/services/getProfileByUsername";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
@@ -20,6 +20,8 @@ import { CustomToastProps } from "@/error/custom-toaster/enum";
 import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
 import { notifyFriendsListChanged } from "@/lib/friendsListEvents";
 import { cn } from "@/lib/utils";
+import { startConversation } from "@/services/directMessages";
+import { useRouter } from "next/navigation";
 
 const PROFILE_CARD_BIO_COLLAPSE_AFTER_CHARS = 200;
 const PROFILE_CARD_BIO_COLLAPSE_AFTER_LINES = 5;
@@ -32,6 +34,7 @@ export function GamesCanvasUserProfile({
   onProfileUpdated?: (updated: Partial<getProfileByUsernameProps>) => void;
 }) {
   const { user, authSessionResolved } = useAuthContext();
+  const router = useRouter();
   const isOwner =
     !!user &&
     !!profile &&
@@ -325,17 +328,29 @@ export function GamesCanvasUserProfile({
                       <Button
                         variant={isFollowing ? "secondary" : "default"}
                         size="sm"
-                        className={`flex-1 ${
+                        className={`flex-1 min-w-0 ${
                           isFollowing
                             ? "bg-secondary hover:bg-secondary/80"
                             : "bg-gradient-primary hover:shadow-neon transition-all duration-200 border-0"
                         }`}
                         onClick={handleFollow}
                       >
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        {isFollowing ? "Seguindo" : "Seguir"}
+                        <UserPlus className="h-4 w-4 mr-1 shrink-0" />
+                        <span className="truncate">{isFollowing ? "Seguindo" : "Seguir"}</span>
                       </Button>
-
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 min-w-0 border-border hover:bg-primary/10 hover:border-primary/40"
+                        onClick={async () => {
+                          if (!profile?.user_id) return;
+                          const conv = await startConversation(String(profile.user_id));
+                          if (conv) router.push(`/conversations?open=${conv.id}`);
+                        }}
+                      >
+                        <MessageCircle className="h-4 w-4 mr-1 shrink-0" />
+                        <span className="truncate">Mensagem</span>
+                      </Button>
                     </div>
                   </div>
                 )}

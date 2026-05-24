@@ -1,5 +1,5 @@
 export interface OnlineUsersChatRoom {
-  id: number;
+  id: string | number;
   fullname: string;
   profile_photo: string;
   username: string;

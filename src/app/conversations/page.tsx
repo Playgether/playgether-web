@@ -7,7 +7,12 @@ export const metadata: Metadata = {
   description: "Suas conversas privadas, de clã e grupos",
 };
 
-export default function ConversationsPage() {
+export default async function ConversationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ open?: string }>;
+}) {
+  const { open } = await searchParams;
   return (
     <BaseLayout>
       <div className="ml-20 h-[calc(100vh-var(--layout-header-height)-var(--layout-quick-messages-height))] flex flex-col">
@@ -18,6 +23,7 @@ export default function ConversationsPage() {
           <ConversationsContent
             listHeight="calc(100vh - 200px)"
             chatHeight="flex-1"
+            autoOpenId={open}
           />
         </div>
       </div>

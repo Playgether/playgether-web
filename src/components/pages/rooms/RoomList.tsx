@@ -17,6 +17,7 @@ export default function RoomList({ rooms }: RoomListProps) {
   const [search, setSearch] = useState("");
   const [showFavorites, setShowFavorites] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [localRooms, setLocalRooms] = useState<RoomCardData[]>(rooms);
   const [occupancy, setOccupancy] = useState<Record<string, number>>({});
   const [favorites, setFavorites] = useState<Set<number>>(
     () =>
@@ -24,30 +25,37 @@ export default function RoomList({ rooms }: RoomListProps) {
   );
   const [, startFavoriteTransition] = useTransition();
 
+  const handleRoomCreated = (newRoom: RoomCardData) => {
+    setLocalRooms((prev) => {
+      if (prev.some((r) => r.id === newRoom.id)) return prev;
+      return [newRoom, ...prev];
+    });
+  };
+
   const searchedRooms = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return rooms;
-    return rooms.filter(
+    if (!q) return localRooms;
+    return localRooms.filter(
       (room) =>
         room.name.toLowerCase().includes(q) ||
         room.summary.toLowerCase().includes(q)
     );
-  }, [rooms, search]);
+  }, [localRooms, search]);
 
   const idsSignature = useMemo(
     () =>
-      rooms
+      localRooms
         .map((r) => r.id)
         .sort((a, b) => a - b)
         .join(","),
-    [rooms]
+    [localRooms]
   );
 
   useEffect(() => {
-    if (rooms.length === 0) return undefined;
+    if (localRooms.length === 0) return undefined;
 
     const tick = () => {
-      const ids = rooms.map((r) => r.id).join(",");
+      const ids = localRooms.map((r) => r.id).join(",");
       fetch(`/api/chatrooms/occupancy?ids=${encodeURIComponent(ids)}`)
         .then((res) => (res.ok ? res.json() : {}))
         .then((data: Record<string, number>) => {
@@ -59,7 +67,7 @@ export default function RoomList({ rooms }: RoomListProps) {
     tick();
     const interval = setInterval(tick, 5000);
     return () => clearInterval(interval);
-  }, [idsSignature, rooms.length]);
+  }, [idsSignature, localRooms.length]);
 
   const displayRooms = useMemo(() => {
     const base = showFavorites
@@ -85,18 +93,18 @@ export default function RoomList({ rooms }: RoomListProps) {
     });
 
     startFavoriteTransition(async () => {
-      const room = rooms.find((r) => r.id === roomId);
+      const room = localRooms.find((r) => r.id === roomId);
       if (!room?.slug) return;
       await favoriteToggleChatRoom(room.slug, favorite ? "POST" : "DELETE");
     });
   };
 
   const noSearchMatches =
-    rooms.length > 0 && searchedRooms.length === 0 && search.trim() !== "";
+    localRooms.length > 0 && searchedRooms.length === 0 && search.trim() !== "";
 
   return (
     <section className="min-h-layout-main w-full bg-background">
-      <CreateRoomModal open={createOpen} onOpenChange={setCreateOpen} />
+      <CreateRoomModal open={createOpen} onOpenChange={setCreateOpen} onRoomCreated={handleRoomCreated} />
 
       <header className="gradient-primary rounded-2xl px-4 py-8 text-center shadow-improved">
         <div className="mx-auto max-w-6xl">
@@ -162,7 +170,7 @@ export default function RoomList({ rooms }: RoomListProps) {
           />
         </div>
 
-        {rooms.length === 0 ? (
+        {localRooms.length === 0 ? (
           <NotFoundPages
             message="Não encontramos nenhuma sala disponível no momento"
             href="/feed"

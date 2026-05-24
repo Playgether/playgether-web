@@ -16,7 +16,7 @@ import { subscribeFriendsListInvalidate } from "@/lib/friendsListEvents";
 
 type FriendApi = {
   id: number;
-  user_id: number;
+  user_id: string | number;
   username: string;
   name: string;
   profile_photo: string | null;

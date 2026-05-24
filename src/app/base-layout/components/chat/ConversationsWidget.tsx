@@ -4,10 +4,12 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { MessageSquare, X } from "lucide-react";
 import { ConversationsContent } from "./ConversationsContent";
+import { useDMUnread } from "@/context/DMUnreadContext";
 
 export function ConversationsWidget() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { unreadCount } = useDMUnread();
 
   // Não mostrar na página de conversas
   if (pathname === "/conversations") return null;
@@ -46,9 +48,11 @@ export function ConversationsWidget() {
         aria-label="Abrir conversas"
       >
         <MessageSquare className="w-6 h-6 text-white" />
-        <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-secondary rounded-full text-xs font-bold text-white flex items-center justify-center animate-glow-pulse">
-          3
-        </span>
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-secondary rounded-full text-xs font-bold text-white flex items-center justify-center animate-glow-pulse">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        )}
       </button>
     </div>
   );
