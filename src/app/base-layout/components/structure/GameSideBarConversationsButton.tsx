@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { GamerSideBarItensInterface } from "../../types/structure/GamerSideBarItensInterface";
 import { ConversationsModal } from "../chat/ConversationsModal";
@@ -14,6 +14,13 @@ export default function GamerSidbarConversationsButtons({
   const [conversationsOpen, setConversationsOpen] = useState(false);
   const [friendsOpen, setFriendsOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+
+  const isActive = item.href
+    ? item.href === "/feed"
+      ? pathname === "/feed"
+      : pathname.startsWith(item.href)
+    : false;
 
   const handleClick = () => {
     if (item.href) {
@@ -43,7 +50,7 @@ export default function GamerSidbarConversationsButtons({
         className={cn(
           "w-full h-14 flex items-center rounded-xl transition-all duration-300 relative",
           "hover:bg-white/20 hover:shadow-glow-neon hover:scale-[1.02]",
-          item.active
+          isActive
             ? "bg-white/20 text-white shadow-glow-neon"
             : "text-white/80 hover:text-white"
         )}

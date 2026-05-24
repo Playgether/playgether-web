@@ -4,10 +4,10 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useAuthContext } from "@/context/AuthContext";
 import { useNotificationContext } from "@/context/NotificationsContext";
-import { ConversationsModal } from "../chat/ConversationsModal";
 import { NotificationsModal } from "./NotificationsModal";
 import { SettingsModal } from "../../SettingsModal";
 import { useBaseLayoutServerContext } from "../../context/BaseLayoutServerContext";
+import { useRouter } from "next/navigation";
 
 export const TopNavigation = () => {
   const { logout } = useAuthContext();
@@ -15,8 +15,8 @@ export const TopNavigation = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [conversationsOpen, setConversationsOpen] = useState(false);
   const { BaseLayout } = useBaseLayoutServerContext();
+  const router = useRouter();
   const icons = BaseLayout?.ServerTopNavigation.icons;
 
   const toggleDarkMode = () => {
@@ -54,7 +54,7 @@ export const TopNavigation = () => {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setConversationsOpen(true)}
+          onClick={() => router.push("/conversations")}
           className="w-11 h-11 rounded-xl hover:bg-muted/50 hover:shadow-glow-neon transition-all duration-300 relative"
           aria-label="Open chat"
           title="Open chat"
@@ -110,10 +110,6 @@ export const TopNavigation = () => {
         onOpenChange={setNotificationsOpen}
       />
       <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
-      <ConversationsModal
-        open={conversationsOpen}
-        onOpenChange={setConversationsOpen}
-      />
     </header>
   );
 };

@@ -19,7 +19,7 @@ const VISIBILITY_REFRESH_MIN_GAP_MS = 5 * 60 * 1000; // 5 min
 
 export type UserProps = {
   username: string;
-  user_id?: number;
+  user_id?: string;
   first_name: string;
   last_name: string;
 };

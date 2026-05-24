@@ -17,7 +17,7 @@ export interface RoomEventSubmission {
   id: number;
   event: number;
   round_number: number;
-  author: number;
+  author: string;
   content: string;
   created_at?: string;
 }
@@ -25,14 +25,14 @@ export interface RoomEventSubmission {
 export interface RoomEvent {
   id: number;
   room: number;
-  created_by: number;
+  created_by: string;
   event_type: RoomEventType;
   title: string;
   status: string;
   game_phase?: RoomGamePhase | string;
   recruitment_deadline_at?: string | null;
   current_voting_round?: number;
-  tie_break_author_ids?: number[];
+  tie_break_author_ids?: string[];
   outcome_draw?: boolean;
   rounds_total: number;
   join_window_sec: number;
@@ -44,7 +44,7 @@ export interface RoomEvent {
   current_question_text?: string | null;
   current_question_started_at?: string | null;
   current_question_deadline_at?: string | null;
-  button_claimed_by?: number | null;
+  button_claimed_by?: string | null;
   button_unlock_at?: string | null;
   button_answer_deadline_at?: string | null;
   button_claimer_has_answered?: boolean;
@@ -59,7 +59,7 @@ export interface RoomEvent {
 export interface RoomEventFinalScore {
   id: number;
   event: number;
-  user: number;
+  user: string;
   username?: string;
   total: number;
   placement: number | null;
@@ -84,7 +84,7 @@ export interface RoomEventQuestion {
 export interface RoomEventParticipant {
   id: number;
   event: number;
-  user: number;
+  user: string;
   username?: string;
   is_active_player: boolean;
   is_eliminated: boolean;
@@ -97,7 +97,7 @@ export interface RoomEventMessage {
   id: number;
   body: string;
   username?: string;
-  author?: number | null;
+  author?: string | null;
   is_system?: boolean;
   created_at?: string;
 }
@@ -106,7 +106,7 @@ export interface RoomEventInvitePayload {
   event_id: number;
   title: string;
   event_type: string;
-  organizer_user_id: number;
+  organizer_user_id: string;
   organizer_username: string;
   recruitment_deadline_at: string | null;
   room_slug: string;

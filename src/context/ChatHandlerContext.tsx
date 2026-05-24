@@ -343,7 +343,7 @@ const ChatHandlerContextProvider = ({
         const next = defaultRoomAmbienceState();
         next.active = Boolean(s.active);
         next.host_user_id =
-          typeof s.host_user_id === "number" ? s.host_user_id : null;
+          typeof s.host_user_id === "string" ? s.host_user_id : null;
         next.host_username =
           typeof s.host_username === "string" ? s.host_username : "";
         next.host_profile_photo =
@@ -369,13 +369,13 @@ const ChatHandlerContextProvider = ({
               .map((x) => {
                 const o = x as Record<string, unknown>;
                 return {
-                  user_id: typeof o.user_id === "number" ? o.user_id : 0,
+                  user_id: typeof o.user_id === "string" ? o.user_id : "",
                   username: typeof o.username === "string" ? o.username : "",
                   fullname: typeof o.fullname === "string" ? o.fullname : "",
                   profile_photo: typeof o.profile_photo === "string" ? o.profile_photo : "",
                 };
               })
-              .filter((x) => x.user_id > 0)
+              .filter((x) => Boolean(x.user_id))
           : [];
         setRoomAmbience(next);
         if (!next.active) {
@@ -388,7 +388,7 @@ const ChatHandlerContextProvider = ({
           .map((x) => {
             const m = x as Record<string, unknown>;
             const author_user_id =
-              typeof m.author_user_id === "number" ? m.author_user_id : 0;
+              typeof m.author_user_id === "string" ? m.author_user_id : null;
             return {
               id: typeof m.id === "number" ? m.id : 0,
               author_user_id,
@@ -399,7 +399,7 @@ const ChatHandlerContextProvider = ({
               body: typeof m.body === "string" ? m.body : "",
               created_at_ms:
                 typeof m.created_at_ms === "number" ? m.created_at_ms : 0,
-              is_system: author_user_id === 0,
+              is_system: !author_user_id,
             } satisfies RoomAmbienceMessage;
           })
           .filter((m) => m.id > 0 && m.body);
@@ -412,8 +412,7 @@ const ChatHandlerContextProvider = ({
       const normalized: RoomAmbienceMessage = {
         ...m,
         is_system:
-          m.is_system ??
-          (typeof m.author_user_id === "number" && m.author_user_id === 0),
+          m.is_system ?? !m.author_user_id,
       };
       setRoomAmbienceMessages((prev) => {
         if (prev.some((x) => x.id === normalized.id)) return prev;
@@ -436,7 +435,7 @@ const ChatHandlerContextProvider = ({
       payload?: {
         reason?: string;
         message?: string;
-        organizer_user_id?: number;
+        organizer_user_id?: string;
       };
     }) => {
       const reason = data?.payload?.reason;

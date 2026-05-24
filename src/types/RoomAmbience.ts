@@ -1,6 +1,6 @@
 export type RoomAmbienceState = {
   active: boolean;
-  host_user_id: number | null;
+  host_user_id: string | null;
   host_username: string;
   host_profile_photo: string;
   video_id: string;
@@ -16,7 +16,7 @@ export type RoomAmbienceState = {
 };
 
 export type RoomAmbienceViewer = {
-  user_id: number;
+  user_id: string;
   username: string;
   fullname: string;
   profile_photo?: string;
@@ -24,7 +24,7 @@ export type RoomAmbienceViewer = {
 
 export type RoomAmbienceMessage = {
   id: number;
-  author_user_id: number;
+  author_user_id: string | null;
   author_username: string;
   author_photo?: string;
   body: string;

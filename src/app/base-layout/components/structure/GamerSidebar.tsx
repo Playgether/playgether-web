@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { profilePhotoToAvatarSrc } from "@/components/profile/ProfileAvatar";
-import { Button } from "@/components/ui/button";
 import { useCreatePostContext } from "@/context/CreatePostContext";
 import { useAuthContext } from "@/context/AuthContext";
 import { useProfileContext } from "@/context/ProfileContext";
@@ -20,7 +19,7 @@ import { GamerSideBarItensInterface } from "../../types/structure/GamerSideBarIt
 import GamerSidbarConversationsButtons from "./GameSideBarConversationsButton";
 
 const sidebarItems: GamerSideBarItensInterface[] = [
-  { icon: <Home className="w-6 h-6" />, label: "Início", active: true, href: "/feed" },
+  { icon: <Home className="w-6 h-6" />, label: "Início", href: "/feed" },
   { icon: <Swords className="w-6 h-6" />, label: "Duo", href: "/duo" },
   { icon: <DoorOpen className="w-6 h-6" />, label: "Salas", href: "/rooms" },
   // {
@@ -74,17 +73,20 @@ export const GamerSidebar = () => {
       </div>
 
       {/* Create Post Button */}
-      <Button
-        variant="ghost"
-        size="icon"
+      <button
         type="button"
-        aria-label="Criar post"
-        title="Criar post"
+        aria-label="Criar"
+        title="Criar"
         onClick={() => createPostContext?.handleCreatePostModal(true)}
-        className="mb-4 w-14 h-14 rounded-xl text-white/80 hover:text-white hover:bg-white/20 hover:shadow-glow-neon hover:scale-105 transition-all duration-300"
+        className="mb-4 w-full h-14 flex items-center rounded-xl px-3 text-white/80 hover:text-white hover:bg-white/20 hover:shadow-glow-neon hover:scale-[1.02] transition-all duration-300"
       >
-        <Plus className="w-6 h-6" />
-      </Button>
+        <div className="w-14 h-14 flex-shrink-0 flex items-center justify-center">
+          <Plus className="w-6 h-6" />
+        </div>
+        <span className="overflow-hidden whitespace-nowrap text-sm font-medium max-w-0 opacity-0 group-hover/sidebar:max-w-xs group-hover/sidebar:opacity-100 transition-all duration-300 delay-100">
+          Criar
+        </span>
+      </button>
 
       {/* Navigation Items */}
       <nav className="w-full flex-1 flex flex-col space-y-1 px-3">

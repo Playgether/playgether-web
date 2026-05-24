@@ -354,7 +354,7 @@ function ChatFloatUnreadBadge({ count }: { count: number }) {
 }
 
 function ambienceMessageIsSystem(m: RoomAmbienceMessage): boolean {
-  return Boolean(m.is_system || m.author_user_id === 0);
+  return Boolean(m.is_system || !m.author_user_id);
 }
 
 const AmbienceChatLine = memo(function AmbienceChatLine({
@@ -518,7 +518,7 @@ export default function RoomAmbiencePanel({
   const amHost =
     user?.user_id != null &&
     roomAmbience.active &&
-    roomAmbience.host_user_id === Number(user.user_id);
+    roomAmbience.host_user_id === user.user_id;
 
   const viewerAlignedMaxDriftSec = DRIFT_MAX_ALIGNED_SEC;
 

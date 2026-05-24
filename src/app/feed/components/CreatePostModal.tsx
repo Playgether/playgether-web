@@ -278,8 +278,6 @@ export const CreatePostModal = () => {
                     sources: ["local"],
                     minImageHeight: 320,
                     minImageWidth: 320,
-                    // maxImageHeight: 1080,
-                    // maxImageWidth: 1980,
                     maxFiles: 5 - uploadedFiles.length,
                     tags: [
                       user?.username || "user",
@@ -289,7 +287,6 @@ export const CreatePostModal = () => {
                     ],
                     detection: "unidet",
                     maxImageFileSize: 5000000,
-                    validateMaxWidthHeight: true,
                     language: "pt-br",
                     showCompletedButton: true,
                     multiple: true,

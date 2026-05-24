@@ -2,7 +2,7 @@ import jwt_decode from "jwt-decode";
 
 export type AccessTokenPayload = {
   username?: string;
-  user_id?: number | string;
+  user_id?: string;
 };
 
 /** Decodifica o access JWT (mesmo padrão de `decodeUser`); a assinatura é validada na API Django. */
