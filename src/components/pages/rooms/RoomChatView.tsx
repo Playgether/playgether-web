@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { ChatRoom } from "@/types/ChatRoom";
 import { ChatRoomMessages } from "@/types/ChatRoomMessages";
 import {
-  CalendarDays,
+  Gamepad2,
   Image as ImageIcon,
   Info,
   LogOut,
@@ -20,7 +20,7 @@ import {
   Star,
   Trophy,
   Users,
-  Radio,
+  TvMinimalPlay,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -70,8 +70,8 @@ const tabs: { id: RoomTab; icon: typeof MessageSquare; label: string }[] = [
   { id: "roles", icon: Shield, label: "Cargos" },
   { id: "music", icon: Music, label: "Música" },
   { id: "settings", icon: Settings, label: "Config" },
-  { id: "events", icon: CalendarDays, label: "Eventos" },
-  { id: "ambience", icon: Radio, label: "Ao vivo" },
+  { id: "events", icon: Gamepad2, label: "Jogos" },
+  { id: "ambience", icon: TvMinimalPlay, label: "Watchparty" },
 ];
 
 export default function RoomChatView({
@@ -109,17 +109,6 @@ export default function RoomChatView({
       resetMessagesQuantity();
     }
   };
-
-  const visibleTabs = tabs.filter((tab) => {
-    if (tab.id !== "ambience") return true;
-    return roomAmbience.active;
-  });
-
-  useEffect(() => {
-    if (!roomAmbience.active && activeTab === "ambience") {
-      setActiveTab("chat");
-    }
-  }, [roomAmbience.active, activeTab]);
 
   const handleToggleFavorite = () => {
     const nextFavorite = !isFavorite;
@@ -291,14 +280,14 @@ export default function RoomChatView({
             </span>
           </div>
 
-          <div className="flex min-w-0 flex-1 items-center justify-center gap-0.5 overflow-x-auto">
-            {visibleTabs.map((tab) => (
+          <div className="flex min-w-0 flex-1 items-center justify-center gap-0.5 overflow-x-auto pt-1">
+            {tabs.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => handleSelectTab(tab.id)}
                 className={cn(
-                  "relative flex-shrink-0 p-2 transition-colors",
+                  "relative flex-shrink-0 overflow-visible p-2 transition-colors",
                   activeTab === tab.id
                     ? "text-primary"
                     : "text-muted-foreground hover:text-foreground"
@@ -307,12 +296,12 @@ export default function RoomChatView({
               >
                 <tab.icon className="h-4 w-4" />
                 {tab.id === "chat" && activeTab !== "chat" && messagesQuantity > 0 ? (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 px-1 text-[10px] font-bold leading-none text-white shadow-sm">
+                  <span className="absolute -right-0.5 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 px-1 text-[10px] font-bold leading-none text-white shadow-sm">
                     {messagesQuantity > 99 ? "99+" : messagesQuantity}
                   </span>
                 ) : null}
-                {tab.id === "ambience" ? (
-                  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-rose-500" />
+                {tab.id === "ambience" && roomAmbience.active ? (
+                  <span className="absolute right-0 top-0.5 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-card" />
                 ) : null}
                 {activeTab === tab.id ? (
                   <span className="absolute bottom-0 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full gradient-primary" />
@@ -389,14 +378,14 @@ export default function RoomChatView({
             </div>
           </div>
 
-          <div className="flex items-center justify-center overflow-x-auto px-2 py-1">
-            {visibleTabs.map((tab) => (
+          <div className="flex items-center justify-center overflow-x-auto px-2 pb-1 pt-1.5">
+            {tabs.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => handleSelectTab(tab.id)}
                 className={cn(
-                  "relative flex-shrink-0 p-2 transition-colors",
+                  "relative flex-shrink-0 overflow-visible p-2 transition-colors",
                   activeTab === tab.id
                     ? "text-primary"
                     : "text-muted-foreground hover:text-foreground"
@@ -405,12 +394,12 @@ export default function RoomChatView({
               >
                 <tab.icon className="h-4 w-4" />
                 {tab.id === "chat" && activeTab !== "chat" && messagesQuantity > 0 ? (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 px-1 text-[10px] font-bold leading-none text-white shadow-sm">
+                  <span className="absolute -right-0.5 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 px-1 text-[10px] font-bold leading-none text-white shadow-sm">
                     {messagesQuantity > 99 ? "99+" : messagesQuantity}
                   </span>
                 ) : null}
-                {tab.id === "ambience" ? (
-                  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-rose-500" />
+                {tab.id === "ambience" && roomAmbience.active ? (
+                  <span className="absolute right-0 top-0.5 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-card" />
                 ) : null}
                 {activeTab === tab.id ? (
                   <span className="absolute bottom-0 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full gradient-primary" />

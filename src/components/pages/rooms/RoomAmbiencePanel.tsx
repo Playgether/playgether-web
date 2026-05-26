@@ -33,6 +33,7 @@ import {
   Users,
   Volume2,
   VolumeX,
+  TvMinimalPlay,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import type { RoomAmbienceMessage } from "@/types/RoomAmbience";
@@ -2137,28 +2138,35 @@ export default function RoomAmbiencePanel({
 
   if (!roomAmbience.active) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 p-6">
-        <h2 className="text-xl font-bold">
-          Modo Ambiente (Watchparty YouTube)
-        </h2>
-        <p className="max-w-xl text-center text-sm text-muted-foreground">
-          Inicie uma transmissão com link do YouTube. Apenas quem iniciar poderá
-          controlar reprodução; espectadores controlam apenas volume local.
-        </p>
-        <div className="flex w-full max-w-xl gap-2">
-          <input
-            value={createUrl}
-            onChange={(e) => setCreateUrl(e.target.value)}
-            placeholder="https://www.youtube.com/watch?v=..."
-            className="flex-1 rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm"
-          />
-          <Button disabled={busy} onClick={() => void createTransmission()}>
-            Iniciar
-          </Button>
+      <div className="flex h-full min-h-0 flex-col overflow-y-auto bg-gradient-to-b from-muted/15 to-background">
+        <div className="mx-auto w-full max-w-lg space-y-6 p-6">
+          <div className="space-y-2 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/20">
+              <TvMinimalPlay className="h-7 w-7" />
+            </div>
+            <h2 className="text-xl font-bold tracking-tight">Watchparty</h2>
+            <p className="text-sm text-muted-foreground">
+              Inicie uma transmissão do YouTube para a sala. Apenas quem iniciar controla a reprodução;
+              espectadores ajustam apenas o volume local.
+            </p>
+          </div>
+          <div className="space-y-3 rounded-2xl border border-border/60 bg-card/90 p-5 shadow-sm">
+            <div className="flex gap-2">
+              <input
+                value={createUrl}
+                onChange={(e) => setCreateUrl(e.target.value)}
+                placeholder="https://www.youtube.com/watch?v=..."
+                className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm"
+              />
+              <Button disabled={busy} onClick={() => void createTransmission()}>
+                Iniciar
+              </Button>
+            </div>
+            {roomAmbienceError ? (
+              <p className="text-center text-xs text-destructive">{roomAmbienceError}</p>
+            ) : null}
+          </div>
         </div>
-        {roomAmbienceError ? (
-          <p className="text-sm text-destructive">{roomAmbienceError}</p>
-        ) : null}
       </div>
     );
   }
