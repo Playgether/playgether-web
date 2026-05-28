@@ -5,18 +5,27 @@ import ProfileImagePost from "@/components/pages/feed/DesktopFeed/Middle/PostsCo
 import { useAuthContext } from "@/context/AuthContext";
 import { useChatHandlerContext } from "@/context/ChatHandlerContext";
 import { usePresenceContext } from "@/context/PresenceContext";
+import { useRoomPermissions } from "@/context/RoomPermissionsContext";
+import { RoomMemberModerationMenu } from "@/components/pages/rooms/RoomModerationMenus";
+import { canModerateMember } from "@/lib/roomPermissions";
+import { ChatRoom } from "@/types/ChatRoom";
 import { Search, Users, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 interface RoomParticipantsPanelProps {
+  room: ChatRoom;
   onClose?: () => void;
 }
 
 export default function RoomParticipantsPanel({
+  room,
   onClose,
 }: RoomParticipantsPanelProps) {
   const { onlineUsers } = useChatHandlerContext();
   const { user } = useAuthContext();
+  const { can, snapshot } = useRoomPermissions();
+  const canKick = can("members.kick");
+  const canMute = can("members.mute");
   const presenceCtx = usePresenceContext();
   const [search, setSearch] = useState("");
 
@@ -109,6 +118,19 @@ export default function RoomParticipantsPanel({
                   @{user.username}
                 </p>
               </div>
+              {selfId != null &&
+              user.id !== selfId &&
+              user.id !== room.owner &&
+              (canKick || canMute) &&
+              canModerateMember(snapshot, room.owner, selfId, user.id) ? (
+                <RoomMemberModerationMenu
+                  roomSlug={room.slug}
+                  userId={user.id}
+                  memberName={user.fullname}
+                  canKick={canKick}
+                  canMute={canMute}
+                />
+              ) : null}
             </div>
           ))
         ) : (

@@ -1,6 +1,8 @@
 "use client";
 
 import { useChatHandlerContext } from "@/context/ChatHandlerContext";
+import { useRoomPermissions } from "@/context/RoomPermissionsContext";
+import { canManageRoomMusic } from "@/lib/roomPermissions";
 import { cn } from "@/lib/utils";
 import {
   ChevronDown,
@@ -105,6 +107,8 @@ function YoutubeMark({ className }: { className?: string }) {
 }
 
 export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
+  const { snapshot } = useRoomPermissions();
+  const canPlayback = canManageRoomMusic(snapshot);
   const { roomMusic, sendRoomMusic } = useChatHandlerContext();
   const [expanded, setExpanded] = useState(false);
   const [localIndex, setLocalIndex] = useState(-1);
@@ -389,11 +393,13 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
   };
 
   const goPrev = () => {
+    if (!canPlayback) return;
     const next = Math.max(0, localIndex - 1);
     sendRoomMusic({ action: "select", index: next });
   };
 
   const goNext = () => {
+    if (!canPlayback) return;
     const next = Math.min(roomMusic.queue.length - 1, localIndex + 1);
     sendRoomMusic({ action: "select", index: next });
   };

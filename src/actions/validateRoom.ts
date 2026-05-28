@@ -11,7 +11,16 @@ export async function validateRoomAction(roomSlug: string) {
         ? res.error.data.error
         : res.response?.data?.error || "Sala inválida";
 
-    return { success: false, message: errorMsg };
+    const code =
+      typeof res.error === "object" && res.error.data?.code
+        ? String(res.error.data.code)
+        : undefined;
+
+    return {
+      success: false,
+      message: errorMsg,
+      roomBanned: code === "room_banned",
+    };
   }
 
   return { success: true };

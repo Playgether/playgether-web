@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Gamepad2, Plus, Search, Star } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import CreateRoomModal from "./CreateRoomModal";
+import { useRoomExpelledForList } from "./RoomExpelledNotice";
 import RoomCard, { type RoomCardData } from "./RoomCard";
 
 interface RoomListProps {
@@ -14,6 +15,7 @@ interface RoomListProps {
 }
 
 export default function RoomList({ rooms }: RoomListProps) {
+  const expelled = useRoomExpelledForList();
   const [search, setSearch] = useState("");
   const [showFavorites, setShowFavorites] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -194,6 +196,11 @@ export default function RoomList({ rooms }: RoomListProps) {
                 room={room}
                 isFavorite={favorites.has(room.id)}
                 onToggleFavorite={handleToggleFavorite}
+                expelledNotice={
+                  expelled && (expelled.slug === room.slug || !expelled.slug)
+                    ? expelled.message
+                    : null
+                }
               />
             ))}
           </div>

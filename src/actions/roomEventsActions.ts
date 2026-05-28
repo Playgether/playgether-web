@@ -86,6 +86,24 @@ export async function beginAfterRecruitment(eventId: number) {
   return roomEventPostAction(eventId, "begin-after-recruitment");
 }
 
+export async function deleteRoomEventMessage(eventId: number, messageId: number) {
+  const headers = await authHeaders();
+  if (!headers) return { ok: false as const, error: "Não autenticado." };
+  try {
+    await api.delete(`/api/v1/room-events/${eventId}/messages/${messageId}/`, {
+      headers,
+    });
+    return { ok: true as const };
+  } catch (e: unknown) {
+    const raw = (e as { response?: { data?: { detail?: string } } })?.response?.data
+      ?.detail;
+    return {
+      ok: false as const,
+      error: (typeof raw === "string" && raw) || "Não foi possível excluir a mensagem.",
+    };
+  }
+}
+
 export async function roomEventPostAction(eventId: number, action: string, body?: Record<string, unknown>) {
   const headers = await authHeaders();
   if (!headers) return { ok: false as const, error: "Não autenticado." };

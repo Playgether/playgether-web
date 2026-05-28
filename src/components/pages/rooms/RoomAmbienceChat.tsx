@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import TextareaAutosize from "react-textarea-autosize";
 import type { RoomAmbienceMessage } from "@/types/RoomAmbience";
+import { RoomMessageActionsMenu } from "@/components/pages/rooms/RoomModerationMenus";
 import {
   ChevronDown,
   ChevronUp,
@@ -57,26 +58,44 @@ function ReplyQuote({
 export const AmbienceChatLine = memo(function AmbienceChatLine({
   m,
   variant = "sidebar",
-  amHost,
   isPinned,
   onReply,
   onPin,
   onUnpin,
+  roomSlug,
+  canDeleteMessage,
+  canKickAuthor,
+  canMuteAuthor,
+  onDeleteMessage,
+  onMessageDeleted,
 }: {
   m: RoomAmbienceMessage;
   variant?: "sidebar" | "float";
-  amHost?: boolean;
   isPinned?: boolean;
   onReply?: (m: RoomAmbienceMessage) => void;
   onPin?: (m: RoomAmbienceMessage) => void;
   onUnpin?: () => void;
+  roomSlug?: string;
+  canDeleteMessage?: boolean;
+  canKickAuthor?: boolean;
+  canMuteAuthor?: boolean;
+  onDeleteMessage?: () => Promise<{ ok: boolean }>;
+  onMessageDeleted?: () => void;
 }) {
   const float = variant === "float";
   const motion = !float
     ? "animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
     : "";
   const isSystem = ambienceMessageIsSystem(m);
-  const canInteract = !isSystem && onReply;
+  const canInteract = !isSystem && (onReply || onDeleteMessage);
+  const authorId =
+    typeof m.author_user_id === "number" && m.author_user_id > 0
+      ? m.author_user_id
+      : null;
+  const showModMenu =
+    roomSlug &&
+    authorId != null &&
+    (canDeleteMessage || canKickAuthor || canMuteAuthor);
 
   if (isSystem) {
     return (
@@ -163,7 +182,7 @@ export const AmbienceChatLine = memo(function AmbienceChatLine({
           >
             <Reply className="h-3.5 w-3.5" />
           </Button>
-          {amHost && onPin ? (
+          {onPin ? (
             <Button
               type="button"
               variant="ghost"
@@ -182,6 +201,21 @@ export const AmbienceChatLine = memo(function AmbienceChatLine({
               )}
             </Button>
           ) : null}
+          {showModMenu ? (
+            <RoomMessageActionsMenu
+              roomSlug={roomSlug}
+              messageId={m.id}
+              authorId={authorId}
+              authorName={m.author_username}
+              canDelete={Boolean(canDeleteMessage)}
+              canKickAuthor={Boolean(canKickAuthor)}
+              canMuteAuthor={Boolean(canMuteAuthor)}
+              kickScope="ambience"
+              onDeleteMessage={onDeleteMessage}
+              onDeleted={onMessageDeleted}
+              align="end"
+            />
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -191,12 +225,10 @@ export const AmbienceChatLine = memo(function AmbienceChatLine({
 export function AmbiencePinnedBanner({
   message,
   float,
-  amHost,
   onUnpin,
 }: {
   message: RoomAmbienceMessage;
   float?: boolean;
-  amHost?: boolean;
   onUnpin?: () => void;
 }) {
   const [expanded, setExpanded] = useState(true);
@@ -273,7 +305,7 @@ export function AmbiencePinnedBanner({
           >
             <ChevronUp className="h-3.5 w-3.5" />
           </Button>
-          {amHost && onUnpin ? (
+          {onUnpin ? (
             <Button
               type="button"
               variant="ghost"
@@ -434,6 +466,7 @@ export function AmbienceChatInput({
   replyTo,
   onCancelReply,
   float,
+  muteNotice,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -441,7 +474,9 @@ export function AmbienceChatInput({
   replyTo: RoomAmbienceMessage | null;
   onCancelReply: () => void;
   float?: boolean;
+  muteNotice?: string | null;
 }) {
+  const inputDisabled = Boolean(muteNotice);
   const [emojiOpen, setEmojiOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const textSelectionRef = useRef({ start: 0, end: 0 });
@@ -472,6 +507,7 @@ export function AmbienceChatInput({
   }, [emojiOpen, syncTextSelection]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (inputDisabled) return;
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       onSend();
@@ -492,6 +528,18 @@ export function AmbienceChatInput({
 
   return (
     <div className={cn("shrink-0", float ? "border-t border-white/10 bg-black p-2" : "flex flex-col gap-2 border-t border-border/60 p-2")}>
+      {muteNotice ? (
+        <p
+          className={cn(
+            "mb-2 rounded-lg border px-3 py-2 text-center text-xs font-semibold",
+            float
+              ? "border-amber-500/40 bg-amber-500/15 text-amber-200"
+              : "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-200",
+          )}
+        >
+          {muteNotice}
+        </p>
+      ) : null}
       {replyTo ? (
         <div
           className={cn(
@@ -552,7 +600,14 @@ export function AmbienceChatInput({
           onKeyUp={syncTextSelection}
           onFocus={syncTextSelection}
           className={textareaClass}
-          placeholder={replyTo ? "Sua resposta…" : "Comentar…"}
+          placeholder={
+            inputDisabled
+              ? "Você não pode enviar mensagens agora."
+              : replyTo
+                ? "Sua resposta…"
+                : "Comentar…"
+          }
+          disabled={inputDisabled}
           minRows={1}
           maxRows={6}
           onKeyDown={handleKeyDown}
@@ -562,6 +617,7 @@ export function AmbienceChatInput({
           size="icon"
           className={cn(sendBtnClass, "mb-0.5 shrink-0")}
           onClick={onSend}
+          disabled={inputDisabled || !value.trim()}
           aria-label="Enviar"
         >
           <Send className="h-4 w-4" />

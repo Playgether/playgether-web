@@ -6,7 +6,7 @@ import {
   deleteChatRoomRule,
   updateChatRoomRule,
 } from "@/actions/chatRoomMutations";
-import { useAuthContext } from "@/context/AuthContext";
+import { useRoomPermissions } from "@/context/RoomPermissionsContext";
 import { ChatRoom } from "@/types/ChatRoom";
 import {
   Calendar,
@@ -104,16 +104,14 @@ export function RoomInfoPanel({ room }: RoomDetailsPanelProps) {
 }
 
 export function RoomRulesPanel({ room }: RoomDetailsPanelProps) {
-  const { user } = useAuthContext();
+  const { can } = useRoomPermissions();
+  const canManage = can("room.rules.manage");
   const [rules, setRules] = useState(room.rules);
   const [newRule, setNewRule] = useState("");
   const [editingRuleId, setEditingRuleId] = useState<number | null>(null);
   const [editingText, setEditingText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-
-  const canManage =
-    user?.user_id != null && Number(user.user_id) === room.owner;
 
   const addRule = () => {
     const value = newRule.trim();

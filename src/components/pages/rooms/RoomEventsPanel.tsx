@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuthContext } from "@/context/AuthContext";
 import { useChatHandlerContext } from "@/context/ChatHandlerContext";
 import { useRoomEventSession } from "@/context/RoomEventSessionContext";
+import { useRoomPermissions } from "@/context/RoomPermissionsContext";
 import { ChatRoom } from "@/types/ChatRoom";
 import type { RoomEventParticipant } from "@/types/RoomEvents";
 import { RoomEventType } from "@/types/RoomEvents";
@@ -50,6 +51,8 @@ function statusLabel(status: ReturnType<typeof guestInviteStatus>): string {
 
 export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
   const { user } = useAuthContext();
+  const { can } = useRoomPermissions();
+  const canCreateGames = can("games.create");
   const { refreshActiveEvent, activeEvent, isOrganizer, myParticipation } = useRoomEventSession();
   const { onlineUsers } = useChatHandlerContext();
   const [title, setTitle] = useState("");
@@ -127,7 +130,7 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
   }, [activeEvent?.id, activeEvent?.status]);
 
   const handleCreate = () => {
-    if (!title.trim()) return;
+    if (!title.trim() || !canCreateGames) return;
     startTransition(async () => {
       setRecruitmentStartError(null);
       setInsufficientParticipantsMessage(null);
@@ -151,6 +154,29 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
       await refreshActiveEvent();
     });
   };
+
+  const canViewGames =
+    canCreateGames ||
+    Boolean(
+      activeEvent &&
+        (activeEvent.status === "running" ||
+          activeEvent.status === "recruiting" ||
+          activeEvent.status === "finished"),
+    );
+
+  if (!canViewGames) {
+    return (
+      <div className="flex h-full min-h-0 flex-col items-center justify-center gap-3 bg-gradient-to-b from-muted/15 to-background p-8 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/20">
+          <Gamepad2 className="h-7 w-7" />
+        </div>
+        <h2 className="text-lg font-bold text-foreground">Jogos</h2>
+        <p className="max-w-sm text-sm text-muted-foreground">
+          Não há nenhum jogo acontecendo no momento.
+        </p>
+      </div>
+    );
+  }
 
   const recruitingHeader =
     activeEvent?.status === "recruiting" && activeEvent.title ? (
@@ -396,6 +422,7 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
         ) : null}
 
         {!hasBlockingEvent ? (
+          canCreateGames ? (
           <div className="space-y-4 rounded-2xl border border-border/60 bg-card/90 p-5 shadow-sm">
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
               <Sparkles className="h-3.5 w-3.5 text-primary" />
@@ -475,6 +502,11 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
               Criar e convidar sala
             </Button>
           </div>
+          ) : (
+            <p className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3 text-center text-sm text-muted-foreground">
+              Você não tem permissão para criar jogos nesta sala.
+            </p>
+          )
         ) : null}
 
         {message ? <p className="text-center text-xs text-muted-foreground">{message}</p> : null}

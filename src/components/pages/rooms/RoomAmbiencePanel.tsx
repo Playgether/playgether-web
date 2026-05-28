@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuthContext } from "@/context/AuthContext";
 import { useChatHandlerContext } from "@/context/ChatHandlerContext";
+import { useRoomPermissions } from "@/context/RoomPermissionsContext";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -37,11 +38,15 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import type { RoomAmbienceMessage } from "@/types/RoomAmbience";
+import { deleteAmbienceMessage } from "@/actions/roomRolesActions";
+import { canModerateMember } from "@/lib/roomPermissions";
+import { RoomMemberModerationMenu } from "@/components/pages/rooms/RoomModerationMenus";
 import {
   AmbienceChatEmptyState,
   AmbienceChatInput,
   AmbienceChatLine,
   AmbiencePinnedBanner,
+  ambienceMessageIsSystem,
 } from "@/components/pages/rooms/RoomAmbienceChat";
 import {
   useCallback,
@@ -428,12 +433,16 @@ function ChatFloatUnreadBadge({ count }: { count: number }) {
 
 export default function RoomAmbiencePanel({
   roomSlug,
+  roomOwnerId,
   entered,
   onEnteredChange,
+  transmissionBanNotice = null,
 }: {
   roomSlug: string;
+  roomOwnerId: number;
   entered: boolean;
   onEnteredChange: (entered: boolean) => void;
+  transmissionBanNotice?: string | null;
 }) {
   const { user } = useAuthContext();
   const {
@@ -539,10 +548,68 @@ export default function RoomAmbiencePanel({
     setSyncModeState(m);
   }, []);
 
+  const { can, snapshot, muteNotice } = useRoomPermissions();
+  const selfId = user?.user_id != null ? Number(user.user_id) : null;
+  const isOwner = snapshot?.is_owner ?? false;
+
   const amHost =
-    user?.user_id != null &&
+    selfId != null &&
     roomAmbience.active &&
-    roomAmbience.host_user_id === Number(user.user_id);
+    roomAmbience.host_user_id === selfId;
+
+  const canCreateWatchparty = can("watchparty.create");
+  const canChangeWatchpartyVideo = amHost || isOwner || can("watchparty.video.change");
+  const canCloseWatchparty = amHost || isOwner || can("watchparty.close");
+  const canPinWatchpartyMessages = amHost || isOwner || can("messages.pin");
+  const canDeleteWatchpartyMessages =
+    amHost || isOwner || can("messages.delete");
+  const canKickWatchpartyMembers = can("members.kick");
+  const canMuteWatchpartyMembers = can("members.mute");
+
+  const canModerateWatchpartyTarget = useCallback(
+    (targetUserId: number) => {
+      if (selfId == null || targetUserId === selfId) return false;
+      if (targetUserId === roomOwnerId) return false;
+      if (targetUserId === roomAmbience.host_user_id) return false;
+      return canModerateMember(snapshot, roomOwnerId, selfId, targetUserId);
+    },
+    [selfId, roomOwnerId, roomAmbience.host_user_id, snapshot],
+  );
+
+  const ambienceMessageModerationProps = useCallback(
+    (m: RoomAmbienceMessage) => {
+      if (ambienceMessageIsSystem(m)) return {};
+      const authorId =
+        typeof m.author_user_id === "number" && m.author_user_id > 0
+          ? m.author_user_id
+          : null;
+      if (authorId == null) return {};
+      const canActOnAuthor = canModerateWatchpartyTarget(authorId);
+      const canDelete =
+        canDeleteWatchpartyMessages &&
+        (authorId === selfId || canActOnAuthor || isOwner || amHost);
+      const canKick = canKickWatchpartyMembers && canActOnAuthor;
+      const canMute = canMuteWatchpartyMembers && canActOnAuthor;
+      if (!canDelete && !canKick && !canMute) return {};
+      return {
+        roomSlug,
+        canDeleteMessage: canDelete,
+        canKickAuthor: canKick,
+        canMuteAuthor: canMute,
+        onDeleteMessage: () => deleteAmbienceMessage(roomSlug, m.id),
+      };
+    },
+    [
+      amHost,
+      canDeleteWatchpartyMessages,
+      canKickWatchpartyMembers,
+      canMuteWatchpartyMembers,
+      canModerateWatchpartyTarget,
+      isOwner,
+      roomSlug,
+      selfId,
+    ],
+  );
 
   const pinnedMessage = useMemo(() => {
     const pinId = roomAmbience.pinned_message_id;
@@ -1945,6 +2012,7 @@ export default function RoomAmbiencePanel({
         channel_avatar_url: meta.channelAvatarUrl,
       });
       setCreateUrl("");
+      onEnteredChange(true);
     } finally {
       setBusy(false);
     }
@@ -1973,6 +2041,7 @@ export default function RoomAmbiencePanel({
   };
 
   const sendComment = () => {
+    if (muteNotice) return;
     const body = chatText.trim();
     if (!body) return;
     sendRoomAmbience({
@@ -2137,6 +2206,20 @@ export default function RoomAmbiencePanel({
   };
 
   if (!roomAmbience.active) {
+    if (!canCreateWatchparty) {
+      return (
+        <div className="flex h-full min-h-0 flex-col items-center justify-center gap-3 bg-gradient-to-b from-muted/15 to-background p-8 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/20">
+            <TvMinimalPlay className="h-7 w-7" />
+          </div>
+          <h2 className="text-lg font-bold text-foreground">Watchparty</h2>
+          <p className="max-w-sm text-sm text-muted-foreground">
+            Não há transmissões ao vivo no momento.
+          </p>
+        </div>
+      );
+    }
+
     return (
       <div className="flex h-full min-h-0 flex-col overflow-y-auto bg-gradient-to-b from-muted/15 to-background">
         <div className="mx-auto w-full max-w-lg space-y-6 p-6">
@@ -2206,9 +2289,15 @@ export default function RoomAmbiencePanel({
         <p className="text-sm font-medium text-foreground">
           {watchingNowLabel(roomAmbience.viewers.length)}
         </p>
+        {transmissionBanNotice ? (
+          <p className="max-w-md rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-center text-sm font-semibold text-destructive">
+            {transmissionBanNotice}
+          </p>
+        ) : null}
         <Button
           size="lg"
           className="px-5"
+          disabled={Boolean(transmissionBanNotice)}
           onClick={() => onEnteredChange(true)}
         >
           Entrar na transmissão
@@ -2262,28 +2351,32 @@ export default function RoomAmbiencePanel({
               <ChevronLeft className="h-3.5 w-3.5" />
               Sair da transmissão
             </Button>
-            {amHost ? (
+            {canChangeWatchpartyVideo || canCloseWatchparty ? (
               <>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  className="h-8"
-                  onClick={() => {
-                    setChangeUrl("");
-                    setChangeVideoOpen(true);
-                  }}
-                >
-                  Trocar vídeo
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="h-8"
-                  onClick={() => setConfirmCloseOpen(true)}
-                >
-                  Encerrar
-                </Button>
+                {canChangeWatchpartyVideo ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="h-8"
+                    onClick={() => {
+                      setChangeUrl("");
+                      setChangeVideoOpen(true);
+                    }}
+                  >
+                    Trocar vídeo
+                  </Button>
+                ) : null}
+                {canCloseWatchparty ? (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="h-8"
+                    onClick={() => setConfirmCloseOpen(true)}
+                  >
+                    Encerrar
+                  </Button>
+                ) : null}
               </>
             ) : null}
           </div>
@@ -2468,8 +2561,7 @@ export default function RoomAmbiencePanel({
                   <AmbiencePinnedBanner
                     message={pinnedMessage}
                     float
-                    amHost={amHost}
-                    onUnpin={handleUnpin}
+                    onUnpin={canPinWatchpartyMessages ? handleUnpin : undefined}
                   />
                 ) : null}
                 <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overflow-x-hidden bg-black px-2 py-2">
@@ -2481,11 +2573,11 @@ export default function RoomAmbiencePanel({
                         key={m.id}
                         m={m}
                         variant="float"
-                        amHost={amHost}
                         isPinned={roomAmbience.pinned_message_id === m.id}
                         onReply={handleReply}
-                        onPin={handlePin}
+                        onPin={canPinWatchpartyMessages ? handlePin : undefined}
                         onUnpin={handleUnpin}
+                        {...ambienceMessageModerationProps(m)}
                       />
                     ))
                   )}
@@ -2498,6 +2590,7 @@ export default function RoomAmbiencePanel({
                   onSend={sendComment}
                   replyTo={replyTo}
                   onCancelReply={() => setReplyTo(null)}
+                  muteNotice={muteNotice}
                 />
               </div>
             ) : null}
@@ -2769,7 +2862,9 @@ export default function RoomAmbiencePanel({
             </div>
             <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-2">
               {roomAmbience.viewers.length > 0 ? (
-                roomAmbience.viewers.map((participant) => (
+                roomAmbience.viewers.map((participant) => {
+                  const canModViewer = canModerateWatchpartyTarget(participant.user_id);
+                  return (
                   <div
                     key={participant.user_id}
                     className="flex items-center gap-2 rounded-lg border border-border/40 bg-muted/20 px-2 py-2"
@@ -2782,7 +2877,7 @@ export default function RoomAmbiencePanel({
                       fallbackTextClassName="text-[10px]"
                       className="ring-1 ring-border"
                     />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="truncate text-xs font-semibold text-foreground">
                         {participant.fullname || participant.username}
                       </p>
@@ -2790,8 +2885,20 @@ export default function RoomAmbiencePanel({
                         @{participant.username}
                       </p>
                     </div>
+                    {canModViewer ? (
+                      <RoomMemberModerationMenu
+                        roomSlug={roomSlug}
+                        userId={participant.user_id}
+                        memberName={participant.fullname || participant.username}
+                        canKick={canKickWatchpartyMembers}
+                        canMute={canMuteWatchpartyMembers}
+                        kickScope="ambience"
+                        triggerClassName="rounded-md p-1 text-muted-foreground hover:bg-background"
+                      />
+                    ) : null}
                   </div>
-                ))
+                  );
+                })
               ) : (
                 <p className="text-xs text-muted-foreground">
                   Ninguém está assistindo a transmissão agora.
@@ -2845,8 +2952,7 @@ export default function RoomAmbiencePanel({
             {pinnedMessage ? (
               <AmbiencePinnedBanner
                 message={pinnedMessage}
-                amHost={amHost}
-                onUnpin={handleUnpin}
+                onUnpin={canPinWatchpartyMessages ? handleUnpin : undefined}
               />
             ) : null}
             <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-2">
@@ -2857,11 +2963,11 @@ export default function RoomAmbiencePanel({
                   <AmbienceChatLine
                     key={m.id}
                     m={m}
-                    amHost={amHost}
                     isPinned={roomAmbience.pinned_message_id === m.id}
                     onReply={handleReply}
-                    onPin={handlePin}
+                    onPin={canPinWatchpartyMessages ? handlePin : undefined}
                     onUnpin={handleUnpin}
+                    {...ambienceMessageModerationProps(m)}
                   />
                 ))
               )}
@@ -2873,6 +2979,7 @@ export default function RoomAmbiencePanel({
               onSend={sendComment}
               replyTo={replyTo}
               onCancelReply={() => setReplyTo(null)}
+              muteNotice={muteNotice}
             />
           </div>
         ) : null}

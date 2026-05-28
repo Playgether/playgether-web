@@ -11,6 +11,7 @@ import {
   useCallback,
   MutableRefObject,
 } from "react";
+import { storeRoomExpelledMessage } from "@/lib/roomExpelledStorage";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { useAuthContext } from "./AuthContext";
 import { OnlineUsersChatRoom } from "@/types/OnlineUsersChatRoom";
@@ -21,6 +22,8 @@ import type {
   RoomAmbienceState,
 } from "@/types/RoomAmbience";
 import { fetchAmbienceChatHistory } from "@/actions/ambienceChatActions";
+import { useRouter } from "next/navigation";
+import { useRoomPermissions } from "@/context/RoomPermissionsContext";
 
 function mergeAmbienceMessages(
   older: RoomAmbienceMessage[],
@@ -168,6 +171,9 @@ const ChatHandlerContextProvider = ({
   /** Evita animação/scroll automático ao colar mensagens antigas no topo (infinite scroll). */
   const suppressAutoFollowScrollRef = useRef(false);
   const { user } = useAuthContext();
+  const router = useRouter();
+  const { muteNotice, applyMuteNotice, refresh: refreshPermissions } =
+    useRoomPermissions();
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
   const [newMessageId, setNewMessageId] = useState(0);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUsersChatRoom[]>([]);
@@ -506,11 +512,30 @@ const ChatHandlerContextProvider = ({
         reason?: string;
         message?: string;
         organizer_user_id?: number;
+        kicked_user_id?: number;
       };
     }) => {
       const reason = data?.payload?.reason;
       const message = data?.payload?.message;
       const organizer_user_id = data?.payload?.organizer_user_id;
+      const kicked_user_id = data?.payload?.kicked_user_id;
+      if (
+        reason === "participant_kicked" &&
+        kicked_user_id != null &&
+        user?.user_id === kicked_user_id
+      ) {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("playgether:event-kicked", {
+              detail: {
+                message:
+                  message ||
+                  "Você foi expulso deste evento e não pode mais participar.",
+              },
+            }),
+          );
+        }
+      }
       if (
         reason &&
         [
@@ -530,6 +555,48 @@ const ChatHandlerContextProvider = ({
           }),
         );
       }
+    },
+    room_kicked: (data: { reason?: string }) => {
+      const reason =
+        typeof data.reason === "string" && data.reason.trim()
+          ? data.reason.trim()
+          : "Você foi expulso desta sala.";
+      storeRoomExpelledMessage(chatroom, reason);
+      router.replace("/rooms");
+    },
+    ambience_kicked: (data: { reason?: string }) => {
+      const reason =
+        typeof data.reason === "string" && data.reason.trim()
+          ? data.reason.trim()
+          : "Você foi expulso desta transmissão.";
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("playgether:ambience-kicked", {
+            detail: { reason },
+          }),
+        );
+      }
+    },
+    room_muted: (data: {
+      message?: string;
+      expires_at?: string | null;
+      duration_seconds?: number | null;
+      remaining_seconds?: number | null;
+    }) => {
+      applyMuteNotice(data);
+    },
+    room_permissions_updated: () => {
+      void refreshPermissions();
+    },
+    room_ambience_message_deleted: (data: { message_id?: number }) => {
+      const id = data.message_id;
+      if (id == null) return;
+      setRoomAmbienceMessages((prev) => prev.filter((m) => m.id !== id));
+    },
+    chat_message_deleted: (data: { message_id?: number }) => {
+      const id = data.message_id;
+      if (typeof id !== "number") return;
+      setRealTimeMessages((prev) => prev.filter((m) => m.id !== id));
     },
   };
 
@@ -659,7 +726,7 @@ const ChatHandlerContextProvider = ({
 
   // Função para enviar mensagem
   const sendMessage = () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || muteNotice) return;
 
     sendJsonMessage({
       event: "message_handler",

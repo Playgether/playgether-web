@@ -1,6 +1,7 @@
 "use client";
 
-import { roomEventPostAction } from "@/actions/roomEventsActions";
+import { deleteRoomEventMessage, roomEventPostAction } from "@/actions/roomEventsActions";
+import { RoomMessageActionsMenu } from "@/components/pages/rooms/RoomModerationMenus";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -12,6 +13,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuthContext } from "@/context/AuthContext";
+import { useRoomPermissions } from "@/context/RoomPermissionsContext";
 import { useRoomEventSession } from "@/context/RoomEventSessionContext";
 import { useRoomEventSocket } from "@/hooks/useRoomEventSocket";
 import { cn } from "@/lib/utils";
@@ -115,6 +117,7 @@ function pickAnswerTimeSec(rt: Record<string, unknown>, api?: number): number {
 export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
   const room = _room;
   const { user } = useAuthContext();
+  const { muteNotice } = useRoomPermissions();
   const { activeEvent, refreshActiveEvent, isOrganizer, myParticipation, dismissEventResults } =
     useRoomEventSession();
   const {
@@ -126,6 +129,7 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
     socketError,
     sendMessage: sendEventSocketMessage,
     claimButton,
+    removeEventMessage,
   } = useRoomEventSocket(activeEvent?.id ?? null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [chatText, setChatText] = useState("");
@@ -147,6 +151,7 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [finalizeDialogOpen, setFinalizeDialogOpen] = useState(false);
   const [kickConfirm, setKickConfirm] = useState<{ user: number; label: string } | null>(null);
+  const [eventKickNotice, setEventKickNotice] = useState<string | null>(null);
   const [autoFinishMessage, setAutoFinishMessage] = useState<string | null>(null);
   const processedButtonTimeoutRef = useRef<string | null>(null);
 
@@ -265,6 +270,18 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
     }
   }, [activeEvent]);
 
+  useEffect(() => {
+    const onEventKicked = (event: Event) => {
+      const message = (event as CustomEvent<{ message?: string }>).detail?.message;
+      setEventKickNotice(
+        message?.trim() || "Você foi expulso deste evento e não pode mais participar.",
+      );
+    };
+    window.addEventListener("playgether:event-kicked", onEventKicked);
+    return () =>
+      window.removeEventListener("playgether:event-kicked", onEventKicked);
+  }, []);
+
   if (!activeEvent) return null;
 
   if (activeEvent.status === "finished") {
@@ -370,9 +387,9 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
     Boolean(waitingClaimerAnswer && !isOrganizer && user?.user_id !== claimedBy);
 
   const mayUseChat = isOrganizer || canPlay;
-  const canModerateEvent = Boolean(
-    user?.user_id && (user.user_id === activeEvent.created_by || user.user_id === room.owner)
-  );
+  const isRoomOwner = Boolean(user?.user_id && user.user_id === room.owner);
+  const canManageEvent = isOrganizer || isRoomOwner;
+  const canModerateEvent = canManageEvent;
   const kickableParticipants = (activeEvent.participants ?? []).filter(
     (p) =>
       p.participation_confirmed &&
@@ -382,7 +399,10 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
   );
 
   const chatInputDisabled =
-    !mayUseChat || othersFrozenWhileClaimerAnswers || imClaimerMustAnswerFirst;
+    !mayUseChat ||
+    othersFrozenWhileClaimerAnswers ||
+    imClaimerMustAnswerFirst ||
+    Boolean(muteNotice);
 
   const chatPlaceholder = !mayUseChat
     ? "Apenas participantes ativos ou o organizador enviam mensagem"
@@ -431,6 +451,14 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
   return (
     <>
     <div className="flex h-full w-full min-h-[min(60dvh,100%)] flex-col gap-3 overflow-x-hidden overflow-y-auto md:max-h-full md:min-h-0 md:overflow-hidden md:flex-row">
+      {eventKickNotice ? (
+        <div
+          role="alert"
+          className="shrink-0 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-center text-sm font-semibold text-destructive"
+        >
+          {eventKickNotice}
+        </div>
+      ) : null}
       <div className="flex min-h-[min(50dvh,100%)] min-w-0 flex-1 flex-col rounded-2xl border border-border/60 bg-card/50 md:min-h-0">
         <header className="shrink-0 border-b border-border/50 px-4 py-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -494,10 +522,28 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
             <div
               key={msg.id}
               className={cn(
-                "max-w-[92%] rounded-2xl px-3 py-2 text-sm",
+                "group relative max-w-[92%] rounded-2xl px-3 py-2 text-sm",
                 msg.is_system ? "bg-muted/50 text-muted-foreground" : "bg-primary/10 text-foreground"
               )}
             >
+              {canModerateEvent && !msg.is_system && activeEvent ? (
+                <div className="absolute right-1 top-1">
+                  <RoomMessageActionsMenu
+                    roomSlug={room.slug}
+                    messageId={msg.id}
+                    authorId={msg.author ?? undefined}
+                    authorName={msg.username ?? "Participante"}
+                    canDelete
+                    canKickAuthor={false}
+                    canMuteAuthor={false}
+                    onDeleteMessage={() =>
+                      deleteRoomEventMessage(activeEvent.id, msg.id)
+                    }
+                    onDeleted={() => removeEventMessage(msg.id)}
+                    align="end"
+                  />
+                </div>
+              ) : null}
               <p className="text-[10px] font-semibold uppercase text-muted-foreground">
                 {msg.username ?? "Sistema"}
               </p>
@@ -508,6 +554,11 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
         </div>
 
         <footer className="shrink-0 border-t border-border/50 p-3">
+          {muteNotice ? (
+            <p className="mb-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-center text-xs font-semibold text-amber-800 dark:text-amber-200">
+              {muteNotice}
+            </p>
+          ) : null}
           <div className="flex gap-2">
             <input
               value={chatText}
@@ -980,7 +1031,14 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
                 </Button>
               </div>
             ) : null}
+          </div>
+        ) : null}
 
+        {canManageEvent ? (
+          <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-3">
+            <p className="mb-2 text-xs font-bold uppercase text-destructive">
+              {isOrganizer ? "Encerrar evento" : "Dono da sala"}
+            </p>
             <Button
               size="sm"
               className="w-full"
@@ -988,7 +1046,7 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
               type="button"
               onClick={() => setFinalizeDialogOpen(true)}
             >
-              Finalizar evento e Pontuação
+              Finalizar evento e pontuação
             </Button>
           </div>
         ) : null}

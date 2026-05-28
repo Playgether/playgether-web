@@ -18,6 +18,7 @@ export async function patchChatRoomSettings(
   body: Partial<{
     group_name: string;
     summary: string;
+    slug: string;
     banner: string | null;
     description: string;
     ambient_images: Record<string, string>;

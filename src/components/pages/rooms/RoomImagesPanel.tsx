@@ -16,7 +16,7 @@ import {
 import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { useAuthContext } from "@/context/AuthContext";
+import { useRoomPermissions } from "@/context/RoomPermissionsContext";
 import { ChatRoom } from "@/types/ChatRoom";
 import { CldUploadWidget } from "next-cloudinary";
 import {
@@ -55,7 +55,6 @@ interface RoomImagesPanelProps {
 }
 
 export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
-  const { user } = useAuthContext();
   const [ambientBackgrounds, setAmbientBackgrounds] = useState<
     Record<AmbientKey, string>
   >(() => ambientFromRoom(room));
@@ -90,8 +89,8 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
     if (saveOpsRef.current === 0) setIsSaving(false);
   };
 
-  const canManage =
-    user?.user_id != null && Number(user.user_id) === room.owner;
+  const { can } = useRoomPermissions();
+  const canManage = can("room.images.manage");
 
   useEffect(() => {
     const from = ambientFromRoom(room);
