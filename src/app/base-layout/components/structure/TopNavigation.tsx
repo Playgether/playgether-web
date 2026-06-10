@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { useTheme } from "next-themes";
 import { useAuthContext } from "@/context/AuthContext";
 import { useNotificationContext } from "@/context/NotificationsContext";
 import { NotificationsModal } from "./NotificationsModal";
@@ -13,7 +14,8 @@ import { useDMUnread } from "@/context/DMUnreadContext";
 export const TopNavigation = () => {
   const { logout } = useAuthContext();
   const { unreadCount } = useNotificationContext();
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { resolvedTheme, setTheme } = useTheme();
+  const isDarkMode = resolvedTheme === "dark";
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { BaseLayout } = useBaseLayoutServerContext();
@@ -22,8 +24,7 @@ export const TopNavigation = () => {
   const { unreadCount: dmUnreadCount } = useDMUnread();
 
   const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-    document.documentElement.classList.toggle("dark");
+    setTheme(isDarkMode ? "light" : "dark");
   };
 
   return (

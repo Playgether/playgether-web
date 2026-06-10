@@ -168,6 +168,8 @@ const ChatHandlerContextProvider = ({
   const [roomEventInvite, setRoomEventInvite] =
     useState<RoomEventInvitePayload | null>(null);
   const [roomMusic, setRoomMusic] = useState<RoomMusicState>(defaultRoomMusicState);
+  const prevRoomMusicRef = useRef<RoomMusicState>(defaultRoomMusicState());
+  const addRestoreIndexRef = useRef<number | null>(null);
   const [roomMusicError, setRoomMusicError] = useState<string | null>(null);
   const [roomAmbience, setRoomAmbience] = useState<RoomAmbienceState>(
     defaultRoomAmbienceState,
@@ -191,6 +193,8 @@ const ChatHandlerContextProvider = ({
   const clearRoomMusicError = useCallback(() => setRoomMusicError(null), []);
   const clearRoomAmbienceError = useCallback(() => setRoomAmbienceError(null), []);
 
+  const sendRoomMusicDirectRef = useRef<((payload: RoomMusicClientAction) => void) | null>(null);
+
   const sendRoomMusic = useCallback(
     (payload: RoomMusicClientAction) => {
       if (readyState !== ReadyState.OPEN) return;
@@ -198,6 +202,8 @@ const ChatHandlerContextProvider = ({
     },
     [readyState, sendJsonMessage],
   );
+
+  sendRoomMusicDirectRef.current = sendRoomMusic;
 
   const sendRoomAmbience = useCallback(
     (payload: RoomAmbienceClientAction) => {
@@ -327,6 +333,33 @@ const ChatHandlerContextProvider = ({
         typeof s.position_sec === "number" ? Math.max(0, s.position_sec) : 0;
       next.sync_epoch_ms =
         typeof s.sync_epoch_ms === "number" ? s.sync_epoch_ms : 0;
+
+      // Queue behavior: adding a track must not interrupt the currently playing one.
+      // Detect: queue grew by 1, we were playing, and backend jumped to the new (last) track.
+      const prev = prevRoomMusicRef.current;
+      if (
+        prev.playing &&
+        prev.current_index >= 0 &&
+        prev.queue.length > 0 &&
+        next.queue.length === prev.queue.length + 1 &&
+        next.current_index !== prev.current_index &&
+        next.current_index >= next.queue.length - 1 &&
+        addRestoreIndexRef.current === null
+      ) {
+        next.current_index = prev.current_index;
+        next.playing = true;
+        addRestoreIndexRef.current = prev.current_index;
+        // Tell backend to keep playing the current track
+        setTimeout(() => {
+          const idx = addRestoreIndexRef.current;
+          if (idx !== null) {
+            sendRoomMusicDirectRef.current?.({ action: "select", index: idx });
+            addRestoreIndexRef.current = null;
+          }
+        }, 50);
+      }
+
+      prevRoomMusicRef.current = next;
       setRoomMusic(next);
     },
     room_music_error: (data: { message?: string }) => {

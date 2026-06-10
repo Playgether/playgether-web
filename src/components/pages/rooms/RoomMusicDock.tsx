@@ -42,6 +42,7 @@ type YtPlayerHandoff = {
   wasPlaying: boolean;
 };
 
+const YT_ENDED = 0;
 const YT_PLAYING = 1;
 const YT_PAUSED = 2;
 const IFRAME_CLICK_GUARD_MS = 900;
@@ -162,10 +163,16 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
   const lastLoadVideoAtRef = useRef(0);
   const reactId = useId();
   const playbackStartedRef = useRef(false);
+  const localIndexRef = useRef(localIndex);
+  const queueLengthRef = useRef(roomMusic.queue.length);
+  const sendRoomMusicRef = useRef(sendRoomMusic);
 
   localPausedRef.current = localPaused;
   localVolumeRef.current = localVolume;
   roomMusicPlayingRef.current = roomMusic.playing;
+  localIndexRef.current = localIndex;
+  queueLengthRef.current = roomMusic.queue.length;
+  sendRoomMusicRef.current = sendRoomMusic;
 
   const localCurrent_: MediaTrack | null =
     localIndex >= 0 && localIndex < roomMusic.queue.length
@@ -316,7 +323,13 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
               }
               return;
             }
-            if (ev.data === YT_PAUSED || ev.data === 0) {
+            // Video ended — remove it from the queue (backend auto-advances to next)
+            if (ev.data === YT_ENDED) {
+              const curIdx = localIndexRef.current;
+              sendRoomMusicRef.current({ action: "remove", index: curIdx });
+              return;
+            }
+            if (ev.data === YT_PAUSED) {
               if (!roomMusicPlayingRef.current) { setLocalPaused(true); return; }
               if (Date.now() - lastLoadVideoAtRef.current < 1200) {
                 try { playerRef.current?.playVideo(); } catch { /* ignore */ }

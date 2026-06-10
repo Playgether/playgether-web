@@ -10,6 +10,7 @@ import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { useAuthContext } from "@/context/AuthContext";
 import { ProfileEditModal } from "./modals/ProfileEditModal";
+import { FollowListModal } from "./modals/FollowListModal";
 import { followProfile } from "@/services/followProfile";
 import { unfollowProfile } from "@/services/unfollowProfile";
 import { postLike } from "@/services/postLike";
@@ -47,6 +48,7 @@ export function GamesCanvasUserProfile({
   const [likes, setLikes] = useState(profile?.quantity_likes ?? 0);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [bioExpanded, setBioExpanded] = useState(false);
+  const [followListModal, setFollowListModal] = useState<"followers" | "following" | null>(null);
 
   useEffect(() => {
     setBioExpanded(false);
@@ -287,18 +289,27 @@ export function GamesCanvasUserProfile({
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 py-4">
-                  {userStats.map((stat, index) => (
-                    <div key={index} className="text-center space-y-1">
+                  {userStats.map((stat, index) => {
+                    const isClickable = stat.label === "Seguidores" || stat.label === "Seguindo";
+                    const modalType = stat.label === "Seguidores" ? "followers" : "following";
+                    return (
                       <div
-                        className={`text-lg transition-all duration-300 ${stat.color}`}
+                        key={index}
+                        className={`text-center space-y-1 ${isClickable ? "cursor-pointer rounded-lg p-1 hover:bg-muted/50 transition-colors" : ""}`}
+                        onClick={isClickable ? () => setFollowListModal(modalType) : undefined}
+                        role={isClickable ? "button" : undefined}
+                        tabIndex={isClickable ? 0 : undefined}
+                        onKeyDown={isClickable ? (e) => { if (e.key === "Enter") setFollowListModal(modalType); } : undefined}
                       >
-                        {stat.value}
+                        <div className={`text-lg transition-all duration-300 ${stat.color}`}>
+                          {stat.value}
+                        </div>
+                        <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                          {stat.label}
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground uppercase tracking-wide">
-                        {stat.label}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 <div className="flex items-center justify-center pb-2">
                   <Button
@@ -369,6 +380,15 @@ export function GamesCanvasUserProfile({
           </CardContent>
         </Card>
       </div>
+
+      {profile && followListModal && (
+        <FollowListModal
+          open={!!followListModal}
+          onOpenChange={(open) => { if (!open) setFollowListModal(null); }}
+          profileId={profile.id}
+          type={followListModal}
+        />
+      )}
 
       {onProfileUpdated && (
         <ProfileEditModal

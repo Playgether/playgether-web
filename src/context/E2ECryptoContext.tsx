@@ -28,6 +28,7 @@ interface E2ECryptoContextValue {
   isReady: boolean;
   needsUnlock: boolean;
   unlock: (password: string) => Promise<boolean>;
+  regenerateKeys: (password: string) => Promise<boolean>;
   encryptForUser: (
     plaintext: string,
     recipientPublicKeyB64: string
@@ -132,6 +133,27 @@ export function E2ECryptoProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
+  const regenerateKeys = useCallback(async (password: string): Promise<boolean> => {
+    try {
+      const keyPair = await generateKeyPair();
+      const exportedPublicKey = await exportPublicKey(keyPair.publicKey);
+      const salt = generateSalt();
+      const wrappedPrivateKey = await wrapPrivateKey(keyPair.privateKey, password, salt);
+      await api.patch("/api/v1/users/upload-keys/", {
+        public_key: exportedPublicKey,
+        encrypted_private_key: wrappedPrivateKey,
+        key_salt: salt,
+      });
+      privateKeyRef.current = keyPair.privateKey;
+      await cachePrivateKey(keyPair.privateKey);
+      setIsReady(true);
+      setNeedsUnlock(false);
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
   const clear = useCallback(() => {
     privateKeyRef.current = null;
     publicKeyRef.current = null;
@@ -142,7 +164,7 @@ export function E2ECryptoProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <E2ECryptoContext.Provider
-      value={{ isReady, needsUnlock, unlock, encryptForUser, decrypt, clear }}
+      value={{ isReady, needsUnlock, unlock, regenerateKeys, encryptForUser, decrypt, clear }}
     >
       {children}
     </E2ECryptoContext.Provider>

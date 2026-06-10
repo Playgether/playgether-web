@@ -65,7 +65,7 @@ export function ConversationsContent({
   autoOpenId,
 }: ConversationsContentProps) {
   const { user } = useAuthContext();
-  const { isReady, needsUnlock, unlock, encryptForUser, decrypt } = useE2ECrypto();
+  const { isReady, needsUnlock, unlock, regenerateKeys, encryptForUser, decrypt } = useE2ECrypto();
   const { markRead } = useDMUnread();
 
   const [conversations, setConversations] = useState<DMConversation[]>([]);
@@ -84,6 +84,9 @@ export function ConversationsContent({
   const [unlockPassword, setUnlockPassword] = useState("");
   const [unlockError, setUnlockError] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
+  const [showRegenConfirm, setShowRegenConfirm] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [regenError, setRegenError] = useState(false);
 
   // New conversation search
   const [showNewConv, setShowNewConv] = useState(false);
@@ -330,6 +333,21 @@ export function ConversationsContent({
     }
   }, [unlockPassword, unlock, loadConversations]);
 
+  const handleRegenerate = useCallback(async () => {
+    if (!unlockPassword) return;
+    setRegenerating(true);
+    setRegenError(false);
+    const ok = await regenerateKeys(unlockPassword);
+    setRegenerating(false);
+    if (!ok) {
+      setRegenError(true);
+    } else {
+      setUnlockPassword("");
+      setShowRegenConfirm(false);
+      loadConversations();
+    }
+  }, [unlockPassword, regenerateKeys, loadConversations]);
+
   // ── Prepare conversation list for sub-components ──────────────────────────
 
   // Apenas conversas com pelo menos uma mensagem aparecem na lista
@@ -341,23 +359,28 @@ export function ConversationsContent({
   // ── Render: unlock panel (inline, dentro da área do chat) ───────────────
 
   const unlockPanel = (
-    <div className="flex flex-col items-center justify-center h-full gap-4 px-8">
+    <div className="flex flex-col items-center justify-center h-full gap-3 px-8">
       <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
         <Lock className="w-6 h-6 text-primary" />
       </div>
-      <p className="text-sm font-medium text-center">
-        Digite sua senha para desbloquear as mensagens
-      </p>
+      <div className="text-center">
+        <p className="text-sm font-semibold">Mensagens criptografadas</p>
+        <p className="text-xs text-muted-foreground mt-1 max-w-xs">
+          Digite a <strong>senha da sua conta</strong> para desbloquear as mensagens desta sessão.
+        </p>
+      </div>
       <input
         type="password"
         value={unlockPassword}
-        onChange={(e) => setUnlockPassword(e.target.value)}
-        placeholder="Senha"
+        onChange={(e) => { setUnlockPassword(e.target.value); setUnlockError(false); setRegenError(false); }}
+        placeholder="Senha da conta"
         className="w-full max-w-xs px-3 py-2 rounded-lg bg-muted/50 border border-border/50 text-sm outline-none focus:border-primary/50"
         onKeyDown={(e) => e.key === "Enter" && handleUnlock()}
       />
       {unlockError && (
-        <p className="text-xs text-destructive">Senha incorreta. Tente novamente.</p>
+        <p className="text-xs text-destructive text-center">
+          Senha incorreta. Tente novamente.
+        </p>
       )}
       <button
         onClick={handleUnlock}
@@ -366,6 +389,44 @@ export function ConversationsContent({
       >
         {unlocking ? "Desbloqueando..." : "Desbloquear"}
       </button>
+
+      {/* Regenerate keys option */}
+      {!showRegenConfirm ? (
+        <button
+          onClick={() => setShowRegenConfirm(true)}
+          className="text-xs text-muted-foreground hover:text-primary transition-colors mt-1"
+        >
+          Esqueci a senha / Recriar chaves
+        </button>
+      ) : (
+        <div className="w-full max-w-xs space-y-2 border border-destructive/30 rounded-lg p-3 bg-destructive/5">
+          <p className="text-xs text-destructive font-medium text-center">
+            ⚠️ Atenção
+          </p>
+          <p className="text-xs text-muted-foreground text-center">
+            Isso irá recriar suas chaves de criptografia usando a senha digitada acima.
+            Mensagens anteriores não poderão ser lidas.
+          </p>
+          {regenError && (
+            <p className="text-xs text-destructive text-center">Erro ao recriar chaves. Tente novamente.</p>
+          )}
+          <div className="flex gap-2">
+            <button
+              onClick={() => { setShowRegenConfirm(false); setRegenError(false); }}
+              className="flex-1 py-1.5 rounded-lg border border-border text-xs text-muted-foreground hover:bg-muted/50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleRegenerate}
+              disabled={regenerating || !unlockPassword}
+              className="flex-1 py-1.5 rounded-lg bg-destructive text-white text-xs font-semibold disabled:opacity-50"
+            >
+              {regenerating ? "Recriando..." : "Confirmar"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 

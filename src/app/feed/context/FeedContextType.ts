@@ -30,4 +30,5 @@ export interface FeedContextType {
   isFetchingNextPage: boolean;
   increaseCommentCount: (postId: number) => void;
   decreaseCommentCount: (postId: number) => void;
+  injectPost: (post: PostProps) => void;
 }

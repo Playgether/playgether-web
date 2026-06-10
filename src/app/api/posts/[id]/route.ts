@@ -2,6 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { api } from "@/services/api";
 import { cookies } from "next/headers";
 
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const accessToken = (await cookies()).get("accessToken")?.value;
+  const { id } = await params;
+
+  try {
+    const response = await api.get(`/api/v1/posts/${id}/`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    return NextResponse.json(response.data);
+  } catch (error: any) {
+    const status = error?.response?.status ?? 500;
+    const data = error?.response?.data;
+    return NextResponse.json(data ?? { error: "Post não encontrado" }, { status });
+  }
+}
+
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
