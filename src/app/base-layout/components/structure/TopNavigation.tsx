@@ -1,6 +1,5 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useTheme } from "next-themes";
 import { useAuthContext } from "@/context/AuthContext";
@@ -10,6 +9,7 @@ import { SettingsModal } from "../../SettingsModal";
 import { useBaseLayoutServerContext } from "../../context/BaseLayoutServerContext";
 import { useRouter } from "next/navigation";
 import { useDMUnread } from "@/context/DMUnreadContext";
+import { GlobalSearchDropdown } from "./GlobalSearchDropdown";
 
 export const TopNavigation = () => {
   const { logout } = useAuthContext();
@@ -31,13 +31,7 @@ export const TopNavigation = () => {
     <header className="fixed top-0 left-20 right-0 h-16 bg-background/80 backdrop-blur-xl border-b border-border/50 z-30 flex items-center justify-between px-6">
       {/* Search Bar */}
       <div className="flex-1 max-w-xl">
-        <div className="relative">
-          {icons.Search}
-          <Input
-            placeholder="Pesquisar"
-            className="pl-12 h-11 bg-muted/50 border-border/50 rounded-xl focus:ring-2 focus:ring-primary/30 transition-all duration-300"
-          />
-        </div>
+        <GlobalSearchDropdown />
       </div>
 
       {/* Right Actions */}
