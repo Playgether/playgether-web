@@ -25,5 +25,5 @@ export function PostPageClient({ postId, post }: PostPageClientProps) {
   const postInContext = getPostById(postId);
   if (!postInContext) return null;
 
-  return <PostModal postId={postId} onClose={() => router.push("/feed")} />;
+  return <PostModal postId={postId} onClose={() => router.push("/feed")} fullPage />;
 }

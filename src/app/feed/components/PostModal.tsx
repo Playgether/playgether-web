@@ -34,9 +34,11 @@ import { handleKeyDown } from "@/components/layouts/SendOnEnterKey/sendOnEnterKe
 export const PostModal = ({
   postId,
   onClose,
+  fullPage = false,
 }: {
   postId: number;
   onClose?: () => void;
+  fullPage?: boolean;
 }) => {
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [isCurrentMediaLoaded, setIsCurrentMediaLoaded] = useState(false);
@@ -359,16 +361,8 @@ export const PostModal = ({
     }
   };
 
-  return (
-    <Dialog defaultOpen onOpenChange={handleOpenChange}>
-      <DialogContent
-        className="max-w-[70vw] w-full h-[95vh] p-0 bg-background/95 backdrop-blur-xl border border-primary/20 overflow-hidden"
-        aria-describedby={undefined}
-      >
-        <VisuallyHidden>
-          <DialogTitle></DialogTitle>
-        </VisuallyHidden>
-        <div className="flex min-h-0 w-full flex-col sm:flex-row">
+  const postBodyContent = (
+    <div className="flex min-h-0 w-full flex-col sm:flex-row">
           {/* Media Section */}
           {hasMedia && (
             <div
@@ -1080,27 +1074,67 @@ export const PostModal = ({
           </div>
         </div>
 
-        <ShareModal
-          post={post}
-          handleShareModal={handleShareModal}
-          shareModalOpen={shareModalOpen}
-        />
+  );
 
-        {selectedComment && (
-          <DeleteCommentModal
-            open={deleteCommentModalOpen}
-            onOpenChange={(open) => {
-              setDeleteCommentModalOpen(open);
-              if (!open) {
-                setSelectedComment(null);
-                setSelectedCommentParentId(null);
-              }
-            }}
-            onConfirm={handleConfirmDeleteComment}
-            comment={selectedComment as PostsCommentsProps}
-            isDeleting={isDeletingComment}
-          />
+  const sharables = (
+    <>
+      <ShareModal
+        post={post}
+        handleShareModal={handleShareModal}
+        shareModalOpen={shareModalOpen}
+      />
+
+      {selectedComment && (
+        <DeleteCommentModal
+          open={deleteCommentModalOpen}
+          onOpenChange={(open) => {
+            setDeleteCommentModalOpen(open);
+            if (!open) {
+              setSelectedComment(null);
+              setSelectedCommentParentId(null);
+            }
+          }}
+          onConfirm={handleConfirmDeleteComment}
+          comment={selectedComment as PostsCommentsProps}
+          isDeleting={isDeletingComment}
+        />
+      )}
+    </>
+  );
+
+  if (fullPage) {
+    return (
+      <div className="ml-0 md:ml-20 min-h-layout-main p-4 md:p-6">
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="mb-4 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            ← Voltar ao feed
+          </button>
         )}
+        <div
+          className="mx-auto max-w-5xl bg-background/95 backdrop-blur-xl border border-primary/20 rounded-2xl overflow-hidden"
+          style={{ height: "calc(100vh - var(--layout-header-height) - 8rem)" }}
+        >
+          {postBodyContent}
+        </div>
+        {sharables}
+      </div>
+    );
+  }
+
+  return (
+    <Dialog defaultOpen onOpenChange={handleOpenChange}>
+      <DialogContent
+        className="max-w-[70vw] w-full h-[95vh] p-0 bg-background/95 backdrop-blur-xl border border-primary/20 overflow-hidden"
+        aria-describedby={undefined}
+      >
+        <VisuallyHidden>
+          <DialogTitle></DialogTitle>
+        </VisuallyHidden>
+        {postBodyContent}
+        {sharables}
       </DialogContent>
     </Dialog>
   );
