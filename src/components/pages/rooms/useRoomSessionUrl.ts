@@ -29,6 +29,8 @@ type UseRoomSessionUrlArgs = {
   roomAmbienceActive: boolean;
   ambienceEntered: boolean;
   immersionAmbience: boolean;
+  /** Evento cujos resultados o usuário já fechou — não exibir bloqueio de acesso ao sair do jogo. */
+  resultsDismissedForEventId?: number | null;
   onApplyWatchDeepLink: () => void;
   onGameDeepLinkDenied?: () => void;
 };
@@ -43,6 +45,7 @@ export function useRoomSessionUrl({
   roomAmbienceActive,
   ambienceEntered,
   immersionAmbience,
+  resultsDismissedForEventId = null,
   onApplyWatchDeepLink,
   onGameDeepLinkDenied,
 }: UseRoomSessionUrlArgs) {
@@ -97,7 +100,10 @@ export function useRoomSessionUrl({
 
       deepLinkResolvedRef.current = true;
 
-      if (!inGameForUrl) {
+      const dismissedCurrentEvent =
+        resultsDismissedForEventId != null && activeEvent.id === resultsDismissedForEventId;
+
+      if (!inGameForUrl && !dismissedCurrentEvent) {
         if (!gameDeniedNotifiedRef.current) {
           gameDeniedNotifiedRef.current = true;
           onGameDeepLinkDenied?.();
@@ -110,6 +116,7 @@ export function useRoomSessionUrl({
     roomAmbienceActive,
     activeEvent,
     inGameForUrl,
+    resultsDismissedForEventId,
     base,
     pathname,
     replacePath,

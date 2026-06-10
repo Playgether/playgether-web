@@ -20,7 +20,7 @@ const TYPE_LABEL: Record<RoomEventType, string> = {
 
 /** Mesmo texto conceitual enviado ao chat ao iniciar (versão curta na UI). */
 const EVENT_TYPE_HELP: Record<RoomEventType, string> = {
-  vote_best: "Rodadas com opções para votar no favorito até fechar o resultado.",
+  vote_best: "Crie algo por rodada, vote no melhor e dispute pontos. Votação obrigatória.",
   quiz_elimination: "Perguntas com eliminação: quem erra sai até restarem os finalistas.",
   button_quiz: "Rodadas rápidas de perguntas; dispute pelo botão conforme as rodadas.",
 };
@@ -59,6 +59,9 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
   const [eventType, setEventType] = useState<RoomEventType>("vote_best");
   const [rounds, setRounds] = useState(5);
   const [buttonAnswerSec, setButtonAnswerSec] = useState(60);
+  const [voteBestRounds, setVoteBestRounds] = useState(3);
+  const [voteBestCreationSec, setVoteBestCreationSec] = useState(60);
+  const [voteBestVoteSec, setVoteBestVoteSec] = useState(60);
   const [message, setMessage] = useState<string | null>(null);
   const [recruitmentStartError, setRecruitmentStartError] = useState<string | null>(null);
   const [insufficientParticipantsMessage, setInsufficientParticipantsMessage] = useState<string | null>(null);
@@ -143,6 +146,11 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
         payload.rounds_total = rounds;
         const sec = Math.min(120, Math.max(15, Math.round(buttonAnswerSec)));
         payload.answer_time_sec = sec;
+      }
+      if (eventType === "vote_best") {
+        payload.rounds_total = Math.min(10, Math.max(1, Math.round(voteBestRounds)));
+        payload.answer_time_sec = Math.min(120, Math.max(5, Math.round(voteBestCreationSec)));
+        payload.vote_time_sec = Math.min(300, Math.max(30, Math.round(voteBestVoteSec)));
       }
       const result = await createRoomEvent(payload);
       if (!result.ok) {
@@ -494,6 +502,63 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
                   <p className="text-[10px] text-muted-foreground">
                     Valores fora de 15–120 não são aceitos pelo servidor.
                   </p>
+                </div>
+              </div>
+            ) : null}
+            {eventType === "vote_best" ? (
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <label htmlFor="ev-vb-rounds" className="text-xs font-medium text-muted-foreground">
+                    Rodadas (1–10)
+                  </label>
+                  <input
+                    id="ev-vb-rounds"
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={voteBestRounds}
+                    onChange={(e) => setVoteBestRounds(Number(e.target.value))}
+                    className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="ev-vb-creation-sec" className="text-xs font-medium text-muted-foreground">
+                    Tempo padrão para criar (5 s – 2 min)
+                  </label>
+                  <input
+                    id="ev-vb-creation-sec"
+                    type="number"
+                    min={5}
+                    max={120}
+                    value={voteBestCreationSec}
+                    onChange={(e) => {
+                      const n = Number(e.target.value);
+                      if (Number.isNaN(n)) return;
+                      setVoteBestCreationSec(Math.min(120, Math.max(5, Math.round(n))));
+                    }}
+                    className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    O organizador pode ajustar por tema (5 s a 2 min) a cada rodada.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="ev-vb-vote-sec" className="text-xs font-medium text-muted-foreground">
+                    Tempo para votar (30 s – 5 min)
+                  </label>
+                  <input
+                    id="ev-vb-vote-sec"
+                    type="number"
+                    min={30}
+                    max={300}
+                    value={voteBestVoteSec}
+                    onChange={(e) => {
+                      const n = Number(e.target.value);
+                      if (Number.isNaN(n)) return;
+                      setVoteBestVoteSec(Math.min(300, Math.max(30, Math.round(n))));
+                    }}
+                    className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm"
+                  />
                 </div>
               </div>
             ) : null}

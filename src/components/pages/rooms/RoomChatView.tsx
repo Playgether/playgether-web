@@ -92,7 +92,7 @@ export default function RoomChatView({
   initialMode,
 }: RoomChatViewProps) {
   const router = useRouter();
-  const { eventShellOpen, activeEvent } = useRoomEventSession();
+  const { eventShellOpen, activeEvent, resultsDismissedForEventId } = useRoomEventSession();
   const { messagesQuantity, resetMessagesQuantity, setChatSurfaceHidden, roomAmbience } =
     useChatHandlerContext();
   const { can, snapshot } = useRoomPermissions();
@@ -158,11 +158,18 @@ export default function RoomChatView({
     roomAmbienceActive: roomAmbience.active,
     ambienceEntered,
     immersionAmbience,
+    resultsDismissedForEventId,
     onApplyWatchDeepLink: applyWatchDeepLink,
     onGameDeepLinkDenied: () => {
       setGameAccessNotice(GAME_ACCESS_DENIED_MESSAGE);
     },
   });
+
+  useEffect(() => {
+    if (resultsDismissedForEventId != null) {
+      setGameAccessNotice(null);
+    }
+  }, [resultsDismissedForEventId]);
 
   useEffect(() => {
     setChatSurfaceHidden(

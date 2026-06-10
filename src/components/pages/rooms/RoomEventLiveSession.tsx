@@ -2,6 +2,7 @@
 
 import { deleteRoomEventMessage, roomEventPostAction } from "@/actions/roomEventsActions";
 import { RoomMessageActionsMenu } from "@/components/pages/rooms/RoomModerationMenus";
+import { VoteBestVotingOverlay } from "@/components/pages/rooms/VoteBestVotingOverlay";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -18,8 +19,8 @@ import { useRoomEventSession } from "@/context/RoomEventSessionContext";
 import { useRoomEventSocket } from "@/hooks/useRoomEventSocket";
 import { cn } from "@/lib/utils";
 import { ChatRoom } from "@/types/ChatRoom";
-import type { RoomEventFinalScore, RoomEventSubmission } from "@/types/RoomEvents";
-import { Loader2, LogOut, Medal, Radio, Send, Timer, Trophy, Users } from "lucide-react";
+import type { RoomEventFinalScore } from "@/types/RoomEvents";
+import { Loader2, LogOut, Medal, Radio, Send, Sparkles, Timer, Trophy, Users } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 
 const PHASE_PT: Record<string, string> = {
@@ -114,6 +115,13 @@ function pickAnswerTimeSec(rt: Record<string, unknown>, api?: number): number {
   return api ?? 60;
 }
 
+function pickUserIdList(rt: Record<string, unknown>, key: string, fallback: number[]): number[] {
+  if (rtHas(rt, key) && Array.isArray(rt[key])) {
+    return (rt[key] as unknown[]).map((x) => Number(x)).filter((n) => Number.isFinite(n));
+  }
+  return fallback;
+}
+
 export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
   const room = _room;
   const { user } = useAuthContext();
@@ -148,11 +156,16 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
   const [bqPergunta, setBqPergunta] = useState("");
   const [bqAnswerText, setBqAnswerText] = useState("");
   const [tickToken, setTickToken] = useState(0);
+  const processedVoteTimeoutRef = useRef<string | null>(null);
+  const processedQuizTimeoutRef = useRef<string | null>(null);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [finalizeDialogOpen, setFinalizeDialogOpen] = useState(false);
   const [kickConfirm, setKickConfirm] = useState<{ user: number; label: string } | null>(null);
   const [eventKickNotice, setEventKickNotice] = useState<string | null>(null);
   const [autoFinishMessage, setAutoFinishMessage] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [voteOverlayOpen, setVoteOverlayOpen] = useState(false);
+  const lastVoteOverlayKeyRef = useRef<string | null>(null);
   const processedButtonTimeoutRef = useRef<string | null>(null);
 
   const rt = (socketState ?? {}) as Record<string, unknown>;
@@ -192,6 +205,29 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
     )?.text;
 
   const submissions = activeEvent?.submissions ?? [];
+  const tieBreakAuthorIds = activeEvent?.tie_break_author_ids ?? [];
+  const roundSubmissions = useMemo(() => {
+    if (!activeEvent) return [];
+    const round = activeEvent.current_round ?? 1;
+    const inRound = submissions.filter((s) => s.round_number === round);
+    if (tieBreakAuthorIds.length > 0) {
+      return inRound.filter((s) => tieBreakAuthorIds.includes(s.author));
+    }
+    return inRound;
+  }, [submissions, activeEvent?.current_round, tieBreakAuthorIds, activeEvent]);
+
+  const currentThemeText = useMemo(() => {
+    if (!activeEvent) return null;
+    return (
+      activeEvent.questions?.find(
+        (q) =>
+          q.round_number === (activeEvent.current_round ?? 0) &&
+          q.order === (activeEvent.current_question_order ?? 1)
+      )?.text ??
+      liveQuestionText ??
+      null
+    );
+  }, [activeEvent, liveQuestionText]);
   const canPlay = Boolean(
     myParticipation?.participation_confirmed &&
       !myParticipation.invitation_declined &&
@@ -199,11 +235,116 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
       !myParticipation.is_eliminated
   );
 
+  const voteExpectedPlayers = useMemo(() => {
+    if (!activeEvent) return [];
+    return (activeEvent.participants ?? []).filter(
+      (p) =>
+        p.participation_confirmed &&
+        !p.left_early &&
+        p.is_active_player &&
+        !p.is_eliminated &&
+        p.user !== activeEvent.created_by
+    );
+  }, [activeEvent]);
+
+  const submittedAuthorIds = useMemo(() => {
+    const fromSubmissions = roundSubmissions.map((s) => s.author);
+    return pickUserIdList(rt, "creation_submitted_user_ids", fromSubmissions);
+  }, [rt, roundSubmissions]);
+
+  const pendingAuthorIds = useMemo(() => {
+    const submitted = new Set(submittedAuthorIds);
+    const fromSocket = pickUserIdList(rt, "creation_pending_user_ids", []);
+    if (fromSocket.length > 0) return fromSocket;
+    return voteExpectedPlayers.filter((p) => !submitted.has(p.user)).map((p) => p.user);
+  }, [rt, submittedAuthorIds, voteExpectedPlayers]);
+
+  const votedUserIds = useMemo(() => {
+    const fromApi = activeEvent?.voting_submitted_user_ids ?? [];
+    return pickUserIdList(rt, "voting_submitted_user_ids", fromApi);
+  }, [rt, activeEvent?.voting_submitted_user_ids]);
+
+  const pendingVoterIds = useMemo(() => {
+    const voted = new Set(votedUserIds);
+    const fromSocket = pickUserIdList(rt, "voting_pending_user_ids", []);
+    if (fromSocket.length > 0) return fromSocket;
+    return voteExpectedPlayers.filter((p) => !voted.has(p.user)).map((p) => p.user);
+  }, [rt, votedUserIds, voteExpectedPlayers]);
+
+  const creationTimeExpired = useMemo(() => {
+    if (gamePhase !== "vote_creation") {
+      return gamePhase === "vote_reveal" || gamePhase === "vote_voting";
+    }
+    if (!deadlineIso) return false;
+    void tickToken;
+    return Date.now() >= new Date(deadlineIso).getTime();
+  }, [gamePhase, deadlineIso, tickToken]);
+
+  const myAlreadySubmitted = Boolean(user?.user_id && submittedAuthorIds.includes(user.user_id));
+
   const authorName = useMemo(() => {
     const m = new Map<number, string>();
     activeEvent?.participants?.forEach((p) => m.set(p.user, p.username ?? `#${p.user}`));
     return (uid: number) => m.get(uid) ?? `#${uid}`;
   }, [activeEvent?.participants]);
+
+  useEffect(() => {
+    if (!activeEvent || activeEvent.event_type !== "vote_best") return;
+    if (gamePhase !== "vote_voting" && gamePhase !== "vote_reveal") {
+      lastVoteOverlayKeyRef.current = null;
+      return;
+    }
+    const overlayKey = `${activeEvent.id}:${activeEvent.current_round}:${activeEvent.current_voting_round ?? 1}:${gamePhase}`;
+    if (gamePhase === "vote_voting" && lastVoteOverlayKeyRef.current !== overlayKey) {
+      lastVoteOverlayKeyRef.current = overlayKey;
+      setVoteOverlayOpen(true);
+    }
+  }, [
+    activeEvent?.id,
+    activeEvent?.event_type,
+    activeEvent?.current_round,
+    activeEvent?.current_voting_round,
+    gamePhase,
+  ]);
+
+  useEffect(() => {
+    const reason = typeof rt.reason === "string" ? rt.reason : "";
+    const refreshReasons = [
+      "submission_created",
+      "vote_reveal",
+      "vote_started",
+      "vote_round_closed",
+      "vote_tiebreak",
+      "vote_round_advanced",
+      "vote_creation_timeout",
+      "vote_creation_closed",
+      "vote_theme_started",
+      "vote_registered",
+      "vote_all_rounds_done",
+      "quiz_question_timeout",
+      "event_finished",
+      "event_auto_finished_insufficient",
+      "answer_submitted",
+      "question_started",
+      "event_begun",
+      "event_begun_early",
+    ];
+    if (refreshReasons.includes(reason)) {
+      void refreshActiveEvent();
+    }
+  }, [rt.reason, refreshActiveEvent]);
+
+  useEffect(() => {
+    if (gamePhase !== "vote_creation") {
+      processedVoteTimeoutRef.current = null;
+    }
+  }, [activeEvent?.id, activeEvent?.current_round, gamePhase]);
+
+  useEffect(() => {
+    if (activeEvent?.event_type === "vote_best" && activeEvent.answer_time_sec) {
+      setThemeTime(activeEvent.answer_time_sec);
+    }
+  }, [activeEvent?.id, activeEvent?.event_type, activeEvent?.answer_time_sec]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -217,6 +358,112 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
   }, [activeEvent?.id, activeEvent?.event_type, gamePhase]);
 
   useEffect(() => {
+    if (!activeEvent || activeEvent.event_type !== "vote_best") return;
+    if (gamePhase !== "vote_creation" && gamePhase !== "vote_voting") return;
+    const id = window.setInterval(() => setTickToken((x) => x + 1), 250);
+    return () => window.clearInterval(id);
+  }, [activeEvent?.id, activeEvent?.event_type, gamePhase]);
+
+  useEffect(() => {
+    if (!activeEvent || activeEvent.event_type !== "quiz_elimination") return;
+    if (gamePhase !== "quiz_main" && gamePhase !== "quiz_finals") return;
+    const id = window.setInterval(() => setTickToken((x) => x + 1), 250);
+    return () => window.clearInterval(id);
+  }, [activeEvent?.id, activeEvent?.event_type, gamePhase]);
+
+  useEffect(() => {
+    if (!activeEvent || activeEvent.event_type !== "quiz_elimination") return;
+    if (gamePhase !== "quiz_main" && gamePhase !== "quiz_finals") return;
+    const dl =
+      pickOptionalIso(rt, "current_question_deadline_at", activeEvent.current_question_deadline_at) ??
+      activeEvent.current_question_deadline_at;
+    if (!dl) return;
+
+    const processKey = `${activeEvent.id}:${gamePhase}:${dl}`;
+    let cancelled = false;
+
+    const fire = async () => {
+      if (cancelled || processedQuizTimeoutRef.current === processKey) return;
+      processedQuizTimeoutRef.current = processKey;
+      await roomEventPostAction(activeEvent.id, "quiz-process-ticks");
+      await refreshActiveEvent();
+    };
+
+    const deadlineMs = new Date(dl).getTime();
+    if (Date.now() >= deadlineMs) {
+      void fire();
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const delayMs = Math.max(0, deadlineMs - Date.now() + 150);
+    const id = window.setTimeout(() => {
+      void fire();
+    }, delayMs);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(id);
+    };
+  }, [
+    activeEvent?.id,
+    activeEvent?.event_type,
+    gamePhase,
+    rt.current_question_deadline_at,
+    activeEvent?.current_question_deadline_at,
+    refreshActiveEvent,
+  ]);
+
+  useEffect(() => {
+    if (gamePhase !== "quiz_main" && gamePhase !== "quiz_finals") {
+      processedQuizTimeoutRef.current = null;
+    }
+  }, [activeEvent?.id, activeEvent?.current_round, activeEvent?.current_question_order, gamePhase]);
+
+  useEffect(() => {
+    if (!activeEvent || activeEvent.event_type !== "vote_best") return;
+    if (gamePhase !== "vote_creation" && gamePhase !== "vote_voting") return;
+    const dl =
+      pickOptionalIso(rt, "current_question_deadline_at", activeEvent.current_question_deadline_at) ??
+      activeEvent.current_question_deadline_at;
+    if (!dl) return;
+
+    const processKey = `${activeEvent.id}:${gamePhase}:${dl}`;
+    let cancelled = false;
+
+    const fire = async () => {
+      if (cancelled || processedVoteTimeoutRef.current === processKey) return;
+      processedVoteTimeoutRef.current = processKey;
+      await roomEventPostAction(activeEvent.id, "vote-process-ticks");
+      await refreshActiveEvent();
+    };
+
+    const deadlineMs = new Date(dl).getTime();
+    if (Date.now() >= deadlineMs) {
+      void fire();
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const delayMs = Math.max(0, deadlineMs - Date.now() + 150);
+    const id = window.setTimeout(() => {
+      void fire();
+    }, delayMs);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(id);
+    };
+  }, [
+    activeEvent?.id,
+    activeEvent?.event_type,
+    gamePhase,
+    rt.current_question_deadline_at,
+    activeEvent?.current_question_deadline_at,
+    refreshActiveEvent,
+  ]);
+
+  useEffect(() => {
     if (!activeEvent || activeEvent.event_type !== "button_quiz") return;
     if (gamePhase !== "button_answering") return;
     const dl =
@@ -224,16 +471,25 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
       activeEvent.button_answer_deadline_at;
     const cl = pickNullableClaimedBy(rt, activeEvent.button_claimed_by);
     if (!cl || !dl) return;
+
     const processKey = `${activeEvent.id}:${cl}:${dl}`;
-    if (processedButtonTimeoutRef.current === processKey) return;
-    processedButtonTimeoutRef.current = processKey;
     let cancelled = false;
+
     const fire = async () => {
-      if (cancelled) return;
+      if (cancelled || processedButtonTimeoutRef.current === processKey) return;
+      processedButtonTimeoutRef.current = processKey;
       await roomEventPostAction(activeEvent.id, "button-process-ticks");
       await refreshActiveEvent();
     };
+
     const deadlineMs = new Date(dl).getTime();
+    if (Date.now() >= deadlineMs) {
+      void fire();
+      return () => {
+        cancelled = true;
+      };
+    }
+
     const delayMs = Math.max(0, deadlineMs - Date.now() + 150);
     const id = window.setTimeout(() => {
       void fire();
@@ -255,8 +511,14 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
 
   useEffect(() => {
     const last = notices.at(-1);
-    if (last?.code === "event_auto_finished_insufficient") {
-      setAutoFinishMessage(last.message);
+    if (
+      last?.code === "event_auto_finished_insufficient" ||
+      last?.code === "event_finished"
+    ) {
+      const msg = last.message?.trim();
+      if (msg?.includes("participantes suficientes") || last.code === "event_auto_finished_insufficient") {
+        setAutoFinishMessage(msg || "O evento foi encerrado: participantes insuficientes.");
+      }
     }
   }, [notices]);
 
@@ -337,6 +599,9 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
                         row.points_votes != null && row.points_votes !== 0
                           ? `Votos ${row.points_votes >= 0 ? "+" : ""}${row.points_votes}`
                           : "",
+                        row.points_ranking != null && row.points_ranking !== 0
+                          ? `Colocação +${row.points_ranking}`
+                          : "",
                       ].filter(Boolean);
                       return parts.length > 0 ? (
                         <p className="pl-10 text-[11px] leading-snug text-muted-foreground">{parts.join(" · ")}</p>
@@ -367,9 +632,31 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
     );
   }
 
+  const submitCreation = () => {
+    const text = creationText.trim();
+    if (!text || !activeEvent) return;
+    startTransition(async () => {
+      setActionError(null);
+      const result = await roomEventPostAction(activeEvent.id, "submit", {
+        content: text,
+        round_number: activeEvent.current_round,
+      });
+      if (result.ok) {
+        setCreationText("");
+      } else {
+        setActionError(result.error ?? "Não foi possível enviar a criação.");
+      }
+      await refreshActiveEvent();
+    });
+  };
+
   const run = (action: string, body?: Record<string, unknown>) => {
     startTransition(async () => {
-      await roomEventPostAction(activeEvent.id, action, body);
+      setActionError(null);
+      const result = await roomEventPostAction(activeEvent.id, action, body);
+      if (!result.ok) {
+        setActionError(result.error ?? "Ação falhou.");
+      }
       await refreshActiveEvent();
     });
   };
@@ -432,10 +719,41 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
         : `Pergunta ${Math.min(activeEvent.current_round, activeEvent.rounds_total)} de ${activeEvent.rounds_total}`
       : null;
 
+  const voteRoundLabel =
+    activeEvent.event_type === "vote_best"
+      ? activeEvent.current_round > activeEvent.rounds_total && gamePhase === "host_setup"
+        ? "Todas as rodadas concluídas"
+        : `Rodada ${Math.min(activeEvent.current_round, activeEvent.rounds_total)} de ${activeEvent.rounds_total}`
+      : null;
+
+  const showVoteThemeBanner =
+    activeEvent.event_type === "vote_best" &&
+    currentThemeText &&
+    (gamePhase === "host_setup" ||
+      gamePhase === "vote_creation" ||
+      gamePhase === "vote_reveal" ||
+      gamePhase === "vote_voting");
+
+  const showVoteTimer =
+    activeEvent.event_type === "vote_best" &&
+    deadlineIso &&
+    (gamePhase === "vote_creation" || gamePhase === "vote_voting");
+
+  const showQuizTimer =
+    activeEvent.event_type === "quiz_elimination" &&
+    deadlineIso &&
+    (gamePhase === "quiz_main" || gamePhase === "quiz_finals");
+
+  const myAlreadyVoted = Boolean(activeEvent?.my_vote_submission_id);
+  const myAlreadyAnsweredQuiz = Boolean(activeEvent?.my_answered_current_question);
+
   const showLiveQuestionBanner =
-    activeEvent.event_type === "button_quiz" &&
-    (gamePhase === "button_answering" || gamePhase === "button_gabarito") &&
-    liveQuestionText;
+    (activeEvent.event_type === "button_quiz" &&
+      (gamePhase === "button_answering" || gamePhase === "button_gabarito") &&
+      liveQuestionText) ||
+    (activeEvent.event_type === "quiz_elimination" &&
+      (gamePhase === "quiz_main" || gamePhase === "quiz_finals") &&
+      liveQuestionText);
 
   const showLeaveEvent =
     activeEvent.status === "running" && !isOrganizer && myParticipation && !myParticipation.left_early;
@@ -469,6 +787,9 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
               </p>
               {buttonRoundLabel ? (
                 <p className="mt-1 text-xs font-semibold text-primary">{buttonRoundLabel}</p>
+              ) : null}
+              {voteRoundLabel ? (
+                <p className="mt-1 text-xs font-semibold text-primary">{voteRoundLabel}</p>
               ) : null}
             </div>
             <div className="flex flex-shrink-0 items-center gap-2">
@@ -506,6 +827,64 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
               <p className="text-[10px] font-bold uppercase text-primary">Pergunta da rodada</p>
               <p className="text-sm font-medium text-foreground whitespace-pre-wrap">{liveQuestionText}</p>
             </div>
+          ) : null}
+          {showVoteThemeBanner ? (
+            <div className="mt-3 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2">
+              <p className="text-[10px] font-bold uppercase text-primary">Tema da rodada</p>
+              <p className="text-sm font-medium text-foreground whitespace-pre-wrap">{currentThemeText}</p>
+            </div>
+          ) : null}
+          {showVoteTimer && !creationTimeExpired ? (
+            <div className="mt-3 flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-primary/35 bg-gradient-to-br from-primary/15 to-card px-4 py-3 shadow-inner">
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-primary">
+                <Timer className="h-4 w-4" aria-hidden />
+                {gamePhase === "vote_creation" ? "Tempo para criar" : "Tempo para votar"}
+              </div>
+              <p className="font-mono text-3xl font-bold tabular-nums tracking-tight text-foreground">
+                {(() => {
+                  void tickToken;
+                  const end = new Date(deadlineIso!).getTime();
+                  const sec = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+                  return formatMmSs(sec);
+                })()}
+              </p>
+            </div>
+          ) : null}
+          {showQuizTimer ? (
+            <div className="mt-3 flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-primary/35 bg-gradient-to-br from-primary/15 to-card px-4 py-3 shadow-inner">
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-primary">
+                <Timer className="h-4 w-4" aria-hidden />
+                Tempo para responder
+              </div>
+              <p className="font-mono text-3xl font-bold tabular-nums tracking-tight text-foreground">
+                {(() => {
+                  void tickToken;
+                  const end = new Date(deadlineIso!).getTime();
+                  const sec = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+                  return formatMmSs(sec);
+                })()}
+              </p>
+            </div>
+          ) : null}
+          {activeEvent.event_type === "vote_best" && gamePhase === "vote_voting" && !voteOverlayOpen ? (
+            <div className="mt-3 flex flex-col gap-2 rounded-xl border border-primary/35 bg-primary/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm font-medium text-foreground">
+                {isOrganizer
+                  ? "Votação em andamento — encerre quando todos votarem."
+                  : activeEvent.my_vote_submission_id
+                    ? "Voto registrado. Você pode revisar as criações."
+                    : "Votação aberta — escolha a melhor criação."}
+              </p>
+              <Button type="button" size="sm" className="shrink-0 gap-1.5" onClick={() => setVoteOverlayOpen(true)}>
+                <Sparkles className="h-3.5 w-3.5" />
+                {isOrganizer ? "Ver criações" : activeEvent.my_vote_submission_id ? "Ver criações" : "Votar agora"}
+              </Button>
+            </div>
+          ) : null}
+          {activeEvent.event_type === "vote_best" && gamePhase === "vote_creation" && creationTimeExpired ? (
+            <p className="mt-3 rounded-lg bg-amber-500/15 px-3 py-2 text-center text-sm font-semibold text-amber-800 dark:text-amber-200">
+              Tempo de criação encerrado — abrindo votação…
+            </p>
           ) : null}
           {deadlineIso && gamePhase === "button_answering" && activeEvent.event_type !== "button_quiz" ? (
             <p className="mt-2 text-xs text-muted-foreground">
@@ -576,7 +955,7 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
       </div>
 
       <aside className="flex w-full shrink-0 flex-col gap-3 pb-4 md:w-[min(100%,380px)] md:max-w-[380px] md:overflow-y-auto md:pb-0">
-        {activeEvent.event_type === "button_quiz" ? (
+        {activeEvent.event_type === "button_quiz" || activeEvent.event_type === "vote_best" ? (
           <div className="rounded-2xl border border-border/60 bg-card/80 p-3">
             <p className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase text-muted-foreground">
               <Users className="h-3.5 w-3.5 shrink-0 text-primary" />
@@ -654,55 +1033,91 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
           </div>
         ) : null}
 
-        {activeEvent.event_type === "vote_best" && gamePhase === "vote_creation" && canPlay ? (
-          <div className="rounded-2xl border border-border/60 bg-card/80 p-3">
-            <p className="mb-2 text-xs font-bold uppercase text-muted-foreground">Sua criação</p>
-            <textarea
-              value={creationText}
-              onChange={(e) => setCreationText(e.target.value)}
-              className="mb-2 min-h-[88px] w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm"
-              placeholder="Escreva conforme o tema do organizador…"
-            />
+        {activeEvent.event_type === "vote_best" &&
+        (gamePhase === "vote_reveal" || gamePhase === "vote_voting") ? (
+          <div className="rounded-2xl border border-primary/25 bg-primary/5 p-3">
+            <p className="mb-2 text-xs font-bold uppercase text-primary">
+              {gamePhase === "vote_voting" ? "Votação aberta" : "Criações reveladas"}
+            </p>
+            <p className="mb-3 text-xs text-muted-foreground">
+              {roundSubmissions.length}{" "}
+              {roundSubmissions.length === 1 ? "criação anônima" : "criações anônimas"} nesta rodada.
+              {gamePhase === "vote_voting" && !isOrganizer && canPlay
+                ? " Escolha a melhor — voto obrigatório."
+                : null}
+            </p>
             <Button
-              className="w-full"
-              disabled={!creationText.trim() || isPending}
-              onClick={() => {
-                run("submit", {
-                  content: creationText.trim(),
-                  round_number: activeEvent.current_round,
-                });
-                setCreationText("");
-              }}
+              type="button"
+              className="w-full gap-2"
+              variant={gamePhase === "vote_voting" ? "default" : "secondary"}
+              onClick={() => setVoteOverlayOpen(true)}
             >
-              Enviar criação
+              <Sparkles className="h-4 w-4" />
+              {gamePhase === "vote_voting" ? "Ver criações e votar" : "Ver criações"}
             </Button>
           </div>
         ) : null}
 
-        {activeEvent.event_type === "vote_best" && gamePhase === "vote_voting" && canPlay ? (
+        {activeEvent.event_type === "vote_best" &&
+        gamePhase === "vote_voting" &&
+        canPlay &&
+        !isOrganizer ? (
           <div className="rounded-2xl border border-border/60 bg-card/80 p-3">
-            <p className="mb-2 text-xs font-bold uppercase text-muted-foreground">Votar (obrigatório)</p>
-            <ul className="max-h-48 space-y-2 overflow-y-auto">
-              {submissions.map((s: RoomEventSubmission) => (
-                <li key={s.id} className="rounded-xl border border-border/50 bg-muted/20 p-2">
-                  <p className="text-xs font-medium text-foreground">{authorName(s.author)}</p>
-                  <p className="text-xs text-muted-foreground line-clamp-3">{s.content}</p>
-                  {s.author !== user?.user_id ? (
-                    <Button
-                      size="sm"
-                      className="mt-2 w-full"
-                      variant="secondary"
-                      disabled={isPending}
-                      onClick={() => run("vote", { submission: s.id, round_number: s.round_number })}
-                    >
-                      Votar nesta
-                    </Button>
-                  ) : (
-                    <p className="mt-1 text-[10px] text-muted-foreground">Sua criação — não pode votar em si.</p>
-                  )}
-                </li>
-              ))}
-            </ul>
+            <p className="mb-2 text-xs font-bold uppercase text-muted-foreground">Seu voto</p>
+            {myAlreadyVoted ? (
+              <p className="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                Voto registrado! Aguarde o fim do tempo ou o encerramento pelo organizador.
+              </p>
+            ) : (
+              <>
+                <p className="mb-3 text-xs text-muted-foreground">
+                  Escolha a melhor criação — voto obrigatório.
+                </p>
+                <Button
+                  type="button"
+                  className="w-full gap-2"
+                  onClick={() => setVoteOverlayOpen(true)}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Ver criações e votar
+                </Button>
+              </>
+            )}
+          </div>
+        ) : null}
+
+        {activeEvent.event_type === "vote_best" &&
+        gamePhase === "vote_creation" &&
+        canPlay &&
+        !isOrganizer ? (
+          <div className="rounded-2xl border border-border/60 bg-card/80 p-3">
+            <p className="mb-2 text-xs font-bold uppercase text-muted-foreground">Sua criação</p>
+            {myAlreadySubmitted ? (
+              <p className="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                Criação enviada! Aguarde o fim do tempo ou a revelação pelo organizador.
+              </p>
+            ) : creationTimeExpired ? (
+              <p className="rounded-lg bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+                O tempo acabou — você não enviou a tempo.
+              </p>
+            ) : (
+              <>
+                <textarea
+                  value={creationText}
+                  onChange={(e) => setCreationText(e.target.value)}
+                  className="mb-2 min-h-[88px] w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm"
+                  placeholder="Escreva conforme o tema do organizador…"
+                />
+                <Button
+                  className="w-full"
+                  disabled={!creationText.trim() || isPending}
+                  type="button"
+                  onClick={submitCreation}
+                >
+                  Enviar criação
+                </Button>
+              </>
+            )}
           </div>
         ) : null}
 
@@ -803,36 +1218,44 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
           </div>
         ) : null}
 
-        {activeEvent.event_type === "quiz_elimination" && canPlay ? (
+        {activeEvent.event_type === "quiz_elimination" && canPlay && !isOrganizer ? (
           <div className="rounded-2xl border border-border/60 bg-card/80 p-3 space-y-2">
             <p className="text-xs font-bold uppercase text-muted-foreground">Resposta (quiz eliminatório)</p>
-            <input
-              value={answerText}
-              onChange={(e) => setAnswerText(e.target.value)}
-              className="w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm"
-              placeholder="Sua resposta"
-            />
-            {gamePhase !== "quiz_finals" ? (
-              <input
-                value={eliminateId}
-                onChange={(e) => setEliminateId(e.target.value)}
-                className="w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm"
-                placeholder="ID do usuário a eliminar (se acertar)"
-              />
-            ) : null}
-            <Button
-              className="w-full"
-              disabled={!answerText.trim() || isPending}
-              type="button"
-              onClick={() => {
-                const body: Record<string, unknown> = { answer_text: answerText.trim() };
-                if (eliminateId) body.eliminate_user_id = Number(eliminateId);
-                run("answer", body);
-                setAnswerText("");
-              }}
-            >
-              Enviar resposta
-            </Button>
+            {myAlreadyAnsweredQuiz && (gamePhase === "quiz_main" || gamePhase === "quiz_finals") ? (
+              <p className="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                Resposta enviada! Aguarde o fim do tempo ou a próxima pergunta do organizador.
+              </p>
+            ) : (
+              <>
+                <input
+                  value={answerText}
+                  onChange={(e) => setAnswerText(e.target.value)}
+                  className="w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm"
+                  placeholder="Sua resposta"
+                />
+                {gamePhase !== "quiz_finals" ? (
+                  <input
+                    value={eliminateId}
+                    onChange={(e) => setEliminateId(e.target.value)}
+                    className="w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm"
+                    placeholder="ID do usuário a eliminar (se acertar)"
+                  />
+                ) : null}
+                <Button
+                  className="w-full"
+                  disabled={!answerText.trim() || isPending}
+                  type="button"
+                  onClick={() => {
+                    const body: Record<string, unknown> = { answer_text: answerText.trim() };
+                    if (eliminateId) body.eliminate_user_id = Number(eliminateId);
+                    run("answer", body);
+                    setAnswerText("");
+                  }}
+                >
+                  Enviar resposta
+                </Button>
+              </>
+            )}
           </div>
         ) : null}
 
@@ -842,59 +1265,153 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
 
             {activeEvent.event_type === "vote_best" ? (
               <div className="space-y-2">
-                <p className="text-[10px] text-muted-foreground">Tema / instrução (pergunta no sistema)</p>
-                <textarea
-                  value={themeText}
-                  onChange={(e) => setThemeText(e.target.value)}
-                  className="min-h-[64px] w-full rounded-lg border bg-background px-2 py-1 text-xs"
-                  placeholder="Ex.: uma cantada de LoL…"
-                />
-                <label className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                  Tempo criação (30–120s)
-                  <input
-                    type="number"
-                    min={30}
-                    max={120}
-                    value={themeTime}
-                    onChange={(e) => setThemeTime(Number(e.target.value))}
-                    className="w-20 rounded border bg-background px-1"
-                  />
-                </label>
-                <Button
-                  size="sm"
-                  className="w-full"
-                  variant="secondary"
-                  disabled={!themeText.trim()}
-                  type="button"
-                  onClick={() =>
-                    run("questions", {
-                      text: themeText.trim(),
-                      round_number: activeEvent.current_round,
-                      order: activeEvent.current_question_order,
-                      time_limit_sec: themeTime,
-                    })
-                  }
-                >
-                  Salvar tema
-                </Button>
-                <Button size="sm" className="w-full" type="button" onClick={() => run("start-current-question")}>
-                  Iniciar tempo de criação
-                </Button>
-                <Button size="sm" className="w-full" variant="outline" type="button" onClick={() => run("reveal-creations")}>
-                  Revelar criações
-                </Button>
-                <Button size="sm" className="w-full" type="button" onClick={() => run("start-voting")}>
-                  Iniciar votação
-                </Button>
-                <Button
-                  size="sm"
-                  className="w-full"
-                  variant="destructive"
-                  type="button"
-                  onClick={() => run("close-voting-round")}
-                >
-                  Encerrar rodada de votos
-                </Button>
+                {gamePhase === "host_setup" && activeEvent.current_round <= activeEvent.rounds_total ? (
+                  <>
+                    <textarea
+                      value={themeText}
+                      onChange={(e) => setThemeText(e.target.value)}
+                      className="min-h-[72px] w-full rounded-lg border bg-background px-3 py-2 text-sm"
+                      placeholder="Ex.: uma cantada de LoL, uma piada sobre astronomia…"
+                    />
+                    <label className="flex flex-col gap-1.5 text-sm text-muted-foreground">
+                      <span>Tempo para criar (5 s – 2 min)</span>
+                      <input
+                        type="number"
+                        min={5}
+                        max={120}
+                        value={themeTime}
+                        onChange={(e) => {
+                          const n = Number(e.target.value);
+                          if (Number.isNaN(n)) return;
+                          setThemeTime(Math.min(120, Math.max(5, Math.round(n))));
+                        }}
+                        className="w-full rounded-lg border bg-background px-3 py-2 text-sm tabular-nums"
+                      />
+                    </label>
+                    <Button
+                      className="w-full"
+                      disabled={!themeText.trim() || isPending}
+                      type="button"
+                      onClick={() =>
+                        run("vote-set-theme", {
+                          text: themeText.trim(),
+                          time_limit_sec: Math.min(120, Math.max(5, themeTime)),
+                        })
+                      }
+                    >
+                      Definir tema
+                    </Button>
+                  </>
+                ) : null}
+                {gamePhase === "vote_creation" ? (
+                  <div className="space-y-2 rounded-lg border border-border/50 bg-background/80 p-2">
+                    <p className="text-xs font-semibold text-foreground">
+                      Respostas: {submittedAuthorIds.length}/{voteExpectedPlayers.length}
+                    </p>
+                    {submittedAuthorIds.length > 0 ? (
+                      <div>
+                        <p className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400">
+                          Já responderam
+                        </p>
+                        <ul className="mt-1 space-y-0.5 text-xs text-foreground">
+                          {submittedAuthorIds.map((uid) => (
+                            <li key={uid}>✓ {authorName(uid)}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                    {pendingAuthorIds.length > 0 ? (
+                      <div>
+                        <p className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400">
+                          Aguardando
+                        </p>
+                        <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+                          {pendingAuthorIds.map((uid) => (
+                            <li key={uid}>… {authorName(uid)}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                    <Button
+                      className="w-full"
+                      type="button"
+                      disabled={
+                        isPending ||
+                        pendingAuthorIds.length > 0 ||
+                        voteExpectedPlayers.length === 0
+                      }
+                      onClick={() => run("reveal-creations")}
+                    >
+                      Ir para votação
+                    </Button>
+                    {pendingAuthorIds.length > 0 ? (
+                      <p className="text-[10px] text-muted-foreground">
+                        Disponível quando todos tiverem enviado, ou automaticamente ao fim do tempo.
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+                {gamePhase === "vote_reveal" ? (
+                  <>
+                    <p className="text-[10px] text-muted-foreground">
+                      Todos veem as criações. Inicie a votação quando estiver pronto.
+                    </p>
+                    <Button size="sm" className="w-full" type="button" disabled={isPending} onClick={() => run("start-voting")}>
+                      Iniciar votação
+                    </Button>
+                  </>
+                ) : null}
+                {gamePhase === "vote_voting" ? (
+                  <div className="space-y-2 rounded-lg border border-border/50 bg-background/80 p-2">
+                    <p className="text-xs font-semibold text-foreground">
+                      Votos: {votedUserIds.length}/{voteExpectedPlayers.length}
+                    </p>
+                    {votedUserIds.length > 0 ? (
+                      <div>
+                        <p className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400">
+                          Já votaram
+                        </p>
+                        <ul className="mt-1 space-y-0.5 text-xs text-foreground">
+                          {votedUserIds.map((uid) => (
+                            <li key={uid}>✓ {authorName(uid)}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                    {pendingVoterIds.length > 0 ? (
+                      <div>
+                        <p className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400">
+                          Aguardando
+                        </p>
+                        <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+                          {pendingVoterIds.map((uid) => (
+                            <li key={uid}>… {authorName(uid)}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                    <Button
+                      size="sm"
+                      className="w-full"
+                      variant="destructive"
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => run("close-voting-round")}
+                    >
+                      Encerrar rodada de votos
+                    </Button>
+                    {pendingVoterIds.length > 0 ? (
+                      <p className="text-[10px] text-muted-foreground">
+                        Disponível quando todos tiverem votado, ou automaticamente ao fim do tempo.
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+                {activeEvent.current_round > activeEvent.rounds_total && gamePhase === "host_setup" ? (
+                  <p className="text-[10px] font-medium text-primary">
+                    Todas as rodadas concluídas — finalize o evento abaixo.
+                  </p>
+                ) : null}
               </div>
             ) : null}
 
@@ -1056,8 +1573,33 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
             <Loader2 className="h-3.5 w-3.5 animate-spin" /> Atualizando…
           </p>
         ) : null}
+        {actionError ? (
+          <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-center text-xs font-medium text-destructive">
+            {actionError}
+          </p>
+        ) : null}
       </aside>
     </div>
+
+    {activeEvent.event_type === "vote_best" &&
+    (gamePhase === "vote_reveal" || gamePhase === "vote_voting") ? (
+      <VoteBestVotingOverlay
+        open={voteOverlayOpen}
+        onOpenChange={setVoteOverlayOpen}
+        eventId={activeEvent.id}
+        roundNumber={activeEvent.current_round ?? 1}
+        themeText={currentThemeText}
+        deadlineIso={gamePhase === "vote_voting" ? deadlineIso : null}
+        tickToken={tickToken}
+        submissions={roundSubmissions}
+        myUserId={user?.user_id}
+        myVoteSubmissionId={activeEvent.my_vote_submission_id}
+        canVote={gamePhase === "vote_voting" && canPlay}
+        isOrganizer={isOrganizer}
+        onVoted={refreshActiveEvent}
+        onError={setActionError}
+      />
+    ) : null}
 
     <AlertDialog open={leaveDialogOpen} onOpenChange={setLeaveDialogOpen}>
       <AlertDialogContent>

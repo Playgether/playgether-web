@@ -111,8 +111,24 @@ export async function roomEventPostAction(eventId: number, action: string, body?
     const res = await api.post(`/api/v1/room-events/${eventId}/${action}/`, body ?? {}, { headers });
     return { ok: true as const, data: res.data };
   } catch (e: unknown) {
-    const raw = (e as { response?: { data?: { detail?: string | string[] } } })?.response?.data?.detail;
+    const data = (e as { response?: { data?: Record<string, unknown> } })?.response?.data;
+    const raw = data?.detail;
     const detail = Array.isArray(raw) ? raw.join(" ") : raw;
-    return { ok: false as const, error: (typeof detail === "string" && detail) || "Ação falhou." };
+    if (typeof detail === "string" && detail) {
+      return { ok: false as const, error: detail };
+    }
+    if (data && typeof data === "object") {
+      const fieldErrors = Object.entries(data)
+        .filter(([key]) => key !== "detail")
+        .flatMap(([key, val]) => {
+          if (Array.isArray(val)) return val.map((msg) => `${key}: ${String(msg)}`);
+          if (typeof val === "string") return [`${key}: ${val}`];
+          return [];
+        });
+      if (fieldErrors.length > 0) {
+        return { ok: false as const, error: fieldErrors.join(" ") };
+      }
+    }
+    return { ok: false as const, error: "Ação falhou." };
   }
 }

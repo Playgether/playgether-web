@@ -14,6 +14,8 @@ export type RoomEventSessionContextValue = {
   sessionLocked: boolean;
   /** Tela cheia do evento (ao vivo ou resultado final até o usuário fechar). */
   eventShellOpen: boolean;
+  /** ID do evento cujos resultados o usuário já fechou (voltou ao chat). */
+  resultsDismissedForEventId: number | null;
   dismissEventResults: () => void;
   myParticipation: RoomEventParticipant | undefined;
   isOrganizer: boolean;
@@ -32,7 +34,9 @@ export function RoomEventSessionProvider({
   const [activeEvent, setActiveEvent] = useState<RoomEvent | null>(null);
   const [resultsDismissedForEventId, setResultsDismissedForEventId] = useState<number | null>(null);
   const activeEventRef = useRef<RoomEvent | null>(null);
+  const resultsDismissedRef = useRef<number | null>(null);
   activeEventRef.current = activeEvent;
+  resultsDismissedRef.current = resultsDismissedForEventId;
 
   const refreshActiveEvent = useCallback(async () => {
     const r = await listRoomEvents(room.slug, { activeOnly: true });
@@ -55,8 +59,16 @@ export function RoomEventSessionProvider({
       }
     }
     if (prev?.status === "finished" && prev.id) {
+      if (resultsDismissedRef.current === prev.id) {
+        setActiveEvent(null);
+        return;
+      }
       const full = await fetchRoomEvent(prev.id);
       if (full.ok && full.data.status === "finished") {
+        if (resultsDismissedRef.current === prev.id) {
+          setActiveEvent(null);
+          return;
+        }
         setActiveEvent(full.data);
         return;
       }
@@ -162,6 +174,7 @@ export function RoomEventSessionProvider({
       refreshActiveEvent,
       sessionLocked,
       eventShellOpen,
+      resultsDismissedForEventId,
       dismissEventResults,
       myParticipation,
       isOrganizer,
@@ -172,6 +185,7 @@ export function RoomEventSessionProvider({
       refreshActiveEvent,
       sessionLocked,
       eventShellOpen,
+      resultsDismissedForEventId,
       dismissEventResults,
       myParticipation,
       isOrganizer,
