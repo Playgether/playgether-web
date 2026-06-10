@@ -1,32 +1,27 @@
 import { Send } from "lucide-react";
-import React, { useRef } from "react";
+import React, { forwardRef, useRef } from "react";
 import { Button } from "@/components/ui/button";
 
-export default function InputMessage({
-  messageInput,
-  onInput,
-  onSend,
-  disabled,
-}: {
-  messageInput: string;
-  onInput: (value: string) => void;
-  onSend?: () => void;
-  disabled?: boolean;
-}) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+const InputMessage = forwardRef<
+  HTMLTextAreaElement,
+  {
+    messageInput: string;
+    onInput: (value: string) => void;
+    onSend?: () => void;
+    disabled?: boolean;
+  }
+>(function InputMessage({ messageInput, onInput, onSend, disabled }, ref) {
+  const internalRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSend = () => {
     if (!messageInput.trim() || disabled) return;
     onSend?.();
-    // Resetar altura após envio
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-    }
+    const el = (ref as React.RefObject<HTMLTextAreaElement>)?.current ?? internalRef.current;
+    if (el) el.style.height = "auto";
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onInput(e.target.value);
-    // Crescer com o conteúdo, máximo 5 linhas (~120px)
     const el = e.target;
     el.style.height = "auto";
     el.style.height = Math.min(el.scrollHeight, 120) + "px";
@@ -37,14 +32,22 @@ export default function InputMessage({
       e.preventDefault();
       handleSend();
     }
-    // Shift+Enter: comportamento padrão (nova linha)
+  };
+
+  const mergeRef = (el: HTMLTextAreaElement | null) => {
+    internalRef.current = el as HTMLTextAreaElement;
+    if (typeof ref === "function") {
+      ref(el);
+    } else if (ref) {
+      (ref as React.MutableRefObject<HTMLTextAreaElement | null>).current = el;
+    }
   };
 
   return (
     <div className="p-4 border-t border-border/50">
       <div className="flex items-end space-x-3">
         <textarea
-          ref={textareaRef}
+          ref={mergeRef}
           value={messageInput}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
@@ -65,4 +68,6 @@ export default function InputMessage({
       </div>
     </div>
   );
-}
+});
+
+export default InputMessage;

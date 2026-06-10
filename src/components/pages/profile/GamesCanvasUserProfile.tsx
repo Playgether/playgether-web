@@ -22,7 +22,7 @@ import { HighlightedAchievementBadges } from "@/components/achievements/Highligh
 import { notifyFriendsListChanged } from "@/lib/friendsListEvents";
 import { cn } from "@/lib/utils";
 import { startConversation } from "@/services/directMessages";
-import { useRouter } from "next/navigation";
+import { useConversationsWidget } from "@/context/ConversationsWidgetContext";
 
 const PROFILE_CARD_BIO_COLLAPSE_AFTER_CHARS = 200;
 const PROFILE_CARD_BIO_COLLAPSE_AFTER_LINES = 5;
@@ -35,7 +35,7 @@ export function GamesCanvasUserProfile({
   onProfileUpdated?: (updated: Partial<getProfileByUsernameProps>) => void;
 }) {
   const { user, authSessionResolved } = useAuthContext();
-  const router = useRouter();
+  const { openWithConversation } = useConversationsWidget();
   const isOwner =
     !!user &&
     !!profile &&
@@ -356,7 +356,7 @@ export function GamesCanvasUserProfile({
                         onClick={async () => {
                           if (!profile?.user_id) return;
                           const conv = await startConversation(String(profile.user_id));
-                          if (conv) router.push(`/conversations?open=${conv.id}`);
+                          if (conv) openWithConversation(conv.id);
                         }}
                       >
                         <MessageCircle className="h-4 w-4 mr-1 shrink-0" />

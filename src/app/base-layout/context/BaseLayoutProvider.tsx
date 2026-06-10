@@ -20,6 +20,7 @@ import NoConversationSelected from "../components/chat/NoConversationSelected";
 import { BaseLayoutServerProvider } from "./BaseLayoutServerContext";
 import { E2ECryptoProvider } from "@/context/E2ECryptoContext";
 import { DMUnreadProvider } from "@/context/DMUnreadContext";
+import { ConversationsWidgetProvider } from "@/context/ConversationsWidgetContext";
 import NotificationsTitle from "../components/structure/NotificationsTitle";
 import SettingsHeader from "../components/structure/SettingsHeader";
 import { Separator } from "@/components/ui/separator";
@@ -122,11 +123,13 @@ export default function BaseLayoutProvider({
 }) {
   return (
     <BaseLayoutServerProvider components={BaseLayoutServerComponents}>
-      <DMUnreadProvider>
-        <E2ECryptoProvider>
-          {children}
-        </E2ECryptoProvider>
-      </DMUnreadProvider>
+      <ConversationsWidgetProvider>
+        <DMUnreadProvider>
+          <E2ECryptoProvider>
+            {children}
+          </E2ECryptoProvider>
+        </DMUnreadProvider>
+      </ConversationsWidgetProvider>
     </BaseLayoutServerProvider>
   );
 }

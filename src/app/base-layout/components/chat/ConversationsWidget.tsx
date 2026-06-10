@@ -1,15 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { MessageSquare, X } from "lucide-react";
 import { ConversationsContent } from "./ConversationsContent";
 import { useDMUnread } from "@/context/DMUnreadContext";
+import { useConversationsWidget } from "@/context/ConversationsWidgetContext";
 
 export function ConversationsWidget() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [forceSelectId, setForceSelectId] = useState<string | undefined>(undefined);
   const { unreadCount } = useDMUnread();
+  const { pendingConvId, clearPending } = useConversationsWidget();
+
+  // Open widget and select conversation when triggered externally (e.g. "Mensagem" button on profile)
+  useEffect(() => {
+    if (!pendingConvId) return;
+    setOpen(true);
+    setForceSelectId(pendingConvId);
+    clearPending();
+  }, [pendingConvId, clearPending]);
 
   // Não mostrar na página de conversas
   if (pathname === "/conversations") return null;
@@ -36,6 +47,7 @@ export function ConversationsWidget() {
             <ConversationsContent
               listHeight="calc(480px - 168px)"
               chatHeight="flex-1"
+              forceSelectId={forceSelectId}
             />
           </div>
         </div>

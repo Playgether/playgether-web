@@ -35,6 +35,7 @@ interface ConversationsContentProps {
   listHeight?: string;
   chatHeight?: string;
   autoOpenId?: string;
+  forceSelectId?: string;
 }
 
 // Map a DMConversation to the legacy ConversationInterface expected by sub-components
@@ -63,6 +64,7 @@ export function ConversationsContent({
   listHeight = "calc(100% - 120px)",
   chatHeight = "flex-1",
   autoOpenId,
+  forceSelectId,
 }: ConversationsContentProps) {
   const { user } = useAuthContext();
   const { isReady, needsUnlock, unlock, regenerateKeys, encryptForUser, decrypt } = useE2ECrypto();
@@ -96,6 +98,8 @@ export function ConversationsContent({
 
   const seenIdsRef = useRef<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const prevForceSelectRef = useRef<string | undefined>(undefined);
 
   // ── Load conversations ────────────────────────────────────────────────────
 
@@ -192,6 +196,19 @@ export function ConversationsContent({
       selectConversation(target);
     }
   }, [autoOpenId, conversations, selectConversation]);
+
+  // Force-select a conversation when opened externally (e.g. "Mensagem" button on profile)
+  useEffect(() => {
+    if (!forceSelectId || forceSelectId === prevForceSelectRef.current) return;
+    prevForceSelectRef.current = forceSelectId;
+    loadConversations().then((convs) => {
+      const target = convs.find((c) => c.id === forceSelectId);
+      if (target) {
+        selectConversation(target);
+        setTimeout(() => inputRef.current?.focus(), 150);
+      }
+    });
+  }, [forceSelectId, loadConversations, selectConversation]);
 
   // ── WebSocket: receive new messages ──────────────────────────────────────
 
@@ -569,6 +586,7 @@ export function ConversationsContent({
                   <div ref={messagesEndRef} />
                 </ScrollArea>
                 <InputMessage
+                  ref={inputRef}
                   onInput={setMessageInput}
                   messageInput={messageInput}
                   onSend={handleSend}
