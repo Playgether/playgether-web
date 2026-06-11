@@ -1,124 +1,372 @@
 "use client";
 
+import {
+  fetchRoomMemberStats,
+  fetchRoomRankings,
+  type RoomRankingBoard,
+  type RoomRankingPeriod,
+} from "@/actions/roomRankingsActions";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
+import type { RoomMemberStatRow, RoomRankingRow } from "@/types/RoomRankings";
+import {
+  Award,
+  BarChart3,
+  Clock,
+  Flame,
+  Gamepad2,
+  MessageSquare,
+  Trophy,
+  TvMinimalPlay,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import {
+  extractYoutubeVideoId,
+  fetchYoutubeOEmbedTitle,
+} from "@/lib/youtube";
+import { RoomModerationSanctionsPanel } from "./RoomModerationSanctionsPanel";
 import { patchChatRoomSettings } from "@/actions/chatRoomMutations";
 import { useChatHandlerContext } from "@/context/ChatHandlerContext";
 import { useRoomPermissions } from "@/context/RoomPermissionsContext";
 import { ChatRoom } from "@/types/ChatRoom";
 import {
-  Award,
   Disc3,
-  Flame,
-  MessageSquare,
   Music,
   Pencil,
   Plus,
   Save,
   Settings,
   Trash2,
-  Trophy,
-  UserPlus,
   X,
 } from "lucide-react";
-import { useMemo, useState, useTransition } from "react";
-import {
-  extractYoutubeVideoId,
-  fetchYoutubeOEmbedTitle,
-} from "@/lib/youtube";
-import { RoomModerationSanctionsPanel } from "./RoomModerationSanctionsPanel";
 
 interface RoomRankingsPanelProps {
+  roomSlug: string;
   roomName: string;
 }
 
-export function RoomRankingsPanel({ roomName }: RoomRankingsPanelProps) {
-  const { onlineUsers } = useChatHandlerContext();
-  const rankingRows = useMemo(
-    () =>
-      onlineUsers.map((user, index) => ({
-        ...user,
-        score: Math.max(100, 2200 - index * 133),
-        messages: Math.max(10, 540 - index * 27),
-        streak: Math.max(1, 21 - index),
-      })),
-    [onlineUsers]
-  );
+const PERIOD_OPTIONS: { id: RoomRankingPeriod; label: string }[] = [
+  { id: "daily", label: "Diário" },
+  { id: "weekly", label: "Semanal" },
+  { id: "monthly", label: "Mensal" },
+  { id: "all", label: "Geral" },
+];
 
-  const topByScore = [...rankingRows].sort((a, b) => b.score - a.score).slice(0, 5);
-  const topByMessages = [...rankingRows]
-    .sort((a, b) => b.messages - a.messages)
-    .slice(0, 5);
-  const topByStreak = [...rankingRows].sort((a, b) => b.streak - a.streak).slice(0, 5);
+function formatBoardValue(board: RoomRankingBoard, value: number, period: RoomRankingPeriod) {
+  if (board === "points") return `${value} pts`;
+  if (board === "wins") return `${value} vitória${value === 1 ? "" : "s"}`;
+  if (board === "participation") return `${value}%`;
+  if (period === "all") return `${value}d seguidos`;
+  return `${value} dia${value === 1 ? "" : "s"}`;
+}
+
+function RankingBoardCard({
+  title,
+  icon: Icon,
+  rows,
+  board,
+  period,
+  subtitle,
+}: {
+  title: string;
+  icon: typeof Award;
+  rows: RoomRankingRow[];
+  board: RoomRankingBoard;
+  period: RoomRankingPeriod;
+  subtitle?: string;
+}) {
+  return (
+    <div className="rounded-xl border border-border/60 bg-muted/30 p-2 shadow-sm">
+      <h3 className="mb-1 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        <Icon className="h-3 w-3" />
+        {title}
+      </h3>
+      {subtitle ? (
+        <p className="mb-2 text-[10px] text-muted-foreground">{subtitle}</p>
+      ) : null}
+      <div className="space-y-1">
+        {rows.length > 0 ? (
+          rows.map((row) => (
+            <div
+              key={row.user_id}
+              className="flex items-center gap-2 rounded-lg border border-border/30 bg-card/40 px-2 py-1.5"
+            >
+              <span className="w-4 text-center text-xs font-bold text-muted-foreground">
+                {row.rank}
+              </span>
+              <ProfileAvatar
+                displayName={row.fullname}
+                username={row.username}
+                profilePhoto={row.profile_photo}
+                sizeClass="h-6 w-6"
+                fallbackTextClassName="text-[9px]"
+              />
+              <span className="flex-1 truncate text-xs font-medium text-foreground">
+                {row.fullname}
+              </span>
+              <span className="text-[10px] font-semibold text-muted-foreground">
+                {formatBoardValue(board, row.value, period)}
+              </span>
+            </div>
+          ))
+        ) : (
+          <p className="py-4 text-center text-xs text-muted-foreground">Sem dados no período.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StatInfoRow({ row, showEngagement }: { row: RoomMemberStatRow; showEngagement: boolean }) {
+  return (
+    <div className="rounded-lg border border-border/40 bg-card/30 px-3 py-2">
+      <div className="flex items-center gap-2">
+        <ProfileAvatar
+          displayName={row.fullname}
+          username={row.username}
+          profilePhoto={row.profile_photo}
+          sizeClass="h-7 w-7"
+          fallbackTextClassName="text-[10px]"
+        />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-foreground">{row.fullname}</p>
+          <p className="text-[10px] text-muted-foreground">@{row.username}</p>
+        </div>
+        {showEngagement && row.participation_score != null ? (
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+            {row.participation_score}% engajamento
+          </span>
+        ) : null}
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[10px] text-muted-foreground sm:grid-cols-3">
+        <span className="flex items-center gap-1">
+          <MessageSquare className="h-3 w-3" />
+          {row.message_count} msgs
+        </span>
+        <span className="flex items-center gap-1">
+          <Clock className="h-3 w-3" />
+          {row.hours_in_room}h na sala
+        </span>
+        <span className="flex items-center gap-1">
+          <Flame className="h-3 w-3" />
+          {row.days_visited} dias
+        </span>
+        <span className="flex items-center gap-1">
+          <Gamepad2 className="h-3 w-3" />
+          {row.events_participated} jogos
+        </span>
+        <span className="flex items-center gap-1">
+          <TvMinimalPlay className="h-3 w-3" />
+          {row.transmissions_participated} transmissões
+        </span>
+        {showEngagement && row.distinct_message_hours != null ? (
+          <span className="flex items-center gap-1">
+            <BarChart3 className="h-3 w-3" />
+            {row.distinct_message_hours} horários distintos
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+export function RoomRankingsPanel({ roomSlug, roomName }: RoomRankingsPanelProps) {
+  const [period, setPeriod] = useState<RoomRankingPeriod>("weekly");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [pointsRows, setPointsRows] = useState<RoomRankingRow[]>([]);
+  const [winsRows, setWinsRows] = useState<RoomRankingRow[]>([]);
+  const [streakRows, setStreakRows] = useState<RoomRankingRow[]>([]);
+  const [participationRows, setParticipationRows] = useState<RoomRankingRow[]>([]);
+  const [streakLabel, setStreakLabel] = useState("");
+  const [participationLabel, setParticipationLabel] = useState("");
+  const [myRanks, setMyRanks] = useState<Partial<Record<RoomRankingBoard, { rank: number | null; value: number }>>>({});
+  const [memberStats, setMemberStats] = useState<RoomMemberStatRow[]>([]);
+  const [canViewEngagement, setCanViewEngagement] = useState(false);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const [pointsRes, winsRes, streakRes, participationRes, statsRes] = await Promise.all([
+      fetchRoomRankings(roomSlug, period, "points"),
+      fetchRoomRankings(roomSlug, period, "wins"),
+      fetchRoomRankings(roomSlug, period, "streak"),
+      fetchRoomRankings(roomSlug, period, "participation"),
+      fetchRoomMemberStats(roomSlug),
+    ]);
+
+    if (!pointsRes.ok || !winsRes.ok || !streakRes.ok || !participationRes.ok) {
+      const err = !pointsRes.ok
+        ? pointsRes.error
+        : !winsRes.ok
+          ? winsRes.error
+          : !streakRes.ok
+            ? streakRes.error
+            : participationRes.error;
+      setError(err ?? "Falha ao carregar rankings.");
+      setLoading(false);
+      return;
+    }
+
+    setPointsRows(pointsRes.data.rows);
+    setWinsRows(winsRes.data.rows);
+    setStreakRows(streakRes.data.rows);
+    setParticipationRows(participationRes.data.rows);
+    setStreakLabel(streakRes.data.streak_label);
+    setParticipationLabel(participationRes.data.streak_label);
+    setMyRanks({
+      points: pointsRes.data.my_rank ?? undefined,
+      wins: winsRes.data.my_rank ?? undefined,
+      streak: streakRes.data.my_rank ?? undefined,
+      participation: participationRes.data.my_rank ?? undefined,
+    });
+
+    if (statsRes.ok) {
+      setMemberStats(statsRes.data.rows);
+      setCanViewEngagement(statsRes.data.can_view_engagement);
+    }
+    setLoading(false);
+  }, [roomSlug, period]);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
+
+  const sortedStats = useMemo(
+    () => [...memberStats].sort((a, b) => a.fullname.localeCompare(b.fullname, "pt-BR")),
+    [memberStats],
+  );
 
   const boards = [
     {
       title: "Top Pontuação",
       icon: Award,
-      rows: topByScore,
-      value: (row: (typeof topByScore)[number]) => `${row.score} pts`,
+      rows: pointsRows,
+      board: "points" as const,
     },
     {
-      title: "Top Mensagens",
-      icon: MessageSquare,
-      rows: topByMessages,
-      value: (row: (typeof topByMessages)[number]) => `${row.messages}`,
+      title: "Top Vitórias",
+      icon: Trophy,
+      rows: winsRows,
+      board: "wins" as const,
     },
     {
-      title: "Top Sequência",
+      title: period === "all" ? "Top Sequência" : "Dias Ativos",
       icon: Flame,
-      rows: topByStreak,
-      value: (row: (typeof topByStreak)[number]) => `${row.streak}d`,
+      rows: streakRows,
+      board: "streak" as const,
+      subtitle: streakLabel,
+    },
+    {
+      title: "Top Participação",
+      icon: BarChart3,
+      rows: participationRows,
+      board: "participation" as const,
+      subtitle: participationLabel,
     },
   ];
 
   return (
     <div className="h-full space-y-5 overflow-y-auto bg-muted/20 p-4">
-      <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
-        <Trophy className="h-5 w-5 text-neon-gold" />
-        Rankings - {roomName}
-      </h2>
-
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
-        {boards.map((board) => (
-          <div
-            key={board.title}
-            className="rounded-xl border border-border/60 bg-muted/30 p-2 shadow-sm"
-          >
-            <h3 className="mb-2 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-              <board.icon className="h-3 w-3" />
-              {board.title}
-            </h3>
-            <div className="space-y-1">
-              {board.rows.length > 0 ? (
-                board.rows.map((row, index) => (
-                  <div
-                    key={row.id}
-                    className="flex items-center gap-2 rounded-lg border border-border/30 bg-card/40 px-2 py-1.5"
-                  >
-                    <span className="w-4 text-center text-xs font-bold text-muted-foreground">
-                      {index + 1}
-                    </span>
-                    <img
-                      src={row.profile_photo}
-                      alt={row.fullname}
-                      className="h-6 w-6 rounded-full object-cover ring-1 ring-border"
-                    />
-                    <span className="flex-1 truncate text-xs font-medium text-foreground">
-                      {row.fullname}
-                    </span>
-                    <span className="text-[10px] font-semibold text-muted-foreground">
-                      {board.value(row)}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <p className="py-4 text-center text-xs text-muted-foreground">
-                  Sem dados no momento.
-                </p>
-              )}
-            </div>
-          </div>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
+          <Trophy className="h-5 w-5 text-neon-gold" />
+          Rankings — {roomName}
+        </h2>
+        <div className="flex flex-wrap gap-1 rounded-lg border border-border/60 bg-muted/40 p-1">
+          {PERIOD_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => setPeriod(opt.id)}
+              className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                period === opt.id
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
+
+      <p className="text-[11px] text-muted-foreground">
+        Top diário (3), semanal e mensal (5) em cada categoria ganham bônus de pontos que entram no
+        ranking de pontuação. Temporada geral é apenas informativa — sem bônus extra.
+      </p>
+
+      {error ? (
+        <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          {error}
+        </p>
+      ) : null}
+
+      {loading ? (
+        <p className="py-8 text-center text-sm text-muted-foreground">Carregando rankings…</p>
+      ) : (
+        <>
+          {Object.entries(myRanks).some(([, v]) => v && v.value > 0) ? (
+            <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+              {myRanks.points && myRanks.points.value > 0 ? (
+                <span className="rounded-full border border-border/50 bg-card/40 px-2 py-0.5">
+                  Você: #{myRanks.points.rank ?? "—"} em pontos ({myRanks.points.value} pts)
+                </span>
+              ) : null}
+              {myRanks.wins && myRanks.wins.value > 0 ? (
+                <span className="rounded-full border border-border/50 bg-card/40 px-2 py-0.5">
+                  Você: #{myRanks.wins.rank ?? "—"} em vitórias
+                </span>
+              ) : null}
+              {myRanks.streak && myRanks.streak.value > 0 ? (
+                <span className="rounded-full border border-border/50 bg-card/40 px-2 py-0.5">
+                  Você: #{myRanks.streak.rank ?? "—"} em{" "}
+                  {period === "all" ? "sequência" : "dias ativos"}
+                </span>
+              ) : null}
+              {myRanks.participation && myRanks.participation.value > 0 ? (
+                <span className="rounded-full border border-border/50 bg-card/40 px-2 py-0.5">
+                  Você: #{myRanks.participation.rank ?? "—"} em participação (
+                  {myRanks.participation.value}%)
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-4">
+            {boards.map((board) => (
+              <RankingBoardCard
+                key={board.board}
+                title={board.title}
+                icon={board.icon}
+                rows={board.rows}
+                board={board.board}
+                period={period}
+                subtitle={board.subtitle}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      <section className="space-y-2 border-t border-border/40 pt-4">
+        <h3 className="text-sm font-bold text-foreground">Estatísticas da sala</h3>
+        {canViewEngagement ? (
+          <p className="text-[11px] text-primary">
+            Como moderador/dono, você também vê o score de engajamento interno.
+          </p>
+        ) : null}
+        <div className="space-y-2">
+          {sortedStats.length > 0 ? (
+            sortedStats.map((row) => (
+              <StatInfoRow key={row.user_id} row={row} showEngagement={canViewEngagement} />
+            ))
+          ) : (
+            <p className="py-4 text-center text-xs text-muted-foreground">
+              Ainda não há estatísticas registradas nesta sala.
+            </p>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

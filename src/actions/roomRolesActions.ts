@@ -222,6 +222,8 @@ export type RoomActiveSanctionRow = {
   id: number;
   user_id: number;
   username: string;
+  fullname: string;
+  profile_photo: string;
   sanction_type: "mute" | "ban" | "ambience_ban";
   expires_at: string | null;
   remaining_seconds: number | null;

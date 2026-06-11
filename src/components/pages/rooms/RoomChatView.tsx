@@ -291,7 +291,7 @@ export default function RoomChatView({
       case "rankings":
         return (
           <div className="min-h-0 flex-1 overflow-hidden">
-            <RoomRankingsPanel roomName={room.group_name} />
+            <RoomRankingsPanel roomSlug={room.slug} roomName={room.group_name} />
           </div>
         );
       case "events":

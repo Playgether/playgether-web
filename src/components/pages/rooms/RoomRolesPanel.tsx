@@ -9,6 +9,7 @@ import {
   unassignRoomRole,
   updateRoomRole,
 } from "@/actions/roomRolesActions";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -523,10 +524,13 @@ export function RoomRolesPanel({ room }: RoomRolesPanelProps) {
                   key={user.id}
                   className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted/50"
                 >
-                  <img
-                    src={user.profile_photo}
-                    alt=""
-                    className="h-7 w-7 rounded-full object-cover ring-1 ring-border/60"
+                  <ProfileAvatar
+                    displayName={user.fullname}
+                    username={user.username}
+                    profilePhoto={user.profile_photo}
+                    sizeClass="h-7 w-7"
+                    ringClass="ring-1 ring-border/60"
+                    fallbackTextClassName="text-[10px]"
                   />
                   <div className="min-w-0 flex-1">
                     <span className="block truncate text-sm">{user.fullname}</span>

@@ -5,6 +5,7 @@ import {
   revokeRoomSanction,
   type RoomActiveSanctionRow,
 } from "@/actions/roomRolesActions";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { Button } from "@/components/ui/button";
 import { useRoomPermissions } from "@/context/RoomPermissionsContext";
 import { cn } from "@/lib/utils";
@@ -108,12 +109,16 @@ export function RoomModerationSanctionsPanel({ roomSlug }: { roomSlug: string })
                 key={`${row.user_id}-${row.sanction_type}-${row.id}`}
                 className="flex items-center gap-3 rounded-lg border border-border/40 bg-card/50 px-3 py-3"
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                  {row.username.slice(0, 2).toUpperCase()}
-                </div>
+                <ProfileAvatar
+                  displayName={row.fullname || row.username}
+                  username={row.username}
+                  profilePhoto={row.profile_photo}
+                  sizeClass="h-10 w-10"
+                  fallbackTextClassName="text-xs"
+                />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-foreground">
-                    {row.username}
+                    {row.fullname || row.username}
                   </p>
                   <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
                     <Icon className="h-4 w-4 shrink-0" />
