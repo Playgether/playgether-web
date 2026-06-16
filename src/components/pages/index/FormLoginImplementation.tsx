@@ -15,6 +15,7 @@ import PasswordInput from "@/components/layouts/PasswordInput";
 import { useState } from "react";
 import { LoginFormSchema } from "./LoginFormSchema";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { useAuthContext } from "@/context/AuthContext";
 
 interface FormLoginImplementationProps {
@@ -120,6 +121,14 @@ export const FormLoginImplementation = ({
           autoComplete="off"
           inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue focus:shadow-glow-neon transition-all duration-300 backdrop-blur-sm"
         />
+        <div className="flex justify-end pt-0.5">
+          <Link
+            href="/forgot-password"
+            className="text-xs text-muted-foreground hover:text-primary transition-colors"
+          >
+            Esqueci minha senha
+          </Link>
+        </div>
       </div>
       <FormLoginButton pending={isSubmitting} />
       <NoHaveAccount onClickAqui={onClickAqui} />
