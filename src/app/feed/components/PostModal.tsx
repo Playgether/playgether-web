@@ -607,6 +607,18 @@ export const PostModal = ({
                     </DropdownMenuContent>
                   </DropdownMenu>
                 )}
+
+                {/* Close button — only in modal mode */}
+                {!fullPage && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onClose ? onClose() : router.back()}
+                    className="shrink-0 text-muted-foreground hover:text-foreground"
+                  >
+                    <XIcon className="h-5 w-5" />
+                  </Button>
+                )}
               </div>
 
               {/* Post Text Toggle */}
