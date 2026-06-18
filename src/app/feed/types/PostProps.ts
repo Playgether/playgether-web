@@ -26,4 +26,11 @@ export interface PostProps {
   isOwn?: boolean;
   comments_disabled?: boolean;
   highlighted_achievements?: HighlightedAchievementPublic[];
+  user_repost_id?: number | null;
+  isRepost?: boolean;
+  repost_id?: number;
+  repost_comment?: string | null;
+  repost_by_name?: string;
+  repost_by_username?: string;
+  repost_by_photo?: string;
 }

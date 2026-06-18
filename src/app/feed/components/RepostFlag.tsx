@@ -7,7 +7,7 @@ export default function RepostFlag({ post }) {
   return (
     <div className="flex items-center space-x-2 mb-3 text-muted-foreground text-sm">
       {icons.Share}
-      <span>{post.user.name} repostou</span>
+      <span>{post.repost_by_name} repostou</span>
     </div>
   );
 }

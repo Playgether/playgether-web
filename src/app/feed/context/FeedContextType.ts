@@ -9,7 +9,7 @@ export interface FeedContextType {
   posts: PostProps[];
   createPostOpen: boolean;
   handlePostCreated: (newPost: PostProps) => void;
-  handleRepost: (postId: number, repost: PostProps) => void;
+  handleRepost: (postId: number, repostId: number | null) => void;
   handlePostUpdate: (updatedPost: PostProps | null, postId: number) => void;
   handleCreatePostModal: (argument: boolean) => void;
   getPostById: (postId: number) => PostProps | undefined;

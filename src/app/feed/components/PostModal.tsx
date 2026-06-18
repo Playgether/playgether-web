@@ -43,7 +43,11 @@ import {
   Trash2,
   MessageCircle,
   MessageCircleOff,
+  PenLine,
+  Repeat2,
+  X as XIcon,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { CustomToast } from "@/components/ui/customSonner";
 
 export const PostModal = ({
@@ -82,9 +86,11 @@ export const PostModal = ({
   const [replyContent, setReplyContent] = useState("");
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
   const [commentsDisabled, setCommentsDisabled] = useState(false);
+  const [isReposting, setIsReposting] = useState(false);
 
   const {
     handleLike,
+    handleRepost,
     getPostById,
     increaseCommentCount,
     decreaseCommentCount,
@@ -199,6 +205,50 @@ export const PostModal = ({
 
   const handleShareModal = (action?: boolean) => {
     action ? setShareModalOpen(action) : setShareModalOpen((prev) => !prev);
+  };
+
+  const handleQuickRepost = async () => {
+    if (!post || isReposting) return;
+    setIsReposting(true);
+    try {
+      const res = await fetch("/api/reposts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: post.id }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        handleRepost(post.id, data.id);
+        CustomToast.success("Post repostado!");
+      } else {
+        const data = await res.json();
+        CustomToast.error(data.detail || "Erro ao repostar.");
+      }
+    } catch {
+      CustomToast.error("Erro ao repostar.");
+    } finally {
+      setIsReposting(false);
+    }
+  };
+
+  const handleUndoRepost = async () => {
+    if (!post?.user_repost_id || isReposting) return;
+    setIsReposting(true);
+    try {
+      const res = await fetch(`/api/reposts/${post.user_repost_id}`, {
+        method: "DELETE",
+      });
+      if (res.ok || res.status === 204) {
+        handleRepost(post.id, null);
+        CustomToast.neutral("Repost desfeito.");
+      } else {
+        CustomToast.error("Erro ao desfazer repost.");
+      }
+    } catch {
+      CustomToast.error("Erro ao desfazer repost.");
+    } finally {
+      setIsReposting(false);
+    }
   };
 
   const onClickLikeComment = (commentId: number) => {
@@ -601,10 +651,52 @@ export const PostModal = ({
                 <PostPropertiers.Comment
                   quantity_comment={post.quantity_comment}
                 />
-                <PostPropertiers.Share
-                  quantity_reposts={post.quantity_reposts}
-                  onClickShare={handleShareModal}
-                />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={cn(
+                        "text-muted-foreground hover:text-primary p-2",
+                        post.user_repost_id && "text-primary"
+                      )}
+                    >
+                      <Repeat2 className="w-5 h-5 mr-2" />
+                      {post.quantity_reposts}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="bg-background/95 backdrop-blur-xl border border-border/50"
+                  >
+                    {post.user_repost_id ? (
+                      <DropdownMenuItem
+                        onClick={handleUndoRepost}
+                        className="text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                        disabled={isReposting}
+                      >
+                        <XIcon className="w-4 h-4 mr-2" />
+                        Desfazer repost
+                      </DropdownMenuItem>
+                    ) : (
+                      <>
+                        <DropdownMenuItem
+                          onClick={handleQuickRepost}
+                          disabled={isReposting}
+                        >
+                          <Repeat2 className="w-4 h-4 mr-2" />
+                          Repostar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleShareModal()}
+                        >
+                          <PenLine className="w-4 h-4 mr-2" />
+                          Repostar com comentário
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <span className="text-sm text-muted-foreground">
                   <DateAndHour date={post.timestamp} />
                 </span>

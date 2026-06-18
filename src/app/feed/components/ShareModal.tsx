@@ -3,12 +3,12 @@ import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-
-// Import current user avatar
-import avatarRaymond from "@/assets/avatar-raymond.jpg";
 import { useFeedServerContext } from "../context/FeedServerContext";
+import { useFeedContext } from "../context/FeedContext";
+import { useAuthContext } from "@/context/AuthContext";
+import { CustomToast } from "@/components/ui/customSonner";
 
 interface ShareModalProps {
   open?: boolean;
@@ -19,12 +19,6 @@ interface ShareModalProps {
   shareModalOpen: boolean;
 }
 
-const currentUser = {
-  name: "Raymond Junior",
-  username: "raymond",
-  avatar: avatarRaymond,
-};
-
 export const ShareModal = ({
   open,
   onOpenChange,
@@ -34,56 +28,47 @@ export const ShareModal = ({
   shareModalOpen,
 }: ShareModalProps) => {
   const [content, setContent] = useState("");
-  const [selectedMedia, setSelectedMedia] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { Feed } = useFeedServerContext();
   const components = Feed.ServerShareModal.components;
-  const buttons = Feed.ServerShareModal.buttons;
   const icons = Feed.ServerShareModal.icons;
+  const { handleRepost } = useFeedContext();
+  const { user } = useAuthContext();
 
-  const handleMediaSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    setSelectedMedia((prev) => [...prev, ...files]);
-  };
-
-  const handleRepost = () => {
-    const repostData = {
-      id: Date.now().toString(),
-      user: currentUser,
-      content,
-      media: selectedMedia.map((file) => ({
-        type: file.type.startsWith("video/")
-          ? ("video" as const)
-          : ("image" as const),
-        url: URL.createObjectURL(file),
-      })),
-      timestamp: "agora",
-      likes: 0,
-      comments: 0,
-      shares: 0,
-      liked: false,
-      isOwn: true,
-      isRepost: true,
-      originalPost: post,
-    };
-    setContent("");
-    setSelectedMedia([]);
-    handleShareModal(true);
-    if (onRepost) {
-      onRepost();
-    }
-    if (onOpenChange) {
-      onOpenChange(false);
+  const handleRepostSubmit = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/reposts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: post.id, comment: content || undefined }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        handleRepost(post.id, data.id);
+        CustomToast.success("Post repostado!");
+        setContent("");
+        handleShareModal(false);
+        if (onRepost) onRepost();
+        if (onOpenChange) onOpenChange(false);
+      } else {
+        const data = await res.json();
+        CustomToast.error(data.detail || "Erro ao repostar.");
+      }
+    } catch {
+      CustomToast.error("Erro ao repostar.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <Dialog
-      open={open}
+      open={open ?? shareModalOpen}
       onOpenChange={(open) => {
         handleShareModal(open);
-        if (onOpenChange) {
-          onOpenChange(open);
-        }
+        if (onOpenChange) onOpenChange(open);
       }}
     >
       <DialogContent className="max-w-2xl bg-background/95 backdrop-blur-xl border border-border/50">
@@ -93,18 +78,15 @@ export const ShareModal = ({
           {/* User Info */}
           <div className="flex items-center space-x-3">
             <Avatar className="w-12 h-12 ring-2 ring-primary/20">
-              {/* <AvatarImage src={currentUser.avatar} alt={currentUser.name} /> */}
               <AvatarFallback className="bg-gradient-primary text-white">
-                {currentUser.name.charAt(0)}
+                {user?.first_name?.charAt(0) ?? "?"}
               </AvatarFallback>
             </Avatar>
             <div>
               <h3 className="font-semibold text-foreground">
-                {currentUser.name}
+                {user ? `${user.first_name} ${user.last_name}` : ""}
               </h3>
-              <p className="text-sm text-muted-foreground">
-                @{currentUser.username}
-              </p>
+              <p className="text-sm text-muted-foreground">@{user?.username}</p>
             </div>
           </div>
 
@@ -116,93 +98,33 @@ export const ShareModal = ({
             className="min-h-24 resize-none bg-muted/30 border-border/50 focus:border-primary/50"
           />
 
-          {/* Media Preview */}
-          {selectedMedia.length > 0 && (
-            <div className="grid grid-cols-2 gap-2">
-              {selectedMedia.map((file, index) => (
-                <div key={index} className="relative aspect-square">
-                  {file.type.startsWith("video/") ? (
-                    <video
-                      src={URL.createObjectURL(file)}
-                      className="w-full h-full object-cover rounded-lg"
-                      controls
-                    />
-                  ) : (
-                    <img
-                      src={URL.createObjectURL(file)}
-                      alt="Preview"
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
           {/* Original Post Preview */}
           <Card className="bg-muted/30 border-border/50">
             <CardContent className="p-4">
               <div className="flex items-center space-x-3 mb-3">
                 <Avatar className="w-8 h-8">
-                  {/* <AvatarImage src={post.user.avatar} alt={post.user_name} /> */}
                   <AvatarFallback className="bg-gradient-primary text-white text-xs">
-                    {post.name.charAt(0)}
+                    {post.name?.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h4 className="font-medium text-sm">{post.user_name}</h4>
-                  <p className="text-xs text-muted-foreground">
-                    @{post.username}
-                  </p>
+                  <h4 className="font-medium text-sm">{post.name}</h4>
+                  <p className="text-xs text-muted-foreground">@{post.username}</p>
                 </div>
               </div>
-              <p className="text-sm text-foreground line-clamp-3">
-                {post.content}
-              </p>
-              {post.media && post.media.length > 0 && (
-                <div className="mt-3">
-                  <img
-                    src={post.media[0].url}
-                    alt="Post media"
-                    className="w-full h-32 object-cover rounded-lg"
-                  />
-                </div>
-              )}
+              <p className="text-sm text-foreground line-clamp-3">{post.comment}</p>
             </CardContent>
           </Card>
 
           {/* Actions */}
-          <div className="flex items-center justify-between pt-4 border-t border-border/50">
-            <div className="flex space-x-2">
-              <label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={handleMediaSelect}
-                />
-                {buttons.MediaSelectedButtonImage}
-              </label>
-
-              <label>
-                <input
-                  type="file"
-                  accept="video/*"
-                  multiple
-                  className="hidden"
-                  onChange={handleMediaSelect}
-                />
-                {buttons.MediaSelectedButtonsVideo}
-              </label>
-            </div>
-
+          <div className="flex items-center justify-end pt-4 border-t border-border/50">
             <Button
-              onClick={handleRepost}
+              onClick={handleRepostSubmit}
+              disabled={isSubmitting}
               className="bg-gradient-primary hover:opacity-90 text-white"
             >
               {icons.Send}
-              Repostar
+              {isSubmitting ? "Repostando..." : "Repostar"}
             </Button>
           </div>
         </div>

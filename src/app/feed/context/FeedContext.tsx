@@ -82,16 +82,16 @@ export const FeedProvider = ({
     [globalCreatePost]
   );
 
-  const handleRepost = useCallback((postId: number, repost: PostProps) => {
-    setPosts((prev) => {
-      // atualiza o post original (incrementa o contador)
-      const updated = prev.map((p) =>
-        p.id === postId ? { ...p, quantity_reposts: p.quantity_reposts + 1 } : p
-      );
-
-      // adiciona o repost no topo
-      return [repost, ...updated];
-    });
+  const handleRepost = useCallback((postId: number, repostId: number | null) => {
+    setPosts((prev) =>
+      prev.map((p) => {
+        if (p.id !== postId) return p;
+        if (repostId === null) {
+          return { ...p, quantity_reposts: Math.max(0, p.quantity_reposts - 1), user_repost_id: null };
+        }
+        return { ...p, quantity_reposts: p.quantity_reposts + 1, user_repost_id: repostId };
+      })
+    );
   }, []);
 
   const getPostById = (postId: number) => {
