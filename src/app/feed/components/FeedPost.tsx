@@ -22,6 +22,7 @@ import VideoComponent from "@/components/layouts/VideoComponent/VideoComponent";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useFeedContext } from "../context/FeedContext";
+import { CustomToast } from "@/components/ui/customSonner";
 
 export const FeedPost = ({ post }) => {
   const [alertOpen, setAlertOpen] = useState(false);
@@ -30,22 +31,100 @@ export const FeedPost = ({ post }) => {
   const { Feed } = useFeedServerContext();
   const components = Feed.ServerFeedPost.components;
   const router = useRouter();
-  const { getPostById } = useFeedContext();
+  const { getPostById, handlePostUpdate } = useFeedContext();
   // const post = getPostById(initialPostId);
 
   const handleShareModal = useCallback((action?: boolean) => {
     action ? setShareModalOpen(action) : setShareModalOpen((prev) => !prev);
   }, []);
 
-  const handleContextAction = (action: string) => {
+  const handleContextAction = async (action: string) => {
+    if (action === "toggle_comments") {
+      const newState = !post.comments_disabled;
+      try {
+        const res = await fetch(`/api/posts/${post.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ comments_disabled: newState }),
+        });
+        if (res.ok) {
+          handlePostUpdate({ ...post, comments_disabled: newState }, post.id);
+          CustomToast.neutral(newState ? "Comentários desativados." : "Comentários ativados.");
+        } else {
+          CustomToast.error("Erro ao alterar configuração de comentários.");
+        }
+      } catch {
+        CustomToast.error("Erro ao alterar configuração de comentários.");
+      }
+      return;
+    }
     setAlertAction(action);
     setAlertOpen(true);
   };
 
-  const confirmAction = () => {
-    // All actions remove the post from feed
-    window.history.back();
+  const confirmAction = async () => {
     setAlertOpen(false);
+
+    if (alertAction === "delete") {
+      try {
+        const res = await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
+        if (res.ok || res.status === 204) {
+          handlePostUpdate(null, post.id);
+          CustomToast.success("Post deletado com sucesso.");
+        } else {
+          CustomToast.error("Erro ao deletar post. Tente novamente.");
+        }
+      } catch {
+        CustomToast.error("Erro ao deletar post. Tente novamente.");
+      }
+      return;
+    }
+
+    if (alertAction === "remove") {
+      handlePostUpdate(null, post.id);
+      CustomToast.neutral("Post removido do seu feed.");
+      return;
+    }
+
+    if (alertAction === "block") {
+      try {
+        await fetch(`/api/profiles/${post.username}/block`, { method: "POST" });
+      } catch {
+        // falha silenciosa — o post já some do feed
+      }
+      handlePostUpdate(null, post.id);
+      CustomToast.info("Usuário bloqueado. Você não verá mais posts dele.");
+      return;
+    }
+
+    if (alertAction === "mute") {
+      try {
+        await fetch(`/api/profiles/${post.username}/mute`, { method: "POST" });
+      } catch {
+        // falha silenciosa — o post já some do feed
+      }
+      handlePostUpdate(null, post.id);
+      CustomToast.neutral("Usuário silenciado. Os posts dele não aparecerão mais.");
+      return;
+    }
+
+    if (alertAction === "report") {
+      try {
+        await fetch("/api/reports", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content_type: "post",
+            object_id: post.id,
+            reason: "other",
+          }),
+        });
+        CustomToast.warning("Denúncia enviada. Nossa equipe irá analisar o post.");
+      } catch {
+        CustomToast.error("Erro ao enviar denúncia. Tente novamente.");
+      }
+      return;
+    }
   };
 
   const handlePostClick = () => {
@@ -106,8 +185,11 @@ export const FeedPost = ({ post }) => {
                   align="end"
                   className="bg-background/95 backdrop-blur-xl border border-border/50"
                 >
-                  {post.isOwn ? (
-                    <ContextMenuOwn handleContextAction={handleContextAction} />
+                  {(post.is_own || post.isOwn) ? (
+                    <ContextMenuOwn
+                      handleContextAction={handleContextAction}
+                      commentsDisabled={post.comments_disabled}
+                    />
                   ) : (
                     <ContextMenuNotMine
                       handleContextAction={handleContextAction}

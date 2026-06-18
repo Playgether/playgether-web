@@ -22,6 +22,8 @@ export interface PostsCommentsProps {
   edited: boolean;
   quantity_replies: number;
   user_username: string;
+  is_pinned?: boolean;
+  is_hidden?: boolean;
   highlighted_achievements?: HighlightedAchievementPublic[];
 }
 

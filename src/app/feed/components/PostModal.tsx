@@ -30,6 +30,21 @@ import { updateCommentAction } from "@/actions/updateComment";
 import { CommentContentType } from "@/components/content_types/CommentContentType";
 import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
 import { handleKeyDown } from "@/components/layouts/SendOnEnterKey/sendOnEnterKey";
+import { CommentActionMenu } from "./CommentActionMenu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  MoreHorizontal,
+  Trash2,
+  MessageCircle,
+  MessageCircleOff,
+} from "lucide-react";
+import { CustomToast } from "@/components/ui/customSonner";
 
 export const PostModal = ({
   postId,
@@ -66,12 +81,14 @@ export const PostModal = ({
   );
   const [replyContent, setReplyContent] = useState("");
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+  const [commentsDisabled, setCommentsDisabled] = useState(false);
 
   const {
     handleLike,
     getPostById,
     increaseCommentCount,
     decreaseCommentCount,
+    handlePostUpdate,
   } = useFeedContext();
   const { user } = useAuthContext();
   const {
@@ -197,6 +214,7 @@ export const PostModal = ({
   useEffect(() => {
     setCurrentMediaIndex(0);
     setIsCurrentMediaLoaded(false);
+    setCommentsDisabled(post?.comments_disabled ?? false);
   }, [postId]);
 
   useEffect(() => {
@@ -446,32 +464,99 @@ export const PostModal = ({
           <div className="flex flex-col overflow-auto flex-1">
             {/* Post Header */}
             <div className="p-6 pb-2 border-b border-border/50 sticky bg-background z-10 top-0 ">
-              <div className="flex items-center space-x-3 mb-2 z-20">
-                <ProfileAvatar
-                  displayName={post.name}
-                  username={post.username}
-                  profilePhoto={post.profile_photo}
-                  sizeClass="h-12 w-12"
-                  ringClass="ring-2 ring-primary/30"
-                  fallbackTextClassName="text-sm"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                    <div className="inline-flex min-w-0 max-w-full shrink-0 items-center gap-2">
-                      <h3 className="w-fit max-w-full shrink-0 text-lg font-bold">
-                        {post.name}
-                      </h3>
-                      {post.verified && texts.verified}
+              <div className="flex items-center justify-between mb-2 z-20 gap-2">
+                <div className="flex items-center space-x-3 min-w-0 flex-1">
+                  <ProfileAvatar
+                    displayName={post.name}
+                    username={post.username}
+                    profilePhoto={post.profile_photo}
+                    sizeClass="h-12 w-12"
+                    ringClass="ring-2 ring-primary/30"
+                    fallbackTextClassName="text-sm"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                      <div className="inline-flex min-w-0 max-w-full shrink-0 items-center gap-2">
+                        <h3 className="w-fit max-w-full shrink-0 text-lg font-bold">
+                          {post.name}
+                        </h3>
+                        {post.verified && texts.verified}
+                      </div>
+                      <HighlightedAchievementBadges
+                        achievements={post.highlighted_achievements}
+                        className="min-w-0"
+                      />
                     </div>
-                    <HighlightedAchievementBadges
-                      achievements={post.highlighted_achievements}
-                      className="min-w-0"
-                    />
+                    <p className="text-sm text-muted-foreground">
+                      @{post.username}
+                    </p>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    @{post.username}
-                  </p>
                 </div>
+
+                {/* 3-dot menu — aparece só para o dono do post */}
+                {(post.is_own || post.username === user?.username) && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-foreground">
+                        <MoreHorizontal className="h-5 w-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="bg-background/95 backdrop-blur-xl border border-border/50">
+                      <DropdownMenuItem
+                        onClick={async () => {
+                          const newState = !commentsDisabled;
+                          setCommentsDisabled(newState);
+                          try {
+                            const res = await fetch(`/api/posts/${post.id}`, {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ comments_disabled: newState }),
+                            });
+                            if (res.ok) {
+                              handlePostUpdate({ ...post, comments_disabled: newState }, post.id);
+                              CustomToast.neutral(newState ? "Comentários desativados." : "Comentários ativados.");
+                            } else {
+                              setCommentsDisabled(!newState);
+                              CustomToast.error("Erro ao alterar configuração de comentários.");
+                            }
+                          } catch {
+                            setCommentsDisabled(!newState);
+                            CustomToast.error("Erro ao alterar configuração de comentários.");
+                          }
+                        }}
+                        className="flex items-center gap-2 hover:bg-muted/50"
+                      >
+                        {commentsDisabled ? (
+                          <><MessageCircle className="h-4 w-4" /> Ligar comentários</>
+                        ) : (
+                          <><MessageCircleOff className="h-4 w-4" /> Desligar comentários</>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={async () => {
+                          try {
+                            const res = await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
+                            if (res.ok || res.status === 204) {
+                              handlePostUpdate(null, post.id);
+                              CustomToast.success("Post deletado com sucesso.");
+                              if (onClose) onClose();
+                              else router.back();
+                            } else {
+                              CustomToast.error("Erro ao deletar post.");
+                            }
+                          } catch {
+                            CustomToast.error("Erro ao deletar post.");
+                          }
+                        }}
+                        className="flex items-center gap-2 text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Excluir post
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
 
               {/* Post Text Toggle */}
@@ -574,62 +659,29 @@ export const PostModal = ({
                                   <span className="shrink-0 text-xs text-muted-foreground">
                                     <DateAndHour date={comment.timestamp} />
                                   </span>
+                                  {comment.is_pinned && (
+                                    <span className="shrink-0 text-xs text-primary font-medium flex items-center gap-1">
+                                      📌 Fixado
+                                    </span>
+                                  )}
+                                  {comment.is_hidden && post.username === user?.username && (
+                                    <span className="shrink-0 text-xs text-muted-foreground font-medium flex items-center gap-1">
+                                      👁 Oculto
+                                    </span>
+                                  )}
                                 </div>
 
-                                {/* Ícones de ação para comentário raiz - sempre visíveis */}
-                                {comment.user_username === user?.username && (
-                                  <div className="flex items-center space-x-1">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-7 w-7 text-muted-foreground hover:text-primary"
-                                      onClick={() => handleEditComment(comment)}
-                                      title="Editar comentário"
-                                    >
-                                      {icons.FaEdit}
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                      onClick={() =>
-                                        handleDeleteCommentModal(
-                                          true,
-                                          {
-                                            id: comment.id,
-                                            comment: comment.comment,
-                                            created_by_user_name:
-                                              comment.created_by_user_name,
-                                            user_username:
-                                              comment.user_username,
-                                            object_id: comment.object_id,
-                                            content_type: comment.content_type,
-                                            quantity_likes:
-                                              comment.quantity_likes,
-                                            answers: comment.answers,
-                                            timestamp: comment.timestamp,
-                                            user_already_like:
-                                              comment.user_already_like,
-                                            created_by_user_photo:
-                                              comment.created_by_user_photo,
-                                            edited: comment.edited,
-                                            quantity_comment:
-                                              comment.quantity_comment,
-                                            user: comment.user,
-                                            quantity_replies:
-                                              comment.quantity_replies,
-                                            highlighted_achievements:
-                                              comment.highlighted_achievements,
-                                          },
-                                          undefined,
-                                        )
-                                      }
-                                      title="Excluir comentário"
-                                    >
-                                      {icons.FaTrash}
-                                    </Button>
-                                  </div>
-                                )}
+                                {/* 3-dot menu para comentário raiz */}
+                                <CommentActionMenu
+                                  comment={comment}
+                                  postOwnerUsername={post.username}
+                                  currentUsername={user?.username}
+                                  onEdit={() => handleEditComment(comment)}
+                                  onDelete={() =>
+                                    handleDeleteCommentModal(true, comment, undefined)
+                                  }
+                                  onCommentUpdate={(updated) => editComment(updated)}
+                                />
                               </div>
 
                               {/* Conteúdo do comentário */}
@@ -845,64 +897,20 @@ export const PostModal = ({
                                           </span>
                                         </div>
 
-                                        {/* Ícones de ação para reply - sempre visíveis */}
-                                        {reply.user_username ===
-                                          user?.username && (
-                                          <div className="flex items-center space-x-1">
-                                            <Button
-                                              variant="ghost"
-                                              size="icon"
-                                              className="h-6 w-6 text-muted-foreground hover:text-primary"
-                                              onClick={() =>
-                                                handleEditComment(reply)
-                                              }
-                                              title="Editar resposta"
-                                            >
-                                              {icons.FaEdit}
-                                            </Button>
-                                            <Button
-                                              variant="ghost"
-                                              size="icon"
-                                              className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                                              onClick={() =>
-                                                handleDeleteCommentModal(
-                                                  true,
-                                                  {
-                                                    id: reply.id,
-                                                    comment: reply.comment,
-                                                    created_by_user_name:
-                                                      reply.created_by_user_name,
-                                                    user_username:
-                                                      reply.user_username,
-                                                    object_id: reply.object_id,
-                                                    content_type:
-                                                      reply.content_type,
-                                                    quantity_likes:
-                                                      reply.quantity_likes,
-                                                    answers: reply.answers,
-                                                    timestamp: reply.timestamp,
-                                                    user_already_like:
-                                                      reply.user_already_like,
-                                                    created_by_user_photo:
-                                                      reply.created_by_user_photo,
-                                                    edited: reply.edited,
-                                                    quantity_comment:
-                                                      reply.quantity_comment,
-                                                    user: reply.user,
-                                                    quantity_replies:
-                                                      reply.quantity_replies,
-                                                    highlighted_achievements:
-                                                      reply.highlighted_achievements,
-                                                  },
-                                                  comment.id,
-                                                )
-                                              }
-                                              title="Excluir resposta"
-                                            >
-                                              {icons.FaTrash}
-                                            </Button>
-                                          </div>
-                                        )}
+                                        {/* 3-dot menu para reply */}
+                                        <CommentActionMenu
+                                          comment={reply as PostsCommentsProps}
+                                          postOwnerUsername={post.username}
+                                          currentUsername={user?.username}
+                                          onEdit={() => handleEditComment(reply)}
+                                          onDelete={() =>
+                                            handleDeleteCommentModal(true, reply as PostsCommentsProps, comment.id)
+                                          }
+                                          onCommentUpdate={(updated) =>
+                                            editAnswerComment(comment.id, reply.id, updated)
+                                          }
+                                          isReply
+                                        />
                                       </div>
 
                                       {/* Conteúdo da reply */}
@@ -1032,7 +1040,12 @@ export const PostModal = ({
                 </div>
               )}
 
-              {/* Comment Input - MODIFICADO: botão dentro do textarea com texto "Enviar" */}
+              {/* Comment Input */}
+              {commentsDisabled ? (
+                <div className="p-4 border-t border-border/50 text-center text-sm text-muted-foreground">
+                  Comentários desativados pelo autor.
+                </div>
+              ) : (
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -1070,6 +1083,7 @@ export const PostModal = ({
                   )}
                 </div>
               </form>
+              )}
             </div>
           </div>
         </div>

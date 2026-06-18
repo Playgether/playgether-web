@@ -3,12 +3,14 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
+  Flag,
   Heart,
   MessageCircle,
   Play,
   Plus,
   Send,
   Share2,
+  Trash2,
   UserX,
   VolumeX,
 } from "lucide-react";
@@ -123,18 +125,12 @@ export const FeedServerComponents = {
       Delete: (
         <ContextualMenu
           text="Deletar post"
-          icon={<UserX className="w-4 h-4" />}
-        />
-      ),
-      Pin: (
-        <ContextualMenu
-          text="Fixar no perfil"
-          icon={<EyeOff className="w-4 h-4" />}
+          icon={<Trash2 className="w-4 h-4" />}
         />
       ),
       Block: (
         <ContextualMenu
-          text="Bloquear usuário"
+          text="Bloquear conta"
           icon={<UserX className="w-4 h-4" />}
         />
       ),
@@ -148,6 +144,12 @@ export const FeedServerComponents = {
         <ContextualMenu
           text="Silenciar usuário"
           icon={<VolumeX className="w-4 h-4" />}
+        />
+      ),
+      Report: (
+        <ContextualMenu
+          text="Denunciar post"
+          icon={<Flag className="w-4 h-4" />}
         />
       ),
     },

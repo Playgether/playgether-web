@@ -8,6 +8,12 @@ export default function ContextMenuNotMine({ handleContextAction }) {
   return (
     <>
       <DropdownMenuItem
+        onClick={() => handleContextAction("mute")}
+        className="flex items-center space-x-2 hover:bg-muted/50"
+      >
+        {contextMenuOptions.MuteUser}
+      </DropdownMenuItem>
+      <DropdownMenuItem
         onClick={() => handleContextAction("block")}
         className="flex items-center space-x-2 text-red-500 hover:text-red-600 hover:bg-red-500/10"
       >
@@ -20,10 +26,10 @@ export default function ContextMenuNotMine({ handleContextAction }) {
         {contextMenuOptions.Remove}
       </DropdownMenuItem>
       <DropdownMenuItem
-        onClick={() => handleContextAction("mute")}
-        className="flex items-center space-x-2 hover:bg-muted/50"
+        onClick={() => handleContextAction("report")}
+        className="flex items-center space-x-2 text-yellow-500 hover:text-yellow-600 hover:bg-yellow-500/10"
       >
-        {contextMenuOptions.MuteUser}
+        {contextMenuOptions.Report}
       </DropdownMenuItem>
     </>
   );

@@ -22,5 +22,8 @@ export interface PostProps {
   user_already_like: boolean;
   verified: boolean;
   username: string;
+  is_own?: boolean;
+  isOwn?: boolean;
+  comments_disabled?: boolean;
   highlighted_achievements?: HighlightedAchievementPublic[];
 }
