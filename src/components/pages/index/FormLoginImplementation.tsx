@@ -17,6 +17,7 @@ import { LoginFormSchema } from "./LoginFormSchema";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { useAuthContext } from "@/context/AuthContext";
+import { GoogleAuthButton } from "@/components/ui/GoogleAuthButton";
 
 interface FormLoginImplementationProps {
   handleSubmit: UseFormHandleSubmit<any | undefined>;
@@ -131,6 +132,19 @@ export const FormLoginImplementation = ({
         </div>
       </div>
       <FormLoginButton pending={isSubmitting} />
+
+      {/* Divider */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px bg-border/50" />
+        <span className="text-xs text-muted-foreground">ou</span>
+        <div className="flex-1 h-px bg-border/50" />
+      </div>
+
+      <GoogleAuthButton
+        label="Continuar com Google"
+        onError={(msg) => CustomToast.error(msg)}
+      />
+
       <NoHaveAccount onClickAqui={onClickAqui} />
     </form>
   );

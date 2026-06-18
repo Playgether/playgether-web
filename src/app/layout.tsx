@@ -2,6 +2,7 @@ import "./globals.css";
 import { AppProvider } from "../context";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "next-themes";
+import { GoogleProvider } from "@/components/providers/GoogleProvider";
 
 export const metadata = {
   description: "Create by gamers for gamers",
@@ -24,9 +25,11 @@ export default function RootLayout({
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <AppProvider>
-            <main className="max-w-[100vw] min-h-screen">{children}</main>
-          </AppProvider>
+          <GoogleProvider>
+            <AppProvider>
+              <main className="max-w-[100vw] min-h-screen">{children}</main>
+            </AppProvider>
+          </GoogleProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -6,6 +6,8 @@ import {
   UseFormWatch,
 } from "react-hook-form";
 import { useState, useEffect } from "react";
+import { GoogleAuthButton } from "@/components/ui/GoogleAuthButton";
+import { CustomToast } from "@/components/ui/customSonner";
 import { ErrosInput } from "../../layouts/ErrosInputLayout/ErrorsInputLayout";
 import InputLayout from "../../layouts/InputLayout";
 import AlreadyHaveAccount from "./AlreadyHaveAccount";
@@ -232,6 +234,18 @@ export const FormRegisterImplementation = ({
         >
           CADASTRAR
         </button>
+
+        {/* Divider */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px bg-border/50" />
+          <span className="text-xs text-muted-foreground">ou</span>
+          <div className="flex-1 h-px bg-border/50" />
+        </div>
+
+        <GoogleAuthButton
+          label="Criar conta com Google"
+          onError={(msg) => CustomToast.error(msg)}
+        />
 
         <AlreadyHaveAccount onClickAqui={onClickAqui} />
       </form>
