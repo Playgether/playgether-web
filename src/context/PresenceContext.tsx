@@ -26,7 +26,7 @@ const IDLE_MS = 3 * 60 * 1000;
 const IDLE_TICK_MS = 20_000;
 
 type PresenceContextValue = {
-  getPresence: (userId: number | undefined) => PresenceRecord;
+  getPresence: (userId: string | number | undefined) => PresenceRecord;
   /** Status efetivo que você transmite (e vê na sua bolinha). */
   getSelfPresenceDisplay: () => PresenceRecord;
   isPresenceConnected: boolean;
@@ -74,7 +74,7 @@ function readStoredManual(): ManualPresenceMode {
 export function PresenceProvider({ children }: { children: React.ReactNode }) {
   const { user, isLoggedOut } = useAuthContext();
   const [presenceByUserId, setPresenceByUserId] = useState<
-    Record<number, PresenceRecord>
+    Record<string, PresenceRecord>
   >({});
   const [manualPresenceMode, setManualPresenceModeState] =
     useState<ManualPresenceMode>("auto");
@@ -104,11 +104,10 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
     setPresenceByUserId((prev) => {
       const next = { ...prev };
       for (const [k, v] of Object.entries(raw)) {
-        const uid = Number(k);
-        if (Number.isNaN(uid)) continue;
+        if (!k) continue;
         if (v && typeof v === "object" && "status" in v) {
           const o = v as { status?: string; last_seen?: string | null };
-          next[uid] = {
+          next[String(k)] = {
             status: String(o.status ?? "offline"),
             last_seen: o.last_seen ?? null,
           };
@@ -127,8 +126,7 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       if (msg.type === "update" && msg.user_id != null) {
-        const uid = Number(msg.user_id);
-        if (Number.isNaN(uid)) return;
+        const uid = String(msg.user_id);
         setPresenceByUserId((prev) => ({
           ...prev,
           [uid]: {
@@ -239,10 +237,10 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
     };
   }, [loggedIn, manualPresenceMode]);
 
-  const selfId = user?.user_id != null ? Number(user.user_id) : null;
+  const selfId = user?.user_id != null ? String(user.user_id) : null;
 
   useEffect(() => {
-    if (selfId == null || Number.isNaN(selfId)) return;
+    if (selfId == null) return;
     const st = computeEffectiveBroadcastStatus();
     setPresenceByUserId((prev) => ({
       ...prev,
@@ -254,15 +252,15 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
   }, [selfId, computeEffectiveBroadcastStatus, idleTick, manualPresenceMode]);
 
   const getPresence = useCallback(
-    (userId: number | undefined): PresenceRecord => {
-      if (userId == null || Number.isNaN(userId)) return defaultPresence();
-      return presenceByUserId[userId] ?? defaultPresence();
+    (userId: string | number | undefined): PresenceRecord => {
+      if (userId == null) return defaultPresence();
+      return presenceByUserId[String(userId)] ?? defaultPresence();
     },
     [presenceByUserId]
   );
 
   const getSelfPresenceDisplay = useCallback((): PresenceRecord => {
-    if (selfId == null || Number.isNaN(selfId) || !loggedIn) {
+    if (selfId == null || !loggedIn) {
       return defaultPresence();
     }
     const st = computeEffectiveBroadcastStatus();
@@ -321,8 +319,8 @@ export function usePresenceContext(): PresenceContextValue {
   return ctx;
 }
 
-export function usePresence(userId: number | undefined): PresenceRecord {
+export function usePresence(userId: string | number | undefined): PresenceRecord {
   const ctx = useContext(PresenceContext);
   if (!ctx) return defaultPresence();
-  return !userId ? defaultPresence() : ctx.getPresence(userId);
+  return userId == null ? defaultPresence() : ctx.getPresence(userId);
 }

@@ -329,13 +329,18 @@ function computeViewerHostDriftSec(
         capVal = cap;
         actualCapped = Math.min(actual, cap + LIVE_STREAM_EDGE_EPS_SEC);
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
 
     // Para go_live: o host estava no live edge. O drift significativo é
     // quantos segundos o viewer está ATRÁS do próprio live edge — não a
     // comparação de posições absolutas entre dois iframes (que diferem).
     // Resultado negativo = viewer atrás do live; 0 = viewer ao vivo.
-    if (hs.playback_command === "go_live" && capVal < Number.MAX_SAFE_INTEGER / 4) {
+    if (
+      hs.playback_command === "go_live" &&
+      capVal < Number.MAX_SAFE_INTEGER / 4
+    ) {
       return actualCapped - capVal;
     }
 
@@ -345,7 +350,9 @@ function computeViewerHostDriftSec(
       hs.position_sec,
       hs.sync_epoch_ms,
     );
-    const rawDrift = Number.isFinite(hostOnTimeline) ? actualCapped - hostOnTimeline : 0;
+    const rawDrift = Number.isFinite(hostOnTimeline)
+      ? actualCapped - hostOnTimeline
+      : 0;
     // Suprime falso "à frente" apenas quando viewer está praticamente no live edge
     // (< 1 s). DVR offsets entre iframes causam drift positivo espúrio nessa faixa.
     if (rawDrift > 0 && capVal < Number.MAX_SAFE_INTEGER / 4) {
@@ -364,10 +371,7 @@ function computeViewerHostDriftSec(
 }
 
 /** Executa o equivalente ao botão “Ir ao vivo” do YouTube neste iframe. */
-function applyGoLiveOnPlayer(
-  p: YtPlayer,
-  desiredPlaying: boolean,
-): void {
+function applyGoLiveOnPlayer(p: YtPlayer, desiredPlaying: boolean): void {
   // Usar Number.MAX_SAFE_INTEGER e mais confiavel que calcular cap = getDuration() - eps:
   // a API do YouTube trata qualquer seek alem do fim como "ir ao live edge real",
   // evitando a imprecisao de getDuration() que fica alguns segundos atras do edge.
@@ -430,6 +434,91 @@ function ChatFloatUnreadBadge({ count }: { count: number }) {
     </span>
   );
 }
+
+function ambienceMessageIsSystem(m: RoomAmbienceMessage): boolean {
+  return Boolean(m.is_system || !m.author_user_id);
+}
+
+const AmbienceChatLine = memo(function AmbienceChatLine({
+  m,
+  variant = "sidebar",
+}: {
+  m: RoomAmbienceMessage;
+  variant?: "sidebar" | "float";
+}) {
+  const float = variant === "float";
+  const motion = !float
+    ? "animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
+    : "";
+  if (ambienceMessageIsSystem(m)) {
+    return (
+      <div
+        className={cn(
+          "max-w-[95%] rounded-2xl border px-3 py-2 text-sm shadow-sm [contain:content]",
+          motion,
+          float
+            ? "border-white/25 bg-black text-zinc-100 shadow-black/40"
+            : "border-border/60 bg-muted/50 text-muted-foreground",
+        )}
+      >
+        <p
+          className={cn(
+            "text-[10px] font-semibold uppercase tracking-wide",
+            float ? "text-zinc-400" : "text-muted-foreground",
+          )}
+        >
+          Sistema
+        </p>
+        <p
+          className={cn(
+            "whitespace-pre-wrap",
+            float ? "text-zinc-50" : "text-foreground",
+          )}
+        >
+          {m.body}
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div
+      className={cn(
+        "flex gap-2 rounded-lg border px-2 py-2 [contain:content]",
+        motion,
+        float
+          ? "border-white/20 bg-black text-zinc-50 shadow-sm shadow-black/40 ring-1 ring-white/5"
+          : "border-border/40 bg-muted/20 text-foreground",
+      )}
+    >
+      <ProfileAvatar
+        displayName={m.author_username}
+        username={m.author_username}
+        profilePhoto={m.author_photo}
+        sizeClass="h-8 w-8"
+        fallbackTextClassName="text-[10px]"
+        className={cn(
+          "mt-0.5 shrink-0 ring-1",
+          float ? "ring-white/25" : "ring-border",
+        )}
+      />
+      <div className="min-w-0 flex-1">
+        <p
+          className={cn(
+            "text-[11px] font-semibold",
+            float ? "text-zinc-100" : "text-foreground",
+          )}
+        >
+          {m.author_username}
+        </p>
+        <p
+          className={cn("text-sm", float ? "text-zinc-50" : "text-foreground")}
+        >
+          {m.body}
+        </p>
+      </div>
+    </div>
+  );
+});
 
 export default function RoomAmbiencePanel({
   roomSlug,
@@ -558,7 +647,8 @@ export default function RoomAmbiencePanel({
     roomAmbience.host_user_id === selfId;
 
   const canCreateWatchparty = can("watchparty.create");
-  const canChangeWatchpartyVideo = amHost || isOwner || can("watchparty.video.change");
+  const canChangeWatchpartyVideo =
+    amHost || isOwner || can("watchparty.video.change");
   const canCloseWatchparty = amHost || isOwner || can("watchparty.close");
   const canPinWatchpartyMessages = amHost || isOwner || can("messages.pin");
   const canDeleteWatchpartyMessages =
@@ -647,6 +737,13 @@ export default function RoomAmbiencePanel({
   /**
    * UI binária: “Ao vivo com host” só após drift estável por vários ticks (evita falso
    * positivo logo após seek/buffer). Independente de `syncMode`.
+    roomAmbience.host_user_id === user.user_id;
+
+  const viewerAlignedMaxDriftSec = DRIFT_MAX_ALIGNED_SEC;
+
+  /**
+   * UI binária: “Ao vivo com host” só com drift &lt; 1s e seguindo o host; caso contrário
+   * “Modo independente” (inclui buffer pós-entrada até alinhar).
    */
   const viewerLiveWithHost =
     !amHost &&
@@ -1025,12 +1122,16 @@ export default function RoomAmbiencePanel({
         try {
           const currentState = p.getPlayerState?.() ?? -1;
           const playerIsBuffering = currentState === YT_BUFFERING;
-          const timeSinceLastGoLive = Date.now() - lastGoLiveAppliedAtMsRef.current;
+          const timeSinceLastGoLive =
+            Date.now() - lastGoLiveAppliedAtMsRef.current;
           // Se o player ainda está em BUFFERING por causa de um seek go_live
           // recente, não interrompemos com outro seek — deixamos o buffer completar.
           // Isso evita que múltiplos cliques em "Sincronizar" reiniciem
           // repetidamente o buffering e deixem o player cada vez mais atrás do live.
-          if (playerIsBuffering && timeSinceLastGoLive < VIEWER_ALIGN_GUARD_MS) {
+          if (
+            playerIsBuffering &&
+            timeSinceLastGoLive < VIEWER_ALIGN_GUARD_MS
+          ) {
             // Seek já em andamento — ignorar esta repetição
           } else {
             applyGoLiveOnPlayer(p, desiredPlaying);
@@ -1039,7 +1140,7 @@ export default function RoomAmbiencePanel({
             const pos =
               Number.isFinite(cap) && cap < Number.MAX_SAFE_INTEGER / 4
                 ? cap
-                : p.getCurrentTime?.() ?? 0;
+                : (p.getCurrentTime?.() ?? 0);
             lastPlayerTickRef.current = {
               at: Date.now(),
               pos,
@@ -1092,9 +1193,7 @@ export default function RoomAmbiencePanel({
         // Always defer a seek while buffering (unless forceSeek) to avoid
         // the second redundant seek that fires right after a go_live seek.
         const deferSeek =
-          needSeek &&
-          !opts?.forceSeek &&
-          currentState === YT_BUFFERING;
+          needSeek && !opts?.forceSeek && currentState === YT_BUFFERING;
         const needPlay =
           desiredPlaying &&
           !isCurrentlyPlaying &&
@@ -1444,11 +1543,14 @@ export default function RoomAmbiencePanel({
             if (pendingViewerAlignRef.current && state === 1) {
               if (manualSyncAwaitingAnchorRef.current) return;
               try {
-                const driftHere = computeViewerHostDriftSec(p, roomAmbienceRef.current, cur);
-                const maxDrift =
-                  isLivePlayer(p)
-                    ? DRIFT_MAX_ALIGNED_SEC_LIVE
-                    : DRIFT_MAX_ALIGNED_SEC_VOD;
+                const driftHere = computeViewerHostDriftSec(
+                  p,
+                  roomAmbienceRef.current,
+                  cur,
+                );
+                const maxDrift = isLivePlayer(p)
+                  ? DRIFT_MAX_ALIGNED_SEC_LIVE
+                  : DRIFT_MAX_ALIGNED_SEC_VOD;
                 if (Math.abs(driftHere) >= maxDrift) {
                   markViewerIndependent();
                   return;
@@ -1491,10 +1593,9 @@ export default function RoomAmbiencePanel({
             if (playPauseMatchesHost) {
               try {
                 const driftHere = computeViewerHostDriftSec(p, hostState, cur);
-                const maxDrift =
-                  isLivePlayer(p)
-                    ? DRIFT_MAX_ALIGNED_SEC_LIVE
-                    : DRIFT_MAX_ALIGNED_SEC_VOD;
+                const maxDrift = isLivePlayer(p)
+                  ? DRIFT_MAX_ALIGNED_SEC_LIVE
+                  : DRIFT_MAX_ALIGNED_SEC_VOD;
                 if (Math.abs(driftHere) < maxDrift) return;
               } catch {
                 return;
@@ -1733,8 +1834,7 @@ export default function RoomAmbiencePanel({
               HOST_LIVE_HEARTBEAT_MIN_INTERVAL_MS;
             if (
               leftBuffering ||
-              (heartbeatDue &&
-                iframeDrift >= HOST_LIVE_HEARTBEAT_DRIFT_SEC)
+              (heartbeatDue && iframeDrift >= HOST_LIVE_HEARTBEAT_DRIFT_SEC)
             ) {
               lastHostLiveHeartbeatAtMsRef.current = now;
               markApplyingRemote(REMOTE_APPLY_GUARD_MS);
@@ -1766,11 +1866,11 @@ export default function RoomAmbiencePanel({
             sinceEpoch < VIEWER_JUMP_IGNORE_INDEP_MS_AFTER_SYNC_EPOCH;
           const absJump = Math.abs(jump);
 
-          if (syncModeRef.current === "synced" && absJump > VIEWER_USER_CONTROL_JUMP_SEC) {
-            if (
-              inHostApplyGrace &&
-              absJump > jumpTh
-            ) {
+          if (
+            syncModeRef.current === "synced" &&
+            absJump > VIEWER_USER_CONTROL_JUMP_SEC
+          ) {
+            if (inHostApplyGrace && absJump > jumpTh) {
               /* salto grande do host em live (DVR) — não marcar independente */
             } else {
               markViewerIndependent();
@@ -1792,9 +1892,17 @@ export default function RoomAmbiencePanel({
       // On live streams, if the server has not yet published a real anchor
       // (position_sec still near 0 but DVR window is large), the drift
       // formula gives a meaningless huge value like "7667 s". Show 0 instead.
-      const liveStale = liveViewer && hs.position_sec < 8 && (() => {
-        try { const d = p.getDuration?.() ?? 0; return d > 120; } catch { return false; }
-      })();
+      const liveStale =
+        liveViewer &&
+        hs.position_sec < 8 &&
+        (() => {
+          try {
+            const d = p.getDuration?.() ?? 0;
+            return d > 120;
+          } catch {
+            return false;
+          }
+        })();
       const newDrift = liveStale ? 0 : computeViewerHostDriftSec(p, hs, actual);
       const absDrift = Math.abs(newDrift);
       const alignedBand = liveViewer
@@ -1820,7 +1928,8 @@ export default function RoomAmbiencePanel({
         if (prevAligned !== nextAligned) return newDrift;
         // When aligned: suppress micro-jitter
         if (nextAligned) {
-          if (Math.abs(prev - newDrift) < DRIFT_UPDATE_THRESHOLD_SEC) return prev;
+          if (Math.abs(prev - newDrift) < DRIFT_UPDATE_THRESHOLD_SEC)
+            return prev;
           return newDrift;
         }
         const delta = Math.abs(newDrift - prev);
@@ -2229,8 +2338,8 @@ export default function RoomAmbiencePanel({
             </div>
             <h2 className="text-xl font-bold tracking-tight">Watchparty</h2>
             <p className="text-sm text-muted-foreground">
-              Inicie uma transmissão do YouTube para a sala. Apenas quem iniciar controla a reprodução;
-              espectadores ajustam apenas o volume local.
+              Inicie uma transmissão do YouTube para a sala. Apenas quem iniciar
+              controla a reprodução; espectadores ajustam apenas o volume local.
             </p>
           </div>
           <div className="space-y-3 rounded-2xl border border-border/60 bg-card/90 p-5 shadow-sm">
@@ -2246,7 +2355,9 @@ export default function RoomAmbiencePanel({
               </Button>
             </div>
             {roomAmbienceError ? (
-              <p className="text-center text-xs text-destructive">{roomAmbienceError}</p>
+              <p className="text-center text-xs text-destructive">
+                {roomAmbienceError}
+              </p>
             ) : null}
           </div>
         </div>
@@ -2720,8 +2831,9 @@ export default function RoomAmbiencePanel({
                             <strong className="text-foreground">
                               Ao vivo com host
                             </strong>{" "}
-                            só aparece após várias leituras estáveis com drift mínimo (live: &lt; 0,7s da borda ao vivo);
-                            caso contrário,{" "}
+                            só aparece após várias leituras estáveis com drift
+                            mínimo (live: &lt; 0,7s da borda ao vivo); caso
+                            contrário,{" "}
                             <strong className="text-foreground">
                               Modo independente
                             </strong>
@@ -2863,40 +2975,46 @@ export default function RoomAmbiencePanel({
             <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-2">
               {roomAmbience.viewers.length > 0 ? (
                 roomAmbience.viewers.map((participant) => {
-                  const canModViewer = canModerateWatchpartyTarget(participant.user_id);
+                  const canModViewer = canModerateWatchpartyTarget(
+                    participant.user_id,
+                  );
                   return (
-                  <div
-                    key={participant.user_id}
-                    className="flex items-center gap-2 rounded-lg border border-border/40 bg-muted/20 px-2 py-2"
-                  >
-                    <ProfileAvatar
-                      displayName={participant.fullname || participant.username}
-                      username={participant.username}
-                      profilePhoto={participant.profile_photo}
-                      sizeClass="h-8 w-8"
-                      fallbackTextClassName="text-[10px]"
-                      className="ring-1 ring-border"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-semibold text-foreground">
-                        {participant.fullname || participant.username}
-                      </p>
-                      <p className="truncate text-[11px] text-muted-foreground">
-                        @{participant.username}
-                      </p>
-                    </div>
-                    {canModViewer ? (
-                      <RoomMemberModerationMenu
-                        roomSlug={roomSlug}
-                        userId={participant.user_id}
-                        memberName={participant.fullname || participant.username}
-                        canKick={canKickWatchpartyMembers}
-                        canMute={canMuteWatchpartyMembers}
-                        kickScope="ambience"
-                        triggerClassName="rounded-md p-1 text-muted-foreground hover:bg-background"
+                    <div
+                      key={participant.user_id}
+                      className="flex items-center gap-2 rounded-lg border border-border/40 bg-muted/20 px-2 py-2"
+                    >
+                      <ProfileAvatar
+                        displayName={
+                          participant.fullname || participant.username
+                        }
+                        username={participant.username}
+                        profilePhoto={participant.profile_photo}
+                        sizeClass="h-8 w-8"
+                        fallbackTextClassName="text-[10px]"
+                        className="ring-1 ring-border"
                       />
-                    ) : null}
-                  </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-semibold text-foreground">
+                          {participant.fullname || participant.username}
+                        </p>
+                        <p className="truncate text-[11px] text-muted-foreground">
+                          @{participant.username}
+                        </p>
+                      </div>
+                      {canModViewer ? (
+                        <RoomMemberModerationMenu
+                          roomSlug={roomSlug}
+                          userId={participant.user_id}
+                          memberName={
+                            participant.fullname || participant.username
+                          }
+                          canKick={canKickWatchpartyMembers}
+                          canMute={canMuteWatchpartyMembers}
+                          kickScope="ambience"
+                          triggerClassName="rounded-md p-1 text-muted-foreground hover:bg-background"
+                        />
+                      ) : null}
+                    </div>
                   );
                 })
               ) : (

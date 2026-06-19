@@ -101,7 +101,7 @@ export interface DuoQueue {
 // ─── Match ───────────────────────────────────────────────────────────────────
 
 export interface MatchPartner {
-  user_id: number;
+  user_id: string | number;
   username: string;
   first_name: string;
   last_name: string;

@@ -12,11 +12,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
   }
 
-  const baseUrl = process.env.baseUrl;
-  if (!baseUrl) {
-    return NextResponse.json({ detail: "Missing baseUrl" }, { status: 500 });
-  }
-
   let nextPath = "/profile";
   try {
     const body = (await request.json()) as { next?: string };

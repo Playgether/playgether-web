@@ -35,7 +35,7 @@ export async function createPost(data: {
       "/api/v1/posts/",
       {
         comment: data.comment,
-        created_by_user: parseInt(userId),
+        created_by_user: userId,
         has_post_media: data.has_post_media,
         medias: data.medias,
       },

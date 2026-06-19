@@ -13,10 +13,9 @@ import { Image, Video, X, Send, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { CldUploadWidget } from "next-cloudinary";
 
-// Import current user avatar
-import avatarRaymond from "@/assets/avatar-raymond.jpg";
 import { useCreatePostContext } from "@/context/CreatePostContext";
 import { useAuthContext } from "@/context/AuthContext";
+import { useProfileContext } from "@/context/ProfileContext";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import {
   CustomToastErrorMessages,
@@ -24,12 +23,6 @@ import {
 } from "@/error/custom-toaster/enum";
 import { deletePostFile } from "@/services/cloudinary_requests/deletePostFile";
 import { createPost, PostMediaProps } from "@/actions/createPost";
-
-const currentUser = {
-  name: "Raymond Junior",
-  username: "raymond",
-  avatar: avatarRaymond,
-};
 
 export const CreatePostModal = () => {
   const [content, setContent] = useState("");
@@ -41,6 +34,10 @@ export const CreatePostModal = () => {
 
   const createPostContext = useCreatePostContext();
   const { user } = useAuthContext();
+  const { profile } = useProfileContext();
+
+  const displayName = user ? `${user.first_name} ${user.last_name}`.trim() || user.username : "";
+  const initials = user ? (user.first_name?.[0] ?? user.username?.[0] ?? "?").toUpperCase() : "?";
 
   const handleCreatePostModal = createPostContext?.handleCreatePostModal ?? (() => {});
   const createPostOpen = createPostContext?.createPostOpen ?? false;
@@ -217,20 +214,16 @@ export const CreatePostModal = () => {
             <div className="flex items-center space-x-3">
               <Avatar className="w-12 h-12 ring-2 ring-primary/20">
                 <AvatarImage
-                  src={currentUser.avatar.src}
-                  alt={currentUser.name}
+                  src={profile?.profile_photo ?? undefined}
+                  alt={displayName}
                 />
                 <AvatarFallback className="bg-gradient-primary text-white">
-                  {currentUser.name.charAt(0)}
+                  {initials}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h3 className="font-semibold text-foreground">
-                  {currentUser.name}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  @{currentUser.username}
-                </p>
+                <h3 className="font-semibold text-foreground">{displayName}</h3>
+                <p className="text-sm text-muted-foreground">@{user?.username}</p>
               </div>
             </div>
 
@@ -285,8 +278,6 @@ export const CreatePostModal = () => {
                     sources: ["local"],
                     minImageHeight: 320,
                     minImageWidth: 320,
-                    // maxImageHeight: 1080,
-                    // maxImageWidth: 1980,
                     maxFiles: 5 - uploadedFiles.length,
                     tags: [
                       user?.username || "user",
@@ -296,7 +287,6 @@ export const CreatePostModal = () => {
                     ],
                     detection: "unidet",
                     maxImageFileSize: 5000000,
-                    validateMaxWidthHeight: true,
                     language: "pt-br",
                     showCompletedButton: true,
                     multiple: true,

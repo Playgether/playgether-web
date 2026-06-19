@@ -173,11 +173,12 @@ export function GameStatsTab({
       typeof window !== "undefined"
         ? `cs2_owner_refresh_once_${profileId}`
         : "";
-    const shouldOwnerForceRefresh =
+    const shouldOwnerForceRefresh = !!(
       isOwner &&
       typeof window !== "undefined" &&
       ownerOnceKey &&
-      sessionStorage.getItem(ownerOnceKey) !== "1";
+      sessionStorage.getItem(ownerOnceKey) !== "1"
+    );
 
     if (shouldOwnerForceRefresh) {
       sessionStorage.setItem(ownerOnceKey, "1");

@@ -52,6 +52,7 @@ function ambientFromRoom(room: ChatRoom): Record<AmbientKey, string> {
 
 interface RoomImagesPanelProps {
   room: ChatRoom;
+  onAmbientImagesUpdated?: (next: Record<string, string>) => void;
 }
 
 export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
@@ -67,7 +68,7 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
   } | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [bannerPublicId, setBannerPublicId] = useState<string>(
-    room.banner ?? ""
+    room.banner ?? "",
   );
   const bannerRef = useRef<string>(room.banner ?? "");
 
@@ -102,7 +103,7 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
   }, [room.slug]);
 
   const persistAmbientImages = async (
-    next: Record<AmbientKey, string>
+    next: Record<AmbientKey, string>,
   ): Promise<boolean> => {
     beginSave();
     setError(null);
@@ -147,10 +148,11 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
     void (async () => {
       const ok = await persistAmbientImages(next);
       if (ok) {
+        onAmbientImagesUpdated?.(next);
         const removed = await deleteCloudinaryRoomAmbientAsset(previousId);
         if (!removed) {
           setError(
-            "A mídia foi removida da sala, mas o arquivo antigo pode não ter sido apagado do armazenamento."
+            "A mídia foi removida da sala, mas o arquivo antigo pode não ter sido apagado do armazenamento.",
           );
         }
       } else {
@@ -191,11 +193,13 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
       return;
     }
 
+    onAmbientImagesUpdated?.(next);
+
     if (previousId && previousId !== stored) {
       const removed = await deleteCloudinaryRoomAmbientAsset(previousId);
       if (!removed) {
         setError(
-          "A nova mídia foi salva, mas a anterior não pôde ser removida do armazenamento. Tente substituir de novo."
+          "A nova mídia foi salva, mas a anterior não pôde ser removida do armazenamento. Tente substituir de novo.",
         );
       }
     }
@@ -227,7 +231,7 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
       const removed = await deleteCloudinaryImage(previousId);
       if (!removed) {
         setError(
-          "O novo banner foi salvo, mas o arquivo anterior não pôde ser removido do armazenamento. Tente trocar de novo."
+          "O novo banner foi salvo, mas o arquivo anterior não pôde ser removido do armazenamento. Tente trocar de novo.",
         );
       }
     }
@@ -253,10 +257,7 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
         <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
           <div className="relative aspect-[16/9] min-h-[160px] max-h-[260px] overflow-hidden sm:min-h-[200px]">
             {bannerPublicId ? (
-              <ImageComponent
-                media_id={bannerPublicId}
-                alt={room.group_name}
-              />
+              <ImageComponent media_id={bannerPublicId} alt={room.group_name} />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-muted/60">
                 <ImageIcon className="h-7 w-7 text-muted-foreground/40" />
@@ -283,7 +284,9 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
                   }}
                   onSuccess={(result: unknown) =>
                     void handleBannerUploadSuccess(
-                      result as { info?: { public_id?: string; asset_id?: string } }
+                      result as {
+                        info?: { public_id?: string; asset_id?: string };
+                      },
                     )
                   }
                 >
@@ -311,8 +314,9 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
           Ambientação por horário
         </h3>
         <p className="mb-2 text-[11px] text-muted-foreground">
-          Imagem ou vídeo. Vídeo: até {AMBIENT_VIDEO_MAX_DURATION_SEC / 60} min, Full HD
-          ({AMBIENT_VIDEO_MAX_LONG_SIDE}×{AMBIENT_VIDEO_MAX_SHORT_SIDE}px no máximo).
+          Imagem ou vídeo. Vídeo: até {AMBIENT_VIDEO_MAX_DURATION_SEC / 60} min,
+          Full HD ({AMBIENT_VIDEO_MAX_LONG_SIDE}×{AMBIENT_VIDEO_MAX_SHORT_SIDE}
+          px no máximo).
         </p>
         <div className="grid grid-cols-2 gap-2">
           {PERIODS.map((p) => {
@@ -407,9 +411,7 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
                                 video.duration >
                                   AMBIENT_VIDEO_MAX_DURATION_SEC + 0.25
                               ) {
-                                setError(
-                                  "Vídeo: duração máxima de 3 minutos.",
-                                );
+                                setError("Vídeo: duração máxima de 3 minutos.");
                                 cb({ cancel: true });
                                 return;
                               }

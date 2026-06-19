@@ -56,14 +56,14 @@ export const RegisterFormSchema = (requiredDocumentIds: number[] = []) => {
         }),
   
         username: z.string()
-        .nonempty('O username é obrigatório').min(6, 'O nome de usuário precisa ter no mínimo 6 caracteres').max(150, 'o nome de usuário deve ter no máximo 150 caracteres').refine((value) => {
-  
-          const letterRegex = /^[a-zA-Z0-9]+$/;
+        .nonempty('O username é obrigatório').min(2, 'O nome de usuário precisa ter no mínimo 2 caracteres').max(150, 'o nome de usuário deve ter no máximo 150 caracteres').refine((value) => {
+
+          const letterRegex = /^[a-zA-Z0-9._-]+$/;
           return (
             letterRegex.test(value)
           )
           }, {
-          message: 'Este campo aceita apenas letras e números',
+          message: 'Este campo aceita apenas letras, números, ponto (.), underline (_) e hífen (-)',
         }),
       }).refine((fields) => fields.password == fields.repeatPassword, {
         path: ['repeatPassword'],

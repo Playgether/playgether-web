@@ -9,6 +9,8 @@ import { useState, useEffect } from "react";
 import { ErrosInput } from "../../layouts/ErrosInputLayout/ErrorsInputLayout";
 import InputLayout from "../../layouts/InputLayout";
 import AlreadyHaveAccount from "./AlreadyHaveAccount";
+import PasswordInput from "@/components/layouts/PasswordInput";
+import { Check, FileText } from "lucide-react";
 import { TermsViewModal } from "@/components/terms/TermsViewModal";
 import { useTermsContext } from "@/context/TermsContext";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
@@ -76,7 +78,7 @@ export const FormRegisterImplementation = ({
               inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue focus:shadow-glow-neon transition-all duration-300 backdrop-blur-sm"
             />
             {availableUsernameResult}
-            <ErrosInput field={errors.username || (backendErrors.username && { message: backendErrors.username })} />
+            <ErrosInput field={errors.username || (backendErrors.username ? { message: backendErrors.username } : undefined)} />
           </div>
           <div className="col-span-1 flex items-start">
             <button
@@ -96,12 +98,11 @@ export const FormRegisterImplementation = ({
             register={{ ...register("email") }}
             inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue focus:shadow-glow-neon transition-all duration-300 backdrop-blur-sm"
           />
-          <ErrosInput field={errors.email || (backendErrors.email && { message: backendErrors.email })} />
+          <ErrosInput field={errors.email || (backendErrors.email ? { message: backendErrors.email } : undefined)} />
         </div>
 
         <div className="space-y-1">
-          <InputLayout
-            type="password"
+          <PasswordInput
             placeholder="Senha"
             register={{ ...register("password") }}
             autoComplete="new-password"
@@ -111,8 +112,7 @@ export const FormRegisterImplementation = ({
         </div>
 
         <div className="space-y-1">
-          <InputLayout
-            type="password"
+          <PasswordInput
             placeholder="Repita a senha"
             register={{ ...register("repeatPassword") }}
             autoComplete="new-password"
@@ -151,43 +151,71 @@ export const FormRegisterImplementation = ({
             </div>
           ) : documents.length > 0 ? (
             <>
-              <p className="text-muted-foreground text-sm">
-                Para se cadastrar, você precisa aceitar os seguintes termos e políticas:
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 mb-1">
+                Termos &amp; Políticas
               </p>
               <div className="space-y-2">
-                {documents.map((doc) => (
-                  <label
-                    key={doc.id}
-                    className="flex items-center gap-3 cursor-pointer p-2 rounded border border-border/40 hover:bg-muted/20"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={acceptedDocuments.includes(doc.id)}
-                      onChange={() => toggleDocument(doc)}
-                      className="w-5 h-5 rounded border-2 border-foreground/30 bg-transparent accent-neon-blue"
-                    />
-                    <span className="flex-1 text-sm text-foreground">
-                      {doc.document_type_display} - {doc.title}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setViewingDoc(doc);
-                      }}
-                      className="text-neon-blue hover:underline text-sm font-medium"
+                {documents.map((doc) => {
+                  const checked = acceptedDocuments.includes(doc.id);
+                  return (
+                    <label
+                      key={doc.id}
+                      className={`flex items-center gap-3 cursor-pointer px-3 py-2.5 rounded-xl border transition-all duration-200
+                        ${checked
+                          ? "border-primary/60 bg-gradient-to-r from-primary/10 to-secondary/10 shadow-[0_0_8px_rgba(var(--primary),0.15)]"
+                          : "border-border/40 bg-background/30 hover:border-border hover:bg-muted/20"
+                        }`}
                     >
-                      Ler
-                    </button>
-                  </label>
-                ))}
+                      {/* Hidden native checkbox for accessibility */}
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleDocument(doc)}
+                        className="sr-only"
+                      />
+
+                      {/* Custom checkbox */}
+                      <div
+                        className={`shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200
+                          ${checked
+                            ? "border-primary bg-gradient-primary"
+                            : "border-border/60 bg-transparent"
+                          }`}
+                      >
+                        {checked && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                      </div>
+
+                      {/* Icon */}
+                      <div className={`shrink-0 p-1 rounded-lg transition-colors duration-200 ${checked ? "bg-primary/20" : "bg-muted/40"}`}>
+                        <FileText className={`w-3.5 h-3.5 ${checked ? "text-primary" : "text-muted-foreground"}`} />
+                      </div>
+
+                      {/* Label */}
+                      <span className={`flex-1 text-xs leading-tight transition-colors duration-200 ${checked ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                        {doc.title}
+                      </span>
+
+                      {/* Ler button */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setViewingDoc(doc);
+                        }}
+                        className="shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold border border-primary/40 text-primary hover:bg-primary/10 hover:border-primary/70 transition-all duration-200"
+                      >
+                        Ler
+                      </button>
+                    </label>
+                  );
+                })}
               </div>
               <ErrosInput
                 field={
                   errors.accepted_documents ||
-                  (backendErrors.accepted_documents && {
-                    message: backendErrors.accepted_documents,
-                  })
+                  (backendErrors.accepted_documents
+                    ? { message: backendErrors.accepted_documents }
+                    : undefined)
                 }
               />
             </>

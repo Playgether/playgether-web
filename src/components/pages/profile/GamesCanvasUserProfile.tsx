@@ -4,12 +4,13 @@ import { useMemo, useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Heart, Settings, UserPlus } from "lucide-react";
+import { Heart, MessageCircle, Settings, UserPlus } from "lucide-react";
 import type { getProfileByUsernameProps } from "@/services/getProfileByUsername";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { useAuthContext } from "@/context/AuthContext";
 import { ProfileEditModal } from "./modals/ProfileEditModal";
+import { FollowListModal } from "./modals/FollowListModal";
 import { followProfile } from "@/services/followProfile";
 import { unfollowProfile } from "@/services/unfollowProfile";
 import { postLike } from "@/services/postLike";
@@ -20,6 +21,8 @@ import { CustomToastProps } from "@/error/custom-toaster/enum";
 import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
 import { notifyFriendsListChanged } from "@/lib/friendsListEvents";
 import { cn } from "@/lib/utils";
+import { startConversation } from "@/services/directMessages";
+import { useConversationsWidget } from "@/context/ConversationsWidgetContext";
 
 const PROFILE_CARD_BIO_COLLAPSE_AFTER_CHARS = 200;
 const PROFILE_CARD_BIO_COLLAPSE_AFTER_LINES = 5;
@@ -31,7 +34,8 @@ export function GamesCanvasUserProfile({
   profile: getProfileByUsernameProps | null;
   onProfileUpdated?: (updated: Partial<getProfileByUsernameProps>) => void;
 }) {
-  const { user } = useAuthContext();
+  const { user, authSessionResolved } = useAuthContext();
+  const { openWithConversation } = useConversationsWidget();
   const isOwner =
     !!user &&
     !!profile &&
@@ -44,6 +48,7 @@ export function GamesCanvasUserProfile({
   const [likes, setLikes] = useState(profile?.quantity_likes ?? 0);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [bioExpanded, setBioExpanded] = useState(false);
+  const [followListModal, setFollowListModal] = useState<"followers" | "following" | null>(null);
 
   useEffect(() => {
     setBioExpanded(false);
@@ -63,20 +68,23 @@ export function GamesCanvasUserProfile({
 
   const userRating = 4.5;
 
+  const excludeSelf = (list: unknown[]) =>
+    list.filter((f) => f !== profile?.id).length;
+
   const [followersCount, setFollowersCount] = useState<number>(() =>
     profile?.followed_by && Array.isArray(profile.followed_by)
-      ? profile.followed_by.length
+      ? excludeSelf(profile.followed_by)
       : 0,
   );
 
   useEffect(() => {
     if (profile?.followed_by && Array.isArray(profile.followed_by)) {
-      setFollowersCount(profile.followed_by.length);
+      setFollowersCount(excludeSelf(profile.followed_by));
     }
   }, [profile?.followed_by]);
   const followingCount =
     (profile?.follows && Array.isArray(profile.follows)
-      ? profile.follows.length
+      ? excludeSelf(profile.follows)
       : 0) ?? 0;
 
   const userStats = useMemo(
@@ -281,18 +289,27 @@ export function GamesCanvasUserProfile({
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 py-4">
-                  {userStats.map((stat, index) => (
-                    <div key={index} className="text-center space-y-1">
+                  {userStats.map((stat, index) => {
+                    const isClickable = stat.label === "Seguidores" || stat.label === "Seguindo";
+                    const modalType = stat.label === "Seguidores" ? "followers" : "following";
+                    return (
                       <div
-                        className={`text-lg transition-all duration-300 ${stat.color}`}
+                        key={index}
+                        className={`text-center space-y-1 ${isClickable ? "cursor-pointer rounded-lg p-1 hover:bg-muted/50 transition-colors" : ""}`}
+                        onClick={isClickable ? () => setFollowListModal(modalType) : undefined}
+                        role={isClickable ? "button" : undefined}
+                        tabIndex={isClickable ? 0 : undefined}
+                        onKeyDown={isClickable ? (e) => { if (e.key === "Enter") setFollowListModal(modalType); } : undefined}
                       >
-                        {stat.value}
+                        <div className={`text-lg transition-all duration-300 ${stat.color}`}>
+                          {stat.value}
+                        </div>
+                        <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                          {stat.label}
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground uppercase tracking-wide">
-                        {stat.label}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 <div className="flex items-center justify-center pb-2">
                   <Button
@@ -316,23 +333,35 @@ export function GamesCanvasUserProfile({
                   </Button>
                 </div>
 
-                {!isOwner && (
+                {authSessionResolved && !isOwner && (
                   <div className="space-y-2">
                     <div className="flex gap-2">
                       <Button
                         variant={isFollowing ? "secondary" : "default"}
                         size="sm"
-                        className={`flex-1 ${
+                        className={`flex-1 min-w-0 ${
                           isFollowing
                             ? "bg-secondary hover:bg-secondary/80"
                             : "bg-gradient-primary hover:shadow-neon transition-all duration-200 border-0"
                         }`}
                         onClick={handleFollow}
                       >
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        {isFollowing ? "Seguindo" : "Seguir"}
+                        <UserPlus className="h-4 w-4 mr-1 shrink-0" />
+                        <span className="truncate">{isFollowing ? "Seguindo" : "Seguir"}</span>
                       </Button>
-
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 min-w-0 border-border hover:bg-primary/10 hover:border-primary/40"
+                        onClick={async () => {
+                          if (!profile?.user_id) return;
+                          const conv = await startConversation(String(profile.user_id));
+                          if (conv) openWithConversation(conv.id);
+                        }}
+                      >
+                        <MessageCircle className="h-4 w-4 mr-1 shrink-0" />
+                        <span className="truncate">Mensagem</span>
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -351,6 +380,15 @@ export function GamesCanvasUserProfile({
           </CardContent>
         </Card>
       </div>
+
+      {profile && followListModal && (
+        <FollowListModal
+          open={!!followListModal}
+          onOpenChange={(open) => { if (!open) setFollowListModal(null); }}
+          profileId={profile.id}
+          type={followListModal}
+        />
+      )}
 
       {onProfileUpdated && (
         <ProfileEditModal

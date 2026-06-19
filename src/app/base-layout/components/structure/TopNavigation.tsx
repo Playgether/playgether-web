@@ -1,39 +1,37 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { useTheme } from "next-themes";
 import { useAuthContext } from "@/context/AuthContext";
-
-import { ConversationsModal } from "../chat/ConversationsModal";
+import { useNotificationContext } from "@/context/NotificationsContext";
 import { NotificationsModal } from "./NotificationsModal";
 import { SettingsModal } from "../../SettingsModal";
 import { useBaseLayoutServerContext } from "../../context/BaseLayoutServerContext";
+import { useRouter } from "next/navigation";
+import { useDMUnread } from "@/context/DMUnreadContext";
+import { GlobalSearchDropdown } from "./GlobalSearchDropdown";
 
 export const TopNavigation = () => {
   const { logout } = useAuthContext();
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { unreadCount } = useNotificationContext();
+  const { resolvedTheme, setTheme } = useTheme();
+  const isDarkMode = resolvedTheme === "dark";
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [conversationsOpen, setConversationsOpen] = useState(false);
   const { BaseLayout } = useBaseLayoutServerContext();
+  const router = useRouter();
   const icons = BaseLayout?.ServerTopNavigation.icons;
+  const { unreadCount: dmUnreadCount } = useDMUnread();
 
   const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-    document.documentElement.classList.toggle("dark");
+    setTheme(isDarkMode ? "light" : "dark");
   };
 
   return (
     <header className="fixed top-0 left-20 right-0 h-16 bg-background/80 backdrop-blur-xl border-b border-border/50 z-30 flex items-center justify-between px-6">
       {/* Search Bar */}
       <div className="flex-1 max-w-xl">
-        <div className="relative">
-          {icons.Search}
-          <Input
-            placeholder="Pesquisar"
-            className="pl-12 h-11 bg-muted/50 border-border/50 rounded-xl focus:ring-2 focus:ring-primary/30 transition-all duration-300"
-          />
-        </div>
+        <GlobalSearchDropdown />
       </div>
 
       {/* Right Actions */}
@@ -53,15 +51,17 @@ export const TopNavigation = () => {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setConversationsOpen(true)}
+          onClick={() => router.push("/conversations")}
           className="w-11 h-11 rounded-xl hover:bg-muted/50 hover:shadow-glow-neon transition-all duration-300 relative"
           aria-label="Open chat"
           title="Open chat"
         >
           {icons.MessageSquare}
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-secondary rounded-full text-xs font-bold text-white flex items-center justify-center animate-glow-pulse">
-            3
-          </span>
+          {dmUnreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-secondary rounded-full text-xs font-bold text-white flex items-center justify-center animate-glow-pulse">
+              {dmUnreadCount > 99 ? "99+" : dmUnreadCount}
+            </span>
+          )}
         </Button>
 
         <Button
@@ -73,9 +73,11 @@ export const TopNavigation = () => {
           title="Open notifications"
         >
           {icons.Bell}
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-primary rounded-full text-xs font-bold text-white flex items-center justify-center animate-glow-pulse">
-            7
-          </span>
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-primary rounded-full text-xs font-bold text-white flex items-center justify-center animate-glow-pulse">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
         </Button>
 
         <Button
@@ -107,10 +109,6 @@ export const TopNavigation = () => {
         onOpenChange={setNotificationsOpen}
       />
       <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
-      <ConversationsModal
-        open={conversationsOpen}
-        onOpenChange={setConversationsOpen}
-      />
     </header>
   );
 };

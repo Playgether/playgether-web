@@ -78,7 +78,7 @@ const Step3 = ({
       <CustomToaster />
       <div className="flex flex-col gap-1 w-full text-center">
         <p className="text-xs">
-          Envie até 5 fotos ou vídeos, com dimensões mínimas de 320x320 pixels.
+          Envie até 5 fotos ou vídeos (mínimo 320x320 pixels).
         </p>
         <p className="text-xs">Fotos podem ter no máximo 5mb e vídeos 50mb.</p>
         <p className="text-xs">
@@ -93,14 +93,11 @@ const Step3 = ({
             sources: ["local"],
             minImageHeight: 320,
             minImageWidth: 320,
-            maxImageHeight: 1080,
-            maxImageWidth: 1980,
             maxFiles: 5,
             tags: [`${user?.username}`, getCurrentDate(), "post", "user"],
             detection: "unidet",
             maxImageFileSize: 5000000,
             maxVideoFileSize: 50000000,
-            validateMaxWidthHeight: true,
             language: "pt-br",
             showCompletedButton: true,
           }}

@@ -110,7 +110,7 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
       const ce = ev as CustomEvent<{
         reason?: string;
         message?: string;
-        organizer_user_id?: number;
+        organizer_user_id?: string;
       }>;
       const d = ce.detail;
       if (

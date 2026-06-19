@@ -12,10 +12,6 @@ export async function PUT(
     return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
   }
 
-  const baseUrl = process.env.baseUrl;
-  if (!baseUrl) {
-    return NextResponse.json({ detail: "Missing baseUrl" }, { status: 500 });
-  }
 
   let body: unknown;
   try {

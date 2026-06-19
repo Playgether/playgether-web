@@ -3,4 +3,7 @@ export interface GamerSideBarItensInterface {
   label: string;
   active?: boolean;
   notifications?: number;
+  href?: string;
+  action?: "conversations" | "friends";
+  rounded?: "full";
 }

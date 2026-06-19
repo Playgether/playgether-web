@@ -1,38 +1,22 @@
 // useSettingSections.tsx
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useTheme } from "next-themes";
 import { Switch } from "@/components/ui/switch";
 import { Moon, Sun } from "lucide-react";
 import { useBaseLayoutServerContext } from "../context/BaseLayoutServerContext";
 
 export function useSettingSections() {
-  // Verifica o tema atual do sistema ou localStorage
-  const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window !== "undefined") {
-      return (
-        document.documentElement.classList.contains("dark") ||
-        window.matchMedia("(prefers-color-scheme: dark)").matches
-      );
-    }
-    return false;
-  });
+  const { resolvedTheme, setTheme } = useTheme();
+  const darkMode = resolvedTheme === "dark";
 
   const [notifications, setNotifications] = useState(true);
   const [soundEffects, setSoundEffects] = useState(true);
   const [autoPlay, setAutoPlay] = useState(false);
   const { BaseLayout } = useBaseLayoutServerContext();
 
-  // Efeito para sincronizar o tema com a classe do HTML
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [darkMode]);
-
   const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
+    setTheme(darkMode ? "light" : "dark");
   };
   const settingSections = [
     {

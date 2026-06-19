@@ -4,7 +4,7 @@ import React from "react";
 
 export default function ChatTabs() {
   return (
-    <TabsList className="grid grid-cols-3 ml-4 mr-4 mb-4 bg-muted/50">
+    <TabsList className="grid grid-cols-3 bg-muted/50">
       <TabsTrigger value="private" className="text-xs gap-1">
         <MessageCircle className="w-4 h-4" />
         Privadas

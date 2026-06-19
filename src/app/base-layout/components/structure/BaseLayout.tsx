@@ -7,6 +7,7 @@ import { QuickMessagesFooter } from "./QuickMessagesFooter";
 import IsMobileWrapper from "./isMobileWrapper";
 import BaseLayoutProvider from "../../context/BaseLayoutProvider";
 import { CreatePostModal } from "@/app/feed/components/CreatePostModal";
+import { ConversationsWidget } from "../chat/ConversationsWidget";
 
 export default function BaseLayout({
   children,
@@ -43,6 +44,9 @@ export default function BaseLayout({
 
         {/* Quick Messages Footer */}
         <QuickMessagesFooter />
+
+        {/* Floating conversations widget — oculto na página /conversations */}
+        <ConversationsWidget />
       </div>
     </BaseLayoutProvider>
   );

@@ -98,6 +98,13 @@ export const FeedProvider = ({
     return posts.find((p) => p.id === postId);
   };
 
+  const injectPost = useCallback((post: PostProps) => {
+    setPosts((prev) => {
+      if (prev.find((p) => p.id === post.id)) return prev;
+      return [post, ...prev];
+    });
+  }, []);
+
   const increaseCommentCount = (postId: number) => {
     setPosts((prev) =>
       prev.map((p) =>
@@ -170,6 +177,7 @@ export const FeedProvider = ({
         getPostById,
         increaseCommentCount,
         decreaseCommentCount,
+        injectPost,
       }}
     >
       {children}

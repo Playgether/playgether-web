@@ -12,10 +12,6 @@ export async function GET(
     return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
   }
 
-  const baseUrl = process.env.baseUrl;
-  if (!baseUrl) {
-    return NextResponse.json({ detail: "Missing baseUrl" }, { status: 500 });
-  }
 
   const incomingUrl = new URL(request.url);
   const search = incomingUrl.searchParams.toString();

@@ -1,7 +1,14 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useSettingSections } from "./hooks/useSettingsSections";
-import { useBaseLayoutServerContext } from "./context/BaseLayoutServerContext";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { Sun, Moon, Bell, ArrowRight, Settings } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface SettingsModalProps {
   open: boolean;
@@ -9,72 +16,86 @@ interface SettingsModalProps {
 }
 
 export const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
-  const { settingSections } = useSettingSections();
-  const { BaseLayout } = useBaseLayoutServerContext();
-  const components = BaseLayout?.ServerSettingsModal?.components;
-  const SettingsHeader = components?.SettingsHeader;
-  const Separator = components?.Separator;
+  const router = useRouter();
+  const { resolvedTheme, setTheme } = useTheme();
+  const [notifications, setNotifications] = useState(true);
+
+  const themeOptions = [
+    { value: "light", label: "Claro", icon: Sun },
+    { value: "dark", label: "Escuro", icon: Moon },
+  ];
+
+  const handleGoToSettings = () => {
+    onOpenChange(false);
+    router.push("/settings");
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg bg-card/95 backdrop-blur-xl border border-primary/20 shadow-glow-primary">
-        {SettingsHeader}
-        <div className="space-y-6 max-h-96 overflow-y-auto">
-          {settingSections.map((section, sectionIndex) => (
-            <div
-              key={section.title}
-              className="animate-slide-up"
-              style={{ animationDelay: `${sectionIndex * 100}ms` }}
-            >
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-6 h-6 bg-gradient-primary rounded-md flex items-center justify-center text-white">
-                  {section.icon}
-                </div>
-                <h3 className="font-semibold text-foreground">
-                  {section.title}
-                </h3>
-              </div>
+      <DialogContent className="max-w-sm bg-card/95 backdrop-blur-xl border border-primary/20 shadow-glow-primary">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-base">
+            <Settings className="w-4 h-4 text-primary" />
+            Configurações rápidas
+          </DialogTitle>
+        </DialogHeader>
 
-              <div className="space-y-4">
-                {section.items.map((item, itemIndex) => (
-                  <div
-                    key={item.label}
-                    className="flex items-center justify-between p-3 rounded-xl bg-muted/20 hover:bg-muted/30 transition-all duration-300"
+        <div className="space-y-5">
+          {/* Theme */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tema</p>
+            <div className="grid grid-cols-3 gap-2">
+              {themeOptions.map(({ value, label, icon: Icon }) => {
+                const active = resolvedTheme === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setTheme(value)}
+                    className={cn(
+                      "flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 text-xs font-medium transition-all duration-200",
+                      active
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border/50 bg-muted/20 text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                    )}
                   >
-                    <div className="flex-1">
-                      <div className="font-medium text-sm text-foreground">
-                        {item.label}
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {item.description}
-                      </div>
-                    </div>
-                    <div className="ml-4">{item.component}</div>
-                  </div>
-                ))}
-              </div>
-
-              {sectionIndex < settingSections.length - 1 && Separator}
+                    <Icon className="w-4 h-4" />
+                    {label}
+                  </button>
+                );
+              })}
             </div>
-          ))}
-          <div className="flex space-x-3 pt-4">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              className="flex-1 bg-gradient-primary hover:shadow-glow-primary transition-all duration-300"
-              onClick={() => {
-                // TODO: Implement save functionality
-                onOpenChange(false);
-              }}
-            >
-              Salvar
-            </Button>
           </div>
+
+          <Separator className="bg-border/50" />
+
+          {/* Notifications toggle */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Bell className="w-4 h-4 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium text-foreground">Notificações</p>
+                <p className="text-xs text-muted-foreground">Push em tempo real</p>
+              </div>
+            </div>
+            <Switch
+              checked={notifications}
+              onCheckedChange={setNotifications}
+              className="data-[state=checked]:bg-primary"
+            />
+          </div>
+
+          <Separator className="bg-border/50" />
+
+          {/* Link to full settings */}
+          <Button
+            variant="outline"
+            className="w-full justify-between group hover:border-primary/50 hover:bg-primary/5 transition-all duration-200"
+            onClick={handleGoToSettings}
+          >
+            <span className="text-sm">Ver todas as configurações</span>
+            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-200" />
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

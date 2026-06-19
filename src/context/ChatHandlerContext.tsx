@@ -140,6 +140,15 @@ const ChatHandlerContext = createContext<ChatHandlerContextProps>(
   {} as ChatHandlerContextProps,
 );
 
+function wsBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_WS_URL) return process.env.NEXT_PUBLIC_WS_URL;
+  if (typeof window !== "undefined") {
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    return `${protocol}//${window.location.hostname}:8000`;
+  }
+  return "ws://localhost:8000";
+}
+
 const ChatHandlerContextProvider = ({
   token,
   chatroom,
@@ -151,7 +160,7 @@ const ChatHandlerContextProvider = ({
 }) => {
   const encodedChatroom = encodeURIComponent(chatroom);
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
-    `ws://192.168.18.8:8000/ws/chatroom/${encodedChatroom}?token=${token}`,
+    `${wsBaseUrl()}/ws/chatroom/${encodedChatroom}?token=${token}`,
     {
       share: false,
       shouldReconnect: () => false,
@@ -181,6 +190,8 @@ const ChatHandlerContextProvider = ({
   const [roomEventInvite, setRoomEventInvite] =
     useState<RoomEventInvitePayload | null>(null);
   const [roomMusic, setRoomMusic] = useState<RoomMusicState>(defaultRoomMusicState);
+  const prevRoomMusicRef = useRef<RoomMusicState>(defaultRoomMusicState());
+  const addRestoreIndexRef = useRef<number | null>(null);
   const [roomMusicError, setRoomMusicError] = useState<string | null>(null);
   const [roomAmbience, setRoomAmbience] = useState<RoomAmbienceState>(
     defaultRoomAmbienceState,
@@ -231,6 +242,8 @@ const ChatHandlerContextProvider = ({
   const clearRoomMusicError = useCallback(() => setRoomMusicError(null), []);
   const clearRoomAmbienceError = useCallback(() => setRoomAmbienceError(null), []);
 
+  const sendRoomMusicDirectRef = useRef<((payload: RoomMusicClientAction) => void) | null>(null);
+
   const sendRoomMusic = useCallback(
     (payload: RoomMusicClientAction) => {
       if (readyState !== ReadyState.OPEN) return;
@@ -238,6 +251,8 @@ const ChatHandlerContextProvider = ({
     },
     [readyState, sendJsonMessage],
   );
+
+  sendRoomMusicDirectRef.current = sendRoomMusic;
 
   const sendRoomAmbience = useCallback(
     (payload: RoomAmbienceClientAction) => {
@@ -314,12 +329,41 @@ const ChatHandlerContextProvider = ({
         .map((x) => {
           const o = x as Record<string, unknown>;
           const video_id = typeof o.video_id === "string" ? o.video_id : "";
-          const title = typeof o.title === "string" ? o.title : "YouTube";
-          const added_by =
-            typeof o.added_by === "string" ? o.added_by : undefined;
-          return { video_id, title, added_by };
+          const title = typeof o.title === "string" ? o.title : "Música";
+          const added_by = typeof o.added_by === "string" ? o.added_by : undefined;
+          const artist = typeof o.artist === "string" ? o.artist : undefined;
+          const thumbnail = typeof o.thumbnail === "string" ? o.thumbnail : undefined;
+          const duration_sec =
+            typeof o.duration_sec === "number" && o.duration_sec > 0
+              ? o.duration_sec
+              : null;
+
+          // active_provider — whitelist only known values
+          const rawProvider = o.active_provider;
+          const active_provider =
+            rawProvider === "spotify" || rawProvider === "deezer" || rawProvider === "youtube"
+              ? rawProvider
+              : "youtube";
+
+          // providers block — pass through if it is an object, else undefined
+          const providers =
+            o.providers && typeof o.providers === "object" && !Array.isArray(o.providers)
+              ? (o.providers as import("@/types/RoomMusic").MediaProviders)
+              : undefined;
+
+          const isrc = typeof o.isrc === "string" ? o.isrc : undefined;
+          const canonical_track_id =
+            typeof o.canonical_track_id === "string" ? o.canonical_track_id : undefined;
+
+          return { video_id, title, added_by, artist, thumbnail, duration_sec,
+                   active_provider, providers, isrc, canonical_track_id };
         })
-        .filter((x) => /^[a-zA-Z0-9_-]{11}$/.test(x.video_id));
+        .filter((x) => {
+          // Accept valid YouTube video_id OR tracks where an alternative provider exists
+          const validYt = /^[a-zA-Z0-9_-]{11}$/.test(x.video_id);
+          const hasAlt = Boolean(x.providers?.spotify || x.providers?.deezer);
+          return validYt || hasAlt;
+        });
       next.current_index =
         typeof s.current_index === "number" ? s.current_index : -1;
       next.playing = Boolean(s.playing);
@@ -338,6 +382,33 @@ const ChatHandlerContextProvider = ({
         typeof s.position_sec === "number" ? Math.max(0, s.position_sec) : 0;
       next.sync_epoch_ms =
         typeof s.sync_epoch_ms === "number" ? s.sync_epoch_ms : 0;
+
+      // Queue behavior: adding a track must not interrupt the currently playing one.
+      // Detect: queue grew by 1, we were playing, and backend jumped to the new (last) track.
+      const prev = prevRoomMusicRef.current;
+      if (
+        prev.playing &&
+        prev.current_index >= 0 &&
+        prev.queue.length > 0 &&
+        next.queue.length === prev.queue.length + 1 &&
+        next.current_index !== prev.current_index &&
+        next.current_index >= next.queue.length - 1 &&
+        addRestoreIndexRef.current === null
+      ) {
+        next.current_index = prev.current_index;
+        next.playing = true;
+        addRestoreIndexRef.current = prev.current_index;
+        // Tell backend to keep playing the current track
+        setTimeout(() => {
+          const idx = addRestoreIndexRef.current;
+          if (idx !== null) {
+            sendRoomMusicDirectRef.current?.({ action: "select", index: idx });
+            addRestoreIndexRef.current = null;
+          }
+        }, 50);
+      }
+
+      prevRoomMusicRef.current = next;
       setRoomMusic(next);
     },
     room_music_error: (data: { message?: string }) => {
@@ -355,7 +426,7 @@ const ChatHandlerContextProvider = ({
         const next = defaultRoomAmbienceState();
         next.active = Boolean(s.active);
         next.host_user_id =
-          typeof s.host_user_id === "number" ? s.host_user_id : null;
+          typeof s.host_user_id === "string" ? s.host_user_id : null;
         next.host_username =
           typeof s.host_username === "string" ? s.host_username : "";
         next.host_profile_photo =
@@ -384,13 +455,13 @@ const ChatHandlerContextProvider = ({
               .map((x) => {
                 const o = x as Record<string, unknown>;
                 return {
-                  user_id: typeof o.user_id === "number" ? o.user_id : 0,
+                  user_id: typeof o.user_id === "string" ? o.user_id : "",
                   username: typeof o.username === "string" ? o.username : "",
                   fullname: typeof o.fullname === "string" ? o.fullname : "",
                   profile_photo: typeof o.profile_photo === "string" ? o.profile_photo : "",
                 };
               })
-              .filter((x) => x.user_id > 0)
+              .filter((x) => Boolean(x.user_id))
           : [];
         const rawPin = (s as { pinned_message_id?: unknown }).pinned_message_id;
         next.pinned_message_id =
@@ -425,6 +496,7 @@ const ChatHandlerContextProvider = ({
           .map((x) => {
             const m = x as Record<string, unknown>;
             const author_user_id =
+              typeof m.author_user_id === "string" ? m.author_user_id : null;
               typeof m.author_user_id === "number" ? m.author_user_id : 0;
             const replyToId =
               typeof m.reply_to_id === "number" && m.reply_to_id > 0
@@ -444,6 +516,7 @@ const ChatHandlerContextProvider = ({
               body: typeof m.body === "string" ? m.body : "",
               created_at_ms:
                 typeof m.created_at_ms === "number" ? m.created_at_ms : 0,
+              is_system: !author_user_id,
               is_system: author_user_id === 0,
               reply_to_id: replyToId,
               reply_to_username:
@@ -478,6 +551,7 @@ const ChatHandlerContextProvider = ({
       const normalized: RoomAmbienceMessage = {
         ...m,
         is_system:
+          m.is_system ?? !m.author_user_id,
           m.is_system ??
           (typeof m.author_user_id === "number" && m.author_user_id === 0),
         reply_to_id:
@@ -511,8 +585,8 @@ const ChatHandlerContextProvider = ({
       payload?: {
         reason?: string;
         message?: string;
-        organizer_user_id?: number;
-        kicked_user_id?: number;
+        organizer_user_id?: string;
+        kicked_user_id?: string;
       };
     }) => {
       const reason = data?.payload?.reason;

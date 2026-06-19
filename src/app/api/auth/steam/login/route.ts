@@ -10,11 +10,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
   }
 
-  const baseUrl = process.env.baseUrl;
-  if (!baseUrl) {
-    return NextResponse.json({ detail: "Missing baseUrl" }, { status: 500 });
-  }
-
   // Encaminha o parâmetro `next` (se existir) para o backend,
   // para ele devolver o usuário na página correta em caso de sucesso/erro.
   const axiosResp = await api.get(`/api/auth/steam/login/`, {

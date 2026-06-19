@@ -1,4 +1,11 @@
 import { api } from "./api";
+import {
+  exportPublicKey,
+  generateKeyPair,
+  generateSalt,
+  wrapPrivateKey,
+  cachePrivateKey,
+} from "@/lib/e2e-crypto";
 
 export interface postCadastroProps {
   first_name: string;
@@ -47,6 +54,14 @@ function parseBackendErrors(error: unknown): CadastroError {
 
 export const post = async (data: postCadastroProps): Promise<CadastroResult> => {
   try {
+    // Generate E2E key pair before registration so keys are stored with the account
+    const keyPair = await generateKeyPair();
+    const salt = generateSalt();
+    const [publicKey, encryptedPrivateKey] = await Promise.all([
+      exportPublicKey(keyPair.publicKey),
+      wrapPrivateKey(keyPair.privateKey, data.password, salt),
+    ]);
+
     const payload = {
       first_name: data.first_name,
       username: data.username,
@@ -54,8 +69,15 @@ export const post = async (data: postCadastroProps): Promise<CadastroResult> => 
       password: data.password,
       last_name: data.last_name,
       accepted_documents: data.accepted_documents,
+      public_key: publicKey,
+      encrypted_private_key: encryptedPrivateKey,
+      key_salt: salt,
     };
     await api.post("/api/v1/users/", payload);
+
+    // Cache the private key so it's available after the user logs in
+    await cachePrivateKey(keyPair.privateKey);
+
     return { success: true };
   } catch (error) {
     const parsed = parseBackendErrors(error);

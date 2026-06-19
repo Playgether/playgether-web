@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { handleKeyDown } from "@/components/layouts/SendOnEnterKey/sendOnEnterKey";
 import {
   Dialog,
   DialogContent,
@@ -42,6 +43,7 @@ export function AddCommentModal({
         <Textarea
           value={value}
           onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => handleKeyDown(e, () => { if (value.trim() && !isSubmitting) onSubmit(value); })}
           placeholder="Seu comentário..."
         />
         <DialogFooter>

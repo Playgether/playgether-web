@@ -11,10 +11,6 @@ export async function POST(
   if (!accessToken) {
     return NextResponse.json({ detail: "Unauthorized" }, { status: 401 });
   }
-  if (!process.env.baseUrl) {
-    return NextResponse.json({ detail: "Missing baseUrl" }, { status: 500 });
-  }
-
   const axiosResp = await api.post(
     `/api/v1/duo/queue/${id}/renew/`,
     {},

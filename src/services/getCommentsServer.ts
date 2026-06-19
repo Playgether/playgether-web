@@ -3,7 +3,7 @@ import { PostCommentsApiReturn } from "./getComments";
 import { api } from "./api";
 
 export const getCommentsServer = async (
-  postId: number | undefined,
+  postId: number | string | undefined,
   pageParam: string | null = null,
   type: "posts" | "comments" | "profiles" | "reposts" = "posts",
 ) => {

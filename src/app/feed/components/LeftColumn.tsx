@@ -40,10 +40,12 @@ export default function LeftColumn() {
             : "Você não possui uma bio, insira uma.",
         followers:
           profile && Array.isArray(profile.followed_by)
-            ? profile.followed_by.length
+            ? profile.followed_by.filter((f) => f !== profile.id).length
             : 0,
         following:
-          profile && Array.isArray(profile.follows) ? profile.follows.length : 0,
+          profile && Array.isArray(profile.follows)
+            ? profile.follows.filter((f) => f !== profile.id).length
+            : 0,
         posts: parsePostsCount(profile?.quantity_posts),
       }
     : {
@@ -60,7 +62,7 @@ export default function LeftColumn() {
     <div className="col-span-3 space-y-6 sticky-container">
       <UserProfile
         user={display}
-        userId={user?.user_id != null ? Number(user.user_id) : undefined}
+        userId={user?.user_id ?? undefined}
         allowStatusPicker={Boolean(user?.user_id)}
         profilePhotoPublicId={
           user

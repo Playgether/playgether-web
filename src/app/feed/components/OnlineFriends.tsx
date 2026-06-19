@@ -16,7 +16,7 @@ import { LoadingComponent } from "@/components/layouts/components/LoadingCompone
 
 type FriendApi = {
   id: number;
-  user_id: number;
+  user_id: string | number;
   username: string;
   name: string;
   profile_photo: string | null;
@@ -127,7 +127,7 @@ export const OnlineFriends = () => {
 
   const visibleFriends = useMemo(() => {
     const q = query.trim().toLowerCase();
-    let list = [...friends];
+    let list = friends.filter((f) => String(f.user_id) !== String(user?.user_id));
     list.sort((a, b) => a.name.localeCompare(b.name, "pt"));
     list = list.filter((f) => {
       const st = friendPresenceStatus(f, presenceCtx ?? null);
@@ -192,7 +192,7 @@ export const OnlineFriends = () => {
                     fallbackTextClassName="text-sm"
                   />
                   <PresenceStatusDot
-                    userId={Number(user.user_id)}
+                    userId={user.user_id}
                     allowPicker
                   />
                 </div>

@@ -1,5 +1,5 @@
 .VirtualizedComments-wrapper {
-  color: var(--texts-color);
+  color: var(--texts-color, hsl(var(--foreground)));
   background: var(--tertiary-color-variant-light);
 }
 

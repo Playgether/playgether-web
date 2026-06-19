@@ -4,6 +4,8 @@ import { useChatHandlerContext } from "@/context/ChatHandlerContext";
 import { useRoomPermissions } from "@/context/RoomPermissionsContext";
 import { canManageRoomMusic } from "@/lib/roomPermissions";
 import { cn } from "@/lib/utils";
+import { usePlaybackTelemetry } from "@/hooks/usePlaybackTelemetry";
+import type { MediaTrack, ProviderName } from "@/types/RoomMusic";
 import {
   ChevronDown,
   ChevronUp,
@@ -14,6 +16,14 @@ import {
   Volume2,
 } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
+import {
+  DeezerMark,
+  ProviderPlayer,
+  SpotifyMark,
+  YoutubeMark,
+} from "./players/ProviderPlayer";
+
+// ── YouTube IFrame API types ──────────────────────────────────────────────────
 
 type YtPlayer = {
   destroy: () => void;
@@ -34,9 +44,9 @@ type YtPlayerHandoff = {
   wasPlaying: boolean;
 };
 
+const YT_ENDED = 0;
 const YT_PLAYING = 1;
 const YT_PAUSED = 2;
-
 const IFRAME_CLICK_GUARD_MS = 900;
 
 let ytIframeApiPromise: Promise<void> | null = null;
@@ -62,9 +72,9 @@ function loadYoutubeIframeApi(): Promise<void> {
   return ytIframeApiPromise;
 }
 
-type RoomMusicDockProps = {
-  mountSuffix: string;
-};
+// ── Volume persistence ────────────────────────────────────────────────────────
+
+type RoomMusicDockProps = { mountSuffix: string };
 
 function volumeStorageKey(mountSuffix: string) {
   return `playgether:room-music-volume:${mountSuffix}`;
@@ -82,29 +92,60 @@ function readStoredVolume(mountSuffix: string): number {
   return 80;
 }
 
-function youtubeThumbUrl(videoId: string) {
-  return `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
+// ── Track helpers ─────────────────────────────────────────────────────────────
+
+function youtubeThumbUrl(track: MediaTrack) {
+  if (track.thumbnail) return track.thumbnail;
+  return `https://i.ytimg.com/vi/${track.video_id}/mqdefault.jpg`;
 }
 
 function youtubeWatchUrl(videoId: string) {
   return `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
 }
 
-function YoutubeMark({ className }: { className?: string }) {
+function trackOpenUrl(track: MediaTrack): string {
+  const p = track.active_provider ?? "youtube";
+  if (p === "spotify" && track.providers?.spotify?.track_id) {
+    return `https://open.spotify.com/track/${track.providers.spotify.track_id}`;
+  }
+  if (p === "deezer" && track.providers?.deezer?.track_id) {
+    return `https://www.deezer.com/track/${track.providers.deezer.track_id}`;
+  }
+  return youtubeWatchUrl(track.video_id);
+}
+
+function trackOpenLabel(provider: ProviderName): string {
+  if (provider === "spotify") return "Ver no Spotify";
+  if (provider === "deezer") return "Ver no Deezer";
+  return "Ver no YouTube";
+}
+
+function ProviderMark({
+  provider,
+  className,
+}: {
+  provider: ProviderName;
+  className?: string;
+}) {
+  if (provider === "spotify")
+    return <SpotifyMark className={cn(className, "text-[#1DB954]")} />;
+  if (provider === "deezer")
+    return <DeezerMark className={cn(className, "text-[#A238FF]")} />;
+  return <YoutubeMark className={cn(className, "text-[#FF0033]")} />;
+}
+
+// ── Non-sync notice (shown for embed-only providers) ─────────────────────────
+
+function EmbedOnlyNotice({ provider }: { provider: ProviderName }) {
+  const name = provider === "spotify" ? "Spotify" : "Deezer";
   return (
-    <svg
-      className={className}
-      viewBox="0 0 24 18"
-      aria-hidden
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        fill="currentColor"
-        d="M23.5 4.2c-.3-1.1-1.2-2-2.3-2.3C19.3 1.2 12 1.2 12 1.2s-7.3 0-9.2.7c-1.1.3-2 1.2-2.3 2.3C0 6.1 0 9 0 9s0 2.9.5 4.8c.3 1.1 1.2 2 2.3 2.3 1.9.7 9.2.7 9.2.7s7.3 0 9.2-.7c1.1-.3 2-1.2 2.3-2.3.5-1.9.5-4.8.5-4.8s0-2.9-.5-4.8zM9.5 12.4V5.6L15.7 9 9.5 12.4z"
-      />
-    </svg>
+    <p className="mt-0.5 truncate text-[9px] text-muted-foreground/70">
+      Reprodução via {name} — sem sincronização de posição
+    </p>
   );
 }
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
   const { snapshot } = useRoomPermissions();
@@ -115,8 +156,8 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
   const [localVolume, setLocalVolume] = useState(() => readStoredVolume(mountSuffix));
   const [localPaused, setLocalPaused] = useState(true);
   const [playerReady, setPlayerReady] = useState(false);
-  /** Bloqueia cliques no iframe logo após trocar expand — evita “clique fantasma” no vídeo */
   const [blockIframePointer, setBlockIframePointer] = useState(false);
+
   const playerRef = useRef<YtPlayer | null>(null);
   const playerHandoffRef = useRef<YtPlayerHandoff | null>(null);
   const mountRef = useRef<HTMLDivElement | null>(null);
@@ -125,11 +166,28 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
   const roomMusicPlayingRef = useRef(roomMusic.playing);
   const lastLoadVideoAtRef = useRef(0);
   const reactId = useId();
-  const playerDomId = `yt-room-${mountSuffix}-${reactId.replace(/:/g, "")}`;
+  const playbackStartedRef = useRef(false);
+  const localIndexRef = useRef(localIndex);
+  const queueLengthRef = useRef(roomMusic.queue.length);
+  const sendRoomMusicRef = useRef(sendRoomMusic);
 
   localPausedRef.current = localPaused;
   localVolumeRef.current = localVolume;
   roomMusicPlayingRef.current = roomMusic.playing;
+  localIndexRef.current = localIndex;
+  queueLengthRef.current = roomMusic.queue.length;
+  sendRoomMusicRef.current = sendRoomMusic;
+
+  const localCurrent_: MediaTrack | null =
+    localIndex >= 0 && localIndex < roomMusic.queue.length
+      ? roomMusic.queue[localIndex]
+      : null;
+
+  const playbackTelemetry = usePlaybackTelemetry({
+    roomSlug: mountSuffix,
+    provider: localCurrent_?.active_provider ?? "youtube",
+    canonicalTrackId: localCurrent_?.canonical_track_id,
+  });
 
   useEffect(() => {
     try {
@@ -141,19 +199,20 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
 
   useEffect(() => {
     setBlockIframePointer(true);
-    const t = window.setTimeout(
-      () => setBlockIframePointer(false),
-      IFRAME_CLICK_GUARD_MS,
-    );
+    const t = window.setTimeout(() => setBlockIframePointer(false), IFRAME_CLICK_GUARD_MS);
     return () => window.clearTimeout(t);
   }, [expanded]);
 
   const hasSession = roomMusic.queue.length > 0;
-  const localCurrent =
-    localIndex >= 0 && localIndex < roomMusic.queue.length
-      ? roomMusic.queue[localIndex]
-      : null;
+  const localCurrent: MediaTrack | null = localCurrent_;
+
+  const activeProvider: ProviderName = localCurrent?.active_provider ?? "youtube";
+  const isYouTube = activeProvider === "youtube";
+
   const title = localCurrent?.title ?? "Música da sala";
+  const openUrl = localCurrent ? trackOpenUrl(localCurrent) : "#";
+
+  // ── Sync state from WebSocket ─────────────────────────────────────────────
 
   useEffect(() => {
     if (roomMusic.queue.length === 0) {
@@ -173,13 +232,21 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
     roomMusic.playing,
   ]);
 
+  // ── YouTube player lifecycle ──────────────────────────────────────────────
+  // Only active when active_provider === "youtube"
+
   useEffect(() => {
+    if (!isYouTube) {
+      // Destroy any lingering YouTube player when switching away
+      try { playerRef.current?.destroy(); } catch { /* ignore */ }
+      playerRef.current = null;
+      setPlayerReady(false);
+      if (mountRef.current) mountRef.current.innerHTML = "";
+      return;
+    }
+
     if (!hasSession || !localCurrent || localIndex < 0) {
-      try {
-        playerRef.current?.pauseVideo();
-      } catch {
-        /* ignore */
-      }
+      try { playerRef.current?.pauseVideo(); } catch { /* ignore */ }
       return;
     }
 
@@ -193,13 +260,10 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
 
     void loadYoutubeIframeApi().then(() => {
       if (cancelled || !mountRef.current) return;
-
       if (mountRef.current) mountRef.current.innerHTML = "";
 
-      const origin =
-        typeof window !== "undefined" ? window.location.origin : "";
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
 
-      /** `controls` só pode mudar recriando o iframe. Recolhido: sem barra; expandido: barra + hover. */
       const playerVars: Record<string, number | string> = {
         playsinline: 1,
         rel: 0,
@@ -233,16 +297,14 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
 
         if (shouldPlay) {
           p.playVideo();
-          window.setTimeout(() => {
-            if (!localPausedRef.current) p.playVideo();
-          }, 200);
-          window.setTimeout(() => {
-            if (!localPausedRef.current) p.playVideo();
-          }, 650);
+          window.setTimeout(() => { if (!localPausedRef.current) p.playVideo(); }, 200);
+          window.setTimeout(() => { if (!localPausedRef.current) p.playVideo(); }, 650);
         } else {
           p.pauseVideo();
         }
       };
+
+      playbackStartedRef.current = false;
 
       playerRef.current = new w.YT!.Player(mountRef.current, {
         height: "100%",
@@ -254,23 +316,27 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
             if (cancelled || !playerRef.current) return;
             applyInitialPlayback(playerRef.current);
             setPlayerReady(true);
+            try { playbackTelemetry.onPlayerReady(); } catch { /* ignore */ }
           },
           onStateChange: (ev: { data: number }) => {
             if (ev.data === YT_PLAYING) {
               setLocalPaused(false);
+              if (!playbackStartedRef.current) {
+                playbackStartedRef.current = true;
+                try { playbackTelemetry.onPlaybackStarted(); } catch { /* ignore */ }
+              }
               return;
             }
-            if (ev.data === YT_PAUSED || ev.data === 0) {
-              if (!roomMusicPlayingRef.current) {
-                setLocalPaused(true);
-                return;
-              }
+            // Video ended — remove it from the queue (backend auto-advances to next)
+            if (ev.data === YT_ENDED) {
+              const curIdx = localIndexRef.current;
+              sendRoomMusicRef.current({ action: "remove", index: curIdx });
+              return;
+            }
+            if (ev.data === YT_PAUSED) {
+              if (!roomMusicPlayingRef.current) { setLocalPaused(true); return; }
               if (Date.now() - lastLoadVideoAtRef.current < 1200) {
-                try {
-                  playerRef.current?.playVideo();
-                } catch {
-                  /* ignore */
-                }
+                try { playerRef.current?.playVideo(); } catch { /* ignore */ }
               }
             }
           },
@@ -291,28 +357,18 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
             seconds: Math.max(0, t),
             wasPlaying: st === YT_PLAYING,
           };
-        } catch {
-          playerHandoffRef.current = null;
-        }
-        try {
-          p.destroy();
-        } catch {
-          /* ignore */
-        }
+        } catch { playerHandoffRef.current = null; }
+        try { p.destroy(); } catch { /* ignore */ }
       }
       playerRef.current = null;
       if (mountRef.current) mountRef.current.innerHTML = "";
       setPlayerReady(false);
     };
-  }, [hasSession, localIndex, localCurrent?.video_id, expanded]);
+  }, [isYouTube, hasSession, localIndex, localCurrent?.video_id, expanded]);
 
   useEffect(() => {
     if (!hasSession) {
-      try {
-        playerRef.current?.destroy();
-      } catch {
-        /* ignore */
-      }
+      try { playerRef.current?.destroy(); } catch { /* ignore */ }
       playerRef.current = null;
       setPlayerReady(false);
       if (mountRef.current) mountRef.current.innerHTML = "";
@@ -321,74 +377,66 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
 
   useEffect(() => {
     return () => {
-      try {
-        playerRef.current?.destroy();
-      } catch {
-        /* ignore */
-      }
+      try { playerRef.current?.destroy(); } catch { /* ignore */ }
       playerRef.current = null;
       setPlayerReady(false);
     };
   }, []);
 
   useEffect(() => {
-    if (!playerReady || !playerRef.current) return;
+    if (!isYouTube || !playerReady || !playerRef.current) return;
     try {
       if (localPaused) playerRef.current.pauseVideo();
       else playerRef.current.playVideo();
-    } catch {
-      /* ignore */
-    }
-  }, [localPaused, playerReady]);
+    } catch { /* ignore */ }
+  }, [isYouTube, localPaused, playerReady]);
 
   useEffect(() => {
-    if (!playerReady || !playerRef.current) return;
+    if (!isYouTube || !playerReady || !playerRef.current) return;
     try {
       playerRef.current.setVolume(localVolume);
       if (localVolume === 0) playerRef.current.mute();
       else playerRef.current.unMute();
-    } catch {
-      /* ignore */
-    }
-  }, [localVolume, playerReady]);
+    } catch { /* ignore */ }
+  }, [isYouTube, localVolume, playerReady]);
+
+  // ── Controls ──────────────────────────────────────────────────────────────
 
   const openExpanded = useCallback((e?: React.MouseEvent | React.PointerEvent) => {
-    e?.preventDefault();
-    e?.stopPropagation();
-    setExpanded(true);
+    e?.preventDefault(); e?.stopPropagation(); setExpanded(true);
   }, []);
 
   const closeExpanded = useCallback((e?: React.MouseEvent | React.PointerEvent) => {
-    e?.preventDefault();
-    e?.stopPropagation();
-    setExpanded(false);
+    e?.preventDefault(); e?.stopPropagation(); setExpanded(false);
   }, []);
 
   const togglePlay = () => {
-    const p = playerRef.current;
-    if (!p || !localCurrent) return;
-    try {
-      if (localPaused) {
-        p.playVideo();
-        setLocalPaused(false);
-      } else {
-        p.pauseVideo();
-        setLocalPaused(true);
-      }
-    } catch {
-      /* ignore */
+    if (!localCurrent) return;
+    if (isYouTube) {
+      const p = playerRef.current;
+      if (!p) return;
+      try {
+        if (localPaused) { p.playVideo(); setLocalPaused(false); }
+        else { p.pauseVideo(); setLocalPaused(true); }
+      } catch { /* ignore */ }
+    } else {
+      // For embed providers there is no programmatic play/pause,
+      // but we still update shared room state for visual consistency.
+      if (localPaused) sendRoomMusic({ action: "play" });
+      else sendRoomMusic({ action: "pause", position_sec: 0 });
+      setLocalPaused((p) => !p);
     }
   };
 
   const onVolumeInput = (v: number) => {
     const next = Math.max(0, Math.min(100, Math.round(v)));
     setLocalVolume(next);
-    try {
-      playerRef.current?.setVolume(next);
-      if (next === 0) playerRef.current?.mute();
-      else playerRef.current?.unMute();
-    } catch {
-      /* ignore */
+    if (isYouTube) {
+      try {
+        playerRef.current?.setVolume(next);
+        if (next === 0) playerRef.current?.mute();
+        else playerRef.current?.unMute();
+      } catch { /* ignore */ }
     }
   };
 
@@ -406,8 +454,9 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
 
   if (!hasSession || !localCurrent) return null;
 
-  const blockPlayerSurfacePointer =
-    !expanded || blockIframePointer;
+  const blockPlayerPointer = !expanded || blockIframePointer;
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="shrink-0 border-t border-border/60 bg-card/95 shadow-[0_-4px_24px_rgba(0,0,0,0.08)] backdrop-blur-md">
@@ -423,19 +472,21 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
         ) : null}
 
         <div className="relative z-30 flex w-full min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-2 pointer-events-none">
+
+          {/* Thumbnail + track info */}
           <div className="relative flex min-w-0 flex-1 items-center gap-2.5">
             <a
-              href={youtubeWatchUrl(localCurrent.video_id)}
+              href={openUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="relative z-[42] shrink-0 rounded-md outline-none ring-offset-background transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-primary/40 pointer-events-auto"
-              title="Abrir no YouTube"
+              title={trackOpenLabel(activeProvider)}
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={youtubeThumbUrl(localCurrent.video_id)}
+                src={youtubeThumbUrl(localCurrent)}
                 alt=""
                 className="pointer-events-none h-11 w-[62px] rounded-md border border-border/50 object-cover"
               />
@@ -447,20 +498,27 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
                   🎧 Agora tocando
                 </p>
                 <p className="truncate text-xs font-medium text-foreground">{title}</p>
+                {localCurrent.artist && (
+                  <p className="truncate text-[10px] text-muted-foreground/80">
+                    {localCurrent.artist}
+                  </p>
+                )}
                 <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] font-medium text-muted-foreground/90">
-                  <YoutubeMark className="h-3 w-4 shrink-0 text-[#FF0033]" />
+                  <ProviderMark provider={activeProvider} className="h-3 w-4 shrink-0" />
                   <a
-                    href={youtubeWatchUrl(localCurrent.video_id)}
+                    href={openUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="pointer-events-auto text-primary underline-offset-2 hover:underline"
                     onClick={(e) => e.stopPropagation()}
                     onPointerDown={(e) => e.stopPropagation()}
                   >
-                    Ver no YouTube
+                    {trackOpenLabel(activeProvider)}
                   </a>
                 </p>
+                {!isYouTube && <EmbedOnlyNotice provider={activeProvider} />}
               </div>
+
               {expanded ? (
                 <button
                   type="button"
@@ -480,6 +538,7 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
             </div>
           </div>
 
+          {/* Player surface */}
           <div
             className={cn(
               "relative z-[38] shrink-0 overflow-hidden rounded-md border border-border/60 bg-black shadow-inner transition-all duration-200",
@@ -490,29 +549,21 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
               expanded && blockIframePointer && "[&_iframe]:pointer-events-none",
             )}
           >
-            <div
-              ref={mountRef}
-              id={playerDomId}
-              className={cn(
-                "relative z-0 h-full w-full",
-                blockPlayerSurfacePointer && "pointer-events-none",
-              )}
+            <ProviderPlayer
+              track={localCurrent}
+              youtubeMount={mountRef}
+              expanded={expanded}
+              blockPointer={blockPlayerPointer}
+              roomSlug={mountSuffix}
+              className="h-full w-full"
             />
-            <div
-              className="pointer-events-none absolute right-1 top-1 z-10 flex items-center rounded bg-black/55 px-1 py-0.5 shadow-sm"
-              aria-hidden
-            >
-              <YoutubeMark className="h-2 w-[11px] shrink-0 text-white" />
-            </div>
           </div>
 
+          {/* Transport controls */}
           <div className="relative z-[42] flex shrink-0 items-center gap-0.5 pointer-events-auto">
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                goPrev();
-              }}
+              onClick={(e) => { e.stopPropagation(); goPrev(); }}
               onPointerDown={(e) => e.stopPropagation()}
               disabled={localIndex <= 0}
               className="rounded-md p-2 text-muted-foreground hover:bg-muted disabled:opacity-30"
@@ -522,10 +573,7 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
             </button>
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                togglePlay();
-              }}
+              onClick={(e) => { e.stopPropagation(); togglePlay(); }}
               onPointerDown={(e) => e.stopPropagation()}
               className="rounded-full gradient-primary p-2 text-primary-foreground shadow-sm disabled:opacity-40"
               title={localPaused ? "Tocar" : "Pausar"}
@@ -534,10 +582,7 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
             </button>
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                goNext();
-              }}
+              onClick={(e) => { e.stopPropagation(); goNext(); }}
               onPointerDown={(e) => e.stopPropagation()}
               disabled={localIndex >= roomMusic.queue.length - 1}
               className="rounded-md p-2 text-muted-foreground hover:bg-muted disabled:opacity-30"
@@ -547,6 +592,7 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
             </button>
           </div>
 
+          {/* Volume */}
           <div className="relative z-[42] flex min-w-[100px] flex-1 items-center gap-1 pointer-events-auto sm:max-w-[140px] sm:flex-none">
             <Volume2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             <input

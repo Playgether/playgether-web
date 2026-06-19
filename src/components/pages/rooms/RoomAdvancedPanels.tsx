@@ -38,6 +38,9 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { useMemo, useState, useTransition } from "react";
+import { MediaResolveError, resolveMediaTrack } from "@/lib/mediaResolver";
+import { isSupportedMediaUrl } from "@/lib/mediaUrls";
 
 interface RoomRankingsPanelProps {
   roomSlug: string;
@@ -394,19 +397,26 @@ export function RoomMusicPanel({ roomName }: RoomMusicPanelProps) {
     clearRoomMusicError();
     const raw = url.trim();
     if (!raw) return;
-    const videoId = extractYoutubeVideoId(raw);
-    if (!videoId) {
+
+    if (!isSupportedMediaUrl(raw)) {
       setLocalError(
-        "Cole apenas links HTTPS do YouTube (watch, youtu.be, embed ou shorts). Caminhos locais não são aceitos.",
+        "Cole um link do YouTube, Spotify ou Deezer (HTTPS). Caminhos locais não são aceitos.",
       );
       return;
     }
+
     setLocalError(null);
     setBusy(true);
     try {
-      const title = await fetchYoutubeOEmbedTitle(videoId);
-      sendRoomMusic({ action: "add", video_id: videoId, title });
+      const track = await resolveMediaTrack(raw);
+      sendRoomMusic({ action: "add", track });
       setUrl("");
+    } catch (err) {
+      if (err instanceof MediaResolveError) {
+        setLocalError(err.message);
+      } else {
+        setLocalError("Não foi possível adicionar a música. Tente novamente.");
+      }
     } finally {
       setBusy(false);
     }
@@ -432,8 +442,8 @@ export function RoomMusicPanel({ roomName }: RoomMusicPanelProps) {
       </h2>
 
       <p className="text-xs text-muted-foreground">
-        Fila compartilhada: apenas links do YouTube. Use o player fixo no rodapé da sala (visível em
-        todas as abas) para pausar, volume e trocar de faixa para todos.
+        Fila compartilhada: cole um link do YouTube, Spotify ou Deezer. O sistema resolve
+        automaticamente nos outros providers e escolhe o melhor embed disponível.
       </p>
 
       {!canQueue && !canPlayback ? (
@@ -468,6 +478,9 @@ export function RoomMusicPanel({ roomName }: RoomMusicPanelProps) {
               setUrl(event.target.value);
             }}
             onKeyDown={(event) => event.key === "Enter" && !busy && void addMusic()}
+            placeholder="Link do YouTube, Spotify ou Deezer…"
+            disabled={busy}
+            aria-label="Link do YouTube"
             placeholder="https://www.youtube.com/watch?v=..."
             disabled={busy || !canQueue}
             className="flex-1 rounded-lg border border-border/60 bg-muted/70 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 disabled:opacity-60"
@@ -477,9 +490,9 @@ export function RoomMusicPanel({ roomName }: RoomMusicPanelProps) {
             onClick={() => void addMusic()}
             disabled={busy || !canQueue}
             className="rounded-lg gradient-primary p-2 text-primary-foreground disabled:opacity-50"
-            title="Adicionar à fila"
+            title={busy ? "Resolvendo…" : "Adicionar à fila"}
           >
-            <Plus className="h-4 w-4" />
+            <Plus className={`h-4 w-4 ${busy ? "animate-spin" : ""}`} />
           </button>
         </div>
       </div>
@@ -509,7 +522,18 @@ export function RoomMusicPanel({ roomName }: RoomMusicPanelProps) {
                   />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
-                    <p className="truncate text-[10px] text-muted-foreground">{item.video_id}</p>
+                    {item.artist ? (
+                      <p className="truncate text-[10px] text-muted-foreground">{item.artist}</p>
+                    ) : (
+                      <p className="truncate text-[10px] text-muted-foreground">{item.video_id}</p>
+                    )}
+                    {item.active_provider && item.active_provider !== "youtube" && (
+                      <p className="mt-0.5 truncate text-[9px] font-medium text-amber-500/90">
+                        via{" "}
+                        {item.active_provider === "spotify" ? "Spotify" : "Deezer"}
+                        {" "}(embed)
+                      </p>
+                    )}
                   </div>
                 </button>
                 <button
@@ -526,7 +550,7 @@ export function RoomMusicPanel({ roomName }: RoomMusicPanelProps) {
           })
         ) : (
           <p className="py-4 text-center text-sm text-muted-foreground">
-            Nenhuma música na fila. Adicione um link do YouTube acima.
+            Nenhuma música na fila. Cole um link do YouTube acima.
           </p>
         )}
       </div>
@@ -551,6 +575,11 @@ export function RoomSettingsPanel({ room }: RoomSettingsPanelProps) {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  const canManage =
+    user?.user_id != null && String(user.user_id) === String(room.owner);
+
+  const startEdit = (key: "name" | "summary") => {
+    if (!canManage) return;
   const startEdit = (key: "name" | "summary" | "slug") => {
     if (key === "slug" && !canSlug) return;
     if (key !== "slug" && !canSettings) return;

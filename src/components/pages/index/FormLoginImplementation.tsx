@@ -4,12 +4,14 @@ import { WrongPasswordComponent } from "./WrongPassword";
 import NoHaveAccount from "./NoHaveAccount";
 import { UseFormHandleSubmit, FieldErrors } from "react-hook-form";
 import { loginAction } from "@/actions/auth";
+import { unlockE2EKeys } from "@/context/E2ECryptoContext";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import {
   CustomToastErrorMessages,
   CustomToastProps,
 } from "@/error/custom-toaster/enum";
 import FormLoginButton from "./FormLoginButton";
+import PasswordInput from "@/components/layouts/PasswordInput";
 import { useState } from "react";
 import { LoginFormSchema } from "./LoginFormSchema";
 import { redirect } from "next/navigation";
@@ -59,6 +61,12 @@ export const FormLoginImplementation = ({
       setUnauthorized(false);
     }
 
+    // Unlock and cache the E2E private key while we still have the plaintext password
+    if (!error) {
+      const password = formData.get("password") as string;
+      await unlockE2EKeys(password);
+    }
+
     if (error && error !== "wrong_password") {
       CustomToast.error(
         "Oops, parece que algo deu errado com a sua requisição",
@@ -105,8 +113,7 @@ export const FormLoginImplementation = ({
 
       <div className="space-y-1">
         <ErrosInput field={validationErrors.password || errors.password} />
-        <InputLayout
-          type="password"
+        <PasswordInput
           placeholder="Password"
           register={{ ...register("password") }}
           name="password"

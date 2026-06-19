@@ -13,7 +13,7 @@ export interface ChatRoom {
   total_messages: number;
   capacity: number;
   peak_users: number;
-  owner: number;
+  owner: string | number;
   owner_fullname: string;
   owner_username: string;
   rules: ChatRules[];

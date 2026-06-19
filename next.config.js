@@ -1,36 +1,79 @@
 /** @type {import('next').NextConfig} */
+
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 const nextConfig = {
   // Avoid redirect loops with Django APPEND_SLASH on proxied API routes.
   skipTrailingSlashRedirect: true,
   async rewrites() {
     return [
       {
-        source: "/ws/:path*",
-        destination: "http://192.168.18.8:8000/ws/:path*", // backend WS
-      },
-      {
         source: "/api/v1/:path*",
-        destination: "http://192.168.18.8:8000/api/v1/:path*",
+        destination: `${API_URL}/api/v1/:path*`,
       },
     ];
   },
-  experimental: {},
+
   images: {
-    domains: [
-      "localhost",
-      "127.0.0.1",
-      "192.168.18.5",
-      "192.168.15.189",
-      "192.168.15.255",
-      "192.168.15.60",
-      "images.unsplash",
-      "images.unsplash.com",
-      "res.cloudinary.com",
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
+      // backend (Django / Fly.io)
+      {
+        protocol: "https",
+        hostname: "playgether-api.fly.dev",
+      },
+
+      // backend (Django / Railway)
+      {
+        protocol: "https",
+        hostname: "playgether-api-production.up.railway.app",
+      },
+
+      // frontend (Vercel preview / prod)
+      {
+        protocol: "https",
+        hostname: "*.vercel.app",
+      },
+
+      // local dev
+      {
+        protocol: "http",
+        hostname: "localhost",
+      },
+      {
+        protocol: "http",
+        hostname: "127.0.0.1",
+      },
+      {
+        protocol: "http",
+        hostname: "192.168.18.5",
+      },
+      {
+        protocol: "http",
+        hostname: "192.168.15.189",
+      },
+      {
+        protocol: "http",
+        hostname: "192.168.15.255",
+      },
+      {
+        protocol: "http",
+        hostname: "192.168.15.60",
+      },
     ],
   },
 
   env: {
-    baseUrl: process.env.LOCAL_API_URL,
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL,
   },
 };
 

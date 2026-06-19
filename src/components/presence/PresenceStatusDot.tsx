@@ -25,7 +25,7 @@ export function PresenceStatusDot({
   /** Só tem efeito no próprio usuário: abre o seletor de status. */
   allowPicker = false,
 }: {
-  userId?: number;
+  userId?: string | number;
   sizeClass?: string;
   borderClass?: string;
   className?: string;
@@ -34,12 +34,12 @@ export function PresenceStatusDot({
   const ctx = useContext(PresenceContext);
   const { user } = useAuthContext();
 
-  const selfId = user?.user_id != null ? Number(user.user_id) : null;
-  const uid = userId != null ? Number(userId) : NaN;
-  const isSelf = selfId != null && !Number.isNaN(uid) && selfId === uid;
+  const selfId = user?.user_id != null ? String(user.user_id) : null;
+  const uid = userId != null ? String(userId) : null;
+  const isSelf = selfId != null && uid != null && selfId === uid;
 
   let st = "offline";
-  if (ctx && userId != null && !Number.isNaN(uid)) {
+  if (ctx && uid != null) {
     st = isSelf
       ? ctx.getSelfPresenceDisplay().status
       : ctx.getPresence(uid).status;
