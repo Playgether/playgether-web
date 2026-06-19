@@ -18,6 +18,9 @@ const TYPE_LABEL: Record<RoomEventType, string> = {
   button_quiz: "Button Quiz",
 };
 
+/** Modos disponíveis ao criar um novo jogo (quiz eliminatório desativado por enquanto). */
+const CREATABLE_EVENT_TYPES: RoomEventType[] = ["vote_best", "button_quiz"];
+
 /** Mesmo texto conceitual enviado ao chat ao iniciar (versão curta na UI). */
 const EVENT_TYPE_HELP: Record<RoomEventType, string> = {
   vote_best: "Crie algo por rodada, vote no melhor e dispute pontos. Votação obrigatória.",
@@ -458,7 +461,7 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
                 onChange={(e) => setEventType(e.target.value as RoomEventType)}
                 className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm"
               >
-                {(Object.keys(TYPE_LABEL) as RoomEventType[]).map((k) => (
+                {(CREATABLE_EVENT_TYPES).map((k) => (
                   <option key={k} value={k}>
                     {TYPE_LABEL[k]}
                   </option>

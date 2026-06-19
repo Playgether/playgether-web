@@ -13,6 +13,7 @@ export interface RoomRankingRow {
 export interface RoomRankingsResponse {
   period: RoomRankingPeriod;
   board: RoomRankingBoard;
+  event_type?: string | null;
   rows: RoomRankingRow[];
   my_rank: { rank: number | null; value: number } | null;
   streak_label: string;

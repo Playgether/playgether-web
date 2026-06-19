@@ -15,6 +15,7 @@ import {
 } from "./rarityConfig";
 import { cn } from "@/lib/utils";
 import { AchievementElectricOverlay } from "./AchievementElectricOverlay";
+import { RarityLevelDot } from "./RarityLevelDot";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -509,12 +510,7 @@ export const RarityBadge = ({
       }
       transition={{ duration: 0.3 }}
     >
-      <span
-        className="flex h-4 w-4 shrink-0 items-center justify-center overflow-visible text-[0.95rem] leading-none"
-        aria-hidden
-      >
-        {config.icon}
-      </span>
+      <RarityLevelDot rarity={rarity} className="h-2 w-2" />
       <span className="flex items-center leading-none [transform:translateZ(0)]">
         {config.label}
       </span>

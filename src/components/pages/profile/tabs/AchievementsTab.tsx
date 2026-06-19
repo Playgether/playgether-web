@@ -37,6 +37,7 @@ import {
   RARITY_ORDER,
   type RarityLevel,
 } from "@/components/pages/profile/rarityConfig";
+import { RarityLevelDot } from "@/components/pages/profile/RarityLevelDot";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -805,7 +806,7 @@ export function AchievementsTab({
                           htmlFor={id}
                           className="text-sm font-normal cursor-pointer flex items-center gap-2"
                         >
-                          <span>{cfg.icon}</span>
+                          <RarityLevelDot rarity={r} className="h-2.5 w-2.5" />
                           {cfg.label}
                         </Label>
                       </div>

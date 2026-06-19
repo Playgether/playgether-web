@@ -38,9 +38,8 @@ export default function RoomList({
   const [showFavorites, setShowFavorites] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [localRooms, setLocalRooms] = useState<RoomCardData[]>(rooms);
-  const [occupancy, setOccupancy] = useState<Record<string, number>>(
-    initialOccupancy,
-  );
+  const [occupancy, setOccupancy] =
+    useState<Record<string, number>>(initialOccupancy);
   const [occupancyReady, setOccupancyReady] = useState(
     () =>
       rooms.length === 0 ||
