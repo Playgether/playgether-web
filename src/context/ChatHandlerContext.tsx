@@ -516,7 +516,6 @@ const ChatHandlerContextProvider = ({
               body: typeof m.body === "string" ? m.body : "",
               created_at_ms:
                 typeof m.created_at_ms === "number" ? m.created_at_ms : 0,
-              is_system: !author_user_id,
               is_system: author_user_id === 0,
               reply_to_id: replyToId,
               reply_to_username:
@@ -551,7 +550,6 @@ const ChatHandlerContextProvider = ({
       const normalized: RoomAmbienceMessage = {
         ...m,
         is_system:
-          m.is_system ?? !m.author_user_id,
           m.is_system ??
           (typeof m.author_user_id === "number" && m.author_user_id === 0),
         reply_to_id:

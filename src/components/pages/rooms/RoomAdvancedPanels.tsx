@@ -12,33 +12,26 @@ import {
   Award,
   BarChart3,
   Clock,
+  Disc3,
   Flame,
   Gamepad2,
   MessageSquare,
-  Trophy,
-  TvMinimalPlay,
-} from "lucide-react";
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
-import {
-  extractYoutubeVideoId,
-  fetchYoutubeOEmbedTitle,
-} from "@/lib/youtube";
-import { RoomModerationSanctionsPanel } from "./RoomModerationSanctionsPanel";
-import { patchChatRoomSettings } from "@/actions/chatRoomMutations";
-import { useChatHandlerContext } from "@/context/ChatHandlerContext";
-import { useRoomPermissions } from "@/context/RoomPermissionsContext";
-import { ChatRoom } from "@/types/ChatRoom";
-import {
-  Disc3,
   Music,
   Pencil,
   Plus,
   Save,
   Settings,
   Trash2,
+  Trophy,
+  TvMinimalPlay,
   X,
 } from "lucide-react";
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { RoomModerationSanctionsPanel } from "./RoomModerationSanctionsPanel";
+import { patchChatRoomSettings } from "@/actions/chatRoomMutations";
+import { useChatHandlerContext } from "@/context/ChatHandlerContext";
+import { useRoomPermissions } from "@/context/RoomPermissionsContext";
+import { ChatRoom } from "@/types/ChatRoom";
 import { MediaResolveError, resolveMediaTrack } from "@/lib/mediaResolver";
 import { isSupportedMediaUrl } from "@/lib/mediaUrls";
 
@@ -479,10 +472,8 @@ export function RoomMusicPanel({ roomName }: RoomMusicPanelProps) {
             }}
             onKeyDown={(event) => event.key === "Enter" && !busy && void addMusic()}
             placeholder="Link do YouTube, Spotify ou Deezer…"
-            disabled={busy}
-            aria-label="Link do YouTube"
-            placeholder="https://www.youtube.com/watch?v=..."
             disabled={busy || !canQueue}
+            aria-label="Link de música"
             className="flex-1 rounded-lg border border-border/60 bg-muted/70 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 disabled:opacity-60"
           />
           <button
@@ -575,11 +566,6 @@ export function RoomSettingsPanel({ room }: RoomSettingsPanelProps) {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const canManage =
-    user?.user_id != null && String(user.user_id) === String(room.owner);
-
-  const startEdit = (key: "name" | "summary") => {
-    if (!canManage) return;
   const startEdit = (key: "name" | "summary" | "slug") => {
     if (key === "slug" && !canSlug) return;
     if (key !== "slug" && !canSettings) return;

@@ -23,6 +23,8 @@ export function useRoomExpelledForList(): RoomExpelledPayload | null {
       setPayload(consumeRoomExpelledMessage());
     }
 
+    if (!slugFromQuery && !msgFromQuery && !legacyQuery) return;
+
     const url = new URL(window.location.href);
     url.searchParams.delete("expelled_slug");
     url.searchParams.delete("expelled_msg");

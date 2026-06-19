@@ -113,9 +113,6 @@ export function RoomRulesPanel({ room }: RoomDetailsPanelProps) {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const canManage =
-    user?.user_id != null && String(user.user_id) === String(room.owner);
-
   const addRule = () => {
     const value = newRule.trim();
     if (!value || !canManage) return;

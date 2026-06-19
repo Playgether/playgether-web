@@ -4,6 +4,7 @@ import { validateRoomAction } from "@/actions/validateRoom";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Clock, Heart, MessageCircle, ShieldAlert, Users } from "lucide-react";
@@ -30,6 +31,8 @@ interface RoomCardProps {
   onToggleFavorite: (roomId: number, favorite: boolean) => void;
   /** Aviso de expulsão desta sala (vindo da lista após redirect). */
   expelledNotice?: string | null;
+  /** Ocupação ainda não carregada (ex.: sala recém-criada). */
+  occupancyLoading?: boolean;
 }
 
 export default function RoomCard({
@@ -37,12 +40,18 @@ export default function RoomCard({
   isFavorite,
   onToggleFavorite,
   expelledNotice = null,
+  occupancyLoading = false,
 }: RoomCardProps) {
   const router = useRouter();
   const reduceMotion = useReducedMotion();
   const [accessError, setAccessError] = useState<string | null>(null);
   const [roomBanned, setRoomBanned] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [bannerLoaded, setBannerLoaded] = useState(!room.banner);
+
+  useEffect(() => {
+    setBannerLoaded(!room.banner);
+  }, [room.banner]);
 
   const banMessage = expelledNotice ?? accessError;
   const enterDisabled = isPending || roomBanned || Boolean(expelledNotice);
@@ -94,12 +103,25 @@ export default function RoomCard({
     >
       <div className="relative h-52 overflow-hidden bg-muted/40 sm:h-56">
         {room.banner ? (
-          <ImageComponent
-            media_id={room.banner}
-            alt={room.name}
-            className="transition-transform duration-300 hover:scale-105"
-          />
-        ) : null}
+          <>
+            {!bannerLoaded ? (
+              <Skeleton className="absolute inset-0 rounded-none" />
+            ) : null}
+            <ImageComponent
+              media_id={room.banner}
+              alt={room.name}
+              className={cn(
+                "transition-transform duration-300 hover:scale-105",
+                !bannerLoaded && "opacity-0",
+              )}
+              onLoadingComplete={() => setBannerLoaded(true)}
+            />
+          </>
+        ) : (
+          <div className="flex h-full items-center justify-center bg-muted/60">
+            <Users className="h-10 w-10 text-muted-foreground/40" />
+          </div>
+        )}
         <button
           type="button"
           onClick={() => onToggleFavorite(room.id, !isFavorite)}
@@ -178,9 +200,13 @@ export default function RoomCard({
               title={`Online agora (atualiza automaticamente). Pico histórico: ${room.peakUsers}`}
             >
               <Users className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium text-neon-green">
-                {room.onlineNow !== undefined ? room.onlineNow : "—"}
-              </span>
+              {occupancyLoading ? (
+                <Skeleton className="h-4 w-4" />
+              ) : (
+                <span className="font-medium text-neon-green">
+                  {room.onlineNow ?? 0}
+                </span>
+              )}
               <span className="text-muted-foreground">/ {room.capacity}</span>
             </div>
             <div
