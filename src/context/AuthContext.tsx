@@ -13,7 +13,9 @@ import { decodeUser } from "@/actions/decodeUser";
 import { logoutServer } from "@/actions/logout";
 import { refreshTokenServer } from "@/actions/refreshToken";
 
-const REFRESH_INTERVAL_MS = 18 * 60 * 1000; // 18 min (antes dos 20 min de expiry do access)
+// Renova 10 min antes do access token de 60 min (produção) expirar.
+// Em dev (30 dias) é mais frequente que o necessário, mas inofensivo.
+const REFRESH_INTERVAL_MS = 50 * 60 * 1000; // 50 min
 /** Mínimo entre refreshes ao voltar à aba (evita spam em alt-tab rápido). */
 const VISIBILITY_REFRESH_MIN_GAP_MS = 5 * 60 * 1000; // 5 min
 

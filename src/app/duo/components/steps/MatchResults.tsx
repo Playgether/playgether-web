@@ -31,6 +31,8 @@ import { useDuoSocket } from "../../hooks/useDuoSocket";
 import { useLiveExpiryLabel } from "../../hooks/useLiveExpiryLabel";
 import { getActiveQueues } from "../../services/duoApi";
 import { usePresenceContext } from "@/context/PresenceContext";
+import { startConversation } from "@/services/directMessages";
+import { useConversationsWidget } from "@/context/ConversationsWidgetContext";
 import { LolRankEmblemFrame } from "@/components/lol/LolRankEmblemFrame";
 import { LolLaneRoleIcon } from "@/components/lol/LolLaneRoleIcon";
 import { lolTierEmblemUrl } from "@/lib/lolRankedEmblem";
@@ -452,6 +454,8 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
   const prefs = partner.preferences as Record<string, any>;
   const slug = match.game_slug;
   const gs = (partner.game_stats ?? {}) as Record<string, any>;
+  const { openWithConversation } = useConversationsWidget();
+  const [isStartingConv, setIsStartingConv] = useState(false);
 
   const displayName = partner.first_name
     ? `${partner.first_name} ${partner.last_name}`.trim()
@@ -781,10 +785,17 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
       <div className="flex space-x-3">
         <Button
           className="flex-1 bg-gradient-primary hover:shadow-glow-primary text-primary-foreground transition-all duration-300"
-          onClick={() => (window.location.href = `/messages?user=${partner.username}`)}
+          disabled={isStartingConv}
+          onClick={async () => {
+            if (!partner.user_id) return;
+            setIsStartingConv(true);
+            const conv = await startConversation(String(partner.user_id));
+            setIsStartingConv(false);
+            if (conv) openWithConversation(conv.id);
+          }}
         >
           <MessageSquare className="w-4 h-4 mr-2" />
-          Mensagem
+          {isStartingConv ? "Abrindo..." : "Mensagem"}
         </Button>
       </div>
     </div>

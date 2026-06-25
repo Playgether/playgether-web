@@ -54,6 +54,7 @@ All colors MUST be HSL.
     /* Status colors */
     --status-online: 120 90% 45%;
     --status-away: 45 93% 47%;
+    --status-dnd: 0 90% 50%;
     --status-offline: 0 0% 45%;
 
     /* UI colors */
@@ -168,6 +169,7 @@ All colors MUST be HSL.
     /* Status colors - brighter for dark mode */
     --status-online: 127 86% 67%;
     --status-away: 45 93% 57%;
+    --status-dnd: 0 86% 60%;
     --status-offline: 0 0% 55%;
 
     /* UI colors for dark mode */
@@ -698,6 +700,11 @@ All colors MUST be HSL.
   .status-away {
     background: hsl(var(--status-away));
     box-shadow: 0 0 8px hsl(var(--status-away) / 0.6);
+  }
+
+  .status-dnd {
+    background: hsl(var(--status-dnd));
+    box-shadow: 0 0 8px hsl(var(--status-dnd) / 0.6);
   }
 
   .status-offline {

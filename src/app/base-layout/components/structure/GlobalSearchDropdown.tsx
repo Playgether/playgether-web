@@ -208,6 +208,16 @@ export function GlobalSearchDropdown() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && query.trim().length >= 2) {
+              e.preventDefault();
+              addRecentSearch(query.trim());
+              setOpen(false);
+              setQuery("");
+              setResults(null);
+              router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+            }
+          }}
           placeholder="Pesquisar"
           className="pl-12 h-11 bg-muted/50 border-border/50 rounded-xl focus:ring-2 focus:ring-primary/30 transition-all duration-300"
           autoComplete="off"

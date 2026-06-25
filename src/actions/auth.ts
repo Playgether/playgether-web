@@ -13,7 +13,7 @@ export async function loginAction(formData: FormData) {
 
   try {
     const response = await api.post("/api/token/", user);
-    const decodedAccessToken = jwt_decode<{ user_id: string | number }>(
+    const decodedAccessToken = jwt_decode<{ user_id: string | number; exp?: number }>(
       response.data.access
     );
 
@@ -21,21 +21,18 @@ export async function loginAction(formData: FormData) {
     const isProduction = process.env.NODE_ENV === "production";
 
     const cookieOptions = isProduction
-      ? {
-          httpOnly: true,
-          secure: true,
-          sameSite: "lax" as const,
-        }
-      : {
-          httpOnly: true,
-          secure: false, // false em dev
-          sameSite: "lax" as const,
-        };
+      ? { httpOnly: true, secure: true, sameSite: "lax" as const }
+      : { httpOnly: true, secure: false, sameSite: "lax" as const };
 
-    cookiesInstance.set("accessToken", response.data.access, cookieOptions);
+    // maxAge alinhado ao exp do JWT — cookie some exatamente quando o token expira
+    const accessMaxAge = decodedAccessToken.exp
+      ? Math.max(Math.floor(decodedAccessToken.exp - Date.now() / 1000), 1)
+      : 3600;
+
+    cookiesInstance.set("accessToken", response.data.access, { ...cookieOptions, maxAge: accessMaxAge });
     cookiesInstance.set("refreshToken", response.data.refresh, {
       ...cookieOptions,
-      maxAge: 60 * 60 * 24 * 30, // 30 dias (alinhado ao REFRESH_TOKEN_LIFETIME do backend)
+      maxAge: 60 * 60 * 24 * 30,
     });
     cookiesInstance.set("user_id", String(decodedAccessToken.user_id), cookieOptions);
 

@@ -4,28 +4,27 @@ import { cookies } from "next/headers";
 import { UserProps } from "@/context/AuthContext";
 import jwt_decode from "jwt-decode";
 
-// export async function decodeUser() {
-//   const user = (await cookies()).get("user");
-//   if (!user) return null;
-//   const userJson = JSON.parse(user?.value);
-//   return userJson as UserProps;
-// }
-
-type JwtPayload = UserProps & { user_id?: string };
+type JwtPayload = UserProps & { user_id?: string; exp?: number };
 
 export async function decodeUser(): Promise<UserProps | null> {
   const accessToken = (await cookies()).get("accessToken");
-
   if (!accessToken) return null;
 
-  const decodedAccessToken = jwt_decode<JwtPayload>(accessToken.value);
+  try {
+    const decoded = jwt_decode<JwtPayload>(accessToken.value);
 
-  const filteredUser: UserProps = {
-    username: decodedAccessToken.username,
-    first_name: decodedAccessToken.first_name,
-    last_name: decodedAccessToken.last_name,
-    user_id: decodedAccessToken.user_id || undefined,
-  };
+    // Token expirado — trata como ausente para o AuthContext disparar o refresh
+    if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+      return null;
+    }
 
-  return filteredUser;
+    return {
+      username: decoded.username,
+      first_name: decoded.first_name,
+      last_name: decoded.last_name,
+      user_id: decoded.user_id || undefined,
+    };
+  } catch {
+    return null;
+  }
 }

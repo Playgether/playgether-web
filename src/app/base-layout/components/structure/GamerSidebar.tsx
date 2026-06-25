@@ -17,6 +17,9 @@ import { useAuthContext } from "@/context/AuthContext";
 import { useProfileContext } from "@/context/ProfileContext";
 import { GamerSideBarItensInterface } from "../../types/structure/GamerSideBarItensInterface";
 import GamerSidbarConversationsButtons from "./GameSideBarConversationsButton";
+import { PresenceStatusDot } from "@/components/presence/PresenceStatusDot";
+import { useRouter, usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 const sidebarItems: GamerSideBarItensInterface[] = [
   { icon: <Home className="w-6 h-6" />, label: "Início", href: "/feed" },
@@ -41,6 +44,8 @@ export const GamerSidebar = () => {
   const createPostContext = useCreatePostContext();
   const { user } = useAuthContext();
   const { profile } = useProfileContext();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const initials = user
     ? (user.first_name?.[0] ?? user.username?.[0] ?? "?").toUpperCase()
@@ -50,20 +55,15 @@ export const GamerSidebar = () => {
     <Image
       src={profilePhotoToAvatarSrc(profile.profile_photo) ?? ""}
       alt={user?.username ?? ""}
-      width={56}
-      height={56}
+      width={40}
+      height={40}
       className="w-full h-full object-cover"
     />
   ) : (
     <span className="text-white font-bold text-lg leading-none">{initials}</span>
   );
 
-  const navItems: GamerSideBarItensInterface[] = [
-    ...sidebarItems,
-    ...(user
-      ? [{ icon: profileIcon, label: "Meu perfil", href: `/profile/${user.username}`, rounded: "full" as const }]
-      : []),
-  ];
+  const isProfileActive = user ? pathname?.startsWith(`/profile/${user.username}`) : false;
 
   return (
     <div className="group/sidebar fixed left-0 top-0 h-full w-20 hover:w-56 transition-[width] duration-300 ease-in-out bg-gradient-primary z-50 flex flex-col items-center py-6 border-r border-sidebar-border overflow-hidden">
@@ -90,9 +90,44 @@ export const GamerSidebar = () => {
 
       {/* Navigation Items */}
       <nav className="w-full flex-1 flex flex-col space-y-1 px-3">
-        {navItems.map((item, index) => (
+        {sidebarItems.map((item, index) => (
           <GamerSidbarConversationsButtons key={index} item={item} />
         ))}
+
+        {/* Profile item inline — precisa de controle da estrutura para o status dot */}
+        {user && (
+          <button
+            type="button"
+            aria-label="Meu perfil"
+            title="Meu perfil"
+            onClick={() => router.push(`/profile/${user.username}`)}
+            className={cn(
+              "w-full h-14 flex items-center rounded-xl transition-all duration-300",
+              "hover:bg-white/20 hover:shadow-glow-neon hover:scale-[1.02]",
+              isProfileActive
+                ? "bg-white/20 text-white shadow-glow-neon"
+                : "text-white/80 hover:text-white"
+            )}
+          >
+            <div className="w-14 h-14 flex-shrink-0 flex items-center justify-center">
+              {/* relative aqui (fora do overflow-hidden) para o dot não ser cortado */}
+              <div className="relative">
+                <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-purple-400/60 shadow-[0_0_10px_2px_rgba(168,85,247,0.35)] hover:ring-purple-300 hover:shadow-[0_0_16px_4px_rgba(168,85,247,0.55)] flex items-center justify-center">
+                  {profileIcon}
+                </div>
+                <PresenceStatusDot
+                  userId={user.user_id}
+                  allowPicker
+                  sizeClass="w-3.5 h-3.5"
+                  borderClass="border-2 border-purple-700"
+                />
+              </div>
+            </div>
+            <span className="overflow-hidden whitespace-nowrap text-sm font-medium max-w-0 opacity-0 group-hover/sidebar:max-w-xs group-hover/sidebar:opacity-100 transition-all duration-300 delay-100">
+              Meu perfil
+            </span>
+          </button>
+        )}
       </nav>
     </div>
   );

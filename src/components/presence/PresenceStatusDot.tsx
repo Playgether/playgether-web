@@ -10,8 +10,9 @@ function statusClass(s: string) {
     case "online":
       return "status-online";
     case "away":
-    case "dnd":
       return "status-away";
+    case "dnd":
+      return "status-dnd";
     default:
       return "status-offline";
   }

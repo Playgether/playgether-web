@@ -27,8 +27,13 @@ export interface SearchPost {
   id: number;
   comment: string;
   username: string;
+  name: string;
   profile_photo: string | null;
   timestamp: string;
+  has_post_media: boolean;
+  quantity_likes: number;
+  quantity_comment: number;
+  quantity_reposts: number;
 }
 
 export interface GlobalSearchResults {
@@ -38,8 +43,20 @@ export interface GlobalSearchResults {
   posts: SearchPost[];
 }
 
-export async function searchGlobal(q: string): Promise<GlobalSearchResults> {
+export interface SearchOptions {
+  limit?: number;
+  offset?: number;
+  type?: "all" | "users" | "posts" | "rooms" | "games";
+  has_media?: boolean;
+}
+
+export async function searchGlobal(q: string, options: SearchOptions = {}): Promise<GlobalSearchResults> {
   const params = new URLSearchParams({ q });
+  if (options.limit !== undefined) params.set("limit", String(options.limit));
+  if (options.offset !== undefined) params.set("offset", String(options.offset));
+  if (options.type) params.set("type", options.type);
+  if (options.has_media) params.set("has_media", "true");
+
   const resp = await apiFetch(`/api/search/?${params}`, { method: "GET" });
 
   if (!resp.ok) {
