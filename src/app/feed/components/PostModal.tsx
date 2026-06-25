@@ -31,6 +31,7 @@ import { CommentContentType } from "@/components/content_types/CommentContentTyp
 import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
 import { handleKeyDown } from "@/components/layouts/SendOnEnterKey/sendOnEnterKey";
 import { CommentActionMenu } from "./CommentActionMenu";
+import { PostPageRecommendations } from "@/app/feed/[id]/PostPageRecommendations";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -430,7 +431,7 @@ export const PostModal = ({
   };
 
   const postBodyContent = (
-    <div className="flex min-h-0 w-full flex-col sm:flex-row">
+    <div className="flex min-h-0 w-full h-full flex-col sm:flex-row">
           {/* Media Section */}
           {hasMedia && (
             <div
@@ -721,6 +722,7 @@ export const PostModal = ({
 
               {comments.data.length > 0 ? (
                 <Virtuoso
+                  style={{ flex: 1, minHeight: 0 }}
                   increaseViewportBy={200}
                   data={comments.data}
                   endReached={loadMore}
@@ -1130,7 +1132,7 @@ export const PostModal = ({
                   )}
                 />
               ) : (
-                <div className="flex items-center justify-center h-full text-center space-y-4 p-4">
+                <div className="flex-1 flex flex-col items-center justify-center text-center space-y-4 p-4">
                   {buttons.comment}
                 </div>
               )}
@@ -1222,20 +1224,15 @@ export const PostModal = ({
 
   if (fullPage) {
     return (
-      <div className="ml-0 md:ml-20 min-h-layout-main p-4 md:p-6">
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="mb-4 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      <div className="ml-0 md:ml-20">
+        <div className="mx-auto max-w-5xl px-4 pt-4 pb-10">
+          <div
+            className="bg-background/95 backdrop-blur-xl border border-primary/20 rounded-2xl overflow-hidden"
+            style={{ height: "calc(100vh - var(--layout-header-height) - 2rem)" }}
           >
-            ← Voltar ao feed
-          </button>
-        )}
-        <div
-          className="mx-auto max-w-5xl bg-background/95 backdrop-blur-xl border border-primary/20 rounded-2xl overflow-hidden"
-          style={{ height: "calc(100vh - var(--layout-header-height) - 8rem)" }}
-        >
-          {postBodyContent}
+            {postBodyContent}
+          </div>
+          <PostPageRecommendations currentPostId={postId} authorUsername={post.username} />
         </div>
         {sharables}
       </div>
