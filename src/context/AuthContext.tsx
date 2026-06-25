@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { decodeUser } from "@/actions/decodeUser";
 import { logoutServer } from "@/actions/logout";
 import { refreshTokenServer } from "@/actions/refreshToken";
+import { clearCachedPrivateKey } from "@/lib/e2e-crypto";
 
 // Renova 10 min antes do access token de 60 min (produção) expirar.
 // Em dev (30 dias) é mais frequente que o necessário, mas inofensivo.
@@ -60,6 +61,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     lastAccessRefreshAtRef.current = 0;
     if (typeof window !== "undefined") {
       localStorage.removeItem("user");
+      clearCachedPrivateKey(); // remove E2E private key on logout
     }
     await logoutServer();
     router.push("/");

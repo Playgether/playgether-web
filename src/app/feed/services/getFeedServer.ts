@@ -1,8 +1,8 @@
 import { api } from "@/services/api";
-import { cookies } from "next/headers";
+import { ensureAccessTokenCookie } from "@/actions/refreshToken";
 
 export async function getFeedServer(pageParam: string | null = null) {
-  const accessToken = (await cookies()).get("accessToken")?.value;
+  const accessToken = await ensureAccessTokenCookie();
   try {
     const response = await api.get(`/api/v1/feed/`, {
       headers: {

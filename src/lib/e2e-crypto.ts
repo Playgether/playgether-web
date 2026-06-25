@@ -118,7 +118,7 @@ export async function unwrapPrivateKey(
   const iv = combined.slice(0, IV_LENGTH);
   const ciphertext = combined.slice(IV_LENGTH);
   const pkcs8 = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, wrappingKey, ciphertext);
-  return crypto.subtle.importKey("pkcs8", pkcs8, RSA_PARAMS, false, ["decrypt"]);
+  return crypto.subtle.importKey("pkcs8", pkcs8, RSA_PARAMS, true, ["decrypt"]);
 }
 
 // ── Message encryption / decryption ──────────────────────────────────────────
@@ -199,18 +199,18 @@ export async function decryptMessage(
   return new TextDecoder().decode(plainBuf);
 }
 
-// ── Session storage (private key cache) ──────────────────────────────────────
+// ── Local storage (private key cache, persists while the user is logged in) ──
 
-const SESSION_KEY = "pgther_privkey_jwk";
+const LOCAL_KEY = "pgther_privkey_jwk";
 
 export async function cachePrivateKey(privateKey: CryptoKey): Promise<void> {
   const jwk = await crypto.subtle.exportKey("jwk", privateKey);
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify(jwk));
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(jwk));
 }
 
 export async function loadCachedPrivateKey(): Promise<CryptoKey | null> {
   try {
-    const raw = sessionStorage.getItem(SESSION_KEY);
+    const raw = localStorage.getItem(LOCAL_KEY);
     if (!raw) return null;
     const jwk = JSON.parse(raw);
     return crypto.subtle.importKey("jwk", jwk, RSA_PARAMS, false, ["decrypt"]);
@@ -220,5 +220,5 @@ export async function loadCachedPrivateKey(): Promise<CryptoKey | null> {
 }
 
 export function clearCachedPrivateKey(): void {
-  sessionStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(LOCAL_KEY);
 }

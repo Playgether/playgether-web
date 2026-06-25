@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Lock, Plus, Trash2, X as XIcon } from "lucide-react";
+import { Plus, Trash2, X as XIcon } from "lucide-react";
 import ChatHeader from "./ChatHeader";
 import ChatMessages from "./ChatMessages";
 import InputMessage from "./InputMessage";
@@ -67,7 +67,7 @@ export function ConversationsContent({
   forceSelectId,
 }: ConversationsContentProps) {
   const { user } = useAuthContext();
-  const { isReady, needsUnlock, unlock, regenerateKeys, encryptForUser, decrypt } = useE2ECrypto();
+  const { isReady, encryptForUser, decrypt } = useE2ECrypto();
   const { markRead } = useDMUnread();
 
   const [conversations, setConversations] = useState<DMConversation[]>([]);
@@ -81,14 +81,6 @@ export function ConversationsContent({
   const [messageInput, setMessageInput] = useState("");
   const [sending, setSending] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
-
-  // Unlock overlay
-  const [unlockPassword, setUnlockPassword] = useState("");
-  const [unlockError, setUnlockError] = useState(false);
-  const [unlocking, setUnlocking] = useState(false);
-  const [showRegenConfirm, setShowRegenConfirm] = useState(false);
-  const [regenerating, setRegenerating] = useState(false);
-  const [regenError, setRegenError] = useState(false);
 
   // New conversation search
   const [showNewConv, setShowNewConv] = useState(false);
@@ -143,11 +135,9 @@ export function ConversationsContent({
       setMessages([]);
       setRawMessages([]);
       seenIdsRef.current.clear();
-      if (!isReady) return;
 
       setLoadingMessages(true);
       const { results } = await getMessages(conv.id);
-      // CursorPagination retorna -timestamp (mais novo primeiro); reverter para exibir do mais antigo
       const sorted = [...results].reverse();
       setRawMessages(sorted);
 
@@ -336,115 +326,12 @@ export function ConversationsContent({
     if (selectedConversation?.id === convId) setSelectedConversation(null);
   }, [selectedConversation]);
 
-  const handleUnlock = useCallback(async () => {
-    if (!unlockPassword) return;
-    setUnlocking(true);
-    setUnlockError(false);
-    const ok = await unlock(unlockPassword);
-    setUnlocking(false);
-    if (!ok) {
-      setUnlockError(true);
-    } else {
-      setUnlockPassword("");
-      loadConversations();
-    }
-  }, [unlockPassword, unlock, loadConversations]);
-
-  const handleRegenerate = useCallback(async () => {
-    if (!unlockPassword) return;
-    setRegenerating(true);
-    setRegenError(false);
-    const ok = await regenerateKeys(unlockPassword);
-    setRegenerating(false);
-    if (!ok) {
-      setRegenError(true);
-    } else {
-      setUnlockPassword("");
-      setShowRegenConfirm(false);
-      loadConversations();
-    }
-  }, [unlockPassword, regenerateKeys, loadConversations]);
-
   // ── Prepare conversation list for sub-components ──────────────────────────
 
   // Apenas conversas com pelo menos uma mensagem aparecem na lista
   const visibleConversations = conversations.filter((c) => c.last_message !== null);
   const conversationItems: ConversationInterface[] = visibleConversations.map((c) =>
     toConversationInterface(c, decryptedPreviews[c.id] ?? null)
-  );
-
-  // ── Render: unlock panel (inline, dentro da área do chat) ───────────────
-
-  const unlockPanel = (
-    <div className="flex flex-col items-center justify-center h-full gap-3 px-8">
-      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-        <Lock className="w-6 h-6 text-primary" />
-      </div>
-      <div className="text-center">
-        <p className="text-sm font-semibold">Mensagens criptografadas</p>
-        <p className="text-xs text-muted-foreground mt-1 max-w-xs">
-          Digite a <strong>senha da sua conta</strong> para desbloquear as mensagens desta sessão.
-        </p>
-      </div>
-      <input
-        type="password"
-        value={unlockPassword}
-        onChange={(e) => { setUnlockPassword(e.target.value); setUnlockError(false); setRegenError(false); }}
-        placeholder="Senha da conta"
-        className="w-full max-w-xs px-3 py-2 rounded-lg bg-muted/50 border border-border/50 text-sm outline-none focus:border-primary/50"
-        onKeyDown={(e) => e.key === "Enter" && handleUnlock()}
-      />
-      {unlockError && (
-        <p className="text-xs text-destructive text-center">
-          Senha incorreta. Tente novamente.
-        </p>
-      )}
-      <button
-        onClick={handleUnlock}
-        disabled={unlocking || !unlockPassword}
-        className="w-full max-w-xs py-2 rounded-lg bg-gradient-primary text-white text-sm font-semibold disabled:opacity-50"
-      >
-        {unlocking ? "Desbloqueando..." : "Desbloquear"}
-      </button>
-
-      {/* Regenerate keys option */}
-      {!showRegenConfirm ? (
-        <button
-          onClick={() => setShowRegenConfirm(true)}
-          className="text-xs text-muted-foreground hover:text-primary transition-colors mt-1"
-        >
-          Esqueci a senha / Recriar chaves
-        </button>
-      ) : (
-        <div className="w-full max-w-xs space-y-2 border border-destructive/30 rounded-lg p-3 bg-destructive/5">
-          <p className="text-xs text-destructive font-medium text-center">
-            ⚠️ Atenção
-          </p>
-          <p className="text-xs text-muted-foreground text-center">
-            Isso irá recriar suas chaves de criptografia usando a senha digitada acima.
-            Mensagens anteriores não poderão ser lidas.
-          </p>
-          {regenError && (
-            <p className="text-xs text-destructive text-center">Erro ao recriar chaves. Tente novamente.</p>
-          )}
-          <div className="flex gap-2">
-            <button
-              onClick={() => { setShowRegenConfirm(false); setRegenError(false); }}
-              className="flex-1 py-1.5 rounded-lg border border-border text-xs text-muted-foreground hover:bg-muted/50"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleRegenerate}
-              disabled={regenerating || !unlockPassword}
-              className="flex-1 py-1.5 rounded-lg bg-destructive text-white text-xs font-semibold disabled:opacity-50"
-            >
-              {regenerating ? "Recriando..." : "Confirmar"}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
   );
 
   // ── Render: main layout ───────────────────────────────────────────────────
@@ -563,39 +450,23 @@ export function ConversationsContent({
         {selectedConversation ? (
           <>
             <ChatHeader selectedConversation={selectedLegacy} />
-            {!isReady ? (
-              needsUnlock ? unlockPanel : (
-                <div className="flex flex-col items-center justify-center flex-1 gap-3 px-8 text-center">
-                  <Lock className="w-8 h-8 text-muted-foreground/50" />
-                  <p className="text-sm text-muted-foreground">
-                    Criptografia E2E não configurada para esta conta.
-                  </p>
-                  <p className="text-xs text-muted-foreground/70">
-                    Faça logout e cadastre-se novamente para ativar as mensagens seguras.
-                  </p>
-                </div>
-              )
-            ) : (
-              <>
-                <ScrollArea className={chatHeight + " p-4 pt-2"}>
-                  {loadingMessages ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">Carregando...</p>
-                  ) : (
-                    <ChatMessages messages={messages} />
-                  )}
-                  <div ref={messagesEndRef} />
-                </ScrollArea>
-                <InputMessage
-                  ref={inputRef}
-                  onInput={setMessageInput}
-                  messageInput={messageInput}
-                  onSend={handleSend}
-                  disabled={sending}
-                />
-              </>
-            )}
+            <ScrollArea className={chatHeight + " p-4 pt-2"}>
+              {loadingMessages ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Carregando...</p>
+              ) : (
+                <ChatMessages messages={messages} />
+              )}
+              <div ref={messagesEndRef} />
+            </ScrollArea>
+            <InputMessage
+              ref={inputRef}
+              onInput={setMessageInput}
+              messageInput={messageInput}
+              onSend={handleSend}
+              disabled={sending || !isReady}
+            />
           </>
-        ) : needsUnlock && !isReady ? unlockPanel : (
+        ) : (
           <NoConversationSelected />
         )}
       </div>

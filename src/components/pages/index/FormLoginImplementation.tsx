@@ -14,7 +14,7 @@ import FormLoginButton from "./FormLoginButton";
 import PasswordInput from "@/components/layouts/PasswordInput";
 import { useState } from "react";
 import { LoginFormSchema } from "./LoginFormSchema";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthContext } from "@/context/AuthContext";
 import { GoogleAuthButton } from "@/components/ui/GoogleAuthButton";
@@ -33,6 +33,7 @@ export const FormLoginImplementation = ({
   errors,
   onClickAqui,
 }: FormLoginImplementationProps) => {
+  const router = useRouter();
   const [unauthorized, setUnauthorized] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { setIsLoggedOut } = useAuthContext();
@@ -63,7 +64,8 @@ export const FormLoginImplementation = ({
       setUnauthorized(false);
     }
 
-    // Unlock and cache the E2E private key while we still have the plaintext password
+    // Unlock E2E keys while we still have the plaintext password.
+    // Uses the context method so isReady is updated immediately (no page reload needed).
     if (!error) {
       const password = formData.get("password") as string;
       await unlockE2EKeys(password);
@@ -79,7 +81,7 @@ export const FormLoginImplementation = ({
       );
     }
     setIsLoggedOut(false);
-    redirect("/feed");
+    router.push("/feed");
   };
   return (
     <form

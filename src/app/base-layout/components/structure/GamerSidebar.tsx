@@ -95,14 +95,17 @@ export const GamerSidebar = () => {
         ))}
 
         {/* Profile item inline — precisa de controle da estrutura para o status dot */}
+        {/* div em vez de button porque PresenceStatusDot (allowPicker) já é um button — button-in-button é HTML inválido */}
         {user && (
-          <button
-            type="button"
+          <div
+            role="button"
+            tabIndex={0}
             aria-label="Meu perfil"
             title="Meu perfil"
             onClick={() => router.push(`/profile/${user.username}`)}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") router.push(`/profile/${user.username}`); }}
             className={cn(
-              "w-full h-14 flex items-center rounded-xl transition-all duration-300",
+              "w-full h-14 flex items-center rounded-xl transition-all duration-300 cursor-pointer",
               "hover:bg-white/20 hover:shadow-glow-neon hover:scale-[1.02]",
               isProfileActive
                 ? "bg-white/20 text-white shadow-glow-neon"
@@ -110,7 +113,6 @@ export const GamerSidebar = () => {
             )}
           >
             <div className="w-14 h-14 flex-shrink-0 flex items-center justify-center">
-              {/* relative aqui (fora do overflow-hidden) para o dot não ser cortado */}
               <div className="relative">
                 <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-purple-400/60 shadow-[0_0_10px_2px_rgba(168,85,247,0.35)] hover:ring-purple-300 hover:shadow-[0_0_16px_4px_rgba(168,85,247,0.55)] flex items-center justify-center">
                   {profileIcon}
@@ -126,7 +128,7 @@ export const GamerSidebar = () => {
             <span className="overflow-hidden whitespace-nowrap text-sm font-medium max-w-0 opacity-0 group-hover/sidebar:max-w-xs group-hover/sidebar:opacity-100 transition-all duration-300 delay-100">
               Meu perfil
             </span>
-          </button>
+          </div>
         )}
       </nav>
     </div>
