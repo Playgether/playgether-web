@@ -560,7 +560,7 @@ export function GamesCanvasContentTabs({
             ))}
           </TabsList>
 
-          <div className="bg-card rounded-lg border border-border shadow-card">
+          <div className="overflow-visible rounded-lg border border-border bg-card shadow-card">
             <TabsContent value="bio" className="p-6 space-y-4">
               <BioTab
                 profile={profile}
@@ -607,7 +607,7 @@ export function GamesCanvasContentTabs({
               />
             </TabsContent>
 
-            <TabsContent value="achievements" className="p-6">
+            <TabsContent value="achievements" className="overflow-visible p-6">
               <AchievementsTab
                 profile={profile}
                 isOwner={isOwner}

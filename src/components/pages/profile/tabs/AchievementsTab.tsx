@@ -161,6 +161,9 @@ export function AchievementsTab({
   const [syncDialogOpen, setSyncDialogOpen] = useState(false);
   const [pickSlug, setPickSlug] = useState<string>("");
   const [syncBusy, setSyncBusy] = useState(false);
+  const [hoveredAchievementId, setHoveredAchievementId] = useState<number | null>(
+    null,
+  );
   /** Slugs cujas conquistas aparecem na grade (pode combinar vários). */
   const [selectedGameSlugs, setSelectedGameSlugs] = useState<Set<string>>(
     () => new Set(),
@@ -410,6 +413,7 @@ export function AchievementsTab({
     if (!profileId || !isOwner || !pickSlug || syncBusy) return;
 
     setSyncBusy(true);
+    const loadingToastId = CustomToast.loading("Atualizando conquistas…");
     try {
       const result = await refreshProfileAchievements(profileId, pickSlug);
 
@@ -426,6 +430,8 @@ export function AchievementsTab({
       }
 
       await fetchAchievementsPage(1);
+
+      CustomToast.dismiss(loadingToastId);
 
       if (trulyNewIds.length > 0) {
         CustomToast.success(
@@ -444,6 +450,7 @@ export function AchievementsTab({
       setSyncBusy(false);
       setTimeout(() => setSyncDialogOpen(false), 320);
     } catch (e) {
+      CustomToast.dismiss(loadingToastId);
       setSyncBusy(false);
       CustomToast.error(
         e instanceof Error
@@ -596,43 +603,47 @@ export function AchievementsTab({
             : "Nenhuma conquista para os jogos e níveis selecionados nos filtros."}
         </p>
       ) : (
-        <div className="space-y-4">
-          {loadingList && displayedAchievements.length > 0 && (
-            <div className="flex justify-center py-1" aria-live="polite">
-              <Loader2
-                className="h-5 w-5 animate-spin text-muted-foreground"
-                aria-hidden
-              />
-            </div>
-          )}
-          <motion.div
-            key={`${listQueryKey}-${listPage}`}
-            className="grid grid-cols-1 md:grid-cols-2 gap-4"
-            initial="hidden"
-            animate="visible"
-            variants={{
-              hidden: {},
-              visible: { transition: { staggerChildren: 0.04 } },
-            }}
-          >
-            {displayedAchievements.map((achievement) => (
-              <AchievementCardItem
-                key={achievement.id}
-                achievement={achievement}
-                sessionNewIds={sessionNewIds}
-                showRecentBadge
-                isOwner={isOwner}
-                highlightedIds={highlightedIds}
-                highlightBusy={highlightBusy}
-                onSaveHighlights={saveHighlights}
-                onOpen={() =>
-                  onAchievementClick(
-                    toModalAchievement(achievement, sessionNewIds),
-                  )
-                }
-              />
-            ))}
-          </motion.div>
+        <div className="relative space-y-4 overflow-visible">
+            {loadingList && displayedAchievements.length > 0 && !syncBusy ? (
+              <div className="flex justify-center py-1" aria-live="polite">
+                <Loader2
+                  className="h-5 w-5 animate-spin text-muted-foreground"
+                  aria-hidden
+                />
+              </div>
+            ) : null}
+            <motion.div
+              key={`${listQueryKey}-${listPage}`}
+              className="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-visible"
+              initial="hidden"
+              animate="visible"
+              variants={{
+                hidden: {},
+                visible: { transition: { staggerChildren: 0.04 } },
+              }}
+            >
+              {displayedAchievements.map((achievement) => (
+                <AchievementCardItem
+                  key={achievement.id}
+                  achievement={achievement}
+                  sessionNewIds={sessionNewIds}
+                  showRecentBadge
+                  isOwner={isOwner}
+                  highlightedIds={highlightedIds}
+                  highlightBusy={highlightBusy}
+                  isHovered={hoveredAchievementId === achievement.id}
+                  onHoverChange={(hovered) =>
+                    setHoveredAchievementId(hovered ? achievement.id : null)
+                  }
+                  onSaveHighlights={saveHighlights}
+                  onOpen={() =>
+                    onAchievementClick(
+                      toModalAchievement(achievement, sessionNewIds),
+                    )
+                  }
+                />
+              ))}
+            </motion.div>
 
           {listMeta.count > 0 && listMeta.total_pages > 1 && (
             <div className="flex flex-col items-center gap-3 border-t border-border pt-6">
@@ -689,7 +700,7 @@ export function AchievementsTab({
               </div>
             </div>
           )}
-        </div>
+          </div>
       )}
 
       <Dialog open={filtersModalOpen} onOpenChange={setFiltersModalOpen}>
@@ -938,6 +949,8 @@ function AchievementCardItem({
   highlightedIds,
   highlightBusy,
   onSaveHighlights,
+  isHovered,
+  onHoverChange,
 }: {
   achievement: ProfileAchievementApi;
   sessionNewIds: Set<number>;
@@ -947,7 +960,10 @@ function AchievementCardItem({
   highlightedIds: number[];
   highlightBusy: boolean;
   onSaveHighlights: (nextIds: number[]) => void;
+  isHovered: boolean;
+  onHoverChange: (hovered: boolean) => void;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const recentlyUnlocked =
     showRecentBadge &&
     achievement.unlocked &&
@@ -981,6 +997,11 @@ function AchievementCardItem({
         "relative rounded-xl",
         !achievement.unlocked && "opacity-[0.72]",
       )}
+      style={{ zIndex: isHovered || menuOpen ? 200 : 1 }}
+      onMouseEnter={() => onHoverChange(true)}
+      onMouseLeave={() => {
+        if (!menuOpen) onHoverChange(false);
+      }}
     >
       <ConquistText
         title={achievement.title}
@@ -990,6 +1011,7 @@ function AchievementCardItem({
         rarity={achievement.rarity}
         recentlyUnlocked={recentlyUnlocked}
         onCardClick={onOpen}
+        interactionLocked={menuOpen}
         leadingBadgeSlot={
           isHighlighted ? (
             <div className="pointer-events-none flex shrink-0 items-center gap-1 rounded-full border border-amber-400/35 bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-100 backdrop-blur-sm">
@@ -1003,13 +1025,13 @@ function AchievementCardItem({
         }
         headerEndSlot={
           isOwner && achievement.unlocked ? (
-            <DropdownMenu>
+            <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="relative h-7 w-7 shrink-0 rounded-md text-zinc-300 opacity-90 hover:opacity-100 -translate-y-1 translate-x-1 hover:bg-black/35 hover:text-white"
+                  className="relative z-30 h-7 w-7 shrink-0 rounded-md text-zinc-300 opacity-90 hover:opacity-100 hover:bg-black/35 hover:text-white"
                   disabled={highlightBusy}
                   aria-label="Opções da conquista"
                   onClick={(e) => e.stopPropagation()}
@@ -1017,18 +1039,25 @@ function AchievementCardItem({
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuContent
+                align="end"
+                sideOffset={2}
+                className="z-[500] w-52"
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+              >
                 {isHighlighted ? (
                   <DropdownMenuItem
                     className="cursor-pointer"
                     disabled={highlightBusy}
-                    onClick={() =>
+                    onClick={(e) => {
+                      e.stopPropagation();
                       onSaveHighlights(
                         highlightedIds.filter(
                           (id) => id !== Number(achievement.id),
                         ),
-                      )
-                    }
+                      );
+                    }}
                   >
                     Remover destaque
                   </DropdownMenuItem>
@@ -1036,14 +1065,15 @@ function AchievementCardItem({
                   <DropdownMenuItem
                     className="cursor-pointer"
                     disabled={highlightBusy || atCapacity}
-                    onClick={() =>
+                    onClick={(e) => {
+                      e.stopPropagation();
                       onSaveHighlights(
                         [...highlightedIds, Number(achievement.id)].slice(
                           0,
                           3,
                         ),
-                      )
-                    }
+                      );
+                    }}
                   >
                     Destacar conquista
                     {atCapacity ? " (máx. 3)" : ""}
