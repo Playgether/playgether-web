@@ -94,6 +94,12 @@ export function GamesLibraryTab({
       return;
     }
 
+    const steamConnectedParam = searchParams?.get("steam_connected");
+    if (steamConnectedParam === "1") {
+      steamStatusCacheByProfileId.delete(profile.id);
+      steamStatusPromiseByProfileId.delete(profile.id);
+    }
+
     const profileId = profile.id;
     const cached = steamStatusCacheByProfileId.get(profileId);
     if (cached !== undefined) {
@@ -124,7 +130,7 @@ export function GamesLibraryTab({
 
     steamStatusPromiseByProfileId.set(profileId, p);
     setSteamStateFromPromise(p, setSteamStatus);
-  }, [profile?.id]);
+  }, [profile?.id, searchParams]);
 
   const handleConnectSteam = async () => {
     const currentSearch = searchParams?.toString() ?? "";

@@ -198,6 +198,18 @@ export function GamesCanvasContentTabs({
   }, [searchParams, pathname, router]);
 
   useEffect(() => {
+    const steamConnected = searchParams?.get("steam_connected");
+    if (steamConnected !== "1") return;
+
+    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    params.delete("steam_connected");
+    const newSearch = params.toString();
+    const basePath = pathname ?? "";
+    const newUrl = newSearch ? `${basePath}?${newSearch}` : basePath;
+    router.replace(newUrl, { scroll: false });
+  }, [searchParams, pathname, router]);
+
+  useEffect(() => {
     if (!profile?.id) {
       setMilestones([]);
       setMilestonesNextPage(null);

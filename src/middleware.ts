@@ -9,6 +9,11 @@ export function middleware(request: NextRequest) {
 
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
 
+  // Retorno OAuth Steam: renova JWT no cliente antes de abrir o perfil.
+  if (pathname === "/auth/steam/return") {
+    return NextResponse.next();
+  }
+
   if (isPublicRoute && hasRefreshToken) {
     return NextResponse.redirect(new URL("/feed", request.url));
   }
