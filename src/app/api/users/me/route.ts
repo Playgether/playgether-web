@@ -11,6 +11,7 @@ export interface MeResponse {
   can_change_username: boolean;
   username_days_remaining: number;
   username_changed_at: string | null;
+  totp_enabled: boolean;
 }
 
 export async function GET() {

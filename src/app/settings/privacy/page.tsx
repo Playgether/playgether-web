@@ -11,6 +11,7 @@ import { SettingsToggleRow } from "../components/SettingsToggleRow";
 import { SettingsSelectRow } from "../components/SettingsSelectRow";
 import { getPreferences, patchPreferences, type UserPreferences } from "@/services/userPreferences";
 import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
+import { TwoFAVerifyModal } from "@/components/ui/TwoFAVerifyModal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -207,6 +208,8 @@ export default function PrivacySettingsPage() {
   const [prefs, setPrefs] = useState<UserPreferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [confirmPrivate, setConfirmPrivate] = useState(false);
+  const [privateNeedsTotp, setPrivateNeedsTotp] = useState(false);
+  const [pendingPrivateValue, setPendingPrivateValue] = useState(false);
 
   useEffect(() => {
     getPreferences()
@@ -215,27 +218,44 @@ export default function PrivacySettingsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const update = async (patch: Partial<UserPreferences>) => {
+  const update = async (patch: Partial<UserPreferences>, totpCode?: string) => {
     if (!prefs) return;
     const prev = prefs;
     setPrefs({ ...prefs, ...patch });
     try {
-      const updated = await patchPreferences(patch);
+      const updated = await patchPreferences(patch, totpCode);
       setPrefs(updated);
-    } catch {
+    } catch (err: any) {
+      if (err?.requires_2fa) {
+        setPrefs(prev);
+        setPendingPrivateValue(patch.private_account!);
+        setPrivateNeedsTotp(true);
+        return;
+      }
       setPrefs(prev);
       CustomToast.error("Erro ao salvar preferência.");
     }
   };
 
   const handlePrivateAccountToggle = (value: boolean) => {
-    if (value) setConfirmPrivate(true);
+    if (value) { setConfirmPrivate(true); }
     else update({ private_account: false });
   };
 
   return (
     <>
       <CustomToaster />
+
+      <TwoFAVerifyModal
+        open={privateNeedsTotp}
+        onOpenChange={setPrivateNeedsTotp}
+        title="Confirmar alteração de privacidade"
+        description="Informe o código 2FA para confirmar a alteração da visibilidade da conta."
+        onConfirm={async (code) => {
+          setPrivateNeedsTotp(false);
+          await update({ private_account: pendingPrivateValue }, code);
+        }}
+      />
 
       <AlertDialog open={confirmPrivate} onOpenChange={setConfirmPrivate}>
         <AlertDialogContent className="bg-card border-border/50">

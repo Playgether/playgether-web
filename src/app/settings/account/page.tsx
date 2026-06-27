@@ -23,6 +23,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { TwoFAVerifyModal } from "@/components/ui/TwoFAVerifyModal";
 import type { MeResponse } from "@/app/api/users/me/route";
 
 export default function AccountSettingsPage() {
@@ -51,6 +52,10 @@ export default function AccountSettingsPage() {
   const [usernameModalOpen, setUsernameModalOpen] = useState(false);
   const [newUsername, setNewUsername] = useState("");
   const [savingUsername, setSavingUsername] = useState(false);
+
+  // 2FA gates for each sensitive action
+  const [emailNeedsTotp, setEmailNeedsTotp] = useState(false);
+  const [usernameNeedsTotp, setUsernameNeedsTotp] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -100,7 +105,7 @@ export default function AccountSettingsPage() {
     }
   };
 
-  const handleChangeEmail = async () => {
+  const handleChangeEmail = async (totpCode?: string) => {
     if (!newEmail.trim()) { CustomToast.warning("Informe o novo e-mail."); return; }
     setSavingEmail(true);
     try {
@@ -108,12 +113,16 @@ export default function AccountSettingsPage() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ new_email: newEmail.trim(), current_password: emailPassword }),
+        body: JSON.stringify({ new_email: newEmail.trim(), current_password: emailPassword, totp_code: totpCode ?? "" }),
       });
-      const data = (await res.json()) as { detail?: string };
-      if (!res.ok) { CustomToast.error(data.detail ?? "Erro ao alterar e-mail."); return; }
+      const data = (await res.json()) as { detail?: string; requires_2fa?: boolean };
+      if (!res.ok) {
+        if (data.requires_2fa) { setEmailNeedsTotp(true); return; }
+        CustomToast.error(data.detail ?? "Erro ao alterar e-mail."); return;
+      }
       await refreshMe();
       setEmailModalOpen(false);
+      setEmailNeedsTotp(false);
       setNewEmail("");
       setEmailPassword("");
       CustomToast.success("E-mail alterado com sucesso!");
@@ -124,7 +133,7 @@ export default function AccountSettingsPage() {
     }
   };
 
-  const handleChangeUsername = async () => {
+  const handleChangeUsername = async (totpCode?: string) => {
     if (!newUsername.trim()) { CustomToast.warning("Informe o novo username."); return; }
     setSavingUsername(true);
     try {
@@ -132,13 +141,17 @@ export default function AccountSettingsPage() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ new_username: newUsername.trim() }),
+        body: JSON.stringify({ new_username: newUsername.trim(), totp_code: totpCode ?? "" }),
       });
-      const data = (await res.json()) as { detail?: string; username?: string };
-      if (!res.ok) { CustomToast.error(data.detail ?? "Erro ao alterar username."); return; }
+      const data = (await res.json()) as { detail?: string; username?: string; requires_2fa?: boolean };
+      if (!res.ok) {
+        if (data.requires_2fa) { setUsernameNeedsTotp(true); return; }
+        CustomToast.error(data.detail ?? "Erro ao alterar username."); return;
+      }
       await refreshMe();
       await fetchProfile();
       setUsernameModalOpen(false);
+      setUsernameNeedsTotp(false);
       setNewUsername("");
       CustomToast.success("Username alterado com sucesso!");
     } catch {
@@ -168,6 +181,22 @@ export default function AccountSettingsPage() {
   return (
     <>
       <CustomToaster />
+
+      {/* 2FA modals for sensitive actions */}
+      <TwoFAVerifyModal
+        open={emailNeedsTotp}
+        onOpenChange={setEmailNeedsTotp}
+        title="Confirmar mudança de e-mail"
+        description="Informe o código 2FA para confirmar a alteração de e-mail."
+        onConfirm={async (code) => { setEmailNeedsTotp(false); await handleChangeEmail(code); }}
+      />
+      <TwoFAVerifyModal
+        open={usernameNeedsTotp}
+        onOpenChange={setUsernameNeedsTotp}
+        title="Confirmar mudança de username"
+        description="Informe o código 2FA para confirmar a alteração de username."
+        onConfirm={async (code) => { setUsernameNeedsTotp(false); await handleChangeUsername(code); }}
+      />
 
       {/* Email change modal */}
       <Dialog open={emailModalOpen} onOpenChange={(o) => { setEmailModalOpen(o); if (!o) { setNewEmail(""); setEmailPassword(""); } }}>
@@ -227,7 +256,7 @@ export default function AccountSettingsPage() {
                 Cancelar
               </Button>
               <Button
-                onClick={handleChangeEmail}
+                onClick={() => handleChangeEmail()}
                 disabled={savingEmail}
                 className="rounded-xl bg-gradient-primary hover:shadow-glow-primary transition-all"
               >
@@ -284,7 +313,7 @@ export default function AccountSettingsPage() {
                 Cancelar
               </Button>
               <Button
-                onClick={handleChangeUsername}
+                onClick={() => handleChangeUsername()}
                 disabled={savingUsername}
                 className="rounded-xl bg-gradient-primary hover:shadow-glow-primary transition-all"
               >

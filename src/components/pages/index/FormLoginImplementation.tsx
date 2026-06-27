@@ -3,7 +3,7 @@ import InputLayout from "../../layouts/InputLayout";
 import { WrongPasswordComponent } from "./WrongPassword";
 import NoHaveAccount from "./NoHaveAccount";
 import { UseFormHandleSubmit, FieldErrors } from "react-hook-form";
-import { loginAction } from "@/actions/auth";
+import { loginAction, completeTwoFALogin } from "@/actions/auth";
 import { unlockE2EKeys } from "@/context/E2ECryptoContext";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import {
@@ -12,12 +12,16 @@ import {
 } from "@/error/custom-toaster/enum";
 import FormLoginButton from "./FormLoginButton";
 import PasswordInput from "@/components/layouts/PasswordInput";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { LoginFormSchema } from "./LoginFormSchema";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthContext } from "@/context/AuthContext";
 import { GoogleAuthButton } from "@/components/ui/GoogleAuthButton";
+import { ShieldCheck, Loader2, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface FormLoginImplementationProps {
   handleSubmit: UseFormHandleSubmit<any | undefined>;
@@ -38,9 +42,22 @@ export const FormLoginImplementation = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { setIsLoggedOut } = useAuthContext();
   const LoginUserSchema = LoginFormSchema();
-  const [validationErrors, setValidationErrors] = useState<
-    Record<string, { message: string }>
-  >({});
+  const [validationErrors, setValidationErrors] = useState<Record<string, { message: string }>>({});
+
+  // 2FA step
+  const [pendingToken, setPendingToken] = useState<string | null>(null);
+  const [totpCode, setTotpCode] = useState("");
+  const [trustDevice, setTrustDevice] = useState(false);
+  const [completing2FA, setCompleting2FA] = useState(false);
+  const totpRef = useRef<HTMLInputElement>(null);
+  const pendingPasswordRef = useRef<string>("");
+
+  useEffect(() => {
+    if (pendingToken) {
+      setTotpCode("");
+      setTimeout(() => totpRef.current?.focus(), 100);
+    }
+  }, [pendingToken]);
 
   const clientAction = async (formData: FormData) => {
     const newUser = {
@@ -49,40 +66,136 @@ export const FormLoginImplementation = ({
     };
     const result = LoginUserSchema.safeParse(newUser);
     if (!result.success) {
-      const errors: Record<string, { message: string }> = {};
+      const errs: Record<string, { message: string }> = {};
       result.error.issues.forEach((issue) => {
-        errors[issue.path[0]] = { message: issue.message };
+        errs[issue.path[0]] = { message: issue.message };
       });
-      setValidationErrors(errors);
+      setValidationErrors(errs);
       return;
     }
-    const { error } = await loginAction(formData);
+
+    const { error, pending_token } = await loginAction(formData);
+
+    if (error === "requires_2fa" && pending_token) {
+      pendingPasswordRef.current = formData.get("password") as string;
+      setPendingToken(pending_token);
+      return;
+    }
+
     if (error === "wrong_password") {
       setUnauthorized(true);
       return;
-    } else {
-      setUnauthorized(false);
     }
+    setUnauthorized(false);
 
-    // Unlock E2E keys while we still have the plaintext password.
-    // Uses the context method so isReady is updated immediately (no page reload needed).
     if (!error) {
       const password = formData.get("password") as string;
       await unlockE2EKeys(password);
     }
 
     if (error && error !== "wrong_password") {
-      CustomToast.error(
-        "Oops, parece que algo deu errado com a sua requisição",
-        {
-          description: CustomToastErrorMessages.wrongAuthRequest,
-          duration: CustomToastProps.defaultDuration,
-        }
-      );
+      CustomToast.error("Oops, parece que algo deu errado com a sua requisição", {
+        description: CustomToastErrorMessages.wrongAuthRequest,
+        duration: CustomToastProps.defaultDuration,
+      });
     }
     setIsLoggedOut(false);
     router.push("/feed");
   };
+
+  const handleComplete2FA = async () => {
+    if (!pendingToken || totpCode.length < 6) return;
+    setCompleting2FA(true);
+    try {
+      const { error } = await completeTwoFALogin(pendingToken, totpCode, trustDevice);
+      if (error) {
+        CustomToast.error(error);
+        return;
+      }
+      // Unlock E2E keys with the saved password
+      if (pendingPasswordRef.current) {
+        await unlockE2EKeys(pendingPasswordRef.current);
+      }
+      setIsLoggedOut(false);
+      router.push("/feed");
+    } finally {
+      setCompleting2FA(false);
+    }
+  };
+
+  // ── 2FA Step ────────────────────────────────────────────────────────────────
+  if (pendingToken) {
+    return (
+      <div className="space-y-5">
+        <CustomToaster />
+        <div className="flex flex-col items-center gap-2 text-center">
+          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+            <ShieldCheck className="w-6 h-6 text-primary" />
+          </div>
+          <h3 className="text-base font-semibold text-foreground">Verificação em dois fatores</h3>
+          <p className="text-sm text-muted-foreground">
+            Informe o código do seu aplicativo autenticador.
+          </p>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium">Código 2FA</Label>
+          <Input
+            ref={totpRef}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={6}
+            value={totpCode}
+            onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            placeholder="000000"
+            className="bg-background/40 border border-border/60 text-center text-2xl tracking-[0.4em] font-mono"
+            onKeyDown={(e) => e.key === "Enter" && handleComplete2FA()}
+          />
+        </div>
+
+        <label className={`flex items-center gap-3 cursor-pointer px-3 py-2.5 rounded-xl border transition-all duration-200
+          ${trustDevice
+            ? "border-primary/60 bg-gradient-to-r from-primary/10 to-secondary/10 shadow-[0_0_8px_rgba(var(--primary),0.15)]"
+            : "border-border/40 bg-background/30 hover:border-border hover:bg-muted/20"
+          }`}>
+          <input
+            type="checkbox"
+            checked={trustDevice}
+            onChange={(e) => setTrustDevice(e.target.checked)}
+            className="sr-only"
+          />
+          <div className={`shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200
+            ${trustDevice ? "border-primary bg-gradient-primary" : "border-border/60 bg-transparent"}`}>
+            {trustDevice && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+          </div>
+          <span className={`text-sm leading-tight transition-colors duration-200 ${trustDevice ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+            Confiar neste dispositivo por 30 dias
+          </span>
+        </label>
+
+        <Button
+          className="w-full bg-gradient-primary hover:shadow-glow-primary transition-all duration-300"
+          onClick={handleComplete2FA}
+          disabled={completing2FA || totpCode.length < 6}
+        >
+          {completing2FA
+            ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Verificando...</>
+            : "Confirmar"}
+        </Button>
+
+        <button
+          type="button"
+          onClick={() => { setPendingToken(null); setTotpCode(""); }}
+          className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors text-center"
+        >
+          ← Voltar ao login
+        </button>
+      </div>
+    );
+  }
+
+  // ── Normal login form ────────────────────────────────────────────────────────
   return (
     <form
       className="space-y-5"
@@ -100,9 +213,7 @@ export const FormLoginImplementation = ({
     >
       <CustomToaster />
       {unauthorized && (
-        <WrongPasswordComponent
-          wrongPassword={"Email ou senha incorreto(s)"}
-        />
+        <WrongPasswordComponent wrongPassword={"Email ou senha incorreto(s)"} />
       )}
       <div className="space-y-1">
         <ErrosInput field={validationErrors.email || errors.email} />
@@ -135,7 +246,6 @@ export const FormLoginImplementation = ({
       </div>
       <FormLoginButton pending={isSubmitting} />
 
-      {/* Divider */}
       <div className="flex items-center gap-3">
         <div className="flex-1 h-px bg-border/50" />
         <span className="text-xs text-muted-foreground">ou</span>

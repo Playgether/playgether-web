@@ -36,15 +36,20 @@ export async function getPreferences(): Promise<UserPreferences> {
   return resp.json();
 }
 
-export async function patchPreferences(data: PreferencesPatch): Promise<UserPreferences> {
+export async function patchPreferences(data: PreferencesPatch, totpCode?: string): Promise<UserPreferences> {
+  const body: Record<string, unknown> = { ...data };
+  if (totpCode) body.totp_code = totpCode;
+
   const resp = await apiFetch("/api/preferences/", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+    body: JSON.stringify(body),
   });
   if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
-    throw new Error((err as any)?.detail ?? "Failed to update preferences");
+    const err = await resp.json().catch(() => ({})) as { detail?: string; requires_2fa?: boolean };
+    const error = new Error(err.detail ?? "Failed to update preferences") as Error & { requires_2fa?: boolean };
+    if (err.requires_2fa) error.requires_2fa = true;
+    throw error;
   }
   return resp.json();
 }

@@ -6,7 +6,7 @@ export function getProfileInitialsFromDisplayName(
   displayName: string,
   usernameFallback?: string,
 ): string {
-  const trimmed = displayName.trim();
+  const trimmed = (displayName ?? "").trim();
   if (trimmed) {
     const parts = trimmed.split(/\s+/).filter(Boolean);
     if (parts.length >= 2) {
