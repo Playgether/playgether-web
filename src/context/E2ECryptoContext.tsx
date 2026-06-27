@@ -86,7 +86,8 @@ export function E2ECryptoProvider({ children }: { children: React.ReactNode }) {
   // On mount: try localStorage first. No lock screen — auto-unlock happens at login.
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+
+    const tryLoad = async () => {
       const cached = await loadCachedPrivateKey();
       if (cancelled) return;
       if (cached) {
@@ -94,10 +95,18 @@ export function E2ECryptoProvider({ children }: { children: React.ReactNode }) {
         setIsReady(true);
         setNeedsUnlock(false);
       }
-      // If no cached key, leave isReady=false — messages show 🔒 individually.
-      // The user unlocks at login via unlockOnLogin/unlockE2EKeys.
-    })();
-    return () => { cancelled = true; };
+    };
+
+    tryLoad();
+
+    // Recarrega quando unlockE2EKeys (login standalone) cacheia a chave no mesmo tab
+    const handleKeyCached = () => { tryLoad(); };
+    window.addEventListener("pgther-key-cached", handleKeyCached);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("pgther-key-cached", handleKeyCached);
+    };
   }, []);
 
   /**
@@ -276,21 +285,20 @@ export async function unlockE2EKeys(password: string): Promise<void> {
       return;
     }
 
-    // Sem chaves → gera novo par (primeira vez)
-    if (!public_key) {
-      const keyPair = await generateKeyPair();
-      const exportedPublicKey = await exportPublicKey(keyPair.publicKey);
-      const salt = generateSalt();
-      const wrappedPrivateKey = await wrapPrivateKey(keyPair.privateKey, password, salt);
-      await fetch("/api/users/upload-keys", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ public_key: exportedPublicKey, encrypted_private_key: wrappedPrivateKey, key_salt: salt }),
-      });
-      await cachePrivateKey(keyPair.privateKey);
-    }
+    // Sem private key no servidor → gera novo par (primeira vez OU estado parcial)
+    const keyPair = await generateKeyPair();
+    const exportedPublicKey = await exportPublicKey(keyPair.publicKey);
+    const salt = generateSalt();
+    const wrappedPrivateKey = await wrapPrivateKey(keyPair.privateKey, password, salt);
+    const uploadRes = await fetch("/api/users/upload-keys", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ public_key: exportedPublicKey, encrypted_private_key: wrappedPrivateKey, key_salt: salt }),
+    });
+    if (!uploadRes.ok) return;
+    await cachePrivateKey(keyPair.privateKey);
   } catch {
-    // silently ignore
+    // API inacessível — silencioso
   }
 }

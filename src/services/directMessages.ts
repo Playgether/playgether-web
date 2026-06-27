@@ -1,5 +1,3 @@
-import { api } from "./api";
-
 export interface DMParticipant {
   id: string;
   username: string;
@@ -30,10 +28,21 @@ export interface DMConversation {
   updated_at: string;
 }
 
+export interface PaginatedMessages {
+  results: DMMessage[];
+  next: string | null;
+  previous: string | null;
+}
+
+async function apiFetch(path: string, init?: RequestInit) {
+  return fetch(path, { credentials: "include", ...init });
+}
+
 export async function getConversations(): Promise<DMConversation[]> {
   try {
-    const res = await api.get("/api/v1/dm/conversations/", { withCredentials: true });
-    return res.data;
+    const res = await apiFetch("/api/dm/conversations");
+    if (!res.ok) return [];
+    return res.json();
   } catch {
     return [];
   }
@@ -41,21 +50,16 @@ export async function getConversations(): Promise<DMConversation[]> {
 
 export async function startConversation(userId: string): Promise<DMConversation | null> {
   try {
-    const res = await api.post(
-      "/api/v1/dm/conversations/start/",
-      { user_id: userId },
-      { withCredentials: true }
-    );
-    return res.data;
+    const res = await apiFetch("/api/dm/conversations/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: userId }),
+    });
+    if (!res.ok) return null;
+    return res.json();
   } catch {
     return null;
   }
-}
-
-export interface PaginatedMessages {
-  results: DMMessage[];
-  next: string | null;
-  previous: string | null;
 }
 
 export async function getMessages(
@@ -63,12 +67,12 @@ export async function getMessages(
   cursor?: string
 ): Promise<PaginatedMessages> {
   try {
-    const params = cursor ? { cursor } : {};
-    const res = await api.get(`/api/v1/dm/conversations/${conversationId}/messages/`, {
-      withCredentials: true,
-      params,
-    });
-    return res.data;
+    const url = cursor
+      ? `/api/dm/conversations/${conversationId}/messages?cursor=${encodeURIComponent(cursor)}`
+      : `/api/dm/conversations/${conversationId}/messages`;
+    const res = await apiFetch(url);
+    if (!res.ok) return { results: [], next: null, previous: null };
+    return res.json();
   } catch {
     return { results: [], next: null, previous: null };
   }
@@ -76,7 +80,7 @@ export async function getMessages(
 
 export async function markConversationRead(conversationId: string): Promise<void> {
   try {
-    await api.post(`/api/v1/dm/conversations/${conversationId}/read/`, {}, { withCredentials: true });
+    await apiFetch(`/api/dm/conversations/${conversationId}/read`, { method: "POST" });
   } catch {
     // ignore
   }
@@ -84,8 +88,8 @@ export async function markConversationRead(conversationId: string): Promise<void
 
 export async function deleteConversation(conversationId: string): Promise<boolean> {
   try {
-    await api.delete(`/api/v1/dm/conversations/${conversationId}/delete/`);
-    return true;
+    const res = await apiFetch(`/api/dm/conversations/${conversationId}`, { method: "DELETE" });
+    return res.ok;
   } catch {
     return false;
   }
@@ -93,8 +97,10 @@ export async function deleteConversation(conversationId: string): Promise<boolea
 
 export async function getUserPublicKey(userId: string): Promise<string | null> {
   try {
-    const res = await api.get(`/api/v1/users/${userId}/public-key/`, { withCredentials: true });
-    return res.data.public_key ?? null;
+    const res = await apiFetch(`/api/users/${userId}/public-key`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.public_key ?? null;
   } catch {
     return null;
   }

@@ -206,6 +206,10 @@ const LOCAL_KEY = "pgther_privkey_jwk";
 export async function cachePrivateKey(privateKey: CryptoKey): Promise<void> {
   const jwk = await crypto.subtle.exportKey("jwk", privateKey);
   localStorage.setItem(LOCAL_KEY, JSON.stringify(jwk));
+  // Notifica o E2ECryptoProvider (mesmo tab) para recarregar a chave imediatamente
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("pgther-key-cached"));
+  }
 }
 
 export async function loadCachedPrivateKey(): Promise<CryptoKey | null> {
@@ -213,7 +217,8 @@ export async function loadCachedPrivateKey(): Promise<CryptoKey | null> {
     const raw = localStorage.getItem(LOCAL_KEY);
     if (!raw) return null;
     const jwk = JSON.parse(raw);
-    return crypto.subtle.importKey("jwk", jwk, RSA_PARAMS, false, ["decrypt"]);
+    const key = await crypto.subtle.importKey("jwk", jwk, RSA_PARAMS, false, ["decrypt"]);
+    return key;
   } catch {
     return null;
   }

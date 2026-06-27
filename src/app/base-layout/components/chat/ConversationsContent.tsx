@@ -298,8 +298,9 @@ export function ConversationsContent({
     if (!q.trim()) { setSearchResults([]); return; }
     setSearching(true);
     try {
-      const res = await api.get(`/api/v1/users/?search=${encodeURIComponent(q)}`, { withCredentials: true });
-      const data = Array.isArray(res.data) ? res.data : (res.data?.results ?? []);
+      const res = await fetch(`/api/users/search?search=${encodeURIComponent(q)}`, { credentials: "include" });
+      const json = await res.json();
+      const data = Array.isArray(json) ? json : (json?.results ?? []);
       setSearchResults(data.slice(0, 8));
     } catch {
       setSearchResults([]);
