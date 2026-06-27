@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { useAuthContext } from "@/context/AuthContext";
 import { useChatHandlerContext } from "@/context/ChatHandlerContext";
 import { useRoomEventSession } from "@/context/RoomEventSessionContext";
-import { extractYoutubeVideoId, fetchYoutubeOEmbedMeta } from "@/lib/youtube";
+import { useRoomPermissions } from "@/context/RoomPermissionsContext";
 import { ChatRoom } from "@/types/ChatRoom";
 import type { RoomEventParticipant } from "@/types/RoomEvents";
 import { RoomEventType } from "@/types/RoomEvents";
-import { CalendarDays, Clock, Loader2, Sparkles } from "lucide-react";
+import { Clock, Gamepad2, Loader2, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 
 const TYPE_LABEL: Record<RoomEventType, string> = {
@@ -18,9 +18,12 @@ const TYPE_LABEL: Record<RoomEventType, string> = {
   button_quiz: "Button Quiz",
 };
 
+/** Modos disponíveis ao criar um novo jogo (quiz eliminatório desativado por enquanto). */
+const CREATABLE_EVENT_TYPES: RoomEventType[] = ["vote_best", "button_quiz"];
+
 /** Mesmo texto conceitual enviado ao chat ao iniciar (versão curta na UI). */
 const EVENT_TYPE_HELP: Record<RoomEventType, string> = {
-  vote_best: "Rodadas com opções para votar no favorito até fechar o resultado.",
+  vote_best: "Crie algo por rodada, vote no melhor e dispute pontos. Votação obrigatória.",
   quiz_elimination: "Perguntas com eliminação: quem erra sai até restarem os finalistas.",
   button_quiz: "Rodadas rápidas de perguntas; dispute pelo botão conforme as rodadas.",
 };
@@ -51,24 +54,21 @@ function statusLabel(status: ReturnType<typeof guestInviteStatus>): string {
 
 export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
   const { user } = useAuthContext();
+  const { can } = useRoomPermissions();
+  const canCreateGames = can("games.create");
   const { refreshActiveEvent, activeEvent, isOrganizer, myParticipation } = useRoomEventSession();
-  const {
-    onlineUsers,
-    roomAmbience,
-    sendRoomAmbience,
-    roomAmbienceError,
-    clearRoomAmbienceError,
-  } = useChatHandlerContext();
+  const { onlineUsers } = useChatHandlerContext();
   const [title, setTitle] = useState("");
   const [eventType, setEventType] = useState<RoomEventType>("vote_best");
   const [rounds, setRounds] = useState(5);
   const [buttonAnswerSec, setButtonAnswerSec] = useState(60);
+  const [voteBestRounds, setVoteBestRounds] = useState(3);
+  const [voteBestCreationSec, setVoteBestCreationSec] = useState(60);
+  const [voteBestVoteSec, setVoteBestVoteSec] = useState(60);
   const [message, setMessage] = useState<string | null>(null);
   const [recruitmentStartError, setRecruitmentStartError] = useState<string | null>(null);
   const [insufficientParticipantsMessage, setInsufficientParticipantsMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [ambienceUrl, setAmbienceUrl] = useState("");
-  const [ambienceBusy, setAmbienceBusy] = useState(false);
   const [nowTick, setNowTick] = useState(() => Date.now());
 
   const hasBlockingEvent = Boolean(
@@ -136,7 +136,7 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
   }, [activeEvent?.id, activeEvent?.status]);
 
   const handleCreate = () => {
-    if (!title.trim()) return;
+    if (!title.trim() || !canCreateGames) return;
     startTransition(async () => {
       setRecruitmentStartError(null);
       setInsufficientParticipantsMessage(null);
@@ -150,6 +150,11 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
         const sec = Math.min(120, Math.max(15, Math.round(buttonAnswerSec)));
         payload.answer_time_sec = sec;
       }
+      if (eventType === "vote_best") {
+        payload.rounds_total = Math.min(10, Math.max(1, Math.round(voteBestRounds)));
+        payload.answer_time_sec = Math.min(120, Math.max(5, Math.round(voteBestCreationSec)));
+        payload.vote_time_sec = Math.min(300, Math.max(30, Math.round(voteBestVoteSec)));
+      }
       const result = await createRoomEvent(payload);
       if (!result.ok) {
         setMessage(result.error);
@@ -161,29 +166,28 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
     });
   };
 
-  const handleStartAmbience = async () => {
-    clearRoomAmbienceError();
-    const videoId = extractYoutubeVideoId(ambienceUrl.trim());
-    if (!videoId) {
-      return;
-    }
-    setAmbienceBusy(true);
-    try {
-      const meta = await fetchYoutubeOEmbedMeta(videoId);
-      sendRoomAmbience({
-        action: "create",
-        video_id: videoId,
-        title: meta.title,
-        channel_name: meta.channelName,
-        channel_url: meta.channelUrl,
-        channel_thumbnail: meta.channelThumbnail,
-        channel_avatar_url: meta.channelAvatarUrl,
-      });
-      setAmbienceUrl("");
-    } finally {
-      setAmbienceBusy(false);
-    }
-  };
+  const canViewGames =
+    canCreateGames ||
+    Boolean(
+      activeEvent &&
+        (activeEvent.status === "running" ||
+          activeEvent.status === "recruiting" ||
+          activeEvent.status === "finished"),
+    );
+
+  if (!canViewGames) {
+    return (
+      <div className="flex h-full min-h-0 flex-col items-center justify-center gap-3 bg-gradient-to-b from-muted/15 to-background p-8 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/20">
+          <Gamepad2 className="h-7 w-7" />
+        </div>
+        <h2 className="text-lg font-bold text-foreground">Jogos</h2>
+        <p className="max-w-sm text-sm text-muted-foreground">
+          Não há nenhum jogo acontecendo no momento.
+        </p>
+      </div>
+    );
+  }
 
   const recruitingHeader =
     activeEvent?.status === "recruiting" && activeEvent.title ? (
@@ -195,9 +199,9 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
       </>
     ) : (
       <>
-        <h2 className="text-xl font-bold tracking-tight">Criar evento</h2>
+        <h2 className="text-xl font-bold tracking-tight">Criar jogo</h2>
         <p className="text-sm text-muted-foreground">
-          Escolha o modo e o nome. Quem estiver na sala recebe um convite; quem aceitar entra no evento.
+          Escolha o modo e o nome. Quem estiver na sala recebe um convite; quem aceitar entra no jogo.
         </p>
       </>
     );
@@ -207,7 +211,7 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
       <div className="mx-auto w-full max-w-lg space-y-6 p-6">
         <div className="space-y-2 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/20">
-            <CalendarDays className="h-7 w-7" />
+            <Gamepad2 className="h-7 w-7" />
           </div>
           {recruitingHeader}
         </div>
@@ -375,43 +379,10 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
           </div>
         ) : null}
 
-        {!roomAmbience.active ? (
-          <div className="space-y-3 rounded-2xl border border-border/60 bg-card/90 p-5 shadow-sm">
-            <div className="text-center">
-              <h3 className="text-base font-bold text-foreground">Modo Ambiente (Watchparty)</h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Inicie uma transmissão do YouTube para a sala. Apenas quem ligar controla a reprodução.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <input
-                value={ambienceUrl}
-                onChange={(e) => setAmbienceUrl(e.target.value)}
-                placeholder="https://www.youtube.com/watch?v=..."
-                className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm"
-              />
-              <Button
-                type="button"
-                disabled={ambienceBusy}
-                onClick={() => void handleStartAmbience()}
-              >
-                Iniciar
-              </Button>
-            </div>
-            {roomAmbienceError ? (
-              <p className="text-center text-xs text-destructive">{roomAmbienceError}</p>
-            ) : null}
-          </div>
-        ) : (
-          <div className="rounded-xl border border-rose-500/35 bg-rose-500/10 px-4 py-3 text-sm text-foreground">
-            Há uma transmissão do Modo Ambiente ativa. A aba <strong>Ao vivo</strong> está disponível no topo da sala.
-          </div>
-        )}
-
         {activeEvent?.status === "recruiting" ? (
           <div className="space-y-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-foreground">
             <p className="text-center text-muted-foreground">
-              Aceite o convite no popup, <strong className="text-foreground">nesta aba Eventos</strong> (botões
+              Aceite o convite no popup, <strong className="text-foreground">nesta aba Jogos</strong> (botões
               abaixo) ou aguarde o tempo; o organizador pode iniciar antes se todos estiverem prontos.
             </p>
             {isOrganizer ? (
@@ -462,14 +433,15 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
         ) : null}
 
         {!hasBlockingEvent ? (
+          canCreateGames ? (
           <div className="space-y-4 rounded-2xl border border-border/60 bg-card/90 p-5 shadow-sm">
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
               <Sparkles className="h-3.5 w-3.5 text-primary" />
-              Novo evento
+              Novo jogo
             </div>
             <div className="space-y-2">
               <label htmlFor="ev-title" className="text-xs font-medium text-muted-foreground">
-                Nome do evento
+                Nome do jogo
               </label>
               <input
                 id="ev-title"
@@ -489,7 +461,7 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
                 onChange={(e) => setEventType(e.target.value as RoomEventType)}
                 className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm"
               >
-                {(Object.keys(TYPE_LABEL) as RoomEventType[]).map((k) => (
+                {(CREATABLE_EVENT_TYPES).map((k) => (
                   <option key={k} value={k}>
                     {TYPE_LABEL[k]}
                   </option>
@@ -536,11 +508,73 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
                 </div>
               </div>
             ) : null}
+            {eventType === "vote_best" ? (
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <label htmlFor="ev-vb-rounds" className="text-xs font-medium text-muted-foreground">
+                    Rodadas (1–10)
+                  </label>
+                  <input
+                    id="ev-vb-rounds"
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={voteBestRounds}
+                    onChange={(e) => setVoteBestRounds(Number(e.target.value))}
+                    className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="ev-vb-creation-sec" className="text-xs font-medium text-muted-foreground">
+                    Tempo padrão para criar (5 s – 2 min)
+                  </label>
+                  <input
+                    id="ev-vb-creation-sec"
+                    type="number"
+                    min={5}
+                    max={120}
+                    value={voteBestCreationSec}
+                    onChange={(e) => {
+                      const n = Number(e.target.value);
+                      if (Number.isNaN(n)) return;
+                      setVoteBestCreationSec(Math.min(120, Math.max(5, Math.round(n))));
+                    }}
+                    className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    O organizador pode ajustar por tema (5 s a 2 min) a cada rodada.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="ev-vb-vote-sec" className="text-xs font-medium text-muted-foreground">
+                    Tempo para votar (30 s – 5 min)
+                  </label>
+                  <input
+                    id="ev-vb-vote-sec"
+                    type="number"
+                    min={30}
+                    max={300}
+                    value={voteBestVoteSec}
+                    onChange={(e) => {
+                      const n = Number(e.target.value);
+                      if (Number.isNaN(n)) return;
+                      setVoteBestVoteSec(Math.min(300, Math.max(30, Math.round(n))));
+                    }}
+                    className="w-full rounded-xl border border-border/70 bg-background px-3 py-2.5 text-sm"
+                  />
+                </div>
+              </div>
+            ) : null}
             <Button className="w-full" disabled={!title.trim() || isPending} onClick={handleCreate}>
               {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Criar e convidar sala
             </Button>
           </div>
+          ) : (
+            <p className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3 text-center text-sm text-muted-foreground">
+              Você não tem permissão para criar jogos nesta sala.
+            </p>
+          )
         ) : null}
 
         {message ? <p className="text-center text-xs text-muted-foreground">{message}</p> : null}

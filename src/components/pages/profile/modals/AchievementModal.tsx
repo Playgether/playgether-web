@@ -14,6 +14,7 @@ import { X } from "lucide-react";
 import { AchievementElectricOverlay } from "../AchievementElectricOverlay";
 import { rarityConfig } from "../rarityConfig";
 import type { RarityLevel } from "../rarityConfig";
+import { RarityLevelDot } from "../RarityLevelDot";
 
 export type AchievementType = {
   id: number;
@@ -207,10 +208,11 @@ export function AchievementModal({
                     <span className="text-muted-foreground">Raridade</span>
                     <Badge
                       variant="outline"
-                      className="text-white border-0 text-xs"
+                      className="text-white border-0 text-xs gap-1.5"
                       style={{ background: config.badgeGradient }}
                     >
-                      {config.icon} {config.label}
+                      <RarityLevelDot rarity={achievement.rarity} className="h-2 w-2" />
+                      {config.label}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between text-sm">

@@ -10,7 +10,6 @@ export type RarityLevel =
 
 export interface RarityConfig {
   label: string;
-  icon: string;
   glowBase: string;
   glowHover: string;
   glowExpanded: string;
@@ -39,7 +38,6 @@ export interface RarityConfig {
 export const rarityConfig: Record<RarityLevel, RarityConfig> = {
   common: {
     label: "Comum",
-    icon: "⚙️",
     glowBase: "none",
     glowHover: "none",
     glowExpanded: "none",
@@ -63,7 +61,6 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
 
   medium: {
     label: "Médio",
-    icon: "🔷",
     glowBase: "0 0 12px rgba(99, 102, 241, 0.1)",
     glowHover: "0 0 22px rgba(99, 102, 241, 0.28)",
     glowExpanded: "0 0 28px rgba(99, 102, 241, 0.35)",
@@ -87,7 +84,6 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
 
   rare: {
     label: "Raro",
-    icon: "💠",
     glowBase: "0 0 16px rgba(59, 130, 246, 0.22)",
     glowHover: "0 0 34px rgba(59, 130, 246, 0.5), 0 0 10px rgba(34, 211, 238, 0.2)",
     glowExpanded: "0 0 40px rgba(59, 130, 246, 0.55), 0 0 15px rgba(34, 211, 238, 0.3)",
@@ -112,7 +108,6 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
 
   "ultra-rare": {
     label: "Ultra Raro",
-    icon: "⚡",
     glowBase: "0 0 22px rgba(139, 92, 246, 0.35)",
     glowHover: "0 0 45px rgba(139, 92, 246, 0.6), 0 0 18px rgba(196, 181, 253, 0.3)",
     glowExpanded:
@@ -138,7 +133,6 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
 
   epic: {
     label: "Épico",
-    icon: "🔮",
     glowBase: "0 0 28px rgba(168, 85, 247, 0.45)",
     glowHover: "0 0 56px rgba(168, 85, 247, 0.7), 0 0 22px rgba(236, 72, 153, 0.35)",
     glowExpanded:
@@ -164,7 +158,6 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
 
   mythic: {
     label: "Mítico",
-    icon: "🔥",
     glowBase:
       "0 0 30px rgba(239, 68, 68, 0.45), 0 0 14px rgba(168, 85, 247, 0.22)",
     glowHover:
@@ -192,7 +185,6 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
 
   legendary: {
     label: "Lendário",
-    icon: "👑",
     glowBase:
       "0 0 38px rgba(251, 191, 36, 0.55), 0 0 16px rgba(245, 158, 11, 0.3)",
     glowHover:
@@ -222,7 +214,6 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
 
   celestial: {
     label: "Celestial",
-    icon: "🌌",
     glowBase:
       "0 0 48px rgba(167, 139, 250, 0.65), 0 0 28px rgba(59, 130, 246, 0.35), 0 0 12px rgba(236, 72, 153, 0.2)",
     glowHover:

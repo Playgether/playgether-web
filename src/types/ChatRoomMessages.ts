@@ -1,5 +1,6 @@
 export interface ChatRoomMessages {
   id: number;
+  author_id?: number;
   author_name: string;
   author_username: string;
   author_profile_photo: string;

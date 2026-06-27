@@ -90,6 +90,12 @@ export function useRoomEventSocket(eventId: number | null) {
                 return [...prev, m];
               });
             }
+            if (msg?.type === "event_message_deleted" && msg.message_id != null) {
+              const deletedId = Number(msg.message_id);
+              if (Number.isFinite(deletedId)) {
+                setEventMessages((prev) => prev.filter((x) => x.id !== deletedId));
+              }
+            }
             if (msg?.type === "presence_update" && Array.isArray(msg.viewers)) {
               setPresence({
                 viewers: msg.viewers as RoomEventPresenceViewer[],
@@ -126,6 +132,10 @@ export function useRoomEventSocket(eventId: number | null) {
     send({ type: "claim_button" });
   }, []);
 
+  const removeEventMessage = useCallback((messageId: number) => {
+    setEventMessages((prev) => prev.filter((x) => x.id !== messageId));
+  }, []);
+
   return {
     connected,
     notices,
@@ -136,5 +146,6 @@ export function useRoomEventSocket(eventId: number | null) {
     socketError,
     sendMessage: (body: string) => send({ type: "send_message", body }),
     claimButton,
+    removeEventMessage,
   };
 }

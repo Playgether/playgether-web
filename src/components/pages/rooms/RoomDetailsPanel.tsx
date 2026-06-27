@@ -6,7 +6,7 @@ import {
   deleteChatRoomRule,
   updateChatRoomRule,
 } from "@/actions/chatRoomMutations";
-import { useAuthContext } from "@/context/AuthContext";
+import { useRoomPermissions } from "@/context/RoomPermissionsContext";
 import { ChatRoom } from "@/types/ChatRoom";
 import {
   Calendar,
@@ -104,16 +104,14 @@ export function RoomInfoPanel({ room }: RoomDetailsPanelProps) {
 }
 
 export function RoomRulesPanel({ room }: RoomDetailsPanelProps) {
-  const { user } = useAuthContext();
+  const { can } = useRoomPermissions();
+  const canManage = can("room.rules.manage");
   const [rules, setRules] = useState(room.rules);
   const [newRule, setNewRule] = useState("");
   const [editingRuleId, setEditingRuleId] = useState<number | null>(null);
   const [editingText, setEditingText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-
-  const canManage =
-    user?.user_id != null && String(user.user_id) === String(room.owner);
 
   const addRule = () => {
     const value = newRule.trim();
@@ -149,7 +147,7 @@ export function RoomRulesPanel({ room }: RoomDetailsPanelProps) {
         return;
       }
       setRules((current) =>
-        current.map((rule) => (rule.id === id ? res.data : rule))
+        current.map((rule) => (rule.id === id ? res.data : rule)),
       );
       setEditingRuleId(null);
       setEditingText("");
@@ -242,15 +240,15 @@ export function RoomRulesPanel({ room }: RoomDetailsPanelProps) {
                 </span>
               )}
               <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                  <button
-                    type="button"
-                    onClick={() => startEdit(rule.id, rule.description)}
-                    disabled={!canManage || isPending}
-                    className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
-                    title="Editar regra"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
+                <button
+                  type="button"
+                  onClick={() => startEdit(rule.id, rule.description)}
+                  disabled={!canManage || isPending}
+                  className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
+                  title="Editar regra"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
                 <button
                   type="button"
                   onClick={() => deleteRule(rule.id)}

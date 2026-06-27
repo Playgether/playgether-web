@@ -10,6 +10,10 @@ import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
 import ProfileImagePost from "@/components/pages/feed/DesktopFeed/Middle/PostsComponents/ProfileImagePost/ProfileImagePost";
 import { useAuthContext } from "@/context/AuthContext";
 import { useChatHandlerContext } from "@/context/ChatHandlerContext";
+import { usePresenceContext } from "@/context/PresenceContext";
+import { useRoomPermissions } from "@/context/RoomPermissionsContext";
+import { canModerateMember } from "@/lib/roomPermissions";
+import { RoomMessageActionsMenu } from "@/components/pages/rooms/RoomModerationMenus";
 import { extractRoomFromDetailedBody } from "@/services/chatRoomApi";
 import { ChatRoom } from "@/types/ChatRoom";
 import { ChatRoomMessages } from "@/types/ChatRoomMessages";
@@ -68,6 +72,24 @@ export default function RoomChatMessagesPanel({
     dismissJoinNotice,
   } = useChatHandlerContext();
   const { user } = useAuthContext();
+  const { can, snapshot } = useRoomPermissions();
+  const presenceCtx = usePresenceContext();
+
+  const selfId = user?.user_id != null ? Number(user.user_id) : null;
+  const canDeleteMessages = can("messages.delete");
+  const canKickMembers = can("members.kick");
+  const canMuteMembers = can("members.mute");
+
+  const resolveAuthorId = useCallback(
+    (message: ChatRoomMessages) => {
+      if (message.author_id != null) return message.author_id;
+      return (
+        onlineUsers.find((u) => u.username === message.author_username)?.id ??
+        null
+      );
+    },
+    [onlineUsers],
+  );
 
   const [timeTick, setTimeTick] = useState(0);
   const [nextPageUrl, setNextPageUrl] = useState<string | null>(
@@ -205,6 +227,10 @@ export default function RoomChatMessagesPanel({
           ) : realTimeMessages.length > 0 ? (
             realTimeMessages.map((message) => {
               const isMine = message.author_username === user?.username;
+              const authorId = resolveAuthorId(message);
+              const canModerateAuthor =
+                authorId != null &&
+                canModerateMember(snapshot, room.owner, selfId, authorId);
               const showNewMessagesDivider = newMessageId === message.id;
 
               return (
@@ -223,7 +249,7 @@ export default function RoomChatMessagesPanel({
                   ) : null}
 
                   <div
-                    className={`flex min-w-0 gap-2 animate-message-fade-in ${
+                    className={`group flex min-w-0 gap-2 animate-message-fade-in ${
                       isMine ? "flex-row-reverse" : ""
                     }`}
                   >
@@ -237,7 +263,7 @@ export default function RoomChatMessagesPanel({
                     ) : null}
 
                     <div
-                      className={`min-w-0 max-w-[75%] ${isMine ? "items-end" : ""}`}
+                      className={`relative min-w-0 max-w-[75%] ${isMine ? "items-end" : ""}`}
                     >
                       {!isMine ? (
                         <div className="mb-0.5 flex flex-col gap-0.5 md:flex-row md:items-center md:gap-2">
@@ -248,12 +274,28 @@ export default function RoomChatMessagesPanel({
                       ) : null}
 
                       <div
-                        className={`break-words whitespace-pre-wrap rounded-lg px-3 py-2 text-sm backdrop-blur-sm ${
+                        className={`relative break-words whitespace-pre-wrap rounded-lg px-3 py-2 text-sm backdrop-blur-sm ${
                           isMine
                             ? "bg-primary text-primary-foreground"
                             : "bg-card/75 text-card-foreground"
                         }`}
                       >
+                        <div
+                          className={`absolute top-1 ${isMine ? "left-1" : "right-1"}`}
+                        >
+                          <RoomMessageActionsMenu
+                            roomSlug={room.slug}
+                            messageId={message.id}
+                            authorId={authorId}
+                            authorName={message.author_name}
+                            canDelete={
+                              canDeleteMessages && (isMine || canModerateAuthor)
+                            }
+                            canKickAuthor={canKickMembers && canModerateAuthor}
+                            canMuteAuthor={canMuteMembers && canModerateAuthor}
+                            align={isMine ? "start" : "end"}
+                          />
+                        </div>
                         {message.body}
                       </div>
                       <span

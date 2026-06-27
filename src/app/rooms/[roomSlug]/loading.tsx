@@ -1,6 +1,5 @@
-import LoadingPages from "@/components/elements/LoadingPages/LoadingPages";
-import React from "react";
+import RoomChatSkeleton from "@/components/pages/rooms/RoomChatSkeleton";
 
 export default function LoadingRoom() {
-  return <LoadingPages message="Carregando" />;
+  return <RoomChatSkeleton />;
 }

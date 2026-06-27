@@ -11,6 +11,7 @@ import {
   useCallback,
   MutableRefObject,
 } from "react";
+import { storeRoomExpelledMessage } from "@/lib/roomExpelledStorage";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { useAuthContext } from "./AuthContext";
 import { OnlineUsersChatRoom } from "@/types/OnlineUsersChatRoom";
@@ -20,6 +21,21 @@ import type {
   RoomAmbienceMessage,
   RoomAmbienceState,
 } from "@/types/RoomAmbience";
+import { fetchAmbienceChatHistory } from "@/actions/ambienceChatActions";
+import { useRouter } from "next/navigation";
+import { useRoomPermissions } from "@/context/RoomPermissionsContext";
+
+function mergeAmbienceMessages(
+  older: RoomAmbienceMessage[],
+  newer: RoomAmbienceMessage[],
+): RoomAmbienceMessage[] {
+  const byId = new Map<number, RoomAmbienceMessage>();
+  for (const m of older) byId.set(m.id, m);
+  for (const m of newer) byId.set(m.id, m);
+  return [...byId.values()]
+    .sort((a, b) => a.created_at_ms - b.created_at_ms)
+    .slice(-200);
+}
 
 export type RoomJoinNotice = { id: number; text: string };
 
@@ -46,7 +62,10 @@ const defaultRoomAmbienceState = (): RoomAmbienceState => ({
   playing: false,
   position_sec: 0,
   sync_epoch_ms: 0,
+  playback_command: null,
   viewers: [],
+  pinned_message_id: null,
+  session_id: "",
 });
 
 function easeOutCubic(t: number): number {
@@ -161,6 +180,9 @@ const ChatHandlerContextProvider = ({
   /** Evita animação/scroll automático ao colar mensagens antigas no topo (infinite scroll). */
   const suppressAutoFollowScrollRef = useRef(false);
   const { user } = useAuthContext();
+  const router = useRouter();
+  const { muteNotice, applyMuteNotice, refresh: refreshPermissions } =
+    useRoomPermissions();
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
   const [newMessageId, setNewMessageId] = useState(0);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUsersChatRoom[]>([]);
@@ -179,6 +201,33 @@ const ChatHandlerContextProvider = ({
   >([]);
   const [roomAmbienceError, setRoomAmbienceError] = useState<string | null>(null);
   const chatSurfaceHiddenRef = useRef(false);
+  const ambienceHistoryLoadedRef = useRef<string | null>(null);
+  const roomAmbienceSessionRef = useRef("");
+
+  useEffect(() => {
+    roomAmbienceSessionRef.current = roomAmbience.session_id;
+  }, [roomAmbience.session_id]);
+
+  useEffect(() => {
+    if (!roomAmbience.active) {
+      ambienceHistoryLoadedRef.current = null;
+      return;
+    }
+    const sessionId = roomAmbience.session_id.trim();
+    if (!sessionId) return;
+    if (ambienceHistoryLoadedRef.current === sessionId) return;
+    ambienceHistoryLoadedRef.current = sessionId;
+    let cancelled = false;
+    setRoomAmbienceMessages([]);
+    void fetchAmbienceChatHistory(chatroom, sessionId).then((res) => {
+      if (cancelled || !res.ok) return;
+      if (roomAmbienceSessionRef.current !== sessionId) return;
+      setRoomAmbienceMessages((prev) => mergeAmbienceMessages(res.data, prev));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [roomAmbience.active, roomAmbience.session_id, chatroom]);
 
   const setChatSurfaceHidden = useCallback((hidden: boolean) => {
     chatSurfaceHiddenRef.current = hidden;
@@ -372,6 +421,7 @@ const ChatHandlerContextProvider = ({
       messages?: RoomAmbienceMessage[];
     }) => {
       const s = data.state;
+      let snapshotSessionId = roomAmbienceSessionRef.current;
       if (s && typeof s === "object") {
         const next = defaultRoomAmbienceState();
         next.active = Boolean(s.active);
@@ -396,6 +446,9 @@ const ChatHandlerContextProvider = ({
           typeof s.position_sec === "number" ? Math.max(0, s.position_sec) : 0;
         next.sync_epoch_ms =
           typeof s.sync_epoch_ms === "number" ? s.sync_epoch_ms : 0;
+        const rawCmd = (s as { playback_command?: unknown }).playback_command;
+        next.playback_command =
+          rawCmd === "go_live" ? "go_live" : null;
         next.viewers = Array.isArray(s.viewers)
           ? s.viewers
               .filter((x) => Boolean(x) && typeof x === "object")
@@ -410,18 +463,49 @@ const ChatHandlerContextProvider = ({
               })
               .filter((x) => Boolean(x.user_id))
           : [];
-        setRoomAmbience(next);
+        const rawPin = (s as { pinned_message_id?: unknown }).pinned_message_id;
+        next.pinned_message_id =
+          typeof rawPin === "number" && rawPin > 0 ? rawPin : null;
+        next.session_id =
+          typeof (s as { session_id?: unknown }).session_id === "string"
+            ? (s as { session_id: string }).session_id
+            : "";
+        snapshotSessionId = next.session_id;
+        roomAmbienceSessionRef.current = next.session_id;
+        setRoomAmbience((prev) => {
+          if (
+            next.active &&
+            next.session_id &&
+            prev.session_id &&
+            prev.session_id !== next.session_id
+          ) {
+            setRoomAmbienceMessages([]);
+            ambienceHistoryLoadedRef.current = null;
+          }
+          return next;
+        });
         if (!next.active) {
           setRoomAmbienceMessages([]);
+          ambienceHistoryLoadedRef.current = null;
         }
       }
       if (Array.isArray(data.messages)) {
+        const sessionFilter = snapshotSessionId.trim();
         const parsed = data.messages
           .filter((x) => Boolean(x) && typeof x === "object")
           .map((x) => {
             const m = x as Record<string, unknown>;
             const author_user_id =
               typeof m.author_user_id === "string" ? m.author_user_id : null;
+              typeof m.author_user_id === "number" ? m.author_user_id : 0;
+            const replyToId =
+              typeof m.reply_to_id === "number" && m.reply_to_id > 0
+                ? m.reply_to_id
+                : undefined;
+            const msgSession =
+              typeof m.transmission_session_id === "string"
+                ? m.transmission_session_id
+                : undefined;
             return {
               id: typeof m.id === "number" ? m.id : 0,
               author_user_id,
@@ -432,20 +516,51 @@ const ChatHandlerContextProvider = ({
               body: typeof m.body === "string" ? m.body : "",
               created_at_ms:
                 typeof m.created_at_ms === "number" ? m.created_at_ms : 0,
-              is_system: !author_user_id,
+              is_system: author_user_id === 0,
+              reply_to_id: replyToId,
+              reply_to_username:
+                typeof m.reply_to_username === "string"
+                  ? m.reply_to_username
+                  : undefined,
+              reply_to_body:
+                typeof m.reply_to_body === "string" ? m.reply_to_body : undefined,
+              transmission_session_id: msgSession,
             } satisfies RoomAmbienceMessage;
           })
-          .filter((m) => m.id > 0 && m.body);
-        setRoomAmbienceMessages(parsed);
+          .filter((m) => {
+            if (!m.id || !m.body) return false;
+            if (!sessionFilter) return true;
+            const sid = (m.transmission_session_id || "").trim();
+            return !sid || sid === sessionFilter;
+          });
+        setRoomAmbienceMessages((prev) => mergeAmbienceMessages(parsed, prev));
       }
     },
     room_ambience_chat_message: (data: { message?: RoomAmbienceMessage }) => {
       const m = data.message;
       if (!m || typeof m !== "object") return;
+      const currentSession = roomAmbienceSessionRef.current.trim();
+      const msgSession = (
+        typeof (m as { transmission_session_id?: string }).transmission_session_id ===
+        "string"
+          ? (m as { transmission_session_id: string }).transmission_session_id
+          : ""
+      ).trim();
+      if (currentSession && msgSession && msgSession !== currentSession) return;
       const normalized: RoomAmbienceMessage = {
         ...m,
         is_system:
-          m.is_system ?? !m.author_user_id,
+          m.is_system ??
+          (typeof m.author_user_id === "number" && m.author_user_id === 0),
+        reply_to_id:
+          typeof m.reply_to_id === "number" && m.reply_to_id > 0
+            ? m.reply_to_id
+            : undefined,
+        reply_to_username:
+          typeof m.reply_to_username === "string" ? m.reply_to_username : undefined,
+        reply_to_body:
+          typeof m.reply_to_body === "string" ? m.reply_to_body : undefined,
+        transmission_session_id: msgSession || undefined,
       };
       setRoomAmbienceMessages((prev) => {
         if (prev.some((x) => x.id === normalized.id)) return prev;
@@ -469,11 +584,30 @@ const ChatHandlerContextProvider = ({
         reason?: string;
         message?: string;
         organizer_user_id?: string;
+        kicked_user_id?: string;
       };
     }) => {
       const reason = data?.payload?.reason;
       const message = data?.payload?.message;
       const organizer_user_id = data?.payload?.organizer_user_id;
+      const kicked_user_id = data?.payload?.kicked_user_id;
+      if (
+        reason === "participant_kicked" &&
+        kicked_user_id != null &&
+        user?.user_id === kicked_user_id
+      ) {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("playgether:event-kicked", {
+              detail: {
+                message:
+                  message ||
+                  "Você foi expulso deste evento e não pode mais participar.",
+              },
+            }),
+          );
+        }
+      }
       if (
         reason &&
         [
@@ -493,6 +627,48 @@ const ChatHandlerContextProvider = ({
           }),
         );
       }
+    },
+    room_kicked: (data: { reason?: string }) => {
+      const reason =
+        typeof data.reason === "string" && data.reason.trim()
+          ? data.reason.trim()
+          : "Você foi expulso desta sala.";
+      storeRoomExpelledMessage(chatroom, reason);
+      router.replace("/rooms");
+    },
+    ambience_kicked: (data: { reason?: string }) => {
+      const reason =
+        typeof data.reason === "string" && data.reason.trim()
+          ? data.reason.trim()
+          : "Você foi expulso desta transmissão.";
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("playgether:ambience-kicked", {
+            detail: { reason },
+          }),
+        );
+      }
+    },
+    room_muted: (data: {
+      message?: string;
+      expires_at?: string | null;
+      duration_seconds?: number | null;
+      remaining_seconds?: number | null;
+    }) => {
+      applyMuteNotice(data);
+    },
+    room_permissions_updated: () => {
+      void refreshPermissions();
+    },
+    room_ambience_message_deleted: (data: { message_id?: number }) => {
+      const id = data.message_id;
+      if (id == null) return;
+      setRoomAmbienceMessages((prev) => prev.filter((m) => m.id !== id));
+    },
+    chat_message_deleted: (data: { message_id?: number }) => {
+      const id = data.message_id;
+      if (typeof id !== "number") return;
+      setRealTimeMessages((prev) => prev.filter((m) => m.id !== id));
     },
   };
 
@@ -622,7 +798,7 @@ const ChatHandlerContextProvider = ({
 
   // Função para enviar mensagem
   const sendMessage = () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || muteNotice) return;
 
     sendJsonMessage({
       event: "message_handler",

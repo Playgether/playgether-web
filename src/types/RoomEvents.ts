@@ -53,6 +53,12 @@ export interface RoomEvent {
   participants?: RoomEventParticipant[];
   questions?: RoomEventQuestion[];
   submissions?: RoomEventSubmission[];
+  /** Criação votada pelo usuário atual (fase vote_voting). */
+  my_vote_submission_id?: number | null;
+  /** IDs dos participantes que já votaram na rodada atual (fase vote_voting). */
+  voting_submitted_user_ids?: number[];
+  /** Usuário já respondeu à pergunta atual (quiz eliminatório). */
+  my_answered_current_question?: boolean;
   final_scores?: RoomEventFinalScore[];
 }
 
@@ -69,6 +75,7 @@ export interface RoomEventFinalScore {
   points_question_correct?: number;
   points_question_wrong?: number;
   points_votes?: number;
+  points_ranking?: number;
 }
 
 export interface RoomEventQuestion {

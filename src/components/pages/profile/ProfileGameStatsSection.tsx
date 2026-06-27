@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Progress } from "@/components/ui/progress";
 import {
   ChevronDown,
@@ -37,6 +38,9 @@ import {
   Loader2,
   Map as MapIcon,
   Search,
+  Skull,
+  Bomb,
+  Scan,
   Swords,
   Target,
   Trophy,
@@ -56,6 +60,11 @@ import { getLolHistory } from "@/services/getLolStats";
 import { LolMatchHistoryDetail } from "@/components/pages/profile/LolMatchHistoryDetail";
 import { LolRankEmblemFrame } from "@/components/lol/LolRankEmblemFrame";
 import { cn } from "@/lib/utils";
+import {
+  getCs2WeaponIconsMap,
+  peekCs2WeaponIconUrl,
+  resolveCs2WeaponIconName,
+} from "@/lib/cs2WeaponIcons";
 import { Info } from "lucide-react";
 
 // ---- Types ----
@@ -360,6 +369,7 @@ export function ProfileGameStatsSection({
   const [lolHistoryItems, setLolHistoryItems] = useState<LolMatchItem[]>([]);
   const [lolHistoryCursor, setLolHistoryCursor] = useState<string | null>(null);
   const [lolHistoryHasMore, setLolHistoryHasMore] = useState(false);
+  const [lolPerformanceScope, setLolPerformanceScope] = useState<LolPerformanceScope>("recent");
   /** Evita resetar o histórico local quando o pai re-renderiza com novo objeto `historyPage` igual. */
   const lolHistoryHydrateTokenRef = useRef<string>("");
 
@@ -407,6 +417,20 @@ export function ProfileGameStatsSection({
     lolStatsResponse?.available === true &&
     Boolean(lolStatsResponse?.overview) &&
     hasLolRiotIdentity;
+  const lolHasRecentMatchStats =
+    useRealLolStats && lolStatsResponse
+      ? getLolHasRecentMatchStats(lolStatsResponse)
+      : false;
+  const lolPerformanceFilterKey =
+    useRealLolStats && lolStatsResponse
+      ? getLolPerformanceFilterKey(lolStatsResponse)
+      : "";
+
+  useEffect(() => {
+    if (!useRealLolStats) return;
+    setLolPerformanceScope(lolHasRecentMatchStats ? "recent" : "overall");
+  }, [useRealLolStats, lolPerformanceFilterKey, lolHasRecentMatchStats]);
+
   const isGameStatsUnavailable =
     (selectedGame === "csgo" && !useRealCs2Stats) ||
     (selectedGame === "lol" && !useRealLolStats);
@@ -729,17 +753,30 @@ export function ProfileGameStatsSection({
             )}
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6 mt-6">
+          {useRealLolStats ? (
+            <div className="mt-4 flex justify-start">
+              <LolPerformanceScopeToggle
+                value={lolPerformanceScope}
+                onValueChange={setLolPerformanceScope}
+                hasRecentMatchStats={lolHasRecentMatchStats}
+              />
+            </div>
+          ) : null}
+
+          <TabsContent value="overview" className="space-y-6 mt-4">
             {useRealCs2Stats ? (
               <Cs2Overview stats={cs2Stats.stats!} />
             ) : useRealLolStats ? (
-              <RealLolOverview stats={lolStatsResponse!} />
+              <RealLolOverview
+                stats={lolStatsResponse!}
+                performanceScope={lolPerformanceScope}
+              />
             ) : (
               <FpsOverview stats={fpsStats} />
             )}
           </TabsContent>
 
-          <TabsContent value="matches" className="space-y-4 mt-6">
+          <TabsContent value="matches" className="space-y-4 mt-4">
             <MatchHistory
               matches={
                 useRealLolStats && selectedGame === "lol"
@@ -873,6 +910,19 @@ const CS2_MAP_ICON_STEM_BY_KEY: Record<string, string> = {
 
 const MAP_ICON_FALLBACK_STEM = "de_mirage";
 
+function formatCs2Hours(hours: number): string {
+  if (hours >= 1000) {
+    return `${Math.round(hours).toLocaleString("pt-BR")}h`;
+  }
+  return `${hours.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}h`;
+}
+
+function cs2KdAccentClass(kd: number): string {
+  if (kd > 1.001) return "text-neon-green";
+  if (kd < 0.999) return "text-red-500";
+  return "text-amber-400";
+}
+
 /** Nomes no repositório MurkyYT: de_*, cs_* (hostage), ar_* (arms race). */
 function isValidMapIconStem(stem: string): boolean {
   return /^(de|cs|ar)_[a-z0-9_]+$/i.test(stem);
@@ -893,6 +943,23 @@ function getCs2MapIconUrl(mapName: string): string {
     stem = MAP_ICON_FALLBACK_STEM;
   }
   return `${CS2_MAP_ICON_BASE}/${stem}.png`;
+}
+
+function Cs2MapIcon({ mapName }: { mapName: string }) {
+  const fallbackUrl = `${CS2_MAP_ICON_BASE}/${MAP_ICON_FALLBACK_STEM}.png`;
+  const [src, setSrc] = useState(() => getCs2MapIconUrl(mapName));
+
+  return (
+    <img
+      src={src}
+      alt={`Ícone ${mapName}`}
+      className="h-12 w-12 object-contain transition-transform duration-300 ease-out will-change-transform md:group-hover:scale-110"
+      loading="lazy"
+      onError={() => {
+        if (src !== fallbackUrl) setSrc(fallbackUrl);
+      }}
+    />
+  );
 }
 
 /** Normaliza nomes da API/Steam para bater nos sets CT/TR/shared. */
@@ -1006,13 +1073,86 @@ function splitWeaponsBySide(
   };
 }
 
-function Cs2WeaponChip({ weapon }: { weapon: Cs2WeaponEntry }) {
+function Cs2StatBar({
+  value,
+  tone = "neutral",
+  className,
+}: {
+  value: number;
+  tone?: "neutral" | "headshot";
+  className?: string;
+}) {
+  const fillClass =
+    tone === "headshot"
+      ? "bg-foreground/85"
+      : "bg-foreground/55";
   return (
-    <div className="flex items-center justify-between rounded-md border border-border/60 bg-muted/20 px-2.5 py-1.5">
-      <span className="text-sm font-medium">{weapon.name}</span>
-      <span className="text-xs text-muted-foreground">
-        {weapon.kills.toLocaleString()} kills ({weapon.pct}%)
-      </span>
+    <div
+      className={cn(
+        "h-1.5 w-full overflow-hidden rounded-full bg-muted/70",
+        className,
+      )}
+    >
+      <div
+        className={cn("h-full rounded-full transition-all", fillClass)}
+        style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
+      />
+    </div>
+  );
+}
+
+function Cs2WeaponIcon({ name }: { name: string }) {
+  const resolvedName = resolveCs2WeaponIconName(name);
+  const [url, setUrl] = useState<string | null>(() =>
+    peekCs2WeaponIconUrl(name),
+  );
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (url) return;
+    let cancelled = false;
+    void getCs2WeaponIconsMap().then((map) => {
+      if (!cancelled) setUrl(map.get(resolvedName) ?? null);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [name, resolvedName, url]);
+
+  if (!url || failed) {
+    return (
+      <Crosshair className="h-4 w-4 text-muted-foreground" aria-hidden />
+    );
+  }
+
+  return (
+    <img
+      src={url}
+      alt=""
+      className="h-full w-full object-contain"
+      loading="lazy"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+function Cs2WeaponChip({ weapon }: { weapon: Cs2WeaponEntry }) {
+  const barValue = Math.min(100, weapon.pct);
+
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/20 px-2.5 py-2">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border/50 bg-background/80 p-1">
+        <Cs2WeaponIcon name={weapon.name} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="truncate text-sm font-medium">{weapon.name}</span>
+          <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+            {weapon.kills.toLocaleString()} ({weapon.pct}%)
+          </span>
+        </div>
+        <Cs2StatBar value={barValue} className="mt-1.5" />
+      </div>
     </div>
   );
 }
@@ -1111,6 +1251,10 @@ function formatSyncedAt(iso?: string | null): string | null {
 }
 
 function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
+  useEffect(() => {
+    void getCs2WeaponIconsMap();
+  }, []);
+
   const mergedFromLegacy = mergeCs2WeaponEntries([
     ...(stats.weapons ?? []),
     ...(stats.ctWeaponKills ?? []),
@@ -1122,31 +1266,46 @@ function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
       : mergedFromLegacy;
   const weaponsBySide = splitWeaponsBySide(normalizedList);
   const topFavoriteWeapons = normalizedList.slice(0, 5);
+  const steamHours =
+    typeof stats.steamTotalHours === "number" ? stats.steamTotalHours : null;
+  const kdAccent = cs2KdAccentClass(stats.kd);
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
-          icon={<Target className="h-4 w-4" />}
+          centered
+          icon={<Swords className={cn("h-4 w-4", kdAccent)} />}
           label="K/D"
           value={stats.kdFormatted}
-          accent="text-neon-green"
+          accent={kdAccent}
         />
         <StatCard
-          icon={<Crosshair className="h-4 w-4" />}
+          centered
+          icon={<Skull className="h-4 w-4 text-neon-blue" />}
           label="HS%"
           value={`${stats.headshotPct}%`}
           accent="text-neon-blue"
         />
         <StatCard
-          icon={<Clock className="h-4 w-4" />}
-          label="Horas"
-          value={`${stats.totalHours}h`}
-          accent="text-neon-pink"
+          centered
+          icon={<Clock className="h-4 w-4 text-neon-platinum" />}
+          label="Horas (CS2)"
+          value={formatCs2Hours(stats.totalHours)}
+          accent="text-neon-platinum"
+        />
+        <StatCard
+          centered
+          icon={<Clock className="h-4 w-4 text-neon-platinum" />}
+          label="Horas totais"
+          value={
+            steamHours !== null ? formatCs2Hours(steamHours) : "—"
+          }
+          accent="text-neon-platinum"
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card className="bg-card/50 border-border">
           <CardContent className="p-4">
             <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
@@ -1154,40 +1313,21 @@ function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
               K/D e Precisão
             </h4>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Kills</span>
-                <span className="font-medium">
-                  {stats.totalKills.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Mortes</span>
-                <span className="font-medium">
-                  {stats.totalDeaths.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Tiros disparados</span>
-                <span className="font-medium">
-                  {stats.totalShotsFired.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Tiros acertados</span>
-                <span className="font-medium">
-                  {stats.totalShotsHit.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Precisão</span>
-                <span className="font-medium">{stats.accuracy}%</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  Média de tiros por kill
-                </span>
-                <span className="font-medium">{stats.shotsPerKill}</span>
-              </div>
+              <Row label="Kills" value={stats.totalKills.toLocaleString()} />
+              <Row label="Mortes" value={stats.totalDeaths.toLocaleString()} />
+              <Row
+                label="Tiros disparados"
+                value={stats.totalShotsFired.toLocaleString()}
+              />
+              <Row
+                label="Tiros acertados"
+                value={stats.totalShotsHit.toLocaleString()}
+              />
+              <Row label="Precisão" value={`${stats.accuracy}%`} />
+              <Row
+                label="Média de tiros por kill"
+                value={String(stats.shotsPerKill)}
+              />
             </div>
           </CardContent>
         </Card>
@@ -1199,52 +1339,57 @@ function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
               Partidas e Rounds
             </h4>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Partidas</span>
-                <span className="font-medium">
-                  {stats.totalMatchesPlayed.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Vitórias</span>
-                <span className="font-medium text-neon-green">
-                  {stats.totalMatchesWon.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Rounds</span>
-                <span className="font-medium">
-                  {stats.totalRoundsPlayed.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">MVPs</span>
-                <span className="font-medium">
-                  {stats.totalMvps.toLocaleString()}
-                </span>
-              </div>
+              <Row
+                label="Partidas"
+                value={stats.totalMatchesPlayed.toLocaleString()}
+              />
+              <Row
+                label="Vitórias"
+                value={stats.totalMatchesWon.toLocaleString()}
+              />
+              <Row
+                label="Win rate"
+                value={`${stats.winrate}%`}
+                valueClassName={
+                  stats.winrate >= 50 ? "text-neon-green font-medium" : undefined
+                }
+              />
+              <Row
+                label="Rounds"
+                value={stats.totalRoundsPlayed.toLocaleString()}
+              />
+              <Row label="MVPs" value={stats.totalMvps.toLocaleString()} />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-card/50 border-border">
+        <Card className="bg-card/50 border-border sm:col-span-2 lg:col-span-1">
           <CardContent className="p-4">
             <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
-              <Crosshair className="h-4 w-4" />
+              <Skull className="h-4 w-4 text-foreground" />
               Headshots
             </h4>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center justify-between gap-3">
                 <span className="text-muted-foreground">Headshots totais</span>
-                <span className="font-medium">
+                <span className="font-semibold tabular-nums text-foreground">
                   {stats.totalHeadshots.toLocaleString()}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  Percentual de headshot
-                </span>
-                <span className="font-medium">{stats.headshotPct}%</span>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">
+                    % kills com headshot
+                  </span>
+                  <span className="font-medium tabular-nums text-foreground">
+                    {stats.headshotPct}%
+                  </span>
+                </div>
+                <Cs2StatBar
+                  value={stats.headshotPct}
+                  tone="headshot"
+                  className="h-2"
+                />
               </div>
             </div>
           </CardContent>
@@ -1253,79 +1398,63 @@ function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
         <Card className="bg-card/50 border-border">
           <CardContent className="p-4">
             <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
-              <Target className="h-4 w-4" />
+              <Bomb className="h-4 w-4" />
               Bombas e Utilidade
             </h4>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Plants</span>
-                <span className="font-medium">
-                  {stats.totalPlants.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Defuses</span>
-                <span className="font-medium">
-                  {stats.totalDefuses.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Kills faca</span>
-                <span className="font-medium">{stats.totalKillsKnife}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Kills granada</span>
-                <span className="font-medium">{stats.totalKillsHegrenade}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Kills molotov</span>
-                <span className="font-medium">{stats.totalKillsMolotov}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  Tiros de taser (Zeus)
-                </span>
-                <span className="font-medium">{stats.totalShotsTaser}</span>
-              </div>
+              <Row label="Plants" value={stats.totalPlants.toLocaleString()} />
+              <Row label="Defuses" value={stats.totalDefuses.toLocaleString()} />
+              <Row
+                label="Kills faca"
+                value={stats.totalKillsKnife.toLocaleString()}
+              />
+              <Row
+                label="Kills granada"
+                value={stats.totalKillsHegrenade.toLocaleString()}
+              />
+              <Row
+                label="Kills molotov"
+                value={stats.totalKillsMolotov.toLocaleString()}
+              />
+              <Row
+                label="Tiros Zeus"
+                value={stats.totalShotsTaser.toLocaleString()}
+              />
             </div>
           </CardContent>
         </Card>
 
-        {stats.sniperStats && (
+        {stats.sniperStats ? (
           <Card className="bg-card/50 border-border">
             <CardContent className="p-4">
               <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
-                <Target className="h-4 w-4" />
+                <Scan className="h-4 w-4" />
                 Snipers
               </h4>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Kills</span>
-                  <span className="font-medium">
-                    {stats.sniperStats.totalKills.toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Percentual</span>
-                  <span className="font-medium">{stats.sniperStats.pct}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    Kills vs sniper zoomado
-                  </span>
-                  <span className="font-medium">
-                    {stats.sniperStats.killsVsZoomed?.toLocaleString() ?? 0}
-                  </span>
-                </div>
+                <Row
+                  label="Kills"
+                  value={stats.sniperStats.totalKills.toLocaleString()}
+                />
+                <Row
+                  label="Percentual"
+                  value={`${stats.sniperStats.pct}%`}
+                />
+                <Row
+                  label="Kills vs sniper zoomado"
+                  value={(
+                    stats.sniperStats.killsVsZoomed ?? 0
+                  ).toLocaleString()}
+                />
               </div>
             </CardContent>
           </Card>
-        )}
+        ) : null}
       </div>
 
       <div className="space-y-3">
         <h4 className="font-semibold text-sm text-muted-foreground flex items-center gap-2">
-          <Target className="h-4 w-4" />
+          <Crosshair className="h-4 w-4" />
           Armas por lado
         </h4>
         <div
@@ -1363,22 +1492,26 @@ function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
         </div>
       </div>
 
-      {topFavoriteWeapons.length > 0 && (
+      {topFavoriteWeapons.length > 0 ? (
         <Card className="bg-card/50 border-border">
           <CardContent className="p-4">
-            <h4 className="font-semibold text-sm text-muted-foreground mb-3">
+            <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
+              <Target className="h-4 w-4" />
               Armas favoritas (Top 5 geral)
             </h4>
             <div className="space-y-2">
               {topFavoriteWeapons.map((weapon) => (
-                <Cs2WeaponChip key={`favorite-${weapon.name}`} weapon={weapon} />
+                <Cs2WeaponChip
+                  key={`favorite-${weapon.name}`}
+                  weapon={weapon}
+                />
               ))}
             </div>
           </CardContent>
         </Card>
-      )}
+      ) : null}
 
-      {stats.mapWinRates.length > 0 && (
+      {stats.mapWinRates.length > 0 ? (
         <Card className="bg-card/50 border-border">
           <CardContent className="p-4">
             <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
@@ -1393,12 +1526,7 @@ function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
                 >
                   <span className="font-medium text-sm inline-flex items-center gap-3 min-w-0">
                     <span className="group relative inline-flex h-12 w-12 shrink-0 overflow-hidden rounded-md border border-border/60">
-                      <img
-                        src={getCs2MapIconUrl(m.map)}
-                        alt={`Ícone ${m.map}`}
-                        className="h-12 w-12 object-contain transition-transform duration-300 ease-out will-change-transform md:group-hover:scale-110"
-                        loading="lazy"
-                      />
+                      <Cs2MapIcon mapName={m.map} />
                     </span>
                     <span className="truncate">{m.map}</span>
                   </span>
@@ -1414,7 +1542,7 @@ function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
             </div>
           </CardContent>
         </Card>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -1647,6 +1775,79 @@ function lolRollupKdaRatioToneClass(ratio: number): string {
 }
 
 const LOL_CHAMPIONS_OVERVIEW_PREVIEW = 5;
+
+type LolPerformanceScope = "recent" | "overall";
+
+function lolPerformanceScopeLabel(
+  scope: LolPerformanceScope,
+  gamesPlayed: number,
+): string {
+  const count = Math.max(0, gamesPlayed);
+  const formatted = count.toLocaleString("pt-BR");
+
+  if (scope === "recent") {
+    if (count === 1) return "Última partida";
+    if (count === 0) return "Últimas partidas";
+    return `Últimas ${formatted} partidas`;
+  }
+
+  if (count === 1) return "1 partida";
+  if (count === 0) return "0 partidas";
+  return `Todas as ${formatted} partidas`;
+}
+
+function getLolHasRecentMatchStats(stats: LolStatsResponse): boolean {
+  return (stats.last20Summary?.gamesPlayed ?? 0) > 0;
+}
+
+function getLolPerformanceFilterKey(stats: LolStatsResponse): string {
+  return [
+    stats.appliedFilters?.timeScope ?? "",
+    stats.appliedFilters?.queueScope ?? "",
+    stats.appliedFilters?.seasonKey ?? "",
+  ].join("|");
+}
+
+function LolPerformanceScopeToggle({
+  value,
+  onValueChange,
+  hasRecentMatchStats,
+}: {
+  value: LolPerformanceScope;
+  onValueChange: (value: LolPerformanceScope) => void;
+  hasRecentMatchStats: boolean;
+}) {
+  return (
+    <ToggleGroup
+      type="single"
+      variant="outline"
+      size="sm"
+      value={value}
+      onValueChange={(next) => {
+        if (next === "recent" || next === "overall") {
+          onValueChange(next);
+        }
+      }}
+      className="w-fit shrink-0 rounded-lg border border-border bg-card/50 p-1"
+    >
+      <ToggleGroupItem
+        value="recent"
+        disabled={!hasRecentMatchStats}
+        className="px-3 data-[state=on]:bg-muted data-[state=on]:text-foreground"
+        aria-label="Últimas partidas"
+      >
+        Últimas partidas
+      </ToggleGroupItem>
+      <ToggleGroupItem
+        value="overall"
+        className="px-3 data-[state=on]:bg-muted data-[state=on]:text-foreground"
+        aria-label="Geral"
+      >
+        Geral
+      </ToggleGroupItem>
+    </ToggleGroup>
+  );
+}
 
 function LolChampionOverviewRow({ champion }: { champion: LolChampionRollupRow }) {
   return (
@@ -2150,7 +2351,13 @@ function LolChampionsExplorerDialog({
   );
 }
 
-function RealLolOverview({ stats }: { stats: LolStatsResponse }) {
+function RealLolOverview({
+  stats,
+  performanceScope,
+}: {
+  stats: LolStatsResponse;
+  performanceScope: LolPerformanceScope;
+}) {
   const [championsDialog, setChampionsDialog] = useState<null | "season" | "overall" | "mastery">(null);
 
   const overview = stats.overview;
@@ -2164,6 +2371,8 @@ function RealLolOverview({ stats }: { stats: LolStatsResponse }) {
   const visibleMasteryChampions = masteryPreview.slice(0, 4);
   const last20 = stats.last20Summary;
   const completeness = stats.dataCompleteness;
+  const hasRecentMatchStats = getLolHasRecentMatchStats(stats);
+
   if (!overview) {
     return (
       <Card className="bg-card/50 border-border">
@@ -2175,12 +2384,26 @@ function RealLolOverview({ stats }: { stats: LolStatsResponse }) {
   }
 
   const hasOverviewMatchStats = overview.gamesPlayed > 0;
-  const winRateAccent = hasOverviewMatchStats
-    ? lolWinRateAccentClass(overview.winRate)
+  const isRecentScope = performanceScope === "recent" && hasRecentMatchStats;
+  const activeWinRate = isRecentScope ? (last20?.winRate ?? 0) : overview.winRate;
+  const activeKdaFormatted = isRecentScope
+    ? (last20?.kdaFormatted ?? "0.00:1")
+    : overview.kdaFormatted;
+  const activeKdaRatio = isRecentScope ? (last20?.kdaRatio ?? 0) : overview.kdaRatio;
+  const hasActiveMatchStats = isRecentScope ? hasRecentMatchStats : hasOverviewMatchStats;
+  const winRateAccent = hasActiveMatchStats
+    ? lolWinRateAccentClass(activeWinRate)
     : "text-muted-foreground";
-  const kdaAccent = hasOverviewMatchStats
-    ? lolKdaRatioAccentClass(overview.kdaRatio)
+  const kdaAccent = hasActiveMatchStats
+    ? lolKdaRatioAccentClass(activeKdaRatio)
     : "text-muted-foreground";
+  const activeGamesPlayed = isRecentScope
+    ? (last20?.gamesPlayed ?? 0)
+    : overview.gamesPlayed;
+  const performanceScopeLabel = lolPerformanceScopeLabel(
+    isRecentScope ? "recent" : "overall",
+    activeGamesPlayed,
+  );
   const queueScope = stats.appliedFilters?.queueScope ?? "ranked_solo";
   const queueFilterLabel = lolQueueFilterLabelPt(queueScope);
   const showRankAtualCard = queueScope !== "aram";
@@ -2235,26 +2458,29 @@ function RealLolOverview({ stats }: { stats: LolStatsResponse }) {
           </Card>
         ) : null}
         <StatCard
-          icon={<Trophy className="h-4 w-4" />}
-          label="Win rate (Playgether)"
-          value={hasOverviewMatchStats ? `${overview.winRate}%` : "Sem estatísticas"}
+          icon={<Trophy className={cn("h-4 w-4", winRateAccent)} />}
+          label="Win rate"
+          value={hasActiveMatchStats ? `${activeWinRate}%` : "Sem estatísticas"}
           accent={winRateAccent}
+          subValue={performanceScopeLabel}
         />
         <StatCard
-          icon={<Target className="h-4 w-4" />}
+          icon={<Target className={cn("h-4 w-4", kdaAccent)} />}
           label="KDA"
-          value={hasOverviewMatchStats ? overview.kdaFormatted : "Sem estatísticas"}
+          value={hasActiveMatchStats ? activeKdaFormatted : "Sem estatísticas"}
           accent={kdaAccent}
+          subValue={performanceScopeLabel}
         />
         <StatCard
-          icon={<Clock className="h-4 w-4" />}
+          icon={<Clock className="h-4 w-4 text-neon-platinum" />}
           label="Horas"
           value={`${overview.timePlayedHours}h`}
-          accent="text-foreground"
+          accent="text-neon-platinum"
+          subValue={performanceScopeLabel}
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card className="bg-card/50 border-border">
           <CardContent className="p-4">
             <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
@@ -2285,26 +2511,6 @@ function RealLolOverview({ stats }: { stats: LolStatsResponse }) {
               <Row label="CS/jogo" value={String(overview.csPerGame)} />
               <Row label="CS/min" value={String(overview.csPerMinute)} />
               <Row label="KP%" value={`${overview.kpPercent}%`} />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card/50 border-border">
-          <CardContent className="p-4">
-            <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Últimas 20
-            </h4>
-            <div className="space-y-2 text-sm">
-              <Row label="Partidas" value={String(last20?.gamesPlayed ?? 0)} />
-              <Row label="Vitórias" value={String(last20?.wins ?? 0)} />
-              <Row label="Derrotas" value={String(last20?.losses ?? 0)} />
-              <Row
-                label="WR"
-                value={`${last20?.winRate ?? 0}%`}
-                valueClassName={lolWinRateAccentClass(last20?.winRate ?? 0)}
-              />
-              <Row label="KDA" value={last20?.kdaFormatted ?? "0.00:1"} />
             </div>
           </CardContent>
         </Card>
@@ -2530,24 +2736,32 @@ function StatCard({
   value,
   accent,
   subValue,
+  centered = false,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
   accent: string;
   subValue?: string;
+  /** Centraliza o conteúdo verticalmente no card. */
+  centered?: boolean;
 }) {
   return (
     <Card className="bg-card/50 border-border overflow-hidden h-full flex flex-col">
-      <CardContent className="p-3 h-full flex flex-col">
+      <CardContent
+        className={cn(
+          "p-3 h-full flex flex-col",
+          centered && "justify-center",
+        )}
+      >
         <div className="flex items-center gap-2 text-muted-foreground mb-1">
           {icon}
           <span className="text-xs font-medium">{label}</span>
         </div>
-        <p className={`text-lg font-bold ${accent}`}>{value}</p>
-        {subValue && (
+        <p className={cn("text-lg font-bold tabular-nums", accent)}>{value}</p>
+        {subValue ? (
           <p className="text-xs text-muted-foreground mt-0.5">{subValue}</p>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   );

@@ -6,10 +6,8 @@ import {
   rarityConfig,
   type RarityLevel,
 } from "@/components/pages/profile/rarityConfig";
-import {
-  RarityAchievementChrome,
-  RarityBadge,
-} from "@/components/pages/profile/ConquistText";
+import { RarityAchievementChrome } from "@/components/pages/profile/ConquistText";
+import { AchievementHoverPreviewCard } from "@/components/pages/profile/AchievementHoverPreviewCard";
 import type { HighlightedAchievementPublic } from "@/types/highlightedAchievements";
 import {
   Tooltip,
@@ -95,72 +93,18 @@ function AchievementHighlightChip({
       </TooltipTrigger>
       <TooltipContent
         side="top"
-        className="max-w-xs border-0 bg-transparent p-0 shadow-none overflow-visible text-left"
+        className="z-[500] max-w-xs border-0 bg-transparent p-0 shadow-none overflow-visible text-left"
       >
-        <RarityAchievementChrome
+        <AchievementHoverPreviewCard
+          title={a.title}
+          description={a.description}
           rarity={rarity}
-          isHovered
-          isExpanded
-          reducedMotion={reducedMotion}
-          staticBorder={false}
-          variant="card"
-          className="w-full max-w-xs rounded-xl"
-          contentClassName="relative z-10 space-y-2 p-3 text-left"
-        >
-          <div className="flex items-center gap-2">
-            <span
-              className={cn(
-                "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-lg leading-none",
-                cfg.textColor,
-              )}
-              style={{
-                background: `${cfg.staticBorderColor}22`,
-                border: `1px solid ${cfg.staticBorderColor}66`,
-              }}
-            >
-              {a.icon_image_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={a.icon_image_url}
-                  alt=""
-                  className="h-5 w-5 object-contain"
-                />
-              ) : (
-                <span
-                  className="flex h-full w-full items-center justify-center text-[1.35rem] leading-none"
-                  aria-hidden
-                >
-                  {a.icon || "🏆"}
-                </span>
-              )}
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0 pr-1">
-                  <p className="font-semibold text-sm leading-snug text-white subpixel-antialiased [transform:translateZ(0)]">
-                    {a.title}
-                  </p>
-                  <p className="text-xs text-zinc-300">{a.game}</p>
-                </div>
-                <RarityBadge
-                  config={cfg}
-                  rarity={rarity}
-                  isHovered
-                  reducedMotion={reducedMotion}
-                />
-              </div>
-            </div>
-          </div>
-          {a.date ? (
-            <p className="text-xs text-zinc-300">Desbloqueada: {a.date}</p>
-          ) : null}
-          <p className="text-xs leading-relaxed text-zinc-300">{a.description}</p>
-          {a.percentage > 0 ? (
-            <p className="text-[11px] text-zinc-300">
-              ~{a.percentage.toFixed(1)}% dos jogadores
-            </p>
-          ) : null}
-        </RarityAchievementChrome>
+          icon={a.icon}
+          iconImageUrl={a.icon_image_url}
+          game={a.game}
+          date={a.date}
+          percentage={a.percentage}
+        />
       </TooltipContent>
     </Tooltip>
   );

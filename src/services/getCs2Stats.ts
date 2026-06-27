@@ -22,6 +22,7 @@ export type Cs2StatsResponse = {
     totalMatchesWon: number;
     winrate: number;
     totalHours: number;
+    steamTotalHours?: number | null;
     totalHeadshots: number;
     headshotPct: number;
     totalShotsFired: number;

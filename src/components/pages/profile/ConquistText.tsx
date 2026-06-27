@@ -15,6 +15,7 @@ import {
 } from "./rarityConfig";
 import { cn } from "@/lib/utils";
 import { AchievementElectricOverlay } from "./AchievementElectricOverlay";
+import { RarityLevelDot } from "./RarityLevelDot";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -31,6 +32,8 @@ export interface ConquistTextProps {
   headerEndSlot?: React.ReactNode;
   /** Conteúdo antes do selo de raridade (ex.: pill “Em destaque”). */
   leadingBadgeSlot?: React.ReactNode;
+  /** Mantém hover/elevação enquanto um menu popover no header está aberto. */
+  interactionLocked?: boolean;
 }
 
 interface ParticleData {
@@ -399,9 +402,9 @@ export function RarityAchievementChrome({
 
         <div
           className={cn(
-            "relative z-[2] overflow-hidden",
+            "relative z-[2] overflow-visible",
             isChip
-              ? "rounded-[calc(var(--radius)-2px)]"
+              ? "rounded-[calc(var(--radius)-2px)] overflow-hidden"
               : "col-start-1 row-start-1 min-h-0 min-w-0",
           )}
           style={{
@@ -509,12 +512,7 @@ export const RarityBadge = ({
       }
       transition={{ duration: 0.3 }}
     >
-      <span
-        className="flex h-4 w-4 shrink-0 items-center justify-center overflow-visible text-[0.95rem] leading-none"
-        aria-hidden
-      >
-        {config.icon}
-      </span>
+      <RarityLevelDot rarity={rarity} className="h-2 w-2" />
       <span className="flex items-center leading-none [transform:translateZ(0)]">
         {config.label}
       </span>
@@ -566,6 +564,7 @@ export const ConquistText = ({
   onCardClick,
   headerEndSlot,
   leadingBadgeSlot,
+  interactionLocked = false,
 }: ConquistTextProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -582,33 +581,48 @@ export const ConquistText = ({
   }, [recentlyUnlocked]);
 
   const handleClick = useCallback(() => {
+    if (interactionLocked) return;
     if (onCardClick) {
       onCardClick();
     } else {
       setIsExpanded((v) => !v);
     }
-  }, [onCardClick]);
+  }, [onCardClick, interactionLocked]);
 
   const isCommon = rarity === "common";
+
+  const effectiveHovered = isHovered || interactionLocked;
+  const isRaised = effectiveHovered || isExpanded;
+  const cardScale =
+    !reducedMotion &&
+    config.hoverScale > 1 &&
+    !config.rotatingBorder &&
+    effectiveHovered
+      ? config.hoverScale
+      : 1;
 
   return (
     <motion.div
       variants={cardVariants}
-      className="relative w-full cursor-pointer rounded-xl overflow-visible"
+      className={cn(
+        "relative w-full cursor-pointer rounded-xl overflow-visible",
+        isRaised && "z-[200]",
+      )}
+      style={{
+        zIndex: isRaised ? 200 : undefined,
+        willChange: "transform",
+      }}
       onClick={handleClick}
       onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
-      whileHover={
-        !reducedMotion && config.hoverScale > 1 && !config.rotatingBorder
-          ? { scale: config.hoverScale }
-          : {}
-      }
+      onHoverEnd={() => {
+        if (!interactionLocked) setIsHovered(false);
+      }}
+      animate={{ scale: cardScale }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      style={{ willChange: "transform" }}
     >
       <RarityAchievementChrome
         rarity={rarity}
-        isHovered={isHovered}
+        isHovered={effectiveHovered}
         isExpanded={isExpanded}
         reducedMotion={reducedMotion}
         staticBorder={false}
@@ -625,7 +639,7 @@ export const ConquistText = ({
             animate={
               isAnimated && !isCommon
                 ? {
-                    boxShadow: isHovered
+                    boxShadow: effectiveHovered
                       ? `0 0 16px ${config.staticBorderColor}, inset 0 0 8px ${config.staticBorderColor}33`
                       : `0 0 6px ${config.staticBorderColor}99`,
                   }
@@ -670,19 +684,19 @@ export const ConquistText = ({
           {/* Text content */}
           <div className="flex-1 min-w-0 space-y-1">
             {/* Header row */}
-            <div className="flex items-start justify-between gap-2 flex-wrap">
+            <div className="relative z-30 flex items-start justify-between gap-2 flex-wrap overflow-visible">
               <h4
                 className={`min-w-0 flex-1 font-semibold ${config.textColor} leading-snug`}
               >
                 {title}
               </h4>
-              <div className="flex items-center gap-0.5 flex-shrink-0">
+              <div className="relative z-30 flex items-center gap-0.5 flex-shrink-0 overflow-visible">
                 <span className="text-xs text-zinc-300 px-2 py-0.5 rounded border border-border/40 bg-black/20 whitespace-nowrap">
                   {date}
                 </span>
                 {headerEndSlot ? (
                   <span
-                    className="flex shrink-0"
+                    className="relative z-30 flex shrink-0 overflow-visible"
                     onClick={(e) => e.stopPropagation()}
                     onPointerDown={(e) => e.stopPropagation()}
                   >
@@ -698,7 +712,7 @@ export const ConquistText = ({
               <RarityBadge
                 config={config}
                 rarity={rarity}
-                isHovered={isHovered}
+                isHovered={effectiveHovered}
                 reducedMotion={reducedMotion}
               />
 

@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { useAuthContext } from "@/context/AuthContext";
 import { useNotificationContext } from "@/context/NotificationsContext";
@@ -15,13 +15,18 @@ export const TopNavigation = () => {
   const { logout } = useAuthContext();
   const { unreadCount } = useNotificationContext();
   const { resolvedTheme, setTheme } = useTheme();
-  const isDarkMode = resolvedTheme === "dark";
+  const [themeMounted, setThemeMounted] = useState(false);
+  const isDarkMode = themeMounted && resolvedTheme === "dark";
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { BaseLayout } = useBaseLayoutServerContext();
   const router = useRouter();
   const icons = BaseLayout?.ServerTopNavigation.icons;
   const { unreadCount: dmUnreadCount } = useDMUnread();
+
+  useEffect(() => {
+    setThemeMounted(true);
+  }, []);
 
   const toggleDarkMode = () => {
     setTheme(isDarkMode ? "light" : "dark");

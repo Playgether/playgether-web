@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { toast } from "sonner";
+import { toast, type ExternalToast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import {
   FaCheckCircle,
@@ -88,7 +88,16 @@ type ToastOptions = {
   description?: React.ReactNode;
   duration?: number;
   action?: { label: string; onClick: () => void };
+  id?: string | number;
   [key: string]: unknown;
+};
+
+const loadingToastOptions = (options: ToastOptions = {}): ExternalToast => {
+  const { description: _description, ...toastOptions } = options;
+  return {
+    ...toastOptions,
+    duration: Infinity,
+  };
 };
 
 const getToastOptionsWithoutDescription = (options: ToastOptions = {}) => {
@@ -127,6 +136,9 @@ export const CustomToast = {
       () => <CustomSonner message={message} type="neutral" {...options} />,
       getToastOptionsWithoutDescription(options)
     ),
+  loading: (message: React.ReactNode, options: ToastOptions = {}) =>
+    toast.loading(message, loadingToastOptions(options)),
+  dismiss: (toastId?: string | number) => toast.dismiss(toastId),
 };
 
 export const CustomToaster = () => <Toaster />;
