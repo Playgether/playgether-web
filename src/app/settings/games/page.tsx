@@ -7,30 +7,89 @@ import { CheckCircle2, XCircle, ExternalLink } from "lucide-react";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import { SettingsPageWrapper, SettingsSection } from "../components/SettingsPageWrapper";
 import { apiFetch } from "@/services/apiFetch";
+import { getGames, type GameDetails } from "@/services/getGames";
+import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
 import { useAuthContext } from "@/context/AuthContext";
-interface ConnectionStatus {
-  steam: boolean;
-  riot: boolean;
+import { disconnectSteam } from "@/services/disconnectSteam";
+
+interface PlatformStatus {
+  connected: boolean;
+  nickname: string | null;
+  avatar: string | null;
+  steam_profile_public: boolean;
 }
 
-function GameConnectionRow({
-  name,
-  icon,
-  connected,
+interface ConnectionsStatus {
+  platforms: Record<string, PlatformStatus>;
+}
+
+function resolveMediaUrl(value: string | null | undefined): string {
+  if (!value) return "";
+  if (value.startsWith("http") || value.startsWith("/")) return value;
+  return getCloudinaryUrl(value);
+}
+
+function classifyGame(game: GameDetails): "steam" | "riot" | null {
+  const slug = (game.platform_slug ?? "").toLowerCase();
+  const acronym = (game.acronym ?? "").toLowerCase();
+  const name = (game.name ?? "").toLowerCase();
+
+  if (slug === "steam" || acronym === "csgo" || acronym === "cs2" || name.includes("counter")) {
+    return "steam";
+  }
+  if (slug === "riot" || acronym === "lol" || name.includes("league") || name.includes("valorant")) {
+    return "riot";
+  }
+  return null;
+}
+
+function handleConnectSteam() {
+  fetch("/api/auth/steam/start", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ next: "/settings/games" }),
+  })
+    .then((r) => r.json())
+    .then((data: { redirect_url?: string }) => {
+      if (data.redirect_url) window.location.href = data.redirect_url;
+    })
+    .catch(() => {});
+}
+
+function GameIcon({ icon, image, avatar, name }: { icon?: string | null; image?: string | null; avatar?: string | null; name: string }) {
+  const src = resolveMediaUrl(avatar ?? icon ?? image);
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        className="w-10 h-10 rounded-xl object-cover"
+        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+      />
+    );
+  }
+  return (
+    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-muted-foreground">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="11" width="4" height="6" rx="1"/><rect x="14" y="11" width="4" height="2" rx="1"/><circle cx="16" cy="16" r="1"/><path d="M6 7h4"/><path d="M8 5v4"/><path d="M2 6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/></svg>
+    </div>
+  );
+}
+
+function GameRow({
+  game,
+  platform,
+  status,
   loading,
   onConnect,
   onDisconnect,
-  connectLabel,
-  comingSoon,
 }: {
-  name: string;
-  icon: React.ReactNode;
-  connected?: boolean;
-  loading?: boolean;
+  game: GameDetails;
+  platform: "steam" | "riot" | null;
+  status: PlatformStatus | null;
+  loading: boolean;
   onConnect?: () => void;
   onDisconnect?: () => void;
-  connectLabel?: string;
-  comingSoon?: boolean;
 }) {
   if (loading) {
     return (
@@ -38,8 +97,8 @@ function GameConnectionRow({
         <div className="flex items-center gap-3">
           <Skeleton className="w-10 h-10 rounded-xl" />
           <div className="space-y-1">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-3 w-32" />
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-3 w-20" />
           </div>
         </div>
         <Skeleton className="h-8 w-24 rounded-lg" />
@@ -47,27 +106,32 @@ function GameConnectionRow({
     );
   }
 
+  const comingSoon = !platform;
+  const connected = status?.connected ?? false;
+  const avatar = connected ? (status?.avatar ?? null) : null;
+
   return (
     <div className="flex items-center justify-between p-4 rounded-xl bg-muted/20 hover:bg-muted/30 transition-colors">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-lg">
-          {icon}
-        </div>
+        <GameIcon icon={game.icon} image={game.image} avatar={avatar} name={game.name} />
         <div>
-          <p className="text-sm font-medium text-foreground">{name}</p>
+          <p className="text-sm font-medium text-foreground">{game.name}</p>
           <div className="flex items-center gap-1 mt-0.5">
             {comingSoon ? (
               <span className="text-xs text-muted-foreground">Em breve</span>
             ) : connected ? (
-              <>
-                <CheckCircle2 className="w-3 h-3 text-green-500" />
-                <span className="text-xs text-green-500">Conectado</span>
-              </>
+              <span className="inline-flex items-center gap-1 text-xs text-green-500">
+                <CheckCircle2 className="w-3 h-3" />
+                Conectado
+                {status?.nickname && (
+                  <span className="text-muted-foreground ml-1">· {status.nickname}</span>
+                )}
+              </span>
             ) : (
-              <>
-                <XCircle className="w-3 h-3 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Não conectado</span>
-              </>
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <XCircle className="w-3 h-3" />
+                Não conectado
+              </span>
             )}
           </div>
         </div>
@@ -90,10 +154,11 @@ function GameConnectionRow({
         <Button
           size="sm"
           onClick={onConnect}
+          disabled={!onConnect}
           className="text-xs rounded-lg bg-gradient-primary hover:shadow-glow-primary transition-all"
         >
           <ExternalLink className="w-3.5 h-3.5 mr-1" />
-          {connectLabel ?? "Conectar"}
+          {platform === "steam" ? "Conectar Steam" : "Conectar Riot"}
         </Button>
       )}
     </div>
@@ -102,62 +167,40 @@ function GameConnectionRow({
 
 export default function GamesSettingsPage() {
   const { user } = useAuthContext();
-  const [status, setStatus] = useState<ConnectionStatus>({ steam: false, riot: false });
+  const [connections, setConnections] = useState<ConnectionsStatus>({ platforms: {} });
+  const [games, setGames] = useState<GameDetails[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user?.user_id) return;
-    apiFetch(`/api/games/connections/status/`, { method: "GET" })
-      .then(async (r) => {
-        if (r.ok) {
-          const data = await r.json();
-          setStatus({ steam: !!data.steam_connected, riot: !!data.riot_connected });
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+
+    Promise.all([
+      apiFetch("/api/games/connections/status/", { method: "GET", credentials: "include" })
+        .then(async (r) => r.ok ? (r.json() as Promise<ConnectionsStatus>) : null)
+        .catch(() => null),
+      getGames().catch(() => [] as GameDetails[]),
+    ]).then(([statusData, catalog]) => {
+      if (statusData) setConnections(statusData);
+      setGames((catalog as GameDetails[]).filter((g) => g.platform_slug !== "playgether"));
+    }).finally(() => setLoading(false));
   }, [user]);
 
-  const handleSteamConnect = () => {
-    window.location.href = "/api/auth/steam/start/";
-  };
-
-  const handleSteamDisconnect = async () => {
-    try {
-      const resp = await apiFetch("/api/steam/disconnect/", { method: "POST" });
-      if (resp.ok) {
-        setStatus((s) => ({ ...s, steam: false }));
+  const handleDisconnect = async (platform: string) => {
+    if (platform === "steam") {
+      try {
+        await disconnectSteam();
+        setConnections((prev) => ({
+          platforms: {
+            ...prev.platforms,
+            steam: { connected: false, nickname: null, avatar: null, steam_profile_public: false },
+          },
+        }));
         CustomToast.success("Steam desconectada!");
+      } catch {
+        CustomToast.error("Erro ao desconectar a Steam.");
       }
-    } catch {
-      CustomToast.error("Erro ao desconectar Steam.");
     }
   };
-
-  const platforms = [
-    {
-      name: "Steam",
-      icon: "🎮",
-      connected: status.steam,
-      onConnect: handleSteamConnect,
-      onDisconnect: handleSteamDisconnect,
-      connectLabel: "Conectar Steam",
-      comingSoon: false,
-    },
-    {
-      name: "Riot Games (LoL / Valorant)",
-      icon: "⚔️",
-      connected: status.riot,
-      onConnect: () => {},
-      onDisconnect: () => {},
-      connectLabel: "Conectar Riot",
-      comingSoon: false,
-    },
-    { name: "Xbox", icon: "🎯", comingSoon: true },
-    { name: "PlayStation", icon: "🕹️", comingSoon: true },
-    { name: "Battle.net", icon: "🔵", comingSoon: true },
-    { name: "Epic Games", icon: "🏆", comingSoon: true },
-  ];
 
   return (
     <>
@@ -170,13 +213,26 @@ export default function GamesSettingsPage() {
           title="Plataformas de jogos"
           description="Vincule suas contas para mostrar suas estatísticas no perfil."
         >
-          {platforms.map((platform) => (
-            <GameConnectionRow
-              key={platform.name}
-              loading={loading && !platform.comingSoon}
-              {...platform}
-            />
-          ))}
+          {loading
+            ? Array.from({ length: 2 }).map((_, i) => (
+                <GameRow key={i} game={{} as GameDetails} platform={null} status={null} loading />
+              ))
+            : games.map((game) => {
+                const platform = classifyGame(game);
+                const status = platform ? (connections.platforms[platform] ?? null) : null;
+
+                return (
+                  <GameRow
+                    key={game.id}
+                    game={game}
+                    platform={platform}
+                    status={status}
+                    loading={false}
+                    onConnect={platform === "steam" ? handleConnectSteam : undefined}
+                    onDisconnect={platform ? () => handleDisconnect(platform) : undefined}
+                  />
+                );
+              })}
         </SettingsSection>
       </SettingsPageWrapper>
     </>

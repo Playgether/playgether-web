@@ -22,7 +22,7 @@ const navItems = [
   { label: "Notificações", href: "/settings/notifications", icon: Bell },
   { label: "Aparência", href: "/settings/appearance", icon: Palette },
   { label: "Jogos Conectados", href: "/settings/games", icon: Gamepad2 },
-  { label: "Integrações", href: "/settings/integrations", icon: Plug },
+  // { label: "Integrações", href: "/settings/integrations", icon: Plug }, // TODO: habilitar quando implementado
   { label: "Dispositivos", href: "/settings/devices", icon: Monitor },
 ];
 

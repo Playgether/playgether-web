@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Loader2, Lock, Shield, Smartphone } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Shield } from "lucide-react";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import { SettingsPageWrapper, SettingsSection } from "../components/SettingsPageWrapper";
 import { apiFetch } from "@/services/apiFetch";
@@ -60,7 +60,7 @@ export default function SecuritySettingsPage() {
       <CustomToaster />
       <SettingsPageWrapper
         title="Segurança"
-        description="Gerencie a segurança da sua conta e sessões ativas."
+        description="Gerencie a segurança da sua conta."
       >
         {/* Change password */}
         <SettingsSection
@@ -167,27 +167,6 @@ export default function SecuritySettingsPage() {
           </div>
         </SettingsSection>
 
-        {/* Sessions - Placeholder */}
-        <SettingsSection
-          title="Sessões ativas"
-          description="Dispositivos onde sua conta está conectada."
-        >
-          <div className="flex items-center justify-between p-4 rounded-xl bg-muted/20">
-            <div className="flex items-center gap-3">
-              <Smartphone className="w-5 h-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium text-foreground">Dispositivo atual</p>
-                <p className="text-xs text-muted-foreground">Sessão ativa agora</p>
-              </div>
-            </div>
-            <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full font-medium">
-              Atual
-            </span>
-          </div>
-          <p className="text-xs text-muted-foreground px-1">
-            O gerenciamento completo de sessões estará disponível em breve.
-          </p>
-        </SettingsSection>
       </SettingsPageWrapper>
     </>
   );
