@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback } from "react";
 import { useSecureWebSocket } from "./useSecureWebSocket";
 import type { DMMessage } from "@/services/directMessages";
 
@@ -27,12 +27,15 @@ export function useDMWebSocket({ conversationId, onNewMessage }: UseDMWebSocketO
       iv: string;
     }) => {
       if (!isConnected || !conversationId) return;
-      sendMessage(
-        JSON.stringify({
-          type: "send_message",
-          ...payload,
-        })
-      );
+      sendMessage(JSON.stringify({ type: "send_message", ...payload }));
+    },
+    [sendMessage, isConnected, conversationId]
+  );
+
+  const sendGroupMessage = useCallback(
+    (body: string) => {
+      if (!isConnected || !conversationId) return;
+      sendMessage(JSON.stringify({ type: "send_message", body }));
     },
     [sendMessage, isConnected, conversationId]
   );
@@ -42,5 +45,5 @@ export function useDMWebSocket({ conversationId, onNewMessage }: UseDMWebSocketO
     sendMessage(JSON.stringify({ type: "mark_read" }));
   }, [sendMessage, isConnected, conversationId]);
 
-  return { sendEncryptedMessage, markRead, isConnected };
+  return { sendEncryptedMessage, sendGroupMessage, markRead, isConnected };
 }

@@ -113,28 +113,10 @@ export const ConversationsModal = ({
                 </ScrollArea>
               </TabsContent>
 
-              <TabsContent value="clan" className="mt-0">
-                <ScrollArea className="h-[calc(100%_-_120px)]">
-                  <Conversations
-                    conversations={conversations}
-                    onSelectConversation={onSelectConversation}
-                    selectedConversation={selectedConversation}
-                    type="clan"
-                    notFoundMessage="Nenhum clan encontrado."
-                    fallbackAvatar={Components.NoImageClan}
-                  />
-                </ScrollArea>
-              </TabsContent>
-
               <TabsContent value="group" className="mt-0">
-                <Conversations
-                  conversations={conversations}
-                  onSelectConversation={onSelectConversation}
-                  selectedConversation={selectedConversation}
-                  type="group"
-                  notFoundMessage="Nenhum grupo encontrado."
-                  fallbackAvatar={Components.NoImageGroup}
-                />
+                <div className="flex flex-col items-center justify-center py-12 px-4 gap-4 h-[calc(100%_-_120px)]">
+                  <p className="text-sm text-muted-foreground text-center">Nenhum grupo ainda.</p>
+                </div>
               </TabsContent>
             </Tabs>
           </div>

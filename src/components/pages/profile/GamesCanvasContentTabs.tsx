@@ -12,6 +12,7 @@ import { PostsTab } from "./tabs/PostsTab";
 import { AchievementsTab } from "./tabs/AchievementsTab";
 import { MilestonesTab } from "./tabs/MilestonesTab";
 import { GamesLibraryTab } from "./tabs/GamesLibraryTab";
+import { RepostsTab } from "./tabs/RepostsTab";
 import { AddCommentModal } from "./modals/AddCommentModal";
 import { EditCommentModal } from "./modals/EditCommentModal";
 import { ConfirmationModal } from "./modals/ConfirmationModal";
@@ -66,6 +67,7 @@ export function GamesCanvasContentTabs({
     bio: "bio",
     media: "midias",
     posts: "textos",
+    reposts: "reposts",
     "game-stats": "estatisticas",
     milestones: "marcos",
     achievements: "conquistas",
@@ -604,6 +606,13 @@ export function GamesCanvasContentTabs({
                 isOwner={isOwner}
                 onPostClick={(postId) => setSelectedPostId(postId)}
                 onDeletePost={(post) => openConfirmModal("deletePost", { post })}
+              />
+            </TabsContent>
+
+            <TabsContent value="reposts" className="p-6">
+              <RepostsTab
+                profile={profile}
+                isOwner={isOwner}
               />
             </TabsContent>
 

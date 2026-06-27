@@ -3,29 +3,28 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Trash2, X as XIcon } from "lucide-react";
+import { Plus, Trash2, X as XIcon, Users, LogOut } from "lucide-react";
 import ChatHeader from "./ChatHeader";
 import ChatMessages from "./ChatMessages";
 import InputMessage from "./InputMessage";
 import ChatTabs from "./ChatTabs";
 import NoConversationSelected from "./NoConversationSelected";
-import NoImageClan from "./NoImageClan";
-import NoImageGroup from "./NoImageGroup";
 import { useE2ECrypto } from "@/context/E2ECryptoContext";
 import { useAuthContext } from "@/context/AuthContext";
 import { useDMWebSocket } from "@/hooks/useDMWebSocket";
 import { useDMNotifications } from "@/hooks/useDMNotifications";
 import { useDMUnread } from "@/context/DMUnreadContext";
 import {
+  createGroup,
   deleteConversation,
   getConversations,
   getMessages,
+  leaveGroup,
   markConversationRead,
   startConversation,
   type DMConversation,
   type DMMessage,
 } from "@/services/directMessages";
-import { api } from "@/services/api";
 import type { ConversationInterface } from "../../types/chat/ConversationInterface";
 import type { MessageInterface } from "../../types/chat/MessageInterface";
 import { resolvePlaygetherMediaUrl } from "@/lib/resolvePlaygetherMediaUrl";
@@ -38,11 +37,27 @@ interface ConversationsContentProps {
   forceSelectId?: string;
 }
 
-// Map a DMConversation to the legacy ConversationInterface expected by sub-components
 function toConversationInterface(
   dm: DMConversation,
   decryptedPreview: string | null
 ): ConversationInterface {
+  if (dm.type === "group") {
+    return {
+      id: dm.id,
+      name: dm.name || "Grupo",
+      avatar: "",
+      lastMessage: dm.last_message?.body ?? "",
+      timestamp: dm.last_message
+        ? new Date(dm.last_message.timestamp).toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "",
+      unread: dm.unread_count || undefined,
+      type: "group" as const,
+    };
+  }
+
   const other = dm.other_participant;
   return {
     id: dm.id,
@@ -75,18 +90,27 @@ export function ConversationsContent({
   const [selectedConversation, setSelectedConversation] = useState<DMConversation | null>(null);
   const autoOpenedRef = useRef(false);
 
-  // Messages for the selected conversation — decrypted
   const [messages, setMessages] = useState<MessageInterface[]>([]);
   const [rawMessages, setRawMessages] = useState<DMMessage[]>([]);
   const [messageInput, setMessageInput] = useState("");
   const [sending, setSending] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
 
-  // New conversation search
+  // New private conversation search
   const [showNewConv, setShowNewConv] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<{ id: string; username: string; first_name: string; last_name: string }[]>([]);
   const [searching, setSearching] = useState(false);
+
+  // Group creation
+  type GroupUser = { id: string; username: string; first_name: string; last_name: string };
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [groupName, setGroupName] = useState("");
+  const [groupSearchQuery, setGroupSearchQuery] = useState("");
+  const [groupSearchResults, setGroupSearchResults] = useState<GroupUser[]>([]);
+  const [groupMembers, setGroupMembers] = useState<GroupUser[]>([]);
+  const [groupSearching, setGroupSearching] = useState(false);
+  const [creatingGroup, setCreatingGroup] = useState(false);
 
   const seenIdsRef = useRef<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -105,14 +129,16 @@ export function ConversationsContent({
     loadConversations();
   }, [loadConversations]);
 
-  // ── Decrypt last-message previews ─────────────────────────────────────────
+  // ── Decrypt last-message previews (private DMs only) ─────────────────────
 
   useEffect(() => {
     if (!isReady) return;
     conversations.forEach(async (conv) => {
+      if (conv.type === "group") return;
       if (!conv.last_message) return;
       if (decryptedPreviews[conv.id]) return;
       const msg = conv.last_message;
+      if (!msg.encrypted_body || !msg.encrypted_key_recipient || !msg.iv) return;
       const isSender = msg.sender_id === user?.user_id;
       const plain = await decrypt(
         msg.encrypted_body,
@@ -146,17 +172,25 @@ export function ConversationsContent({
         if (seenIdsRef.current.has(msg.id)) continue;
         seenIdsRef.current.add(msg.id);
         const isSender = msg.sender_id === user?.user_id;
-        const plain = await decrypt(
-          msg.encrypted_body,
-          msg.encrypted_key_recipient,
-          msg.iv,
-          isSender,
-          msg.encrypted_key_sender
-        );
+
+        let content: string;
+        if (msg.body) {
+          content = msg.body;
+        } else {
+          const plain = await decrypt(
+            msg.encrypted_body!,
+            msg.encrypted_key_recipient!,
+            msg.iv!,
+            isSender,
+            msg.encrypted_key_sender
+          );
+          content = plain ?? "🔒 Não foi possível decifrar";
+        }
+
         decrypted.push({
           id: msg.id,
           sender: msg.sender_username,
-          content: plain ?? "🔒 Não foi possível decifrar",
+          content,
           timestamp: new Date(msg.timestamp).toLocaleTimeString("pt-BR", {
             hour: "2-digit",
             minute: "2-digit",
@@ -168,7 +202,6 @@ export function ConversationsContent({
       setLoadingMessages(false);
       const unreadBefore = conv.unread_count ?? 0;
       markConversationRead(conv.id);
-      // Limpar badge localmente sem esperar re-fetch
       setConversations((prev) =>
         prev.map((c) => (c.id === conv.id ? { ...c, unread_count: 0 } : c))
       );
@@ -187,7 +220,7 @@ export function ConversationsContent({
     }
   }, [autoOpenId, conversations, selectConversation]);
 
-  // Force-select a conversation when opened externally (e.g. "Mensagem" button on profile)
+  // Force-select a conversation (e.g. "Mensagem" button on profile)
   useEffect(() => {
     if (!forceSelectId || forceSelectId === prevForceSelectRef.current) return;
     prevForceSelectRef.current = forceSelectId;
@@ -208,18 +241,25 @@ export function ConversationsContent({
       seenIdsRef.current.add(msg.id);
 
       const isSender = msg.sender_id === user?.user_id;
-      const plain = await decrypt(
-        msg.encrypted_body,
-        msg.encrypted_key_recipient,
-        msg.iv,
-        isSender,
-        msg.encrypted_key_sender
-      );
+
+      let content: string;
+      if (msg.body) {
+        content = msg.body;
+      } else {
+        const plain = await decrypt(
+          msg.encrypted_body!,
+          msg.encrypted_key_recipient!,
+          msg.iv!,
+          isSender,
+          msg.encrypted_key_sender
+        );
+        content = plain ?? "🔒 Não foi possível decifrar";
+      }
 
       const ui: MessageInterface = {
         id: msg.id,
         sender: msg.sender_username,
-        content: plain ?? "🔒 Não foi possível decifrar",
+        content,
         timestamp: new Date(msg.timestamp).toLocaleTimeString("pt-BR", {
           hour: "2-digit",
           minute: "2-digit",
@@ -229,7 +269,6 @@ export function ConversationsContent({
 
       setMessages((prev) => [...prev, ui]);
 
-      // Update conversation preview
       setConversations((prev) =>
         prev.map((c) =>
           c.id === msg.conversation_id
@@ -237,31 +276,30 @@ export function ConversationsContent({
             : c
         )
       );
-      if (plain) {
+      if (msg.body) {
+        // no decrypted preview needed for group messages
+      } else if (content) {
         setDecryptedPreviews((prev) => ({
           ...prev,
-          [msg.conversation_id ?? ""]: plain,
+          [msg.conversation_id ?? ""]: content,
         }));
       }
     },
     [decrypt, user]
   );
 
-  const { sendEncryptedMessage } = useDMWebSocket({
+  const { sendEncryptedMessage, sendGroupMessage } = useDMWebSocket({
     conversationId: selectedConversation?.id ?? null,
     onNewMessage: handleNewMessage,
   });
 
-  // Notificações globais — recarrega lista quando chega mensagem de outra conversa
   useDMNotifications({
     onNotification: useCallback((convId: string) => {
-      // Se a notificação é da conversa aberta, o WebSocket da conversa já cuida
       if (convId === selectedConversation?.id) return;
       loadConversations();
     }, [selectedConversation?.id, loadConversations]),
   });
 
-  // Auto-scroll to latest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -270,8 +308,20 @@ export function ConversationsContent({
 
   const handleSend = useCallback(async () => {
     const text = messageInput.trim();
-    if (!text || !selectedConversation || !isReady || sending) return;
+    if (!text || !selectedConversation || sending) return;
 
+    if (selectedConversation.type === "group") {
+      setSending(true);
+      try {
+        sendGroupMessage(text);
+        setMessageInput("");
+      } finally {
+        setSending(false);
+      }
+      return;
+    }
+
+    if (!isReady) return;
     const recipientKey = selectedConversation.other_participant?.public_key;
     if (!recipientKey) return;
 
@@ -289,9 +339,9 @@ export function ConversationsContent({
     } finally {
       setSending(false);
     }
-  }, [messageInput, selectedConversation, isReady, sending, encryptForUser, sendEncryptedMessage]);
+  }, [messageInput, selectedConversation, isReady, sending, encryptForUser, sendEncryptedMessage, sendGroupMessage]);
 
-  // ── Unlock handler ────────────────────────────────────────────────────────
+  // ── Private conversation search ───────────────────────────────────────────
 
   const handleSearchUsers = useCallback(async (q: string) => {
     setSearchQuery(q);
@@ -327,19 +377,81 @@ export function ConversationsContent({
     if (selectedConversation?.id === convId) setSelectedConversation(null);
   }, [selectedConversation]);
 
-  // ── Prepare conversation list for sub-components ──────────────────────────
+  // ── Group creation ────────────────────────────────────────────────────────
 
-  // Apenas conversas com pelo menos uma mensagem aparecem na lista
-  const visibleConversations = conversations.filter((c) => c.last_message !== null);
-  const conversationItems: ConversationInterface[] = visibleConversations.map((c) =>
-    toConversationInterface(c, decryptedPreviews[c.id] ?? null)
+  const handleGroupSearchUsers = useCallback(async (q: string) => {
+    setGroupSearchQuery(q);
+    if (!q.trim()) { setGroupSearchResults([]); return; }
+    setGroupSearching(true);
+    try {
+      const res = await fetch(`/api/users/search?search=${encodeURIComponent(q)}`, { credentials: "include" });
+      const json = await res.json();
+      const data: GroupUser[] = Array.isArray(json) ? json : (json?.results ?? []);
+      setGroupSearchResults(data.slice(0, 8).filter((u) => !groupMembers.some((m) => m.id === u.id)));
+    } catch {
+      setGroupSearchResults([]);
+    } finally {
+      setGroupSearching(false);
+    }
+  }, [groupMembers]);
+
+  const handleAddGroupMember = useCallback((u: GroupUser) => {
+    setGroupMembers((prev) => [...prev, u]);
+    setGroupSearchQuery("");
+    setGroupSearchResults([]);
+  }, []);
+
+  const handleRemoveGroupMember = useCallback((userId: string) => {
+    setGroupMembers((prev) => prev.filter((m) => m.id !== userId));
+  }, []);
+
+  const handleResetGroupForm = useCallback(() => {
+    setShowCreateGroup(false);
+    setGroupName("");
+    setGroupMembers([]);
+    setGroupSearchQuery("");
+    setGroupSearchResults([]);
+  }, []);
+
+  const handleCreateGroup = useCallback(async () => {
+    if (!groupName.trim() || groupMembers.length === 0 || creatingGroup) return;
+    setCreatingGroup(true);
+    try {
+      const conv = await createGroup(groupName.trim(), groupMembers.map((m) => m.id));
+      if (!conv) return;
+      handleResetGroupForm();
+      const updated = await loadConversations();
+      const fresh = updated.find((c) => c.id === conv.id) ?? conv;
+      selectConversation(fresh);
+    } finally {
+      setCreatingGroup(false);
+    }
+  }, [groupName, groupMembers, creatingGroup, loadConversations, selectConversation, handleResetGroupForm]);
+
+  const handleLeaveGroup = useCallback(async (convId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const ok = await leaveGroup(convId);
+    if (!ok) return;
+    setConversations((prev) => prev.filter((c) => c.id !== convId));
+    if (selectedConversation?.id === convId) setSelectedConversation(null);
+  }, [selectedConversation]);
+
+  // ── Prepare conversation lists ────────────────────────────────────────────
+
+  const privateConversations = conversations.filter(
+    (c) => (c.type === "private" || !c.type) && c.last_message !== null
   );
-
-  // ── Render: main layout ───────────────────────────────────────────────────
+  const groupConversations = conversations.filter((c) => c.type === "group");
 
   const selectedLegacy = selectedConversation
     ? toConversationInterface(selectedConversation, decryptedPreviews[selectedConversation.id] ?? null)
     : null;
+
+  const isSendDisabled =
+    sending ||
+    (selectedConversation?.type !== "group" && !isReady);
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="flex h-full">
@@ -383,64 +495,189 @@ export function ConversationsContent({
             )}
           </div>
 
+          {/* Private conversations */}
           <TabsContent value="private" className="mt-0 p-0 flex-1 overflow-hidden">
             <ScrollArea style={{ height: listHeight }}>
-              {conversationItems.length === 0 ? (
+              {privateConversations.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
                   Nenhuma conversa ainda.
                 </p>
               ) : (
-                visibleConversations.map((conv) => {
-                    const item = toConversationInterface(conv, decryptedPreviews[conv.id] ?? null);
-                    return (
-                      <div
-                        key={conv.id}
-                        onClick={() => selectConversation(conv)}
-                        className={`group p-4 cursor-pointer hover:bg-muted/20 transition-colors border-l-2 ${
-                          selectedConversation?.id === conv.id
-                            ? "border-primary bg-primary/10"
-                            : "border-transparent"
-                        }`}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">{item.name}</p>
-                            <p className="text-xs text-muted-foreground truncate">{item.lastMessage}</p>
+                privateConversations.map((conv) => {
+                  const item = toConversationInterface(conv, decryptedPreviews[conv.id] ?? null);
+                  return (
+                    <div
+                      key={conv.id}
+                      onClick={() => selectConversation(conv)}
+                      className={`group p-4 cursor-pointer hover:bg-muted/20 transition-colors border-l-2 ${
+                        selectedConversation?.id === conv.id
+                          ? "border-primary bg-primary/10"
+                          : "border-transparent"
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{item.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{item.lastMessage}</p>
+                        </div>
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={(e) => handleDeleteConversation(conv.id, e)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 flex items-center justify-center rounded hover:text-destructive"
+                              title="Apagar conversa"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                            <span className="text-xs text-muted-foreground">{item.timestamp}</span>
                           </div>
-                          <div className="flex flex-col items-end gap-1 shrink-0">
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={(e) => handleDeleteConversation(conv.id, e)}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 flex items-center justify-center rounded hover:text-destructive"
-                                title="Apagar conversa"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                              <span className="text-xs text-muted-foreground">{item.timestamp}</span>
-                            </div>
-                            {(item.unread ?? 0) > 0 && (
-                              <span className="w-5 h-5 rounded-full bg-gradient-secondary flex items-center justify-center text-xs text-white font-bold">
-                                {item.unread}
-                              </span>
-                            )}
-                          </div>
+                          {(item.unread ?? 0) > 0 && (
+                            <span className="w-5 h-5 rounded-full bg-gradient-secondary flex items-center justify-center text-xs text-white font-bold">
+                              {item.unread}
+                            </span>
+                          )}
                         </div>
                       </div>
-                    );
-                  })
+                    </div>
+                  );
+                })
               )}
             </ScrollArea>
           </TabsContent>
 
-          <TabsContent value="clan" className="mt-0 flex-1 overflow-hidden">
-            <ScrollArea style={{ height: listHeight }}>
-              <NoImageClan />
-            </ScrollArea>
-          </TabsContent>
-
+          {/* Group conversations */}
           <TabsContent value="group" className="mt-0 flex-1 overflow-hidden">
             <ScrollArea style={{ height: listHeight }}>
-              <NoImageGroup />
+              {showCreateGroup ? (
+                <div className="p-4 space-y-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <button
+                      onClick={handleResetGroupForm}
+                      className="text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <XIcon className="w-4 h-4" />
+                    </button>
+                    <span className="text-sm font-medium">Novo grupo</span>
+                  </div>
+                  <input
+                    autoFocus
+                    value={groupName}
+                    onChange={(e) => setGroupName(e.target.value)}
+                    placeholder="Nome do grupo"
+                    className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border/50 text-sm outline-none focus:border-primary/50"
+                  />
+                  <input
+                    value={groupSearchQuery}
+                    onChange={(e) => handleGroupSearchUsers(e.target.value)}
+                    placeholder="Adicionar membros..."
+                    className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border/50 text-sm outline-none focus:border-primary/50"
+                  />
+                  {groupSearching && <p className="text-xs text-muted-foreground px-1">Buscando...</p>}
+                  {groupSearchResults.map((u) => (
+                    <button
+                      key={u.id}
+                      onClick={() => handleAddGroupMember(u)}
+                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted/30 text-sm transition-colors"
+                    >
+                      <span className="font-medium">{u.first_name} {u.last_name}</span>
+                      <span className="text-muted-foreground ml-1">@{u.username}</span>
+                    </button>
+                  ))}
+                  {groupMembers.length > 0 && (
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">Membros selecionados</p>
+                      {groupMembers.map((m) => (
+                        <div key={m.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-muted/20 text-sm">
+                          <span>
+                            {m.first_name} {m.last_name}
+                            <span className="text-muted-foreground ml-1">@{m.username}</span>
+                          </span>
+                          <button
+                            onClick={() => handleRemoveGroupMember(m.id)}
+                            className="text-muted-foreground hover:text-destructive transition-colors"
+                          >
+                            <XIcon className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <button
+                    onClick={handleCreateGroup}
+                    disabled={!groupName.trim() || groupMembers.length === 0 || creatingGroup}
+                    className="w-full py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors"
+                  >
+                    {creatingGroup ? "Criando..." : "Criar grupo"}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {groupConversations.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 px-4 gap-4">
+                      <Users className="w-10 h-10 text-muted-foreground/40" />
+                      <p className="text-sm text-muted-foreground text-center">Nenhum grupo ainda.</p>
+                      <button
+                        onClick={() => setShowCreateGroup(true)}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-sm transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Criar grupo
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      {groupConversations.map((conv) => {
+                        const item = toConversationInterface(conv, null);
+                        return (
+                          <div
+                            key={conv.id}
+                            onClick={() => selectConversation(conv)}
+                            className={`group p-4 cursor-pointer hover:bg-muted/20 transition-colors border-l-2 ${
+                              selectedConversation?.id === conv.id
+                                ? "border-primary bg-primary/10"
+                                : "border-transparent"
+                            }`}
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                                <Users className="w-4 h-4 text-primary" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm truncate">{item.name}</p>
+                                <p className="text-xs text-muted-foreground truncate">{item.lastMessage || "Sem mensagens"}</p>
+                              </div>
+                              <div className="flex flex-col items-end gap-1 shrink-0">
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={(e) => handleLeaveGroup(conv.id, e)}
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 flex items-center justify-center rounded hover:text-destructive"
+                                    title="Sair do grupo"
+                                  >
+                                    <LogOut className="w-3.5 h-3.5" />
+                                  </button>
+                                  <span className="text-xs text-muted-foreground">{item.timestamp}</span>
+                                </div>
+                                {(item.unread ?? 0) > 0 && (
+                                  <span className="w-5 h-5 rounded-full bg-gradient-secondary flex items-center justify-center text-xs text-white font-bold">
+                                    {item.unread}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <button
+                        onClick={() => setShowCreateGroup(true)}
+                        className="w-full p-4 text-primary text-sm flex items-center gap-2 hover:bg-muted/20 transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Criar novo grupo
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
             </ScrollArea>
           </TabsContent>
         </Tabs>
@@ -464,7 +701,7 @@ export function ConversationsContent({
               onInput={setMessageInput}
               messageInput={messageInput}
               onSend={handleSend}
-              disabled={sending || !isReady}
+              disabled={isSendDisabled}
             />
           </>
         ) : (

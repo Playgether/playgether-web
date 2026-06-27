@@ -902,6 +902,38 @@ All colors MUST be HSL.
     );
   }
 
+  /* ── User Preference: Reduce Animations ───────────────────────────────── */
+  .reduce-animations *,
+  .reduce-animations *::before,
+  .reduce-animations *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* ── User Preference: UI Density ────────────────────────────────────────  */
+  .density-compact {
+    --density-scale: 0.85;
+  }
+  .density-compact body {
+    font-size: calc(1rem * 0.9);
+  }
+  /* Tighten Tailwind rem-based padding/gap by scaling root font slightly */
+  .density-compact {
+    font-size: 14px;
+  }
+
+  /* ── User Preference: Font Size ─────────────────────────────────────────  */
+  .font-size-small body,
+  .font-size-small {
+    font-size: 14px;
+  }
+  .font-size-large body,
+  .font-size-large {
+    font-size: 18px;
+  }
+
   /** Altura fixa da área útil — necessário para flex + overflow interno (ex.: chat da sala) */
   .h-layout-main {
     height: calc(

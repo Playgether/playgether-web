@@ -431,7 +431,7 @@ export const PostModal = ({
   };
 
   const postBodyContent = (
-    <div className="flex min-h-0 w-full h-full flex-col sm:flex-row">
+    <div className={cn("flex min-h-0 w-full flex-col sm:flex-row", hasMedia && "h-full")}>
           {/* Media Section */}
           {hasMedia && (
             <div
@@ -512,9 +512,9 @@ export const PostModal = ({
           )}
 
           {/* Content Section */}
-          <div className="flex flex-col overflow-auto flex-1">
+          <div className={cn("flex flex-col", hasMedia ? "overflow-auto flex-1" : "w-full")}>
             {/* Post Header */}
-            <div className="p-6 pb-2 border-b border-border/50 sticky bg-background z-10 top-0 ">
+            <div className="p-6 pb-2 border-b border-border/50 sticky bg-card z-10 top-0">
               <div className="flex items-center justify-between mb-2 z-20 gap-2">
                 <div className="flex items-center space-x-3 min-w-0 flex-1">
                   <ProfileAvatar
@@ -717,12 +717,12 @@ export const PostModal = ({
             </div>
 
             {/* Comments Section */}
-            <div className="flex-1 flex flex-col relative">
+            <div className={cn("flex flex-col relative", hasMedia && "flex-1")}>
               {texts.comments}
 
               {comments.data.length > 0 ? (
                 <Virtuoso
-                  style={{ flex: 1, minHeight: 0 }}
+                  style={hasMedia ? { flex: 1, minHeight: 0 } : { height: "14rem" }}
                   increaseViewportBy={200}
                   data={comments.data}
                   endReached={loadMore}
@@ -1157,7 +1157,7 @@ export const PostModal = ({
                   e.preventDefault();
                   handleComment();
                 }}
-                className="p-4 border-t border-border/50 sticky bg-background/100 bottom-0 w-full"
+                className="p-4 border-t border-border/50 sticky bg-card bottom-0 w-full"
               >
                 <div className="relative">
                   <Textarea
@@ -1227,8 +1227,8 @@ export const PostModal = ({
       <div className="ml-0 md:ml-20">
         <div className="mx-auto max-w-5xl px-4 pt-4 pb-10">
           <div
-            className="bg-background/95 backdrop-blur-xl border border-primary/20 rounded-2xl overflow-hidden"
-            style={{ height: "calc(100vh - var(--layout-header-height) - 2rem)" }}
+            className="bg-card border border-border/50 backdrop-blur-sm shadow-card rounded-2xl overflow-hidden"
+            style={hasMedia ? { height: "calc(100vh - var(--layout-header-height) - 2rem)" } : undefined}
           >
             {postBodyContent}
           </div>
@@ -1242,7 +1242,10 @@ export const PostModal = ({
   return (
     <Dialog defaultOpen onOpenChange={handleOpenChange}>
       <DialogContent
-        className="max-w-[70vw] w-full h-[95vh] p-0 bg-background/95 backdrop-blur-xl border border-primary/20 overflow-hidden"
+        className={cn(
+          "w-full p-0 bg-card border border-border/50 backdrop-blur-sm shadow-card overflow-hidden",
+          hasMedia ? "max-w-[70vw] h-[80vh]" : "max-w-2xl h-auto"
+        )}
         aria-describedby={undefined}
       >
         <VisuallyHidden>

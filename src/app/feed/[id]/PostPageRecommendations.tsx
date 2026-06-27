@@ -7,6 +7,7 @@ import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
 import type { PostProps } from "@/app/feed/types/PostProps";
 import { Heart, MessageCircle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PostPageRecommendationsProps {
   currentPostId: number;
@@ -49,7 +50,31 @@ export function PostPageRecommendations({ currentPostId, authorUsername }: PostP
     load();
   }, [currentPostId, authorUsername]);
 
-  if (loading || (authorPosts.length === 0 && feedPosts.length === 0)) return null;
+  if (loading) {
+    return (
+      <div className="mt-6 space-y-8">
+        <section>
+          <Skeleton className="h-4 w-32 mb-3" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="bg-card border border-border/40 rounded-xl overflow-hidden p-3 space-y-3">
+                <Skeleton className="w-full aspect-video rounded-lg" />
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-6 w-6 rounded-full shrink-0" />
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-3 w-12 ml-auto" />
+                </div>
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-3/4" />
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  if (authorPosts.length === 0 && feedPosts.length === 0) return null;
 
   return (
     <div className="mt-6 space-y-8">

@@ -12,17 +12,23 @@ export interface DMMessage {
   conversation_id?: string;
   sender_id: string;
   sender_username: string;
-  encrypted_body: string;
-  encrypted_key_recipient: string;
-  encrypted_key_sender: string;
-  iv: string;
+  // Plaintext body — group messages only
+  body?: string;
+  // E2E encrypted fields — private DMs only
+  encrypted_body?: string;
+  encrypted_key_recipient?: string;
+  encrypted_key_sender?: string;
+  iv?: string;
   timestamp: string;
   is_read: boolean;
 }
 
 export interface DMConversation {
   id: string;
+  type: "private" | "group";
+  name: string;
   other_participant: DMParticipant | null;
+  participants: DMParticipant[] | null;
   last_message: DMMessage | null;
   unread_count: number;
   updated_at: string;
@@ -62,6 +68,20 @@ export async function startConversation(userId: string): Promise<DMConversation 
   }
 }
 
+export async function createGroup(name: string, memberIds: string[]): Promise<DMConversation | null> {
+  try {
+    const res = await apiFetch("/api/dm/conversations/create_group", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, member_ids: memberIds }),
+    });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
 export async function getMessages(
   conversationId: string,
   cursor?: string
@@ -89,6 +109,15 @@ export async function markConversationRead(conversationId: string): Promise<void
 export async function deleteConversation(conversationId: string): Promise<boolean> {
   try {
     const res = await apiFetch(`/api/dm/conversations/${conversationId}`, { method: "DELETE" });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function leaveGroup(conversationId: string): Promise<boolean> {
+  try {
+    const res = await apiFetch(`/api/dm/conversations/${conversationId}/leave`, { method: "POST" });
     return res.ok;
   } catch {
     return false;

@@ -1,14 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import { SettingsPageWrapper, SettingsSection } from "../components/SettingsPageWrapper";
 import { SettingsToggleRow } from "../components/SettingsToggleRow";
 import { SettingsSelectRow } from "../components/SettingsSelectRow";
-import { getPreferences, patchPreferences, type UserPreferences } from "@/services/userPreferences";
+import { useUserPreferences } from "@/context/UserPreferencesContext";
+import type { UserPreferences } from "@/services/userPreferences";
 import { cn } from "@/lib/utils";
 
 const themeOptions = [
@@ -17,34 +16,15 @@ const themeOptions = [
 ];
 
 export default function AppearanceSettingsPage() {
-  const { setTheme, resolvedTheme } = useTheme();
-  const [prefs, setPrefs] = useState<UserPreferences | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getPreferences()
-      .then((data) => {
-        // Normalize legacy "system" default to "dark" on load
-        const normalized = data.theme === "system" ? { ...data, theme: "dark" as const } : data;
-        setPrefs(normalized);
-        setTheme(normalized.theme);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const { setTheme } = useTheme();
+  const { prefs, loading, updatePrefs } = useUserPreferences();
 
   const update = async (patch: Partial<UserPreferences>) => {
-    if (!prefs) return;
-    const optimistic = { ...prefs, ...patch };
-    setPrefs(optimistic);
-    if (patch.theme) setTheme(patch.theme);
     try {
-      const updated = await patchPreferences(patch);
-      setPrefs(updated);
+      await updatePrefs(patch);
+      if (patch.theme) setTheme(patch.theme);
       CustomToast.success("Preferência salva!");
     } catch {
-      setPrefs(prefs);
-      if (patch.theme) setTheme(prefs.theme);
       CustomToast.error("Erro ao salvar preferência.");
     }
   };
