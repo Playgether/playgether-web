@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(response.data);
   } catch (error: any) {
     const status = error.response?.status ?? 500;
-    const detail = error.response?.data?.detail ?? "Erro ao alterar username";
-    return NextResponse.json({ detail }, { status });
+    const data = error.response?.data ?? { detail: "Erro ao alterar username" };
+    return NextResponse.json(data, { status });
   }
 }

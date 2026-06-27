@@ -33,6 +33,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json(response.data);
   } catch (error: any) {
     const status = error.response?.status ?? 500;
-    return NextResponse.json({ detail: error.response?.data?.detail ?? "Erro" }, { status });
+    const data = error.response?.data ?? { detail: "Erro" };
+    return NextResponse.json(data, { status });
   }
 }
