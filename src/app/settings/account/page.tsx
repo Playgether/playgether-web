@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
-import { Loader2, Camera, Trash2 } from "lucide-react";
+import { Loader2, Camera, Trash2, Mail, Eye, EyeOff, Lock, AtSign, Clock } from "lucide-react";
 import { CldUploadWidget } from "next-cloudinary";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
@@ -16,6 +16,14 @@ import { useProfileContext } from "@/context/ProfileContext";
 import { useAuthContext } from "@/context/AuthContext";
 import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
 import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import type { MeResponse } from "@/app/api/users/me/route";
 
 export default function AccountSettingsPage() {
   const { profile, fetchProfile } = useProfileContext();
@@ -30,12 +38,31 @@ export default function AccountSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const [me, setMe] = useState<MeResponse | null>(null);
+
+  // Email modal
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailPassword, setEmailPassword] = useState("");
+  const [showEmailPassword, setShowEmailPassword] = useState(false);
+  const [savingEmail, setSavingEmail] = useState(false);
+
+  // Username modal
+  const [usernameModalOpen, setUsernameModalOpen] = useState(false);
+  const [newUsername, setNewUsername] = useState("");
+  const [savingUsername, setSavingUsername] = useState(false);
+
   useEffect(() => {
-    if (profile === undefined) {
-      fetchProfile().finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+    const init = async () => {
+      try {
+        if (profile === undefined) await fetchProfile();
+        const meRes = await fetch("/api/users/me/", { credentials: "include" });
+        if (meRes.ok) setMe(await meRes.json());
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
   }, []);
 
   useEffect(() => {
@@ -44,6 +71,11 @@ export default function AccountSettingsPage() {
       setBio(profile.bio ?? "");
     }
   }, [profile]);
+
+  const refreshMe = async () => {
+    const res = await fetch("/api/users/me/", { credentials: "include" });
+    if (res.ok) setMe(await res.json());
+  };
 
   const handleSave = async () => {
     if (!profile?.id) return;
@@ -68,9 +100,58 @@ export default function AccountSettingsPage() {
     }
   };
 
+  const handleChangeEmail = async () => {
+    if (!newEmail.trim()) { CustomToast.warning("Informe o novo e-mail."); return; }
+    setSavingEmail(true);
+    try {
+      const res = await fetch("/api/users/change-email/", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ new_email: newEmail.trim(), current_password: emailPassword }),
+      });
+      const data = (await res.json()) as { detail?: string };
+      if (!res.ok) { CustomToast.error(data.detail ?? "Erro ao alterar e-mail."); return; }
+      await refreshMe();
+      setEmailModalOpen(false);
+      setNewEmail("");
+      setEmailPassword("");
+      CustomToast.success("E-mail alterado com sucesso!");
+    } catch {
+      CustomToast.error("Erro ao alterar e-mail.");
+    } finally {
+      setSavingEmail(false);
+    }
+  };
+
+  const handleChangeUsername = async () => {
+    if (!newUsername.trim()) { CustomToast.warning("Informe o novo username."); return; }
+    setSavingUsername(true);
+    try {
+      const res = await fetch("/api/users/change-username/", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ new_username: newUsername.trim() }),
+      });
+      const data = (await res.json()) as { detail?: string; username?: string };
+      if (!res.ok) { CustomToast.error(data.detail ?? "Erro ao alterar username."); return; }
+      await refreshMe();
+      await fetchProfile();
+      setUsernameModalOpen(false);
+      setNewUsername("");
+      CustomToast.success("Username alterado com sucesso!");
+    } catch {
+      CustomToast.error("Erro ao alterar username.");
+    } finally {
+      setSavingUsername(false);
+    }
+  };
+
   const currentPhoto = removePhoto ? null : (newPhoto ?? profile?.profile_photo ?? null);
   const currentBanner = removeBanner ? null : (newBanner ?? profile?.profile_banner ?? null);
   const bannerSrc = currentBanner ? resolveGameMediaUrl(currentBanner) : null;
+  const isSocialAccount = me ? !me.has_usable_password : false;
 
   if (loading) {
     return (
@@ -87,16 +168,141 @@ export default function AccountSettingsPage() {
   return (
     <>
       <CustomToaster />
+
+      {/* Email change modal */}
+      <Dialog open={emailModalOpen} onOpenChange={(o) => { setEmailModalOpen(o); if (!o) { setNewEmail(""); setEmailPassword(""); } }}>
+        <DialogContent className="bg-card border-border/50 max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Mail className="w-5 h-5 text-primary" />
+              </div>
+              <DialogTitle>Alterar e-mail</DialogTitle>
+            </div>
+            <DialogDescription className="text-sm text-muted-foreground">
+              {isSocialAccount
+                ? "Informe o novo endereço de e-mail para sua conta."
+                : "Informe o novo e-mail e sua senha atual para confirmar a alteração."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Novo e-mail</Label>
+              <Input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="novo@email.com"
+                className="bg-background/50 border-border/50"
+                onKeyDown={(e) => e.key === "Enter" && handleChangeEmail()}
+              />
+            </div>
+
+            {!isSocialAccount && (
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Senha atual</Label>
+                <div className="relative">
+                  <Input
+                    type={showEmailPassword ? "text" : "password"}
+                    value={emailPassword}
+                    onChange={(e) => setEmailPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="bg-background/50 border-border/50 pr-10"
+                    onKeyDown={(e) => e.key === "Enter" && handleChangeEmail()}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowEmailPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showEmailPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-1">
+              <Button variant="outline" onClick={() => setEmailModalOpen(false)} className="rounded-xl">
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleChangeEmail}
+                disabled={savingEmail}
+                className="rounded-xl bg-gradient-primary hover:shadow-glow-primary transition-all"
+              >
+                {savingEmail ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</> : "Alterar e-mail"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Username change modal */}
+      <Dialog open={usernameModalOpen} onOpenChange={(o) => { setUsernameModalOpen(o); if (!o) setNewUsername(""); }}>
+        <DialogContent className="bg-card border-border/50 max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <AtSign className="w-5 h-5 text-primary" />
+              </div>
+              <DialogTitle>Alterar username</DialogTitle>
+            </div>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Você pode alterar seu username uma vez a cada 60 dias. Use apenas letras, números, pontos e underscores.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Novo username</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm select-none">@</span>
+                <Input
+                  value={newUsername}
+                  onChange={(e) => setNewUsername(e.target.value.replace(/[^a-zA-Z0-9_.]/g, ""))}
+                  placeholder={me?.username ?? "username"}
+                  className="bg-background/50 border-border/50 pl-9"
+                  maxLength={30}
+                  onKeyDown={(e) => e.key === "Enter" && handleChangeUsername()}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {newUsername.length}/30 caracteres · letras, números, <code className="text-xs">.</code> e <code className="text-xs">_</code>
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 px-3 py-2.5 flex items-start gap-2">
+              <Clock className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                Após alterar, você precisará aguardar <strong>60 dias</strong> para mudar novamente.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-1">
+              <Button variant="outline" onClick={() => setUsernameModalOpen(false)} className="rounded-xl">
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleChangeUsername}
+                disabled={savingUsername}
+                className="rounded-xl bg-gradient-primary hover:shadow-glow-primary transition-all"
+              >
+                {savingUsername ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</> : "Alterar username"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <SettingsPageWrapper
         title="Conta"
         description="Gerencie suas informações pessoais e aparência do perfil."
       >
         {/* Avatar & Banner */}
         <SettingsSection title="Foto & Banner">
-          {/* Banner */}
           <div className="relative h-36 rounded-xl overflow-hidden bg-muted/30 flex items-center justify-center border border-border/50">
             {bannerSrc ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img src={bannerSrc} alt="Banner" className="w-full h-full object-cover" />
             ) : (
               <p className="text-xs text-muted-foreground">Sem banner</p>
@@ -104,42 +310,23 @@ export default function AccountSettingsPage() {
             <div className="absolute bottom-2 right-2 flex gap-2">
               <CldUploadWidget
                 uploadPreset={PresetsCloudinary.profile_banners}
-                onSuccess={(result: any) => {
-                  setNewBanner(result?.info?.public_id ?? null);
-                  setRemoveBanner(false);
-                }}
+                onSuccess={(result: any) => { setNewBanner(result?.info?.public_id ?? null); setRemoveBanner(false); }}
               >
                 {({ open }) => (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    className="h-8 px-3 text-xs rounded-lg"
-                    onClick={() => open()}
-                  >
-                    <Camera className="w-3.5 h-3.5 mr-1" />
-                    Alterar
+                  <Button type="button" size="sm" variant="secondary" className="h-8 px-3 text-xs rounded-lg" onClick={() => open()}>
+                    <Camera className="w-3.5 h-3.5 mr-1" />Alterar
                   </Button>
                 )}
               </CldUploadWidget>
-              {(currentBanner) && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="destructive"
-                  className="h-8 px-3 text-xs rounded-lg"
-                  onClick={() => {
-                    setRemoveBanner(true);
-                    setNewBanner(null);
-                  }}
-                >
+              {currentBanner && (
+                <Button type="button" size="sm" variant="destructive" className="h-8 px-3 text-xs rounded-lg"
+                  onClick={() => { setRemoveBanner(true); setNewBanner(null); }}>
                   <Trash2 className="w-3.5 h-3.5" />
                 </Button>
               )}
             </div>
           </div>
 
-          {/* Avatar */}
           <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/20">
             <ProfileAvatar
               displayName={name || user?.username || ""}
@@ -150,37 +337,19 @@ export default function AccountSettingsPage() {
             <div className="flex gap-2">
               <CldUploadWidget
                 uploadPreset={PresetsCloudinary.profile_image}
-                onSuccess={(result: any) => {
-                  setNewPhoto(result?.info?.public_id ?? null);
-                  setRemovePhoto(false);
-                }}
+                onSuccess={(result: any) => { setNewPhoto(result?.info?.public_id ?? null); setRemovePhoto(false); }}
               >
                 {({ open }) => (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="h-8 px-3 text-xs rounded-lg"
-                    onClick={() => open()}
-                  >
-                    <Camera className="w-3.5 h-3.5 mr-1" />
-                    Alterar foto
+                  <Button type="button" size="sm" variant="outline" className="h-8 px-3 text-xs rounded-lg" onClick={() => open()}>
+                    <Camera className="w-3.5 h-3.5 mr-1" />Alterar foto
                   </Button>
                 )}
               </CldUploadWidget>
               {currentPhoto && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
+                <Button type="button" size="sm" variant="ghost"
                   className="h-8 px-3 text-xs rounded-lg text-destructive hover:text-destructive"
-                  onClick={() => {
-                    setRemovePhoto(true);
-                    setNewPhoto(null);
-                  }}
-                >
-                  <Trash2 className="w-3.5 h-3.5 mr-1" />
-                  Remover
+                  onClick={() => { setRemovePhoto(true); setNewPhoto(null); }}>
+                  <Trash2 className="w-3.5 h-3.5 mr-1" />Remover
                 </Button>
               )}
             </div>
@@ -201,39 +370,76 @@ export default function AccountSettingsPage() {
               />
             </div>
 
+            {/* Username */}
             <div className="space-y-1.5">
-              <Label className="text-sm font-medium">Username</Label>
-              <Input
-                value={user?.username ?? ""}
-                readOnly
-                disabled
-                className="bg-muted/30 border-border/30 text-muted-foreground cursor-not-allowed"
-              />
-              <p className="text-xs text-muted-foreground">
-                O username não pode ser alterado por aqui no momento.
-              </p>
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">Username</Label>
+                {me?.can_change_username ? (
+                  <Button
+                    type="button" variant="ghost" size="sm"
+                    onClick={() => setUsernameModalOpen(true)}
+                    className="h-7 px-2 text-xs text-primary hover:text-primary gap-1"
+                  >
+                    <AtSign className="w-3.5 h-3.5" />
+                    Alterar
+                  </Button>
+                ) : (
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Clock className="w-3 h-3" />
+                    {me?.username_days_remaining}d restantes
+                  </span>
+                )}
+              </div>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm select-none">@</span>
+                <Input
+                  value={me?.username ?? user?.username ?? ""}
+                  readOnly
+                  disabled
+                  className="bg-muted/30 border-border/30 text-muted-foreground cursor-not-allowed pl-9"
+                />
+              </div>
+              {!me?.can_change_username && (
+                <p className="text-xs text-muted-foreground">
+                  Username alterado recentemente. Disponível para troca em {me?.username_days_remaining} dia(s).
+                </p>
+              )}
             </div>
 
+            {/* Email */}
             <div className="space-y-1.5">
-              <Label className="text-sm font-medium">E-mail</Label>
-              <Input
-                value=""
-                readOnly
-                disabled
-                placeholder="email@exemplo.com"
-                className="bg-muted/30 border-border/30 text-muted-foreground cursor-not-allowed"
-              />
-              <p className="text-xs text-muted-foreground">
-                Altere o e-mail na seção de Segurança.
-              </p>
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">E-mail</Label>
+                <Button
+                  type="button" variant="ghost" size="sm"
+                  onClick={() => setEmailModalOpen(true)}
+                  className="h-7 px-2 text-xs text-primary hover:text-primary gap-1"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  Alterar
+                </Button>
+              </div>
+              <div className="relative">
+                <Input
+                  value={me?.email_masked ?? ""}
+                  readOnly
+                  disabled
+                  className="bg-muted/30 border-border/30 text-muted-foreground font-mono cursor-not-allowed pr-8"
+                />
+                <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
+              </div>
+              {isSocialAccount && (
+                <p className="text-xs text-muted-foreground">
+                  Conta vinculada via {me?.auth_provider === "google" ? "Google" : "Steam"}. Não é necessária senha para alterar o e-mail.
+                </p>
+              )}
             </div>
 
+            {/* Bio */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-medium">Bio</Label>
-                <span className="text-xs text-muted-foreground">
-                  {bio.length}/{PROFILE_BIO_MAX_LENGTH}
-                </span>
+                <span className="text-xs text-muted-foreground">{bio.length}/{PROFILE_BIO_MAX_LENGTH}</span>
               </div>
               <Textarea
                 value={bio}
@@ -254,14 +460,7 @@ export default function AccountSettingsPage() {
             disabled={saving}
             className="bg-gradient-primary hover:shadow-glow-primary transition-all duration-300 px-8"
           >
-            {saving ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Salvando...
-              </>
-            ) : (
-              "Salvar alterações"
-            )}
+            {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</> : "Salvar alterações"}
           </Button>
         </div>
       </SettingsPageWrapper>
