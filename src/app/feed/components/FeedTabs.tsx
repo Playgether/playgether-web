@@ -15,16 +15,16 @@ const TABS: { id: FeedMode; label: string }[] = [
 
 export function FeedTabs({ mode, onChange }: FeedTabsProps) {
   return (
-    <div className="mb-6 flex rounded-xl border border-border/50 bg-muted/20 p-1">
+    <div className="mb-4 flex rounded-lg border border-border/50 bg-muted/20 p-0.5 lg:mb-6 lg:rounded-xl lg:p-1">
       {TABS.map((tab) => (
         <button
           key={tab.id}
           type="button"
           onClick={() => onChange(tab.id)}
           className={cn(
-            "flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200",
+            "flex-1 rounded-md px-3 py-1.5 text-xs font-semibold transition-all duration-200 lg:rounded-lg lg:px-4 lg:py-2.5 lg:text-sm",
             mode === tab.id
-              ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md"
+              ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
           )}
         >

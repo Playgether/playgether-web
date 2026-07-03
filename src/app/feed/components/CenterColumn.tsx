@@ -9,7 +9,6 @@ import { FeedPost } from "./FeedPost";
 import { FeedTabs } from "./FeedTabs";
 import { FeedEmptyState } from "./FeedEmptyState";
 import { FollowSuggestionsCard } from "./FollowSuggestionsCard";
-import { ActiveRoomsCard } from "./ActiveRoomsCard";
 
 export default function CenterColumn() {
   const {
@@ -34,13 +33,6 @@ export default function CenterColumn() {
 
   return (
     <div className="relative col-span-6 space-y-6">
-      <FeedTabs mode={feedMode} onChange={setFeedMode} />
-
-      <div className="space-y-4 lg:hidden">
-        <FollowSuggestionsCard />
-        <ActiveRoomsCard />
-      </div>
-
       <div className="mb-3 lg:hidden">
         <Button
           onClick={() => handleCreatePostModal(true)}
@@ -62,6 +54,12 @@ export default function CenterColumn() {
           <Plus className="mr-2 h-5 w-5 lg:mr-3 lg:h-6 lg:w-6" />
           Compartilhe algo conosco
         </Button>
+      </div>
+
+      <FeedTabs mode={feedMode} onChange={setFeedMode} />
+
+      <div className="lg:hidden">
+        <FollowSuggestionsCard />
       </div>
 
       <div className="relative flex flex-col gap-6 lg:gap-[70px]">
