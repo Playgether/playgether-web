@@ -31,6 +31,9 @@ import { CommentContentType } from "@/components/content_types/CommentContentTyp
 import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
 import { handleKeyDown } from "@/components/layouts/SendOnEnterKey/sendOnEnterKey";
 import { CommentActionMenu } from "./CommentActionMenu";
+import ContextMenuNotMine from "./ContextMenuNotMine";
+import ContextMenuOwn from "./ContextMenuOwn";
+import ContextMenuAction from "./ContextMenuAction";
 import { PostPageRecommendations } from "@/app/feed/[id]/PostPageRecommendations";
 import {
   DropdownMenu,
@@ -41,9 +44,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   MoreHorizontal,
-  Trash2,
-  MessageCircle,
-  MessageCircleOff,
   PenLine,
   Repeat2,
   X as XIcon,
@@ -88,6 +88,8 @@ export const PostModal = ({
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
   const [commentsDisabled, setCommentsDisabled] = useState(false);
   const [isReposting, setIsReposting] = useState(false);
+  const [contextAlertOpen, setContextAlertOpen] = useState(false);
+  const [contextAlertAction, setContextAlertAction] = useState("");
 
   const {
     handleLike,
@@ -430,6 +432,134 @@ export const PostModal = ({
     }
   };
 
+  const isPostOwner = Boolean(
+    post.is_own || post.isOwn || (user?.username && post.username === user.username),
+  );
+
+  const handlePostContextAction = async (action: string) => {
+    if (action === "toggle_comments") {
+      const newState = !commentsDisabled;
+      setCommentsDisabled(newState);
+      try {
+        const res = await fetch(`/api/posts/${post.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ comments_disabled: newState }),
+        });
+        if (res.ok) {
+          handlePostUpdate({ ...post, comments_disabled: newState }, post.id);
+          CustomToast.neutral(newState ? "Comentários desativados." : "Comentários ativados.");
+        } else {
+          setCommentsDisabled(!newState);
+          CustomToast.error("Erro ao alterar configuração de comentários.");
+        }
+      } catch {
+        setCommentsDisabled(!newState);
+        CustomToast.error("Erro ao alterar configuração de comentários.");
+      }
+      return;
+    }
+
+    setContextAlertAction(action);
+    setContextAlertOpen(true);
+  };
+
+  const confirmPostContextAction = async () => {
+    setContextAlertOpen(false);
+
+    if (contextAlertAction === "delete") {
+      try {
+        const res = await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
+        if (res.ok || res.status === 204) {
+          handlePostUpdate(null, post.id);
+          CustomToast.success("Post deletado com sucesso.");
+          if (onClose) onClose();
+          else router.back();
+        } else {
+          CustomToast.error("Erro ao deletar post.");
+        }
+      } catch {
+        CustomToast.error("Erro ao deletar post.");
+      }
+      return;
+    }
+
+    if (contextAlertAction === "remove") {
+      handlePostUpdate(null, post.id);
+      CustomToast.neutral("Post removido do seu feed.");
+      if (onClose) onClose();
+      else router.back();
+      return;
+    }
+
+    if (contextAlertAction === "block") {
+      try {
+        await fetch(`/api/profiles/${post.username}/block`, { method: "POST" });
+      } catch {
+        // falha silenciosa — o post já some do feed
+      }
+      handlePostUpdate(null, post.id);
+      CustomToast.info("Usuário bloqueado. Você não verá mais posts dele.");
+      if (onClose) onClose();
+      else router.back();
+      return;
+    }
+
+    if (contextAlertAction === "mute") {
+      try {
+        await fetch(`/api/profiles/${post.username}/mute`, { method: "POST" });
+      } catch {
+        // falha silenciosa — o post já some do feed
+      }
+      handlePostUpdate(null, post.id);
+      CustomToast.neutral("Usuário silenciado. Os posts dele não aparecerão mais.");
+      if (onClose) onClose();
+      else router.back();
+      return;
+    }
+
+    if (contextAlertAction === "report") {
+      try {
+        await fetch("/api/reports", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content_type: "post",
+            object_id: post.id,
+            reason: "other",
+          }),
+        });
+        CustomToast.warning("Denúncia enviada. Nossa equipe irá analisar o post.");
+      } catch {
+        CustomToast.error("Erro ao enviar denúncia. Tente novamente.");
+      }
+    }
+  };
+
+  const postActionsMenu = (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 shrink-0 rounded-none hover:rounded-none focus-visible:rounded-none text-muted-foreground hover:text-foreground"
+        >
+          <MoreHorizontal className="h-5 w-5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="bg-background/95 backdrop-blur-xl border border-border/50">
+        {isPostOwner ? (
+          <ContextMenuOwn
+            handleContextAction={handlePostContextAction}
+            commentsDisabled={commentsDisabled}
+          />
+        ) : (
+          <ContextMenuNotMine handleContextAction={handlePostContextAction} />
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   const postBodyContent = (
     <div className="flex min-h-0 w-full h-full flex-col sm:flex-row">
           {/* Media Section */}
@@ -512,11 +642,25 @@ export const PostModal = ({
           )}
 
           {/* Content Section */}
-          <div className="flex flex-col overflow-auto flex-1">
+          <div className="relative flex flex-col overflow-auto flex-1">
             {/* Post Header */}
-            <div className="p-6 pb-2 border-b border-border/50 sticky bg-background z-10 top-0 ">
-              <div className="flex items-center justify-between mb-2 z-20 gap-2">
-                <div className="flex items-center space-x-3 min-w-0 flex-1">
+            <div className="sticky top-0 z-20 border-b border-border/50 bg-background">
+              <div className="absolute top-0 right-0 z-30 flex items-center">
+                {postActionsMenu}
+                {!fullPage ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => (onClose ? onClose() : router.back())}
+                    className="h-9 w-9 shrink-0 rounded-none hover:rounded-none focus-visible:rounded-none text-muted-foreground hover:text-foreground"
+                  >
+                    <XIcon className="h-5 w-5" />
+                  </Button>
+                ) : null}
+              </div>
+              <div className="p-6 pb-2">
+              <div className={cn("mb-2", !fullPage ? "pr-20" : "pr-11")}>
+                <div className="flex items-center space-x-3 min-w-0">
                   <ProfileAvatar
                     displayName={post.name}
                     username={post.username}
@@ -543,83 +687,6 @@ export const PostModal = ({
                     </p>
                   </div>
                 </div>
-
-                {/* 3-dot menu — aparece só para o dono do post */}
-                {(post.is_own || post.username === user?.username) && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-foreground">
-                        <MoreHorizontal className="h-5 w-5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-background/95 backdrop-blur-xl border border-border/50">
-                      <DropdownMenuItem
-                        onClick={async () => {
-                          const newState = !commentsDisabled;
-                          setCommentsDisabled(newState);
-                          try {
-                            const res = await fetch(`/api/posts/${post.id}`, {
-                              method: "PATCH",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ comments_disabled: newState }),
-                            });
-                            if (res.ok) {
-                              handlePostUpdate({ ...post, comments_disabled: newState }, post.id);
-                              CustomToast.neutral(newState ? "Comentários desativados." : "Comentários ativados.");
-                            } else {
-                              setCommentsDisabled(!newState);
-                              CustomToast.error("Erro ao alterar configuração de comentários.");
-                            }
-                          } catch {
-                            setCommentsDisabled(!newState);
-                            CustomToast.error("Erro ao alterar configuração de comentários.");
-                          }
-                        }}
-                        className="flex items-center gap-2 hover:bg-muted/50"
-                      >
-                        {commentsDisabled ? (
-                          <><MessageCircle className="h-4 w-4" /> Ligar comentários</>
-                        ) : (
-                          <><MessageCircleOff className="h-4 w-4" /> Desligar comentários</>
-                        )}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={async () => {
-                          try {
-                            const res = await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
-                            if (res.ok || res.status === 204) {
-                              handlePostUpdate(null, post.id);
-                              CustomToast.success("Post deletado com sucesso.");
-                              if (onClose) onClose();
-                              else router.back();
-                            } else {
-                              CustomToast.error("Erro ao deletar post.");
-                            }
-                          } catch {
-                            CustomToast.error("Erro ao deletar post.");
-                          }
-                        }}
-                        className="flex items-center gap-2 text-red-500 hover:text-red-600 hover:bg-red-500/10"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Excluir post
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-
-                {/* Close button — only in modal mode */}
-                {!fullPage && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onClose ? onClose() : router.back()}
-                    className="shrink-0 text-muted-foreground hover:text-foreground"
-                  >
-                    <XIcon className="h-5 w-5" />
-                  </Button>
-                )}
               </div>
 
               {/* Post Text Toggle */}
@@ -714,6 +781,7 @@ export const PostModal = ({
                   <DateAndHour date={post.timestamp} />
                 </span>
               </PostPropertiers.Root>
+              </div>
             </div>
 
             {/* Comments Section */}
@@ -1219,6 +1287,13 @@ export const PostModal = ({
           isDeleting={isDeletingComment}
         />
       )}
+
+      <ContextMenuAction
+        alertAction={contextAlertAction}
+        alertOpen={contextAlertOpen}
+        confirmAction={confirmPostContextAction}
+        setAlertOpen={setContextAlertOpen}
+      />
     </>
   );
 
@@ -1242,6 +1317,7 @@ export const PostModal = ({
   return (
     <Dialog defaultOpen onOpenChange={handleOpenChange}>
       <DialogContent
+        hideCloseButton
         className="max-w-[70vw] w-full h-[95vh] p-0 bg-background/95 backdrop-blur-xl border border-primary/20 overflow-hidden"
         aria-describedby={undefined}
       >

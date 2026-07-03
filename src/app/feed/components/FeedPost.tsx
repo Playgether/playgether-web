@@ -246,7 +246,7 @@ export const FeedPost = ({ post }) => {
                 {post.medias.slice(0, 2).map((item, index) => (
                   <div
                     key={index}
-                    className="relative group cursor-pointer"
+                    className="relative group cursor-pointer overflow-hidden"
                     onClick={handlePostClick}
                   >
                     {item.media_type === "image" ? (
@@ -261,7 +261,7 @@ export const FeedPost = ({ post }) => {
                       <div className="relative video-container">
                         <VideoComponent
                           media_id={item.media_file}
-                          className="h-40 w-full rounded-lg object-cover sm:h-48 lg:h-64"
+                          className="h-40 w-full object-cover sm:h-48 lg:h-64"
                           preload="metadata"
                           style={{
                             background:
@@ -273,7 +273,7 @@ export const FeedPost = ({ post }) => {
                       </div>
                     )}
                     {post.medias.length > 2 && index === 1 && (
-                      <div className="absolute inset-0 bg-black/70 flex items-center justify-center rounded-xl z-10">
+                      <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/70">
                         <div className="text-center">
                           <span className="text-white text-3xl font-bold">
                             +{post.medias.length - 2}
