@@ -8,7 +8,6 @@ import { LoadingComponent } from "@/components/layouts/components/LoadingCompone
 import { FeedPost } from "./FeedPost";
 import { FeedTabs } from "./FeedTabs";
 import { FeedEmptyState } from "./FeedEmptyState";
-import { FollowSuggestionsCard } from "./FollowSuggestionsCard";
 
 export default function CenterColumn() {
   const {
@@ -33,34 +32,20 @@ export default function CenterColumn() {
 
   return (
     <div className="relative col-span-6 space-y-6">
-      <div className="mb-3 lg:hidden">
+      <div className="mb-3 lg:mb-6">
         <Button
           onClick={() => handleCreatePostModal(true)}
           variant="outline"
-          className="h-11 w-full justify-start gap-2 rounded-full border-border/60 bg-muted/30 px-4 text-sm font-medium text-muted-foreground shadow-none hover:bg-muted/50 hover:text-foreground"
+          className="h-11 w-full justify-start gap-2 rounded-full border-border/60 bg-muted/30 px-4 text-sm font-medium text-muted-foreground shadow-none hover:bg-muted/50 hover:text-foreground lg:h-14 lg:gap-3 lg:px-6 lg:text-base"
         >
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-primary">
-            <Plus className="h-4 w-4 text-white" />
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-primary lg:h-9 lg:w-9">
+            <Plus className="h-4 w-4 text-white lg:h-5 lg:w-5" />
           </span>
           Compartilhe algo conosco
         </Button>
       </div>
 
-      <div className="mb-6 hidden lg:block">
-        <Button
-          onClick={() => handleCreatePostModal(true)}
-          className="h-14 w-full rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-base font-semibold text-white shadow-lg transition-all duration-300 hover:from-purple-600 hover:to-pink-600 hover:shadow-xl lg:h-16 lg:text-lg"
-        >
-          <Plus className="mr-2 h-5 w-5 lg:mr-3 lg:h-6 lg:w-6" />
-          Compartilhe algo conosco
-        </Button>
-      </div>
-
       <FeedTabs mode={feedMode} onChange={setFeedMode} />
-
-      <div className="lg:hidden">
-        <FollowSuggestionsCard />
-      </div>
 
       <div className="relative flex flex-col gap-6 lg:gap-[70px]">
         {isFeedLoading ? (

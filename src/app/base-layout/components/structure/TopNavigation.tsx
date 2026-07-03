@@ -115,7 +115,7 @@ export const TopNavigation = () => {
           variant="ghost"
           size="icon"
           onClick={() => logout()}
-          className={`${actionBtn} hidden sm:flex`}
+          className={actionBtn}
           aria-label="Log out"
           title="Log out"
         >
