@@ -4,9 +4,13 @@ import {
   InfiniteQueryObserverResult,
 } from "@tanstack/react-query";
 import { PostProps } from "../types/PostProps";
+import type { FeedMode } from "../types/FeedMode";
 
 export interface FeedContextType {
   posts: PostProps[];
+  feedMode: FeedMode;
+  setFeedMode: (mode: FeedMode) => void;
+  isFeedLoading: boolean;
   createPostOpen: boolean;
   handlePostCreated: (newPost: PostProps) => void;
   handleRepost: (postId: number, repostId: number | null) => void;

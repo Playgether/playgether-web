@@ -6,6 +6,10 @@ import { useFeedContext } from "../context/FeedContext";
 import { Virtuoso } from "react-virtuoso";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 import { FeedPost } from "./FeedPost";
+import { FeedTabs } from "./FeedTabs";
+import { FeedEmptyState } from "./FeedEmptyState";
+import { FollowSuggestionsCard } from "./FollowSuggestionsCard";
+import { ActiveRoomsCard } from "./ActiveRoomsCard";
 
 export default function CenterColumn() {
   const {
@@ -14,6 +18,9 @@ export default function CenterColumn() {
     fetchNextPage,
     handleCreatePostModal,
     posts,
+    feedMode,
+    setFeedMode,
+    isFeedLoading,
   } = useFeedContext();
 
   const loadMore = useCallback(() => {
@@ -22,8 +29,18 @@ export default function CenterColumn() {
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  const showEmpty =
+    !isFeedLoading && !isFetchingNextPage && posts.length === 0;
+
   return (
     <div className="relative col-span-6 space-y-6">
+      <FeedTabs mode={feedMode} onChange={setFeedMode} />
+
+      <div className="space-y-4 lg:hidden">
+        <FollowSuggestionsCard />
+        <ActiveRoomsCard />
+      </div>
+
       <div className="mb-3 lg:hidden">
         <Button
           onClick={() => handleCreatePostModal(true)}
@@ -48,18 +65,27 @@ export default function CenterColumn() {
       </div>
 
       <div className="relative flex flex-col gap-6 lg:gap-[70px]">
-        <Virtuoso
-          useWindowScroll
-          increaseViewportBy={200}
-          overscan={3}
-          data={posts}
-          endReached={loadMore}
-          itemContent={(index, post) => (
-            <div key={post.id} style={{ animationDelay: `${index * 200}ms` }}>
-              <FeedPost post={post} />
-            </div>
-          )}
-        />
+        {isFeedLoading ? (
+          <LoadingComponent text="Carregando feed..." showText />
+        ) : showEmpty ? (
+          <FeedEmptyState
+            mode={feedMode}
+            onCreatePost={() => handleCreatePostModal(true)}
+          />
+        ) : (
+          <Virtuoso
+            useWindowScroll
+            increaseViewportBy={200}
+            overscan={3}
+            data={posts}
+            endReached={loadMore}
+            itemContent={(index, post) => (
+              <div key={post.id} style={{ animationDelay: `${index * 200}ms` }}>
+                <FeedPost post={post} />
+              </div>
+            )}
+          />
+        )}
         {isFetchingNextPage && (
           <div className="z-40 mt-[30px] h-fit w-full">
             <LoadingComponent text="Carregando novos posts" showText={true} />

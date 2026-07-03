@@ -200,6 +200,27 @@ function EmptyState({ query }: { query: string }) {
   );
 }
 
+function hasResultsForTab(tab: Tab, data: GlobalSearchResults): boolean {
+  switch (tab) {
+    case "pessoas":
+      return data.users.length > 0;
+    case "posts":
+    case "midia":
+      return data.posts.length > 0;
+    case "salas":
+      return data.rooms.length > 0;
+    case "jogos":
+      return data.games.length > 0;
+    default:
+      return (
+        data.users.length > 0 ||
+        data.posts.length > 0 ||
+        data.rooms.length > 0 ||
+        data.games.length > 0
+      );
+  }
+}
+
 function LoadingState() {
   return (
     <div className="flex items-center justify-center py-20 gap-3 text-muted-foreground">
@@ -318,12 +339,7 @@ export function SearchResults() {
 
   // ── render ────────────────────────────────────────────────────────────────
 
-  const hasResults =
-    results &&
-    (results.users.length > 0 ||
-      results.games.length > 0 ||
-      results.rooms.length > 0 ||
-      results.posts.length > 0);
+  const hasResults = results ? hasResultsForTab(activeTab, results) : false;
 
   return (
     <div className="mx-auto w-full max-w-2xl">
@@ -502,17 +518,13 @@ export function SearchResults() {
             {/* ── MÍDIA ── */}
             {activeTab === "midia" && results && (
               <div className="mx-3 mt-3 overflow-hidden rounded-xl border border-border/30 bg-card/40 sm:mx-4 sm:mt-4">
-                {results.posts.length > 0 ? (
-                  results.posts.map((p) => (
-                    <PostCard
-                      key={p.id}
-                      post={p}
-                      onClick={() => navigate(`/feed/${p.id}`)}
-                    />
-                  ))
-                ) : (
-                  <EmptyState query={q} />
-                )}
+                {results.posts.map((p) => (
+                  <PostCard
+                    key={p.id}
+                    post={p}
+                    onClick={() => navigate(`/feed/${p.id}`)}
+                  />
+                ))}
               </div>
             )}
 

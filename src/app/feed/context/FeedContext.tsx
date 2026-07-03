@@ -14,6 +14,7 @@ import { ResponseFeed } from "../types/ResponseFeed";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useAuthContext } from "@/context/AuthContext";
 import { getFeedClient } from "../services/getFeedClient";
+import type { FeedMode } from "../types/FeedMode";
 
 // Criando o contexto
 export const FeedContext = createContext<FeedContextType | undefined>(undefined);
@@ -37,21 +38,36 @@ export const FeedProvider = ({
 }) => {
   const [posts, setPosts] = useState<PostProps[]>(response.data);
   const [createPostOpen, setCreatePostOpen] = useState(false);
+  const [feedMode, setFeedModeState] = useState<FeedMode>("following");
   const { user } = useAuthContext();
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useInfiniteQuery({
-      queryKey: ["feed-posts"],
-      queryFn: ({ pageParam }) => getFeedClient(pageParam),
-      getNextPageParam: (lastPage) => {
-        if (lastPage?.next_page) {
-          const url = new URL(lastPage.next_page);
-          return url.searchParams.get("cursor");
-        }
-        return null;
-      },
-      enabled: !!user,
-      initialPageParam: null,
-    });
+
+  const setFeedMode = useCallback((mode: FeedMode) => {
+    setFeedModeState(mode);
+    setPosts([]);
+  }, []);
+
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isPending,
+    isFetching,
+  } = useInfiniteQuery({
+    queryKey: ["feed-posts", feedMode],
+    queryFn: ({ pageParam }) => getFeedClient(pageParam, feedMode),
+    getNextPageParam: (lastPage) => {
+      if (lastPage?.next_page) {
+        const url = new URL(lastPage.next_page);
+        return url.searchParams.get("cursor");
+      }
+      return null;
+    },
+    enabled: !!user,
+    initialPageParam: null,
+  });
+
+  const isFeedLoading = (isPending || isFetching) && !isFetchingNextPage;
 
   useEffect(() => {
     if (data?.pages) {
@@ -59,6 +75,12 @@ export const FeedProvider = ({
       setPosts(merged);
     }
   }, [data]);
+
+  useEffect(() => {
+    if (feedMode === "following" && !data?.pages?.length && response.data.length > 0) {
+      setPosts(response.data);
+    }
+  }, [feedMode, data, response.data]);
 
   const handlePostCreated = useCallback((newPost: PostProps) => {
     setPosts((prev) => [newPost, ...prev]);
@@ -165,6 +187,9 @@ export const FeedProvider = ({
     <FeedContext.Provider
       value={{
         posts,
+        feedMode,
+        setFeedMode,
+        isFeedLoading,
         handlePostCreated,
         handleRepost,
         handlePostUpdate,
