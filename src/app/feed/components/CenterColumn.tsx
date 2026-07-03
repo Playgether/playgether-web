@@ -1,4 +1,5 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import React, { useCallback } from "react";
@@ -8,6 +9,7 @@ import { LoadingComponent } from "@/components/layouts/components/LoadingCompone
 import { FeedPost } from "./FeedPost";
 import { FeedTabs } from "./FeedTabs";
 import { FeedEmptyState } from "./FeedEmptyState";
+import { FeedListFooter } from "./FeedListFooter";
 
 export default function CenterColumn() {
   const {
@@ -23,7 +25,7 @@ export default function CenterColumn() {
 
   const loadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
+      void fetchNextPage();
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
@@ -47,7 +49,7 @@ export default function CenterColumn() {
 
       <FeedTabs mode={feedMode} onChange={setFeedMode} />
 
-      <div className="relative flex flex-col gap-6 lg:gap-[70px]">
+      <div className="relative flex flex-col">
         {isFeedLoading ? (
           <LoadingComponent text="Carregando feed..." showText />
         ) : showEmpty ? (
@@ -60,19 +62,12 @@ export default function CenterColumn() {
             useWindowScroll
             increaseViewportBy={200}
             overscan={3}
+            atBottomThreshold={400}
             data={posts}
             endReached={loadMore}
-            itemContent={(index, post) => (
-              <div key={post.id} style={{ animationDelay: `${index * 200}ms` }}>
-                <FeedPost post={post} />
-              </div>
-            )}
+            components={{ Footer: FeedListFooter }}
+            itemContent={(_index, post) => <FeedPost post={post} />}
           />
-        )}
-        {isFetchingNextPage && (
-          <div className="z-40 mt-[30px] h-fit w-full">
-            <LoadingComponent text="Carregando novos posts" showText={true} />
-          </div>
         )}
       </div>
     </div>

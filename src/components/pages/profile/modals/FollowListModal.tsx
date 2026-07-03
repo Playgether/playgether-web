@@ -34,6 +34,12 @@ interface FollowListModalProps {
   onOpenChange: (open: boolean) => void;
   profileId: number;
   type: "followers" | "following";
+  isOwnProfile?: boolean;
+  onListChange?: (change: {
+    type: "followers" | "following";
+    action: "follow" | "unfollow";
+    userId: number;
+  }) => void;
 }
 
 export function FollowListModal({
@@ -41,6 +47,8 @@ export function FollowListModal({
   onOpenChange,
   profileId,
   type,
+  isOwnProfile: isOwnProfileProp,
+  onListChange,
 }: FollowListModalProps) {
   const router = useRouter();
   const { profile: myProfile, fetchProfile } = useProfileContext();
@@ -59,6 +67,7 @@ export function FollowListModal({
       : `/api/profiles/${profileId}/following`;
 
   const title = type === "followers" ? "Seguidores" : "Seguindo";
+  const isOwnProfile = isOwnProfileProp ?? myProfile?.id === profileId;
 
   const fetchUsers = useCallback(async () => {
     const res = await apiFetch(endpoint, { credentials: "include" });
@@ -82,15 +91,23 @@ export function FollowListModal({
 
         setUsers(list);
 
+        const ownProfile =
+          isOwnProfileProp ?? latestProfile?.id === profileId;
+
         const followSet = new Set(
-          Array.isArray(latestProfile?.follows) ? latestProfile.follows : [],
+          (Array.isArray(latestProfile?.follows) ? latestProfile.follows : []).map(
+            (id) => Number(id),
+          ),
         );
 
         const state: Record<number, boolean> = {};
         list.forEach((u) => {
-          state[u.id] = followSet.size > 0
-            ? followSet.has(u.id)
-            : (u.user_already_follow ?? false);
+          if (type === "following" && ownProfile) {
+            state[u.id] = true;
+          } else {
+            state[u.id] =
+              followSet.has(u.id) || (u.user_already_follow ?? false);
+          }
         });
         setFollowingState(state);
       } catch (e: any) {
@@ -101,7 +118,7 @@ export function FollowListModal({
     };
 
     void init();
-  }, [open, fetchUsers, fetchProfile]);
+  }, [open, fetchUsers, fetchProfile, isOwnProfileProp, profileId, type]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -115,7 +132,19 @@ export function FollowListModal({
 
   const handleToggleFollow = async (user: FollowUser) => {
     const prev = followingState[user.id] ?? false;
-    setFollowingState((s) => ({ ...s, [user.id]: !prev }));
+    const next = !prev;
+    const prevUsers = users;
+
+    setFollowingState((s) => ({ ...s, [user.id]: next }));
+    setUsers((list) => {
+      if (prev && type === "following" && isOwnProfile) {
+        return list.filter((u) => u.id !== user.id);
+      }
+      return list.map((u) =>
+        u.id === user.id ? { ...u, user_already_follow: next } : u,
+      );
+    });
+
     try {
       if (prev) {
         await unfollowProfile(user.id);
@@ -123,8 +152,15 @@ export function FollowListModal({
         await followProfile(user.id);
       }
       notifyFriendsListChanged();
+      void fetchProfile();
+      onListChange?.({
+        type,
+        action: prev ? "unfollow" : "follow",
+        userId: user.id,
+      });
     } catch {
       setFollowingState((s) => ({ ...s, [user.id]: prev }));
+      setUsers(prevUsers);
     }
   };
 
@@ -182,8 +218,9 @@ export function FollowListModal({
                 <UserRow
                   key={user.id}
                   user={user}
+                  listType={type}
+                  isOwnProfile={isOwnProfile}
                   isFollowing={followingState[user.id] ?? false}
-                  showFollowBack={type === "followers" && !(followingState[user.id] ?? false)}
                   onNavigate={handleNavigate}
                   onToggleFollow={handleToggleFollow}
                 />
@@ -196,19 +233,34 @@ export function FollowListModal({
   );
 }
 
+const unfollowButtonClass =
+  "shrink-0 h-8 px-3 text-xs border border-border/50 bg-muted/20 text-muted-foreground hover:!border-red-400/50 hover:!bg-red-500/15 hover:!text-red-400 transition-colors duration-200";
+
+const followingButtonClass =
+  "shrink-0 h-8 px-3 text-xs border border-border/50 bg-muted/30 text-foreground hover:!border-red-400/50 hover:!bg-red-500/15 hover:!text-red-400 transition-colors duration-200";
+
 function UserRow({
   user,
+  listType,
+  isOwnProfile,
   isFollowing,
-  showFollowBack,
   onNavigate,
   onToggleFollow,
 }: {
   user: FollowUser;
+  listType: "followers" | "following";
+  isOwnProfile: boolean;
   isFollowing: boolean;
-  showFollowBack: boolean;
   onNavigate: (username: string) => void;
   onToggleFollow: (user: FollowUser) => void;
 }) {
+  const showUnfollow = listType === "following" && isOwnProfile;
+  const showFollowBack =
+    listType === "followers" && !isFollowing;
+  const showFollow = listType === "following" && !isOwnProfile && !isFollowing;
+  const showFollowing =
+    listType === "following" && !isOwnProfile && isFollowing;
+
   return (
     <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted/50 transition-all duration-200 group">
       <div
@@ -235,7 +287,20 @@ function UserRow({
         </div>
       </div>
 
-      {showFollowBack ? (
+      {showUnfollow ? (
+        <Button
+          size="sm"
+          variant="outline"
+          className={unfollowButtonClass}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFollow(user);
+          }}
+        >
+          <UserCheck className="w-3 h-3 mr-1" />
+          Deixar de seguir
+        </Button>
+      ) : showFollowBack ? (
         <Button
           size="sm"
           variant="default"
@@ -248,11 +313,37 @@ function UserRow({
           <UserPlus className="w-3 h-3 mr-1" />
           Seguir de volta
         </Button>
-      ) : isFollowing ? (
+      ) : showFollowing ? (
         <Button
           size="sm"
-          variant="secondary"
-          className="shrink-0 h-8 px-3 text-xs hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all duration-200"
+          variant="outline"
+          className={followingButtonClass}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFollow(user);
+          }}
+        >
+          <UserCheck className="w-3 h-3 mr-1" />
+          Seguindo
+        </Button>
+      ) : showFollow ? (
+        <Button
+          size="sm"
+          variant="default"
+          className="shrink-0 h-8 px-3 text-xs bg-gradient-primary border-0 hover:shadow-neon transition-all duration-200"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFollow(user);
+          }}
+        >
+          <UserPlus className="w-3 h-3 mr-1" />
+          Seguir
+        </Button>
+      ) : listType === "followers" && isFollowing ? (
+        <Button
+          size="sm"
+          variant="outline"
+          className={followingButtonClass}
           onClick={(e) => {
             e.stopPropagation();
             onToggleFollow(user);

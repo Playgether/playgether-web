@@ -347,6 +347,9 @@ export function ProfilePostsProvider({
 
   const feedContextValue: FeedContextType = {
     posts,
+    feedMode: "following",
+    setFeedMode: () => {},
+    isFeedLoading: false,
     createPostOpen: false,
     handlePostCreated: () => {},
     handleRepost: () => {},
@@ -359,6 +362,8 @@ export function ProfilePostsProvider({
     isFetchingNextPage: false,
     increaseCommentCount,
     decreaseCommentCount,
+    injectPost: () => {},
+    handleAuthorFollow: () => {},
   };
 
   const value: ProfilePostsContextValue = {

@@ -1,4 +1,7 @@
 import type { FeedMode } from "../types/FeedMode";
+import { parseFeedCursor } from "../utils/parseFeedCursor";
+
+export { parseFeedCursor };
 
 export async function getFeedClient(
   pageParam: string | null = null,

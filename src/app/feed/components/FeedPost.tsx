@@ -23,6 +23,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useFeedContext } from "../context/FeedContext";
 import { CustomToast } from "@/components/ui/customSonner";
+import { FeedPostFollowButton } from "./FeedPostFollowButton";
 
 export const FeedPost = ({ post }) => {
   const [alertOpen, setAlertOpen] = useState(false);
@@ -224,26 +225,29 @@ export const FeedPost = ({ post }) => {
                   </div>
                 </div>
               </div>
-              <DropdownMenu>
-                <div className="pointer-events-auto">
-                {components.MoreOptions}
-                <DropdownMenuContent
-                  align="end"
-                  className="bg-background/95 backdrop-blur-xl border border-border/50"
-                >
-                  {(post.is_own || post.isOwn) ? (
-                    <ContextMenuOwn
-                      handleContextAction={handleContextAction}
-                      commentsDisabled={post.comments_disabled}
-                    />
-                  ) : (
-                    <ContextMenuNotMine
-                      handleContextAction={handleContextAction}
-                    />
-                  )}
-                </DropdownMenuContent>
-                </div>
-              </DropdownMenu>
+              <div className="pointer-events-auto flex shrink-0 items-center gap-2">
+                <FeedPostFollowButton post={post} />
+                <DropdownMenu>
+                  <div className="pointer-events-auto">
+                    {components.MoreOptions}
+                    <DropdownMenuContent
+                      align="end"
+                      className="bg-background/95 backdrop-blur-xl border border-border/50"
+                    >
+                      {post.is_own || post.isOwn ? (
+                        <ContextMenuOwn
+                          handleContextAction={handleContextAction}
+                          commentsDisabled={post.comments_disabled}
+                        />
+                      ) : (
+                        <ContextMenuNotMine
+                          handleContextAction={handleContextAction}
+                        />
+                      )}
+                    </DropdownMenuContent>
+                  </div>
+                </DropdownMenu>
+              </div>
             </div>
 
             {/* Content */}

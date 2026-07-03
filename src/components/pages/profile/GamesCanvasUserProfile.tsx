@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -77,15 +77,23 @@ export function GamesCanvasUserProfile({
       : 0,
   );
 
+  const [followingCount, setFollowingCount] = useState<number>(() =>
+    profile?.follows && Array.isArray(profile.follows)
+      ? excludeSelf(profile.follows)
+      : 0,
+  );
+
   useEffect(() => {
     if (profile?.followed_by && Array.isArray(profile.followed_by)) {
       setFollowersCount(excludeSelf(profile.followed_by));
     }
   }, [profile?.followed_by]);
-  const followingCount =
-    (profile?.follows && Array.isArray(profile.follows)
-      ? excludeSelf(profile.follows)
-      : 0) ?? 0;
+
+  useEffect(() => {
+    if (profile?.follows && Array.isArray(profile.follows)) {
+      setFollowingCount(excludeSelf(profile.follows));
+    }
+  }, [profile?.follows]);
 
   const userStats = useMemo(
     () => [
@@ -116,6 +124,32 @@ export function GamesCanvasUserProfile({
       profile?.quantity_posts,
       profile?.gamer_nivel,
     ],
+  );
+
+  const handleFollowListChange = useCallback(
+    ({
+      type,
+      action,
+      userId,
+    }: {
+      type: "followers" | "following";
+      action: "follow" | "unfollow";
+      userId: number;
+    }) => {
+      if (!profile || !isOwner) return;
+
+      if (type === "following") {
+        const delta = action === "follow" ? 1 : -1;
+        setFollowingCount((count) => Math.max(0, count + delta));
+        onProfileUpdated?.({
+          follows:
+            action === "follow"
+              ? ([...(profile.follows ?? []), userId] as [])
+              : ((profile.follows ?? []).filter((id) => Number(id) !== userId) as []),
+        });
+      }
+    },
+    [isOwner, onProfileUpdated, profile],
   );
 
   const getRatingColor = (rating: number) => {
@@ -387,6 +421,8 @@ export function GamesCanvasUserProfile({
           onOpenChange={(open) => { if (!open) setFollowListModal(null); }}
           profileId={profile.id}
           type={followListModal}
+          isOwnProfile={isOwner}
+          onListChange={handleFollowListChange}
         />
       )}
 

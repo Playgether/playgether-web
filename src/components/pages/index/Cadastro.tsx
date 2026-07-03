@@ -29,7 +29,7 @@ const Cadastro = ({ onClickX, onClickAqui }) => {
             <div className="w-12 h-12 rounded-full bg-secondary" />
             <div className="w-12 h-12 rounded-full bg-neon-blue" />
           </div>
-          <h2 className="text-2xl font-bold tracking-[0.2em] text-foreground">
+          <h2 className="pb-1 text-2xl font-bold leading-normal tracking-[0.12em] text-foreground sm:tracking-[0.2em]">
             <span className="text-secondary">PLAY</span>
             <span className="text-neon-blue">GETHER</span>
           </h2>

@@ -13,7 +13,7 @@ const Normal = ({ onClickCadastrar, onClickLogar }: NormalProps) => {
         <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-neon-blue opacity-90" />
       </div>
 
-      <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-[0.3em] mb-4 animate-fade-up text-foreground">
+      <h1 className="mb-4 max-w-full animate-fade-up px-2 text-[2.25rem] font-bold leading-tight tracking-[0.06em] text-foreground xs:text-5xl sm:tracking-[0.12em] md:text-7xl md:tracking-[0.2em] lg:text-8xl lg:tracking-[0.28em]">
         <span className="text-secondary">PLAY</span>
         <span
           className="text-neon-blue"

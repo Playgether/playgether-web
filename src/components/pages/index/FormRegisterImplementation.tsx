@@ -75,8 +75,8 @@ export const FormRegisterImplementation = ({
             {backendErrors.general}
           </div>
         )}
-        <div className="grid grid-cols-6 gap-2 w-full">
-          <div className="col-span-5 space-y-1">
+        <div className="flex w-full gap-2">
+          <div className="min-w-0 flex-1 space-y-1">
             <InputLayout
               type="text"
               placeholder="Nome de usuário"
@@ -94,15 +94,13 @@ export const FormRegisterImplementation = ({
               }
             />
           </div>
-          <div className="col-span-1 flex items-start">
-            <button
-              type="button"
-              onClick={() => handleAvailableUsernames(getValues("username"))}
-              className="w-full h-[46px] rounded-lg gradient-primary text-primary-foreground font-bold text-xs tracking-widest uppercase hover:scale-[1.02] hover:shadow-glow-primary transition-all duration-300"
-            >
-              Testar
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => handleAvailableUsernames(getValues("username"))}
+            className="h-[46px] shrink-0 rounded-lg px-3 gradient-primary text-primary-foreground text-xs font-bold uppercase tracking-wide hover:scale-[1.02] hover:shadow-glow-primary transition-all duration-300"
+          >
+            Testar
+          </button>
         </div>
 
         <div className="space-y-1">
