@@ -8,8 +8,6 @@ export function GoogleProvider({ children }: { children: React.ReactNode }) {
   if (!clientId) return <>{children}</>;
 
   return (
-    <GoogleOAuthProvider clientId={clientId}>
-      {children}
-    </GoogleOAuthProvider>
+    <GoogleOAuthProvider clientId={clientId}>{children}</GoogleOAuthProvider>
   );
 }

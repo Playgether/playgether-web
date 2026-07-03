@@ -202,7 +202,7 @@ export function GlobalSearchDropdown() {
     <div ref={containerRef} className="relative w-full">
       {/* Input */}
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground sm:left-4" />
         <Input
           ref={inputRef}
           value={query}
@@ -219,7 +219,7 @@ export function GlobalSearchDropdown() {
             }
           }}
           placeholder="Pesquisar"
-          className="pl-12 h-11 bg-muted/50 border-border/50 rounded-xl focus:ring-2 focus:ring-primary/30 transition-all duration-300"
+          className="h-10 rounded-xl border-border/50 bg-muted/50 pl-10 text-sm transition-all duration-300 focus:ring-2 focus:ring-primary/30 sm:h-11 sm:pl-12"
           autoComplete="off"
         />
         {query && (

@@ -1,10 +1,8 @@
 import React from "react";
 import { GamerSidebar } from "./GamerSidebar";
-import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
 import { TopNavigation } from "./TopNavigation";
 import { QuickMessagesFooter } from "./QuickMessagesFooter";
-import IsMobileWrapper from "./isMobileWrapper";
+import { MobileBottomNav } from "./MobileBottomNav";
 import BaseLayoutProvider from "../../context/BaseLayoutProvider";
 import { CreatePostModal } from "@/app/feed/components/CreatePostModal";
 import { ConversationsWidget } from "../chat/ConversationsWidget";
@@ -16,37 +14,28 @@ export default function BaseLayout({
 }) {
   return (
     <BaseLayoutProvider>
-      <div className="min-h-screen bg-background w-screen pr-4">
-        <IsMobileWrapper
-          gamerSidebar={<GamerSidebar />}
-          button={
-            <Button
-              variant="ghost"
-              size="icon"
-              type="button"
-              aria-label="Open menu"
-              className="fixed top-4 left-4 z-50 w-12 h-12 rounded-xl bg-background/80 backdrop-blur-xl border border-border/50"
-            >
-              <Menu aria-hidden="true" className="w-6 h-6" />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          }
-        />
+      <div className="min-h-screen w-full overflow-x-hidden bg-background lg:w-screen lg:pr-4">
+        {/* Sidebar — apenas desktop */}
+        <div className="hidden lg:block">
+          <GamerSidebar />
+        </div>
 
-        {/* Top Navigation */}
+        {/* Navegação inferior — apenas mobile/tablet */}
+        <MobileBottomNav />
+
         <TopNavigation />
 
-        <div className="pt-[var(--layout-header-height)] pb-[var(--layout-quick-messages-height)]">
+        <div className="pb-[calc(var(--layout-quick-messages-height)+var(--layout-bottom-nav-height))] pt-[var(--layout-header-height)] lg:pb-[var(--layout-quick-messages-height)]">
           {children}
         </div>
 
         <CreatePostModal />
 
-        {/* Quick Messages Footer */}
         <QuickMessagesFooter />
 
-        {/* Floating conversations widget — oculto na página /conversations */}
-        <ConversationsWidget />
+        <div className="hidden lg:block">
+          <ConversationsWidget />
+        </div>
       </div>
     </BaseLayoutProvider>
   );

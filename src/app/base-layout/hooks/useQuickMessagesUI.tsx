@@ -16,10 +16,12 @@ interface UIState {
 
 const HISTORY_LIMIT = 50;
 
-export const useQuickMessagesUI = (quickMessages: QuickMessage[]) => {
-  // Estado das mensagens gerenciado pelo hook otimizado
+export const useQuickMessagesUI = (
+  quickMessages: QuickMessage[],
+  maxConcurrent = 3
+) => {
   const { activeMessages, messageTimers, allMessagesShown, fadingOutMessages } =
-    useQuickMessages(quickMessages);
+    useQuickMessages(quickMessages, { maxConcurrent });
 
   // ✅ Estado consolidado da UI
   const [uiState, setUIState] = useState<UIState>({

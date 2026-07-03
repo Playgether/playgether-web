@@ -1,4 +1,3 @@
-// hooks/useQuickMessages.ts - VERSÃO OTIMIZADA
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { QuickMessage } from "../types/structure/QuickMessage";
 
@@ -9,8 +8,20 @@ interface QuickMessagesState {
   fadingOutMessages: Set<string>;
 }
 
-export const useQuickMessages = (messages: QuickMessage[]) => {
-  // ✅ Estado consolidado para evitar race conditions
+interface UseQuickMessagesOptions {
+  /** Quantas mensagens exibir ao mesmo tempo (PC: 3, mobile: 1). */
+  maxConcurrent?: number;
+}
+
+export const useQuickMessages = (
+  messages: QuickMessage[],
+  options: UseQuickMessagesOptions = {}
+) => {
+  const maxConcurrent = Math.max(
+    1,
+    Math.min(3, options.maxConcurrent ?? 3)
+  );
+
   const [state, setState] = useState<QuickMessagesState>({
     activeMessages: [],
     messageTimers: {},
@@ -18,13 +29,12 @@ export const useQuickMessages = (messages: QuickMessage[]) => {
     fadingOutMessages: new Set(),
   });
 
-  // Refs para controle interno
   const shownMessageIds = useRef<Set<string>>(new Set());
   const timeoutRefs = useRef<Record<string, NodeJS.Timeout>>({});
   const intervalRef = useRef<NodeJS.Timeout>();
   const isInitialized = useRef(false);
+  const prevMaxConcurrent = useRef(maxConcurrent);
 
-  // ✅ Função para limpar timeouts com segurança
   const cleanupTimeouts = useCallback((messageIds?: string[]) => {
     if (messageIds) {
       messageIds.forEach((id) => {
@@ -39,7 +49,44 @@ export const useQuickMessages = (messages: QuickMessage[]) => {
     }
   }, []);
 
-  // ✅ Cleanup completo no unmount
+  const findNextUnshownMessage = useCallback(() => {
+    return messages.find((m) => !shownMessageIds.current.has(m.id));
+  }, [messages]);
+
+  const resetQueue = useCallback(() => {
+    isInitialized.current = false;
+    shownMessageIds.current = new Set();
+    cleanupTimeouts();
+    setState({
+      activeMessages: [],
+      messageTimers: {},
+      allMessagesShown: false,
+      fadingOutMessages: new Set(),
+    });
+  }, [cleanupTimeouts]);
+
+  const initialize = useCallback(() => {
+    if (messages.length === 0) return;
+
+    const initialMessages = messages.slice(0, maxConcurrent);
+    const initialTimers: Record<string, number> = {};
+
+    shownMessageIds.current = new Set();
+    initialMessages.forEach((msg) => {
+      initialTimers[msg.id] = msg.duration;
+      shownMessageIds.current.add(msg.id);
+    });
+
+    setState({
+      activeMessages: initialMessages,
+      messageTimers: initialTimers,
+      allMessagesShown: messages.length <= maxConcurrent,
+      fadingOutMessages: new Set(),
+    });
+
+    isInitialized.current = true;
+  }, [messages, maxConcurrent]);
+
   useEffect(() => {
     return () => {
       cleanupTimeouts();
@@ -49,15 +96,8 @@ export const useQuickMessages = (messages: QuickMessage[]) => {
     };
   }, [cleanupTimeouts]);
 
-  // ✅ Função memoizada para encontrar próxima mensagem
-  const findNextUnshownMessage = useCallback(() => {
-    return messages.find((m) => !shownMessageIds.current.has(m.id));
-  }, [messages]);
-
-  // ✅ Handler otimizado para fim de timer
   const handleMessageTimerEnd = useCallback(
     (messageId: string) => {
-      // Iniciar fade out
       setState((prev) => ({
         ...prev,
         fadingOutMessages: new Set(prev.fadingOutMessages).add(messageId),
@@ -65,13 +105,11 @@ export const useQuickMessages = (messages: QuickMessage[]) => {
 
       cleanupTimeouts([messageId]);
 
-      // Timeout para remover mensagem após animação
       timeoutRefs.current[messageId] = setTimeout(() => {
         setState((currentState) => {
           const nextUnshown = findNextUnshownMessage();
           shownMessageIds.current.add(messageId);
 
-          // ✅ Atualização atômica do estado
           const newState: QuickMessagesState = {
             activeMessages: nextUnshown
               ? currentState.activeMessages.map((msg) =>
@@ -86,7 +124,11 @@ export const useQuickMessages = (messages: QuickMessage[]) => {
                   ...currentState.messageTimers,
                   [nextUnshown.id]: nextUnshown.duration,
                 }
-              : currentState.messageTimers,
+              : (() => {
+                  const next = { ...currentState.messageTimers };
+                  delete next[messageId];
+                  return next;
+                })(),
 
             allMessagesShown:
               messages.length > 0 &&
@@ -112,9 +154,16 @@ export const useQuickMessages = (messages: QuickMessage[]) => {
     [messages, findNextUnshownMessage, cleanupTimeouts]
   );
 
-  // ✅ Inicialização otimizada e limpeza de mensagens removidas
+  // Reinicia fila ao mudar mobile ↔ desktop
   useEffect(() => {
-    // Limpa timeouts e refs de mensagens removidas
+    if (prevMaxConcurrent.current !== maxConcurrent) {
+      prevMaxConcurrent.current = maxConcurrent;
+      resetQueue();
+    }
+  }, [maxConcurrent, resetQueue]);
+
+  // Inicialização e limpeza quando a lista de mensagens muda
+  useEffect(() => {
     const currentIds = new Set(messages.map((m) => m.id));
     const removedIds = Array.from(shownMessageIds.current).filter(
       (id) => !currentIds.has(id)
@@ -124,28 +173,11 @@ export const useQuickMessages = (messages: QuickMessage[]) => {
       cleanupTimeouts(removedIds);
     }
 
-    // Inicialização padrão
-    if (isInitialized.current || messages.length === 0) return;
+    if (!isInitialized.current && messages.length > 0) {
+      initialize();
+    }
+  }, [messages, maxConcurrent, initialize, cleanupTimeouts]);
 
-    const initialMessages = messages.slice(0, 3);
-    const initialTimers: Record<string, number> = {};
-
-    initialMessages.forEach((msg) => {
-      initialTimers[msg.id] = msg.duration;
-      shownMessageIds.current.add(msg.id);
-    });
-
-    setState({
-      activeMessages: initialMessages,
-      messageTimers: initialTimers,
-      allMessagesShown: messages.length <= 3,
-      fadingOutMessages: new Set(),
-    });
-
-    isInitialized.current = true;
-  }, [messages, cleanupTimeouts]);
-
-  // ✅ Timer otimizado com menor overhead
   useEffect(() => {
     if (state.activeMessages.length === 0) return;
 
@@ -154,15 +186,12 @@ export const useQuickMessages = (messages: QuickMessage[]) => {
         const newTimers = { ...currentState.messageTimers };
         let hasChanges = false;
 
-        // ✅ Processar apenas mensagens ativas
         currentState.activeMessages.forEach((message) => {
           if (newTimers[message.id] > 0) {
             newTimers[message.id]--;
             hasChanges = true;
 
-            // ✅ Agendar fim do timer sem bloquear
             if (newTimers[message.id] === 0) {
-              // Usar setTimeout para não bloquear o estado atual
               setTimeout(() => handleMessageTimerEnd(message.id), 0);
             }
           }
@@ -181,7 +210,6 @@ export const useQuickMessages = (messages: QuickMessage[]) => {
     };
   }, [state.activeMessages, handleMessageTimerEnd]);
 
-  // ✅ Retorno memoizado para evitar re-renders desnecessários
   return useMemo(
     () => ({
       activeMessages: state.activeMessages,

@@ -21,18 +21,31 @@ export default function CenterColumn() {
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
   return (
-    <div className="col-span-6 space-y-6 relative">
-      {/* Create Post Button */}
-      <div className="mb-6">
+    <div className="col-span-6 relative space-y-6">
+      {/* Composer — mobile (topo do feed) */}
+      <div className="mb-4 lg:hidden">
         <Button
           onClick={() => handleCreatePostModal(true)}
-          className="w-full h-16 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+          variant="outline"
+          className="h-11 w-full justify-start gap-2 rounded-full border-border/60 bg-muted/30 px-4 text-sm font-medium text-muted-foreground shadow-none hover:bg-muted/50 hover:text-foreground"
         >
-          <Plus className="w-6 h-6 mr-3" />
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-primary">
+            <Plus className="h-4 w-4 text-white" />
+          </span>
           Compartilhe algo conosco
         </Button>
       </div>
-      <div className="flex flex-col gap-[70px] relative">
+      {/* Composer — desktop */}
+      <div className="mb-6 hidden lg:block">
+        <Button
+          onClick={() => handleCreatePostModal(true)}
+          className="h-14 w-full rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-base font-semibold text-white shadow-lg transition-all duration-300 hover:from-purple-600 hover:to-pink-600 hover:shadow-xl lg:h-16 lg:text-lg"
+        >
+          <Plus className="mr-2 h-5 w-5 lg:mr-3 lg:h-6 lg:w-6" />
+          Compartilhe algo conosco
+        </Button>
+      </div>
+      <div className="relative flex flex-col gap-10 lg:gap-[70px]">
         <Virtuoso
           useWindowScroll
           style={{ height: "100%" }}

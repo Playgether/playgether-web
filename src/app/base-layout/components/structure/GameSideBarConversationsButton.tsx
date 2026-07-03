@@ -75,7 +75,7 @@ export default function GamerSidbarConversationsButtons({
         </div>
 
         {/* Label — desliza quando sidebar expande */}
-        <span className="overflow-hidden whitespace-nowrap text-sm font-medium max-w-0 opacity-0 group-hover/sidebar:max-w-xs group-hover/sidebar:opacity-100 transition-all duration-300 delay-100">
+        <span className="max-w-0 overflow-hidden whitespace-nowrap text-sm font-medium opacity-0 transition-all delay-100 duration-300 group-hover/sidebar:max-w-xs group-hover/sidebar:opacity-100">
           {item.label}
         </span>
       </button>

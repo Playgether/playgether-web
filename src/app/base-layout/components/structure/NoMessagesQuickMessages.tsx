@@ -4,14 +4,16 @@ import React from "react";
 export default function NoMessagesQuickMessages() {
   return (
     <>
-      <div className="flex items-center space-x-2">
-        <div className="w-8 h-8 bg-gradient-secondary rounded-lg flex items-center justify-center">
-          <Megaphone className="w-4 h-4 text-white" />
+      <div className="flex shrink-0 items-center gap-2">
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-secondary lg:h-8 lg:w-8">
+          <Megaphone className="h-3.5 w-3.5 text-white lg:h-4 lg:w-4" />
         </div>
-        <span className="font-bold text-lg">Alto-falante</span>{" "}
+        <span className="text-sm font-bold lg:text-lg">Alto-falante</span>
       </div>
-      <div className="text-center flex-1 pr-32 font-bold text-lg">
-        <p className="text-muted-foreground">Não há mensagens no momento</p>
+      <div className="min-w-0 flex-1 text-center lg:pr-32">
+        <p className="truncate text-xs text-muted-foreground lg:text-lg lg:font-bold">
+          Não há mensagens no momento
+        </p>
       </div>
     </>
   );

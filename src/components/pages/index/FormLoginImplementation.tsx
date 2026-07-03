@@ -77,7 +77,7 @@ export const FormLoginImplementation = ({
         {
           description: CustomToastErrorMessages.wrongAuthRequest,
           duration: CustomToastProps.defaultDuration,
-        }
+        },
       );
     }
     setIsLoggedOut(false);
@@ -100,9 +100,7 @@ export const FormLoginImplementation = ({
     >
       <CustomToaster />
       {unauthorized && (
-        <WrongPasswordComponent
-          wrongPassword={"Email ou senha incorreto(s)"}
-        />
+        <WrongPasswordComponent wrongPassword={"Email ou senha incorreto(s)"} />
       )}
       <div className="space-y-1">
         <ErrosInput field={validationErrors.email || errors.email} />

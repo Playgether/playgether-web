@@ -132,8 +132,8 @@ export const FeedPost = ({ post }) => {
   };
 
   return (
-    <Card className="bg-card border-border/50 backdrop-blur-sm hover:shadow-glow-primary/30 hover:scale-[1.02] hover:border-primary/40 transition-all duration-300 animate-fade-up hover:cursor-pointer mb-7">
-      <CardContent className="p-6">
+    <Card className="mb-4 animate-fade-up border-border/50 bg-card backdrop-blur-sm transition-all duration-300 hover:cursor-pointer hover:border-primary/40 hover:shadow-glow-primary/30 sm:mb-6 lg:mb-7 lg:hover:scale-[1.02]">
+      <CardContent className="p-4 sm:p-6">
         {post && (
           <Link href={`/feed/${post.id}`} scroll={false}>
             {/* Repost Header */}
@@ -206,7 +206,7 @@ export const FeedPost = ({ post }) => {
             {post.medias && post.medias.length > 0 && (
               <div
                 className={cn(
-                  "mb-4 rounded-xl overflow-hidden  h-64",
+                  "mb-4 h-48 overflow-hidden rounded-xl sm:h-56 lg:h-64",
                   post.medias.length === 1
                     ? "grid grid-cols-1"
                     : "grid grid-cols-2 gap-2"
@@ -222,7 +222,7 @@ export const FeedPost = ({ post }) => {
                       <ImageComponent
                         media_id={item.media_file}
                         alt="Post media"
-                        className={`w-full h-64 object-cover transition-transform duration-300 ${
+                        className={`h-48 w-full object-cover transition-transform duration-300 sm:h-56 lg:h-64 ${
                           post.medias.length < 2 && "group-hover:scale-105"
                         }`}
                       />
@@ -230,7 +230,7 @@ export const FeedPost = ({ post }) => {
                       <div className="relative video-container">
                         <VideoComponent
                           media_id={item.media_file}
-                          className="w-full h-64 object-cover rounded-lg"
+                          className="h-48 w-full rounded-lg object-cover sm:h-56 lg:h-64"
                           preload="metadata"
                           style={{
                             background:
@@ -257,8 +257,8 @@ export const FeedPost = ({ post }) => {
             )}
 
             {/* Actions */}
-            <div className="flex items-center justify-between pt-4 border-t border-border/50">
-              <div className="flex items-center space-x-6">
+            <div className="flex items-center justify-between gap-2 border-t border-border/50 pt-3 sm:pt-4">
+              <div className="flex items-center space-x-3 sm:space-x-6">
                 <PostActions post={post} handleShareModal={handleShareModal} />
               </div>
             </div>
