@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Image, Video, X, Send, Loader2 } from "lucide-react";
+import { ImagePlay, X, Send, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { CldUploadWidget } from "next-cloudinary";
 
@@ -272,12 +272,12 @@ export const CreatePostModal = () => {
             <div className="flex items-center justify-between pt-4 border-t border-border/50">
               <div className="flex space-x-2">
                 <CldUploadWidget
-                  key={`image-${widgetKey}`}
+                  key={`media-${widgetKey}`}
                   signatureEndpoint="/api/signed-posts"
                   options={{
                     sources: ["local"],
-                    minImageHeight: 320,
-                    minImageWidth: 320,
+                    maxImageWidth: 8000,
+                    maxImageHeight: 8000,
                     maxFiles: 5 - uploadedFiles.length,
                     tags: [
                       user?.username || "user",
@@ -287,59 +287,10 @@ export const CreatePostModal = () => {
                     ],
                     detection: "unidet",
                     maxImageFileSize: 5000000,
-                    language: "pt-br",
-                    showCompletedButton: true,
-                    multiple: true,
-                    clientAllowedFormats: ["image"],
-                  }}
-                  onSuccess={handleUploadSuccess}
-                  onError={handleUploadError}
-                  onOpen={handleWidgetOpen}
-                  onClose={handleWidgetClose}
-                >
-                  {({ open }) => (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="text-muted-foreground hover:text-primary"
-                      onClick={() => {
-                        if (uploadedFiles.length >= 5) {
-                          CustomToast.warning("Limite de mídias", {
-                            description:
-                              "Você pode adicionar no máximo 5 mídias por post.",
-                            duration: CustomToastProps.defaultDuration,
-                          });
-                          return;
-                        }
-                        // Abre o widget diretamente
-                        open();
-                      }}
-                      disabled={uploadedFiles.length >= 5}
-                    >
-                      <Image className="w-5 h-5" />
-                    </Button>
-                  )}
-                </CldUploadWidget>
-
-                {/* <CldUploadWidget
-                  key={`video-${widgetKey}`}
-                  signatureEndpoint="/api/signed-posts"
-                  options={{
-                    sources: ["local"],
-                    maxFiles: 5 - uploadedFiles.length,
-                    tags: [
-                      user?.username || "user",
-                      getCurrentDate(),
-                      "post",
-                      "user",
-                    ],
-                    detection: "unidet",
                     maxVideoFileSize: 50000000,
                     language: "pt-br",
                     showCompletedButton: true,
                     multiple: true,
-                    clientAllowedFormats: ["video"],
                   }}
                   onSuccess={handleUploadSuccess}
                   onError={handleUploadError}
@@ -361,15 +312,15 @@ export const CreatePostModal = () => {
                           });
                           return;
                         }
-                        // Abre o widget diretamente
                         open();
                       }}
                       disabled={uploadedFiles.length >= 5}
+                      aria-label="Adicionar fotos ou vídeos"
                     >
-                      <Video className="w-5 h-5" /> 
+                      <ImagePlay className="w-5 h-5" />
                     </Button>
                   )}
-                </CldUploadWidget> */}
+                </CldUploadWidget>
               </div>
 
               <Button
