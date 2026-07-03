@@ -35,5 +35,5 @@ export interface FeedContextType {
   increaseCommentCount: (postId: number) => void;
   decreaseCommentCount: (postId: number) => void;
   injectPost: (post: PostProps) => void;
-  handleAuthorFollow: (postId: number) => void;
+  handleAuthorFollow: (postId: number, following?: boolean) => void;
 }

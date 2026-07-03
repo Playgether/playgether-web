@@ -225,7 +225,7 @@ export const FeedPost = ({ post }) => {
                   </div>
                 </div>
               </div>
-              <div className="pointer-events-auto flex shrink-0 items-center gap-2">
+              <div className="pointer-events-auto flex shrink-0 items-center gap-1 sm:gap-2">
                 <FeedPostFollowButton post={post} />
                 <DropdownMenu>
                   <div className="pointer-events-auto">

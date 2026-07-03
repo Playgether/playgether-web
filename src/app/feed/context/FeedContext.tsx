@@ -238,13 +238,16 @@ export const FeedProvider = ({
     [],
   );
 
-  const handleAuthorFollow = useCallback((postId: number) => {
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId ? { ...p, user_already_follow: true } : p,
-      ),
-    );
-  }, []);
+  const handleAuthorFollow = useCallback(
+    (postId: number, following = true) => {
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId ? { ...p, user_already_follow: following } : p,
+        ),
+      );
+    },
+    [],
+  );
 
   return (
     <FeedContext.Provider

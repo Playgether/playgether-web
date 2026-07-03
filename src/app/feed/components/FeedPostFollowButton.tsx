@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { UserPlus } from "lucide-react";
+import { UserCheck, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { followProfile } from "@/services/followProfile";
+import { unfollowProfile } from "@/services/unfollowProfile";
 import { CustomToast } from "@/components/ui/customSonner";
 import { useFeedContext } from "../context/FeedContext";
 import { useProfileContext } from "@/context/ProfileContext";
@@ -23,41 +25,69 @@ export function FeedPostFollowButton({ post }: FeedPostFollowButtonProps) {
 
   const isOwnPost = post.is_own || post.isOwn;
 
-  if (feedMode !== "explore" || isOwnPost || isFollowing) {
+  if (feedMode !== "explore" || isOwnPost) {
     return null;
   }
 
-  const handleFollow = async (event: React.MouseEvent) => {
+  const handleToggleFollow = async (event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
 
     if (isLoading) return;
 
+    const wasFollowing = isFollowing;
+    const nextFollowing = !wasFollowing;
+
+    setIsFollowing(nextFollowing);
+    handleAuthorFollow(post.id, nextFollowing);
     setIsLoading(true);
+
     try {
-      await followProfile(post.username);
-      setIsFollowing(true);
-      handleAuthorFollow(post.id);
-      void fetchProfile();
-      CustomToast.success("Você começou a seguir este jogador.");
+      if (wasFollowing) {
+        await unfollowProfile(post.username);
+        void fetchProfile();
+        CustomToast.success("Você deixou de seguir este usuário.");
+      } else {
+        await followProfile(post.username);
+        void fetchProfile();
+        CustomToast.success("Você começou a seguir este usuário.");
+      }
     } catch {
-      CustomToast.error("Não foi possível seguir este jogador.");
+      setIsFollowing(wasFollowing);
+      handleAuthorFollow(post.id, wasFollowing);
+      CustomToast.error(
+        wasFollowing
+          ? "Não foi possível deixar de seguir este usuário."
+          : "Não foi possível seguir este usuário.",
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
+  const label = isFollowing ? "Seguindo" : "Seguir";
+
   return (
     <Button
       type="button"
       size="sm"
-      variant="outline"
-      disabled={isLoading}
-      onClick={(event) => void handleFollow(event)}
-      className="pointer-events-auto h-8 shrink-0 gap-1.5 border-primary/40 px-3 text-xs font-semibold text-primary hover:bg-primary/10"
+      variant={isFollowing ? "secondary" : "outline"}
+      onClick={(event) => void handleToggleFollow(event)}
+      title={label}
+      aria-label={label}
+      className={cn(
+        "pointer-events-auto h-8 shrink-0 p-0 text-xs font-semibold lg:gap-1.5 lg:px-2.5",
+        isFollowing
+          ? "w-8 text-muted-foreground hover:bg-secondary/80 lg:w-auto"
+          : "w-8 border-primary/40 text-primary hover:bg-primary/10 lg:w-auto",
+      )}
     >
-      <UserPlus className="h-3.5 w-3.5" />
-      Seguir
+      {isFollowing ? (
+        <UserCheck className="h-3.5 w-3.5" />
+      ) : (
+        <UserPlus className="h-3.5 w-3.5" />
+      )}
+      <span className="hidden lg:inline">{label}</span>
     </Button>
   );
 }
