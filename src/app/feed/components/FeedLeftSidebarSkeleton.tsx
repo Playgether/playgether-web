@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function FeedLeftSidebarSkeleton() {
   return (
-    <div className="col-span-3 space-y-6 sticky-container">
+    <div className="sticky-container col-span-3 hidden min-w-0 space-y-6 lg:block">
       <Card className="bg-card border-border/50 backdrop-blur-sm">
         <CardContent className="p-6 text-center space-y-4">
           <div className="flex justify-center">

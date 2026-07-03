@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 // Import avatars
 import avatarSophia from "@/assets/avatar-sophia.jpg";
@@ -89,18 +90,28 @@ export const ConversationsModal = ({
     setMessageInput(value);
   };
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) setSelectedConversation(null);
+    onOpenChange(nextOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl w-full p-0 bg-background/95 backdrop-blur-xl border border-primary/20">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="flex max-h-[min(90dvh,720px)] max-w-6xl flex-col gap-0 overflow-hidden p-0 bg-background/95 backdrop-blur-xl border border-primary/20">
         {Components.ChatModalHeader}
-        <div className="flex h-[70vh]">
+        <div className="flex min-h-0 flex-1 h-[min(70dvh,560px)] sm:h-[min(70vh,600px)]">
           {/* Conversations List */}
-          <div className="w-1/3 border-r p-0 border-border/50 ">
-            <Tabs defaultValue="private" className="h-full">
+          <div
+            className={cn(
+              "flex w-full flex-col border-border/50 md:w-1/3 md:border-r",
+              selectedConversation ? "hidden md:flex" : "flex"
+            )}
+          >
+            <Tabs defaultValue="private" className="flex h-full flex-col">
               {Components.ChatTabs}
               {Components.SearchBar}
 
-              <TabsContent value="private" className="mt-0 p-0">
+              <TabsContent value="private" className="mt-0 flex-1 overflow-hidden p-0">
                 <ScrollArea className="h-[calc(100%_-_120px)]">
                   <Conversations
                     conversations={conversations}
@@ -113,7 +124,7 @@ export const ConversationsModal = ({
                 </ScrollArea>
               </TabsContent>
 
-              <TabsContent value="clan" className="mt-0">
+              <TabsContent value="clan" className="mt-0 flex-1 overflow-hidden">
                 <ScrollArea className="h-[calc(100%_-_120px)]">
                   <Conversations
                     conversations={conversations}
@@ -126,7 +137,7 @@ export const ConversationsModal = ({
                 </ScrollArea>
               </TabsContent>
 
-              <TabsContent value="group" className="mt-0">
+              <TabsContent value="group" className="mt-0 flex-1 overflow-hidden">
                 <Conversations
                   conversations={conversations}
                   onSelectConversation={onSelectConversation}
@@ -140,18 +151,23 @@ export const ConversationsModal = ({
           </div>
 
           {/* Chat Area */}
-          <div className="flex-1 flex flex-col">
+          <div
+            className={cn(
+              "flex min-w-0 flex-1 flex-col",
+              selectedConversation ? "flex" : "hidden md:flex"
+            )}
+          >
             {selectedConversation ? (
               <>
-                {/* Chat Header */}
-                <ChatHeader selectedConversation={selectedConversation} />
+                <ChatHeader
+                  selectedConversation={selectedConversation}
+                  onBack={() => setSelectedConversation(null)}
+                />
 
-                {/* Messages */}
-                <ScrollArea className="flex-1 p-4 pt-2">
+                <ScrollArea className="flex-1 p-3 pt-2 sm:p-4 sm:pt-2">
                   <ChatMessages messages={mockMessages} />
                 </ScrollArea>
 
-                {/* Message Input */}
                 <InputMessage onInput={onInput} messageInput={messageInput} />
               </>
             ) : (

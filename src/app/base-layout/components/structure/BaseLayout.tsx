@@ -14,7 +14,7 @@ export default function BaseLayout({
 }) {
   return (
     <BaseLayoutProvider>
-      <div className="min-h-screen w-full overflow-x-hidden bg-background lg:w-screen lg:pr-4">
+      <div className="min-h-screen w-full max-w-[100vw] overflow-x-clip bg-background">
         {/* Sidebar — apenas desktop */}
         <div className="hidden lg:block">
           <GamerSidebar />
@@ -25,7 +25,7 @@ export default function BaseLayout({
 
         <TopNavigation />
 
-        <div className="pb-[calc(var(--layout-quick-messages-height)+var(--layout-bottom-nav-height))] pt-[var(--layout-header-height)] lg:pb-[var(--layout-quick-messages-height)]">
+        <div className="pb-[calc(var(--layout-quick-messages-height)+var(--layout-bottom-nav-height)+env(safe-area-inset-bottom,0px)+0.75rem)] pt-[var(--layout-header-height)] lg:pb-[var(--layout-quick-messages-height)]">
           {children}
         </div>
 

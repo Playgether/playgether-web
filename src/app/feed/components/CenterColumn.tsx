@@ -15,15 +15,16 @@ export default function CenterColumn() {
     handleCreatePostModal,
     posts,
   } = useFeedContext();
+
   const loadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
   return (
-    <div className="col-span-6 relative space-y-6">
-      {/* Composer — mobile (topo do feed) */}
-      <div className="mb-4 lg:hidden">
+    <div className="relative col-span-6 space-y-6">
+      <div className="mb-3 lg:hidden">
         <Button
           onClick={() => handleCreatePostModal(true)}
           variant="outline"
@@ -35,7 +36,7 @@ export default function CenterColumn() {
           Compartilhe algo conosco
         </Button>
       </div>
-      {/* Composer — desktop */}
+
       <div className="mb-6 hidden lg:block">
         <Button
           onClick={() => handleCreatePostModal(true)}
@@ -45,24 +46,22 @@ export default function CenterColumn() {
           Compartilhe algo conosco
         </Button>
       </div>
-      <div className="relative flex flex-col gap-10 lg:gap-[70px]">
+
+      <div className="relative flex flex-col gap-6 lg:gap-[70px]">
         <Virtuoso
           useWindowScroll
-          style={{ height: "100%" }}
           increaseViewportBy={200}
           overscan={3}
           data={posts}
           endReached={loadMore}
           itemContent={(index, post) => (
             <div key={post.id} style={{ animationDelay: `${index * 200}ms` }}>
-              {/* {React.cloneElement(FeedPost, { post })} */}
-              {/* <FeedPost initialPostId={post.id} /> */}
               <FeedPost post={post} />
             </div>
           )}
         />
         {isFetchingNextPage && (
-          <div className="h-fit w-full z-40 mt-[30px]">
+          <div className="z-40 mt-[30px] h-fit w-full">
             <LoadingComponent text="Carregando novos posts" showText={true} />
           </div>
         )}

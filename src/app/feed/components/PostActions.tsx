@@ -117,11 +117,11 @@ export default function PostActions({
                 e.preventDefault();
               }}
               className={cn(
-                "text-muted-foreground hover:text-primary p-2",
+                "p-1.5 text-muted-foreground hover:text-primary sm:p-2",
                 post.user_repost_id && "text-primary"
               )}
             >
-              <Repeat2 className="w-5 h-5 mr-2" />
+              <Repeat2 className="mr-1.5 h-4 w-4 sm:mr-2 sm:h-5 sm:w-5" />
               {formatCount(post.quantity_reposts)}
             </Button>
           </DropdownMenuTrigger>

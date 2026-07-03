@@ -11,10 +11,10 @@ export default function LayoutTypeHandler({
   const components = Feed.ServerFeedPage.components;
 
   return (
-    <div className="lg:grid lg:grid-cols-12 lg:gap-8 lg:pb-10">
-      <div className="hidden lg:contents">{components.LeftColumn}</div>
+    <div className="lg:grid lg:grid-cols-12 lg:gap-4 lg:pb-10 xl:gap-6 2xl:gap-8">
+      {components.LeftColumn}
       {CenterColumn}
-      <div className="hidden lg:contents">{components.RightColumn}</div>
+      {components.RightColumn}
     </div>
   );
 }

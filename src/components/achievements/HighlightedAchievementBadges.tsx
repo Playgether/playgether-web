@@ -26,9 +26,11 @@ function normalizeRarity(r: string): RarityLevel {
 function AchievementHighlightChip({
   achievement: a,
   className,
+  compact = false,
 }: {
   achievement: HighlightedAchievementPublic;
   className?: string;
+  compact?: boolean;
 }) {
   const rarity = normalizeRarity(String(a.rarity));
   const cfg = rarityConfig[rarity];
@@ -40,21 +42,30 @@ function AchievementHighlightChip({
     <img
       src={a.icon_image_url}
       alt=""
-      className="h-3.5 w-3.5 shrink-0 object-contain"
+      className={cn("shrink-0 object-contain", compact ? "h-3 w-3" : "h-3.5 w-3.5")}
     />
   ) : (
-    <span className="text-[11px] leading-none shrink-0" aria-hidden>
+    <span
+      className={cn("leading-none shrink-0", compact ? "text-[10px]" : "text-[11px]")}
+      aria-hidden
+    >
       {a.icon || "🏆"}
     </span>
   );
 
-  const titleShort = a.title.length > 18 ? `${a.title.slice(0, 16)}…` : a.title;
+  const titleLimit = compact ? 12 : 18;
+  const titleShort =
+    a.title.length > titleLimit ? `${a.title.slice(0, titleLimit - 1)}…` : a.title;
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <motion.span
-          className={cn("inline-flex max-w-full min-w-0 cursor-help", className)}
+          className={cn(
+            "inline-flex min-w-0 max-w-full cursor-help",
+            compact && "max-w-[calc(50%-0.125rem)] flex-1 basis-[calc(50%-0.125rem)]",
+            className,
+          )}
           onHoverStart={() => setHover(true)}
           onHoverEnd={() => setHover(false)}
           whileHover={
@@ -74,12 +85,20 @@ function AchievementHighlightChip({
             staticBorder={false}
             variant="chip"
             className="min-w-0 max-w-full"
-            contentClassName="relative z-10 flex items-center gap-1 max-w-full min-w-0 rounded-[calc(var(--radius)-2px)] px-1.5 py-[3px] subpixel-antialiased"
+            contentClassName={cn(
+              "relative z-10 flex min-w-0 max-w-full items-center gap-1 rounded-[calc(var(--radius)-2px)] subpixel-antialiased",
+              compact ? "px-1 py-0.5" : "px-1.5 py-[3px]",
+            )}
           >
             <span className={cn("flex shrink-0 items-center", cfg.textColor)}>
               {iconNode}
             </span>
-            <span className="flex min-w-0 flex-1 items-center gap-0.5 truncate text-[10px] font-semibold leading-tight">
+            <span
+              className={cn(
+                "flex min-w-0 flex-1 items-center gap-0.5 truncate font-semibold leading-tight",
+                compact ? "text-[9px] sm:text-[10px]" : "text-[10px]",
+              )}
+            >
               <span className="shrink-0 tabular-nums text-zinc-300 [transform:translateZ(0)]">
                 {a.game_short}
               </span>
@@ -114,11 +133,13 @@ export function HighlightedAchievementBadges({
   achievements,
   className,
   max = 3,
+  compact = false,
 }: {
   achievements?: HighlightedAchievementPublic[] | null;
   className?: string;
   /** Limite de tags exibidas (API já envia no máx. 3). */
   max?: number;
+  compact?: boolean;
 }) {
   const list = (achievements ?? []).slice(0, max);
   if (list.length === 0) return null;
@@ -127,13 +148,15 @@ export function HighlightedAchievementBadges({
     <TooltipProvider delayDuration={280}>
       <div
         className={cn(
-          "flex w-fit max-w-full flex-wrap items-center gap-1 min-w-0",
+          compact
+            ? "flex w-full min-w-0 flex-wrap items-center gap-1"
+            : "flex w-fit max-w-full min-w-0 flex-wrap items-center gap-1",
           className,
         )}
         aria-label="Conquistas em destaque"
       >
         {list.map((a) => (
-          <AchievementHighlightChip key={a.id} achievement={a} />
+          <AchievementHighlightChip key={a.id} achievement={a} compact={compact} />
         ))}
       </div>
     </TooltipProvider>

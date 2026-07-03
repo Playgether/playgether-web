@@ -15,10 +15,10 @@ export default async function ConversationsPage({
   const { open } = await searchParams;
   return (
     <BaseLayout>
-      <div className="h-layout-main bg-background ml-0 md:ml-20 flex flex-col">
-        <div className="max-w-7xl w-full mx-auto p-4 md:p-6 flex flex-col flex-1 overflow-hidden">
-          <h1 className="text-xl font-bold mb-4 shrink-0">Conversas</h1>
-          <div className="flex-1 overflow-hidden rounded-xl border border-border/50 bg-card/30 shadow-card">
+      <div className="flex h-[calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-var(--layout-bottom-nav-height))] flex-col bg-background lg:ml-20 lg:h-layout-main">
+        <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col overflow-hidden p-3 sm:p-4 md:p-6">
+          <h1 className="mb-3 shrink-0 text-lg font-bold sm:mb-4 sm:text-xl">Conversas</h1>
+          <div className="flex-1 overflow-hidden rounded-xl border border-border/50 bg-card/30 shadow-card min-h-0">
             <ConversationsContent
               listHeight="100%"
               chatHeight="flex-1"

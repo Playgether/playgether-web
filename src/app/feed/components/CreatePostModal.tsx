@@ -189,7 +189,7 @@ export const CreatePostModal = () => {
 
       <Dialog open={modalOpen} onOpenChange={handleCloseModal}>
         <DialogContent
-          className="max-w-2xl bg-background/95 backdrop-blur-xl border border-border/50"
+          className="flex max-h-[min(90dvh,calc(100dvh-var(--layout-header-height)-2rem))] max-w-2xl flex-col overflow-hidden bg-background/95 backdrop-blur-xl border border-border/50"
           // Previne que o modal feche quando o widget estiver aberto
           onInteractOutside={(e) => {
             if (isWidgetOpen) {
@@ -203,13 +203,13 @@ export const CreatePostModal = () => {
             }
           }}
         >
-          <DialogHeader>
+          <DialogHeader className="shrink-0">
             <DialogTitle className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
               Criar Post
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-1">
             {/* User Info */}
             <div className="flex items-center space-x-3">
               <Avatar className="w-12 h-12 ring-2 ring-primary/20">
@@ -267,9 +267,10 @@ export const CreatePostModal = () => {
                 ))}
               </div>
             )}
+          </div>
 
-            {/* Actions */}
-            <div className="flex items-center justify-between pt-4 border-t border-border/50">
+          {/* Actions */}
+          <div className="flex shrink-0 items-center justify-between border-t border-border/50 pt-4">
               <div className="flex space-x-2">
                 <CldUploadWidget
                   key={`media-${widgetKey}`}
@@ -344,7 +345,6 @@ export const CreatePostModal = () => {
                 )}
               </Button>
             </div>
-          </div>
         </DialogContent>
       </Dialog>
     </>

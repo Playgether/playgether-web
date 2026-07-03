@@ -59,7 +59,7 @@ export default function LeftColumn() {
       };
 
   return (
-    <div className="col-span-3 space-y-6 sticky-container">
+    <div className="sticky-container col-span-3 hidden min-w-0 space-y-6 lg:block">
       <UserProfile
         user={display}
         userId={user?.user_id ?? undefined}

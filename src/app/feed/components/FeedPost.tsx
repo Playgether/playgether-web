@@ -132,30 +132,60 @@ export const FeedPost = ({ post }) => {
   };
 
   return (
-    <Card className="mb-4 animate-fade-up border-border/50 bg-card backdrop-blur-sm transition-all duration-300 hover:cursor-pointer hover:border-primary/40 hover:shadow-glow-primary/30 sm:mb-6 lg:mb-7 lg:hover:scale-[1.02]">
-      <CardContent className="p-4 sm:p-6">
+    <Card className="mb-3 animate-fade-up border-border/50 bg-card backdrop-blur-sm transition-all duration-300 hover:cursor-pointer hover:border-primary/40 hover:shadow-glow-primary/30 sm:mb-5 lg:mb-7 lg:hover:scale-[1.02]">
+      <CardContent className="p-3 sm:p-5 lg:p-6">
         {post && (
           <Link href={`/feed/${post.id}`} scroll={false}>
             {/* Repost Header */}
             {post.isRepost && <RepostFlag post={post} />}
             {/* Header */}
-            <div className="flex items-center justify-between mb-4 gap-2 min-w-0">
-              <div className="flex items-center space-x-3 min-w-0 flex-1">
+            <div className="mb-3 flex min-w-0 items-center justify-between gap-2 sm:mb-4">
+              <div className="flex min-w-0 flex-1 items-center space-x-2.5 sm:space-x-3">
                 <div className="shrink-0">
                   <ProfileAvatar
                     displayName={post.name}
                     username={post.username}
                     profilePhoto={post.profile_photo}
-                    sizeClass="h-12 w-12"
+                    sizeClass="h-10 w-10 sm:h-12 sm:w-12"
                     ringClass="ring-2 ring-primary/20"
                     fallbackTextClassName="text-sm"
                   />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                    <div className="inline-flex min-w-0 max-w-full shrink-0 items-center gap-2">
+                  {/* Desktop — tags inline com o nome (layout original) */}
+                  <div className="hidden min-w-0 lg:block">
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                      <div className="inline-flex min-w-0 max-w-full shrink-0 items-center gap-2">
+                        <h3
+                          className="inline-block w-fit max-w-full min-w-0 font-semibold text-foreground"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/profile/${post.username}`);
+                          }}
+                        >
+                          {post.name}
+                        </h3>
+                        {post.verified && (
+                          <span className="inline-flex shrink-0">
+                            {components.VerifiedProfile}
+                          </span>
+                        )}
+                      </div>
+                      <HighlightedAchievementBadges
+                        achievements={post.highlighted_achievements}
+                        className="min-w-0"
+                      />
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      @{post.username} • <DateAndHour date={post.timestamp} />
+                    </p>
+                  </div>
+
+                  {/* Mobile — tags em linha própria, compactas */}
+                  <div className="min-w-0 lg:hidden">
+                    <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
                       <h3
-                        className="inline-block w-fit max-w-full min-w-0 font-semibold text-foreground"
+                        className="min-w-0 truncate font-semibold text-foreground"
                         onClick={(e) => {
                           e.stopPropagation();
                           router.push(`/profile/${post.username}`);
@@ -171,12 +201,13 @@ export const FeedPost = ({ post }) => {
                     </div>
                     <HighlightedAchievementBadges
                       achievements={post.highlighted_achievements}
-                      className="min-w-0"
+                      className="mt-1.5"
+                      compact
                     />
+                    <p className="mt-1 truncate text-sm text-muted-foreground">
+                      @{post.username} • <DateAndHour date={post.timestamp} />
+                    </p>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    @{post.username} • <DateAndHour date={post.timestamp} />
-                  </p>
                 </div>
               </div>
               <DropdownMenu>
@@ -206,7 +237,7 @@ export const FeedPost = ({ post }) => {
             {post.medias && post.medias.length > 0 && (
               <div
                 className={cn(
-                  "mb-4 h-48 overflow-hidden rounded-xl sm:h-56 lg:h-64",
+                  "mb-3 h-40 overflow-hidden rounded-lg sm:mb-4 sm:h-48 sm:rounded-xl lg:h-64",
                   post.medias.length === 1
                     ? "grid grid-cols-1"
                     : "grid grid-cols-2 gap-2"
@@ -222,7 +253,7 @@ export const FeedPost = ({ post }) => {
                       <ImageComponent
                         media_id={item.media_file}
                         alt="Post media"
-                        className={`h-48 w-full object-cover transition-transform duration-300 sm:h-56 lg:h-64 ${
+                        className={`h-40 w-full object-cover transition-transform duration-300 sm:h-48 lg:h-64 ${
                           post.medias.length < 2 && "group-hover:scale-105"
                         }`}
                       />
@@ -230,7 +261,7 @@ export const FeedPost = ({ post }) => {
                       <div className="relative video-container">
                         <VideoComponent
                           media_id={item.media_file}
-                          className="h-48 w-full rounded-lg object-cover sm:h-56 lg:h-64"
+                          className="h-40 w-full rounded-lg object-cover sm:h-48 lg:h-64"
                           preload="metadata"
                           style={{
                             background:
@@ -257,8 +288,8 @@ export const FeedPost = ({ post }) => {
             )}
 
             {/* Actions */}
-            <div className="flex items-center justify-between gap-2 border-t border-border/50 pt-3 sm:pt-4">
-              <div className="flex items-center space-x-3 sm:space-x-6">
+            <div className="flex items-center justify-between gap-2 border-t border-border/50 pt-2.5 sm:pt-4">
+              <div className="flex items-center space-x-2 sm:space-x-6">
                 <PostActions post={post} handleShareModal={handleShareModal} />
               </div>
             </div>

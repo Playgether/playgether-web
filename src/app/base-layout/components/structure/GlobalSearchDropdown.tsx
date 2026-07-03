@@ -240,7 +240,7 @@ export function GlobalSearchDropdown() {
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border/50 rounded-xl shadow-xl z-50 overflow-hidden max-h-[480px] flex flex-col">
+        <div className="absolute top-full left-0 right-0 z-50 mt-2 flex max-h-[min(60dvh,480px)] flex-col overflow-hidden rounded-xl border border-border/50 bg-background shadow-xl sm:max-h-[480px]">
           <div className="overflow-y-auto flex-1">
 
             {/* ── Loading ── */}
