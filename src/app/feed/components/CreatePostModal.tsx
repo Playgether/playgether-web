@@ -209,7 +209,7 @@ export const CreatePostModal = () => {
             </DialogTitle>
           </DialogHeader>
 
-          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-1">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-0.5 py-1 pr-1">
             {/* User Info */}
             <div className="flex items-center space-x-3">
               <Avatar className="w-12 h-12 ring-2 ring-primary/20">
@@ -232,7 +232,7 @@ export const CreatePostModal = () => {
               placeholder="O que está acontecendo?"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="min-h-32 resize-none bg-muted/30 border-border/50 focus:border-primary/50"
+              className="min-h-32 resize-none border-border/50 bg-muted/30 focus:border-primary/50 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary/50 focus-visible:ring-offset-0"
             />
 
             {/* Media Preview */}

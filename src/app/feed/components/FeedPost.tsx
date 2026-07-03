@@ -132,16 +132,28 @@ export const FeedPost = ({ post }) => {
   };
 
   return (
-    <Card className="mb-3 animate-fade-up border-border/50 bg-card backdrop-blur-sm transition-all duration-300 hover:cursor-pointer hover:border-primary/40 hover:shadow-glow-primary/30 sm:mb-5 lg:mb-7 lg:hover:scale-[1.02]">
-      <CardContent className="p-3 sm:p-5 lg:p-6">
+    <Card className="relative mb-3 animate-fade-up border-border/50 bg-card backdrop-blur-sm transition-all duration-300 hover:cursor-pointer hover:border-primary/40 hover:shadow-glow-primary/30 sm:mb-5 lg:mb-7 lg:hover:scale-[1.02]">
+      <CardContent className="relative p-3 sm:p-5 lg:p-6">
         {post && (
-          <Link href={`/feed/${post.id}`} scroll={false}>
+          <>
+            <Link
+              href={`/feed/${post.id}`}
+              scroll={false}
+              className="absolute inset-0 z-0 rounded-[inherit]"
+              aria-label={`Abrir post de ${post.name}`}
+              tabIndex={-1}
+            />
+            <div className="relative z-[1] pointer-events-none">
             {/* Repost Header */}
-            {post.isRepost && <RepostFlag post={post} />}
+            {post.isRepost && (
+              <div className="pointer-events-none">
+                <RepostFlag post={post} />
+              </div>
+            )}
             {/* Header */}
             <div className="mb-3 flex min-w-0 items-center justify-between gap-2 sm:mb-4">
               <div className="flex min-w-0 flex-1 items-center space-x-2.5 sm:space-x-3">
-                <div className="shrink-0">
+                <div className="pointer-events-none shrink-0">
                   <ProfileAvatar
                     displayName={post.name}
                     username={post.username}
@@ -157,8 +169,9 @@ export const FeedPost = ({ post }) => {
                     <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                       <div className="inline-flex min-w-0 max-w-full shrink-0 items-center gap-2">
                         <h3
-                          className="inline-block w-fit max-w-full min-w-0 font-semibold text-foreground"
+                          className="pointer-events-auto inline-block w-fit max-w-full min-w-0 font-semibold text-foreground"
                           onClick={(e) => {
+                            e.preventDefault();
                             e.stopPropagation();
                             router.push(`/profile/${post.username}`);
                           }}
@@ -173,10 +186,10 @@ export const FeedPost = ({ post }) => {
                       </div>
                       <HighlightedAchievementBadges
                         achievements={post.highlighted_achievements}
-                        className="min-w-0"
+                        className="pointer-events-auto relative z-10 min-w-0"
                       />
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="pointer-events-none text-sm text-muted-foreground">
                       @{post.username} • <DateAndHour date={post.timestamp} />
                     </p>
                   </div>
@@ -185,8 +198,9 @@ export const FeedPost = ({ post }) => {
                   <div className="min-w-0 lg:hidden">
                     <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
                       <h3
-                        className="min-w-0 truncate font-semibold text-foreground"
+                        className="pointer-events-auto min-w-0 truncate font-semibold text-foreground"
                         onClick={(e) => {
+                          e.preventDefault();
                           e.stopPropagation();
                           router.push(`/profile/${post.username}`);
                         }}
@@ -201,16 +215,17 @@ export const FeedPost = ({ post }) => {
                     </div>
                     <HighlightedAchievementBadges
                       achievements={post.highlighted_achievements}
-                      className="mt-1.5"
+                      className="pointer-events-auto relative z-20 mt-1.5"
                       compact
                     />
-                    <p className="mt-1 truncate text-sm text-muted-foreground">
+                    <p className="pointer-events-none mt-1 truncate text-sm text-muted-foreground">
                       @{post.username} • <DateAndHour date={post.timestamp} />
                     </p>
                   </div>
                 </div>
               </div>
               <DropdownMenu>
+                <div className="pointer-events-auto">
                 {components.MoreOptions}
                 <DropdownMenuContent
                   align="end"
@@ -227,6 +242,7 @@ export const FeedPost = ({ post }) => {
                     />
                   )}
                 </DropdownMenuContent>
+                </div>
               </DropdownMenu>
             </div>
 
@@ -237,7 +253,7 @@ export const FeedPost = ({ post }) => {
             {post.medias && post.medias.length > 0 && (
               <div
                 className={cn(
-                  "mb-3 h-40 overflow-hidden rounded-lg sm:mb-4 sm:h-48 sm:rounded-xl lg:h-64",
+                  "pointer-events-auto mb-3 h-40 overflow-hidden rounded-lg sm:mb-4 sm:h-48 sm:rounded-xl lg:h-64",
                   post.medias.length === 1
                     ? "grid grid-cols-1"
                     : "grid grid-cols-2 gap-2"
@@ -288,12 +304,13 @@ export const FeedPost = ({ post }) => {
             )}
 
             {/* Actions */}
-            <div className="flex items-center justify-between gap-2 border-t border-border/50 pt-2.5 sm:pt-4">
+            <div className="pointer-events-auto flex items-center justify-between gap-2 border-t border-border/50 pt-2.5 sm:pt-4">
               <div className="flex items-center space-x-2 sm:space-x-6">
                 <PostActions post={post} handleShareModal={handleShareModal} />
               </div>
             </div>
-          </Link>
+            </div>
+          </>
         )}
       </CardContent>
 

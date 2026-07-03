@@ -1,6 +1,7 @@
 import * as React from "react"
 
 const MOBILE_BREAKPOINT = 768
+const CAN_HOVER_QUERY = "(hover: hover) and (pointer: fine)"
 
 export function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
@@ -16,4 +17,34 @@ export function useIsMobile() {
   }, [])
 
   return !!isMobile
+}
+
+/** Dispositivos com mouse/trackpad — hover confiável (não touch). */
+export function useCanHover() {
+  const [canHover, setCanHover] = React.useState(false)
+
+  React.useEffect(() => {
+    const mql = window.matchMedia(CAN_HOVER_QUERY)
+    const onChange = () => setCanHover(mql.matches)
+    mql.addEventListener("change", onChange)
+    setCanHover(mql.matches)
+    return () => mql.removeEventListener("change", onChange)
+  }, [])
+
+  return canHover
+}
+
+/** Touch / celular — usa tap em vez de hover. Mobile-first para evitar flash de Tooltip. */
+export function usePrefersTouch() {
+  const [prefersTouch, setPrefersTouch] = React.useState(true)
+
+  React.useEffect(() => {
+    const mql = window.matchMedia("(hover: none), (pointer: coarse)")
+    const onChange = () => setPrefersTouch(mql.matches)
+    mql.addEventListener("change", onChange)
+    setPrefersTouch(mql.matches)
+    return () => mql.removeEventListener("change", onChange)
+  }, [])
+
+  return prefersTouch
 }
