@@ -24,38 +24,38 @@ export default function GamesCanvasProfile({
   };
 
   return (
-    <div className="min-h-layout-main bg-background ml-0 md:ml-20">
-      <div className="max-w-7xl mx-auto p-4 md:p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-1 order-1 lg:order-1">
-            <div className="sticky top-6">
-              <GamesCanvasUserProfile
-                profile={profile}
-                onProfileUpdated={handleProfileUpdated}
-              />
-            </div>
-          </div>
-
-          <div className="lg:col-span-3 order-2 lg:order-2">
-                <ProfileFeedServerComponentsProvider>
-                <ProfilePostsProvider
-                  profileUsername={profile?.username}
-                  onPostAddedToCache={() =>
-                    handleProfileUpdated({
-                      quantity_posts:
-                        Number(profile?.quantity_posts || 0) + 1,
-                    })
-                  }
-                >
+    <div className="min-h-layout-main w-full min-w-0 max-w-full bg-background layout-content-offset">
+      <div className="mx-auto w-full max-w-7xl px-4 py-4 lg:py-4 xl:px-6 xl:py-6">
+        <ProfileFeedServerComponentsProvider>
+          <ProfilePostsProvider
+            profileUsername={profile?.username}
+            onPostAddedToCache={() =>
+              handleProfileUpdated({
+                quantity_posts: Number(profile?.quantity_posts || 0) + 1,
+              })
+            }
+          >
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-4 lg:gap-6">
+              <div className="order-1 min-w-0 lg:order-2 lg:col-span-3">
                 <GamesCanvasContentTabs
                   profile={profile}
                   initialComments={initialComments}
                   onProfileUpdated={handleProfileUpdated}
                 />
-              </ProfilePostsProvider>
-            </ProfileFeedServerComponentsProvider>
-          </div>
-        </div>
+              </div>
+
+              <div className="order-2 hidden min-w-0 lg:order-1 lg:col-span-1 lg:block">
+                <div className="lg:sticky lg:top-6">
+                  <GamesCanvasUserProfile
+                    profile={profile}
+                    variant="full"
+                    onProfileUpdated={handleProfileUpdated}
+                  />
+                </div>
+              </div>
+            </div>
+          </ProfilePostsProvider>
+        </ProfileFeedServerComponentsProvider>
       </div>
     </div>
   );

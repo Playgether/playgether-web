@@ -181,28 +181,42 @@ function TextPostCard({
 
   return (
     <Card
-      className="hover:shadow-card transition-shadow duration-200 cursor-pointer relative"
+      className="hover:shadow-card transition-shadow duration-200 cursor-pointer relative z-0"
       onClick={onClick}
     >
       {isOwner && onDelete && (
         <div
-          className="absolute top-3 right-3 z-10"
+          className="absolute top-3 right-3"
           onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
         >
-          <DropdownMenu>
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button
+                type="button"
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[140px]">
+            <DropdownMenuContent
+              align="end"
+              sideOffset={2}
+              className="min-w-[140px]"
+              onOpenAutoFocus={(e) => e.preventDefault()}
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
               <DropdownMenuItem
                 className="text-red-500 focus:text-red-500 focus:bg-destructive/10 hover:bg-destructive/10 cursor-pointer"
-                onClick={() => onDelete(post)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(post);
+                }}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Excluir
@@ -211,13 +225,13 @@ function TextPostCard({
           </DropdownMenu>
         </div>
       )}
-      <CardContent className="p-4">
+      <CardContent className="p-3 sm:p-4">
         <div className="space-y-3">
-          <div className="flex items-start justify-between gap-2 pr-8">
-            <p className="text-foreground text-sm leading-relaxed flex-1 line-clamp-3">
+          <div className="flex flex-col gap-2 pr-8 sm:flex-row sm:items-start sm:justify-between">
+            <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-foreground">
               {truncatedComment || "Sem legenda"}
             </p>
-            <span className="text-sm text-muted-foreground flex items-center gap-1 shrink-0">
+            <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground sm:text-sm">
               <Clock className="h-3 w-3" />
               <DateAndHour date={post.timestamp} />
             </span>

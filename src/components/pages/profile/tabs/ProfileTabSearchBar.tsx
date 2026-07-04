@@ -111,48 +111,46 @@ export function ProfileTabSearchBar({
 
   return (
     <div className={cn("space-y-3", className)}>
-      <div className="flex flex-col sm:flex-row gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            value={localSearch}
-            onChange={(e) => {
-              setLocalSearch(e.target.value);
-              onSearchChange(e.target.value);
-            }}
-            onKeyDown={handleSearchKeyDown}
-            placeholder={placeholder}
-            className="pl-9"
-          />
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <Input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => onDateRangeChange(e.target.value, dateTo)}
-            className="w-[140px]"
-            title="Data inicial"
-          />
-          <Input
-            type="date"
-            value={dateTo}
-            onChange={(e) => onDateRangeChange(dateFrom, e.target.value)}
-            className="w-[140px]"
-            title="Data final"
-          />
-          {hasActiveFilters && (
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleClear}
-              className="shrink-0"
-              title="Limpar filtros"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="search"
+          value={localSearch}
+          onChange={(e) => {
+            setLocalSearch(e.target.value);
+            onSearchChange(e.target.value);
+          }}
+          onKeyDown={handleSearchKeyDown}
+          placeholder={placeholder}
+          className="pl-9"
+        />
+      </div>
+      <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-nowrap sm:items-center">
+        <Input
+          type="date"
+          value={dateFrom}
+          onChange={(e) => onDateRangeChange(e.target.value, dateTo)}
+          className="min-w-0 w-full pr-9 sm:w-[140px] sm:flex-none sm:pr-3 max-sm:[&::-webkit-calendar-picker-indicator]:absolute max-sm:[&::-webkit-calendar-picker-indicator]:right-2 max-sm:[&::-webkit-calendar-picker-indicator]:top-1/2 max-sm:[&::-webkit-calendar-picker-indicator]:-translate-y-1/2 max-sm:relative"
+          title="Data inicial"
+        />
+        <Input
+          type="date"
+          value={dateTo}
+          onChange={(e) => onDateRangeChange(dateFrom, e.target.value)}
+          className="min-w-0 w-full pr-9 sm:w-[140px] sm:flex-none sm:pr-3 max-sm:[&::-webkit-calendar-picker-indicator]:absolute max-sm:[&::-webkit-calendar-picker-indicator]:right-2 max-sm:[&::-webkit-calendar-picker-indicator]:top-1/2 max-sm:[&::-webkit-calendar-picker-indicator]:-translate-y-1/2 max-sm:relative"
+          title="Data final"
+        />
+        {hasActiveFilters && (
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleClear}
+            className="shrink-0"
+            title="Limpar filtros"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </div>
     </div>
   );

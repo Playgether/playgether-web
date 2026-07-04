@@ -128,7 +128,7 @@ export function MediaTab({
         hasActiveFilters={hasActiveMediaFilters}
         placeholder="Buscar por palavra no texto ou legenda..."
       />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
         {mediaPosts.map((post) => (
           <MediaPostCard
             key={post.id}
@@ -179,36 +179,9 @@ function MediaPostCard({
 
   return (
     <Card
-      className="overflow-hidden group cursor-pointer hover:shadow-card transition-all duration-200 relative"
+      className="overflow-hidden group cursor-pointer hover:shadow-card transition-all duration-200 relative z-0"
       onClick={onClick}
     >
-      {isOwner && onDelete && (
-        <div
-          className="absolute top-2 left-2 z-10"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="secondary"
-                size="icon"
-                className="h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 text-white border-0"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="min-w-[140px]">
-              <DropdownMenuItem
-                className="text-red-500 focus:text-red-500 focus:bg-destructive/10 hover:bg-destructive/10 cursor-pointer"
-                onClick={() => onDelete(post)}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Excluir
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      )}
       <div className="relative aspect-square">
         {firstMedia ? (
           isVideo ? (
@@ -231,11 +204,6 @@ function MediaPostCard({
                 alt="Post media"
                 className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-200"
               />
-              {mediaCount > 1 && (
-                <div className="absolute top-2 right-2 bg-black/50 backdrop-blur-sm rounded px-2 py-1 text-xs text-white flex items-center gap-1">
-                  <span>+{mediaCount}</span>
-                </div>
-              )}
             </div>
           )
         ) : (
@@ -243,21 +211,67 @@ function MediaPostCard({
             Sem mídia
           </div>
         )}
+        <div
+          className="absolute top-2 right-2 z-[1] flex items-center gap-1.5"
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          {mediaCount > 1 && (
+            <div className="rounded bg-black/50 px-2 py-1 text-xs text-white backdrop-blur-sm">
+              +{mediaCount}
+            </div>
+          )}
+          {isOwner && onDelete && (
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="icon"
+                  className="h-8 w-8 rounded-full border-0 bg-black/50 text-white backdrop-blur-sm hover:bg-black/70"
+                  onClick={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                sideOffset={2}
+                className="min-w-[140px]"
+                onOpenAutoFocus={(e) => e.preventDefault()}
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+              >
+                <DropdownMenuItem
+                  className="cursor-pointer text-red-500 hover:bg-destructive/10 focus:bg-destructive/10 focus:text-red-500"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(post);
+                  }}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Excluir
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-4">
+      <CardContent className="p-3 lg:p-4">
+        <div className="flex flex-row items-center justify-between gap-2 text-sm sm:flex-col sm:items-stretch lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-3 sm:gap-4">
             <div className="flex items-center gap-1 text-muted-foreground">
-              <Heart className="h-4 w-4" />
+              <Heart className="h-4 w-4 shrink-0" />
               <span>{post.quantity_likes}</span>
             </div>
             <div className="flex items-center gap-1 text-muted-foreground">
-              <MessageCircle className="h-4 w-4" />
+              <MessageCircle className="h-4 w-4 shrink-0" />
               <span>{post.quantity_comment}</span>
             </div>
           </div>
           {mediaCount > 1 && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">
               {mediaCount} mídias
             </span>
           )}

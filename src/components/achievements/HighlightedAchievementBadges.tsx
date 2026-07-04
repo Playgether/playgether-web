@@ -288,7 +288,7 @@ export function HighlightedAchievementBadges({
       <div
         className={cn(
           "relative z-20 flex min-w-0 flex-wrap items-center gap-1",
-          compact ? "w-full" : "w-fit max-w-full",
+          "w-fit max-w-full",
           className,
         )}
         aria-label="Conquistas em destaque"

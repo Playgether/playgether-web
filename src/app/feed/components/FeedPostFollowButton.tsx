@@ -76,10 +76,10 @@ export function FeedPostFollowButton({ post }: FeedPostFollowButtonProps) {
       title={label}
       aria-label={label}
       className={cn(
-        "pointer-events-auto h-8 shrink-0 p-0 text-xs font-semibold lg:gap-1.5 lg:px-2.5",
+        "pointer-events-auto h-7 shrink-0 p-0 text-xs font-semibold lg:h-8 lg:gap-1.5 lg:px-2.5",
         isFollowing
-          ? "w-8 text-muted-foreground hover:bg-secondary/80 lg:w-auto"
-          : "w-8 border-primary/40 text-primary hover:bg-primary/10 lg:w-auto",
+          ? "w-7 text-muted-foreground hover:bg-secondary/80 lg:w-auto"
+          : "w-7 border-primary/40 text-primary hover:bg-primary/10 lg:w-auto",
       )}
     >
       {isFollowing ? (

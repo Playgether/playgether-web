@@ -30,9 +30,13 @@ const PROFILE_CARD_BIO_COLLAPSE_AFTER_LINES = 5;
 export function GamesCanvasUserProfile({
   profile,
   onProfileUpdated,
+  variant = "full",
+  embedded = false,
 }: {
   profile: getProfileByUsernameProps | null;
   onProfileUpdated?: (updated: Partial<getProfileByUsernameProps>) => void;
+  variant?: "full" | "compact";
+  embedded?: boolean;
 }) {
   const { user, authSessionResolved } = useAuthContext();
   const { openWithConversation } = useConversationsWidget();
@@ -227,12 +231,413 @@ export function GamesCanvasUserProfile({
     maximumFractionDigits: likes >= 100000 ? 1 : 0,
   }).format(likes);
 
+  const modals = (
+    <>
+      {profile && followListModal && (
+        <FollowListModal
+          open={!!followListModal}
+          onOpenChange={(open) => {
+            if (!open) setFollowListModal(null);
+          }}
+          profileId={profile.id}
+          type={followListModal}
+          isOwnProfile={isOwner}
+          onListChange={handleFollowListChange}
+        />
+      )}
+
+      {onProfileUpdated && (
+        <ProfileEditModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          profile={profile}
+          onProfileUpdated={onProfileUpdated}
+          onWidgetOpenChange={() => {}}
+        />
+      )}
+    </>
+  );
+
+  if (variant === "compact") {
+    const statShortLabels: Record<string, string> = {
+      Seguidores: "Seg.",
+      Seguindo: "Segu.",
+      Posts: "Posts",
+      Nível: "Nív.",
+    };
+
+    const compactBody = embedded ? (
+      <>
+        <div className="relative h-5 overflow-hidden bg-muted">
+          {profile?.profile_banner ? (
+            <div className="absolute inset-0">
+              <ImageComponent
+                media_id={profile.profile_banner}
+                className="h-full w-full object-cover"
+                alt="Profile Banner"
+              />
+            </div>
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/25 via-primary/10 to-primary/25" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
+        </div>
+
+        <div className="px-2.5 pb-2 pt-0">
+          <div className="flex items-center gap-2">
+            <ProfileAvatar
+              displayName={profile?.name ?? "?"}
+              username={profile?.username}
+              profilePhoto={profile?.profile_photo}
+              sizeClass="h-9 w-9 shrink-0"
+              className="mt-0.5 border-2 border-card shadow-neon"
+              fallbackTextClassName="text-xs"
+            />
+            <div className="min-w-0 flex flex-1 items-start justify-between gap-1">
+              <div className="min-w-0">
+                <h1 className="truncate text-[13px] font-bold leading-tight text-card-foreground">
+                  {profile?.name || "—"}
+                </h1>
+                <p className="truncate text-[10px] leading-tight text-muted-foreground">
+                  @
+                  {(profile?.username || "user")
+                    .toLowerCase()
+                    .replace(/\s+/g, "")}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-1">
+                {/* Nota do perfil — desativada temporariamente
+                <Badge
+                  variant="secondary"
+                  className={`border-0 px-1 py-0 text-[9px] font-semibold leading-none ${getRatingColor(userRating)}`}
+                >
+                  {userRating}
+                </Badge>
+                */}
+                {isOwner && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 border-0 bg-card/70 text-card-foreground shadow-none backdrop-blur-sm hover:bg-card hover:text-primary"
+                    onClick={() => setIsEditModalOpen(true)}
+                    title="Editar perfil"
+                  >
+                    <Settings className="h-3 w-3" />
+                  </Button>
+                )}
+                {authSessionResolved && !isOwner && (
+                  <>
+                    <Button
+                      variant={isFollowing ? "secondary" : "default"}
+                      size="icon"
+                      className={cn(
+                        "h-6 w-6",
+                        !isFollowing && "border-0 bg-gradient-primary",
+                      )}
+                      onClick={handleFollow}
+                      title={isFollowing ? "Seguindo" : "Seguir"}
+                    >
+                      <UserPlus className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-6 w-6 border-border"
+                      onClick={async () => {
+                        if (!profile?.user_id) return;
+                        const conv = await startConversation(
+                          String(profile.user_id),
+                        );
+                        if (conv) openWithConversation(conv.id);
+                      }}
+                      title="Mensagem"
+                    >
+                      <MessageCircle className="h-3 w-3" />
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="mt-1 pl-11">
+            <HighlightedAchievementBadges
+              achievements={profile?.highlighted_achievements}
+              compact
+            />
+          </div>
+
+          <div
+            className={cn(
+              "mt-1.5 flex items-stretch divide-x divide-border/50 border border-border/40 bg-muted/20",
+              embedded ? "rounded-none" : "rounded-md",
+            )}
+          >
+            {userStats.map((stat, index) => {
+              const isClickable =
+                stat.label === "Seguidores" || stat.label === "Seguindo";
+              const modalType =
+                stat.label === "Seguidores" ? "followers" : "following";
+              return (
+                <div
+                  key={index}
+                  className={cn(
+                    "flex flex-1 flex-col items-center justify-center py-1",
+                    isClickable &&
+                      "cursor-pointer transition-colors hover:bg-muted/40",
+                  )}
+                  onClick={
+                    isClickable
+                      ? () => setFollowListModal(modalType)
+                      : undefined
+                  }
+                  role={isClickable ? "button" : undefined}
+                  tabIndex={isClickable ? 0 : undefined}
+                  onKeyDown={
+                    isClickable
+                      ? (e) => {
+                          if (e.key === "Enter") setFollowListModal(modalType);
+                        }
+                      : undefined
+                  }
+                >
+                  <span
+                    className={cn(
+                      "text-xs font-semibold tabular-nums leading-none",
+                      stat.color,
+                    )}
+                  >
+                    {stat.value}
+                  </span>
+                  <span className="mt-0.5 text-[7px] uppercase leading-none text-muted-foreground">
+                    {statShortLabels[stat.label] ?? stat.label}
+                  </span>
+                </div>
+              );
+            })}
+            <button
+              type="button"
+              disabled={isOwner}
+              onClick={!isOwner ? handleLike : undefined}
+              className={cn(
+                "flex flex-1 flex-col items-center justify-center py-1 transition-colors",
+                !isOwner && "hover:bg-muted/40",
+                isOwner && "cursor-default",
+                isLiked && !isOwner && "text-red-500",
+              )}
+              title={`${likes.toLocaleString("pt-BR")} curtidas`}
+            >
+              <Heart
+                className={cn(
+                  "h-3 w-3",
+                  isLiked && !isOwner && "fill-current text-red-500",
+                )}
+              />
+              <span className="mt-0.5 text-[7px] uppercase leading-none text-muted-foreground">
+                {likesLabel}
+              </span>
+            </button>
+          </div>
+        </div>
+      </>
+    ) : (
+      <>
+        <div className="relative h-12 overflow-hidden bg-muted sm:h-14">
+          {profile?.profile_banner ? (
+            <div className="absolute inset-0">
+              <ImageComponent
+                media_id={profile.profile_banner}
+                className="h-full w-full object-cover"
+                alt="Profile Banner"
+              />
+            </div>
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
+          {isOwner && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-2 h-7 w-7 border border-border/50 bg-card/80 text-card-foreground shadow-md backdrop-blur-md hover:bg-card hover:text-primary"
+              onClick={() => setIsEditModalOpen(true)}
+            >
+              <Settings className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
+
+        <div className="px-3 pb-3 pt-0">
+          <div className="flex gap-2.5">
+            <ProfileAvatar
+              displayName={profile?.name ?? "?"}
+              username={profile?.username}
+              profilePhoto={profile?.profile_photo}
+              sizeClass="h-12 w-12 shrink-0"
+              className="-mt-6 border-[3px] border-card shadow-neon"
+              fallbackTextClassName="text-sm"
+            />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-1.5">
+                <div className="min-w-0">
+                  <h1 className="truncate text-sm font-bold text-card-foreground">
+                    {profile?.name || "—"}
+                  </h1>
+                  <p className="truncate text-[11px] text-muted-foreground">
+                    @
+                    {(profile?.username || "user")
+                      .toLowerCase()
+                      .replace(/\s+/g, "")}
+                  </p>
+                </div>
+                {/* Nota do perfil — desativada temporariamente
+                <Badge
+                  variant="secondary"
+                  className={`shrink-0 border-0 px-1.5 py-0 text-[10px] font-semibold ${getRatingColor(userRating)}`}
+                >
+                  {userRating}
+                </Badge>
+                */}
+              </div>
+              <div className="mt-1">
+                <HighlightedAchievementBadges
+                  achievements={profile?.highlighted_achievements}
+                  compact
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-2.5 grid grid-cols-4 gap-0.5">
+            {userStats.map((stat, index) => {
+              const isClickable =
+                stat.label === "Seguidores" || stat.label === "Seguindo";
+              const modalType =
+                stat.label === "Seguidores" ? "followers" : "following";
+              return (
+                <div
+                  key={index}
+                  className={cn(
+                    "space-y-0.5 text-center",
+                    isClickable &&
+                      "cursor-pointer rounded-md p-0.5 transition-colors hover:bg-muted/50",
+                  )}
+                  onClick={
+                    isClickable
+                      ? () => setFollowListModal(modalType)
+                      : undefined
+                  }
+                  role={isClickable ? "button" : undefined}
+                  tabIndex={isClickable ? 0 : undefined}
+                  onKeyDown={
+                    isClickable
+                      ? (e) => {
+                          if (e.key === "Enter") setFollowListModal(modalType);
+                        }
+                      : undefined
+                  }
+                >
+                  <div
+                    className={cn(
+                      "text-sm font-semibold tabular-nums",
+                      stat.color,
+                    )}
+                  >
+                    {stat.value}
+                  </div>
+                  <div className="text-[8px] uppercase tracking-wide text-muted-foreground">
+                    {stat.label}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-2.5 flex items-center gap-1.5">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={isOwner}
+              onClick={!isOwner ? handleLike : undefined}
+              className={cn(
+                "h-7 rounded-full px-2 text-[11px]",
+                isOwner
+                  ? "cursor-default border-border bg-muted/40 opacity-100"
+                  : isLiked
+                    ? "border-red-500/30 bg-red-500/10 text-red-500"
+                    : "border-border text-card-foreground",
+              )}
+            >
+              <Heart
+                className={cn(
+                  "mr-0.5 h-3 w-3",
+                  isLiked ? "fill-current text-red-500" : "text-red-500",
+                )}
+              />
+              {likesLabel}
+            </Button>
+
+            {authSessionResolved && !isOwner && (
+              <>
+                <Button
+                  variant={isFollowing ? "secondary" : "default"}
+                  size="sm"
+                  className={cn(
+                    "h-7 flex-1 text-[11px]",
+                    !isFollowing &&
+                      "border-0 bg-gradient-primary hover:shadow-neon",
+                  )}
+                  onClick={handleFollow}
+                >
+                  <UserPlus className="mr-0.5 h-3 w-3 shrink-0" />
+                  {isFollowing ? "Seguindo" : "Seguir"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 flex-1 border-border text-[11px] hover:border-primary/40 hover:bg-primary/10"
+                  onClick={async () => {
+                    if (!profile?.user_id) return;
+                    const conv = await startConversation(String(profile.user_id));
+                    if (conv) openWithConversation(conv.id);
+                  }}
+                >
+                  <MessageCircle className="mr-0.5 h-3 w-3 shrink-0" />
+                  Msg
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+      </>
+    );
+
+    if (embedded) {
+      return (
+        <>
+          {compactBody}
+          {modals}
+        </>
+      );
+    }
+
+    return (
+      <>
+        <CustomToaster />
+        <Card className="overflow-hidden border-border bg-card shadow-card">
+          {compactBody}
+        </Card>
+        {modals}
+      </>
+    );
+  }
+
   return (
     <>
       <CustomToaster />
-      <div className="w-full max-w-sm">
-        <Card className="overflow-hidden bg-card border-border shadow-card">
-          <div className="relative h-32 overflow-hidden bg-muted">
+      <div className="mx-auto w-full max-w-md lg:mx-0 lg:max-w-sm">
+        <Card className="overflow-hidden border-border bg-card shadow-card">
+          <div className="relative h-24 overflow-hidden bg-muted sm:h-28 lg:h-32">
             {profile?.profile_banner ? (
               <div className="absolute inset-0">
                 <ImageComponent
@@ -260,32 +665,34 @@ export function GamesCanvasUserProfile({
           </div>
 
           <CardContent className="p-0">
-            <div className="relative px-6 pb-6">
-              <div className="absolute -top-10 left-6">
+            <div className="relative px-4 pb-4 lg:px-6 lg:pb-6">
+              <div className="absolute -top-8 left-4 lg:-top-10 lg:left-6">
                 <div className="relative">
                   <ProfileAvatar
                     displayName={profile?.name ?? "?"}
                     username={profile?.username}
                     profilePhoto={profile?.profile_photo}
-                    sizeClass="h-20 w-20"
+                    sizeClass="h-16 w-16 lg:h-20 lg:w-20"
                     className="border-4 border-card shadow-neon"
-                    fallbackTextClassName="text-xl"
+                    fallbackTextClassName="text-lg lg:text-xl"
                   />
                 </div>
               </div>
 
-              <div className="pt-12 space-y-3">
+              <div className="space-y-3 pt-10 lg:pt-12">
                 <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <h1 className="text-xl font-bold text-card-foreground">
+                  <div className="flex items-start justify-between gap-2 lg:items-center">
+                    <h1 className="min-w-0 text-lg font-bold text-card-foreground lg:text-xl">
                       {profile?.name || "—"}
                     </h1>
+                    {/* Nota do perfil — desativada temporariamente
                     <Badge
                       variant="secondary"
                       className={`border-0 font-semibold ${getRatingColor(userRating)}`}
                     >
                       {userRating}
                     </Badge>
+                    */}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     @
@@ -322,23 +729,23 @@ export function GamesCanvasUserProfile({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 py-4">
+                <div className="grid grid-cols-4 gap-2 py-3 lg:grid-cols-2 lg:gap-3 lg:py-4">
                   {userStats.map((stat, index) => {
                     const isClickable = stat.label === "Seguidores" || stat.label === "Seguindo";
                     const modalType = stat.label === "Seguidores" ? "followers" : "following";
                     return (
                       <div
                         key={index}
-                        className={`text-center space-y-1 ${isClickable ? "cursor-pointer rounded-lg p-1 hover:bg-muted/50 transition-colors" : ""}`}
+                        className={`space-y-0.5 text-center lg:space-y-1 ${isClickable ? "cursor-pointer rounded-lg p-1 transition-colors hover:bg-muted/50" : ""}`}
                         onClick={isClickable ? () => setFollowListModal(modalType) : undefined}
                         role={isClickable ? "button" : undefined}
                         tabIndex={isClickable ? 0 : undefined}
                         onKeyDown={isClickable ? (e) => { if (e.key === "Enter") setFollowListModal(modalType); } : undefined}
                       >
-                        <div className={`text-lg transition-all duration-300 ${stat.color}`}>
+                        <div className={`text-base transition-all duration-300 lg:text-lg ${stat.color}`}>
                           {stat.value}
                         </div>
-                        <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground lg:text-xs">
                           {stat.label}
                         </div>
                       </div>
@@ -402,7 +809,7 @@ export function GamesCanvasUserProfile({
               </div>
             </div>
 
-            <div className="border-t border-border bg-muted/20 px-6 py-3">
+            <div className="border-t border-border bg-muted/20 px-4 py-3 lg:px-6">
               <div className="flex justify-between text-center">
                 <div className="flex-1">
                   <div className="text-sm font-semibold text-neon-blue">
@@ -415,26 +822,7 @@ export function GamesCanvasUserProfile({
         </Card>
       </div>
 
-      {profile && followListModal && (
-        <FollowListModal
-          open={!!followListModal}
-          onOpenChange={(open) => { if (!open) setFollowListModal(null); }}
-          profileId={profile.id}
-          type={followListModal}
-          isOwnProfile={isOwner}
-          onListChange={handleFollowListChange}
-        />
-      )}
-
-      {onProfileUpdated && (
-        <ProfileEditModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          profile={profile}
-          onProfileUpdated={onProfileUpdated}
-          onWidgetOpenChange={() => {}}
-        />
-      )}
+      {modals}
     </>
   );
 }

@@ -16,10 +16,7 @@ import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import { CustomToastProps } from "@/error/custom-toaster/enum";
-import {
-  patchProfile,
-  PROFILE_BIO_MAX_LENGTH,
-} from "@/services/patchProfile";
+import { patchProfile, PROFILE_BIO_MAX_LENGTH } from "@/services/patchProfile";
 import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
 import type { getProfileByUsernameProps } from "@/services/getProfileByUsername";
 import { useAuthContext } from "@/context/AuthContext";
@@ -276,14 +273,19 @@ export function ProfileEditModal({
 
       await patchProfile(profile.username ?? profile.id, payload);
 
-      if (oldProfilePhotoPublicId && (newProfilePhoto || removePhotoRequested)) {
+      if (
+        oldProfilePhotoPublicId &&
+        (newProfilePhoto || removePhotoRequested)
+      ) {
         await deleteOldProfileImage(oldProfilePhotoPublicId);
       }
 
       onProfileUpdated({
         name: payload.name ?? profile.name,
         bio: payload.bio ?? profile.bio,
-        profile_photo: removePhotoRequested ? undefined : (payload.profile_photo ?? profile.profile_photo),
+        profile_photo: removePhotoRequested
+          ? undefined
+          : (payload.profile_photo ?? profile.profile_photo),
       });
 
       CustomToast.success("Perfil atualizado com sucesso!", {
@@ -308,14 +310,16 @@ export function ProfileEditModal({
     }
   };
 
-  const displayPhoto =
-    removePhotoRequested ? null : (newProfilePhoto ?? profile?.profile_photo);
+  const displayPhoto = removePhotoRequested
+    ? null
+    : (newProfilePhoto ?? profile?.profile_photo);
   const hasCurrentPhoto = !!(
     (profile?.profile_photo || newProfilePhoto) &&
     !removePhotoRequested
   );
-  const displayBanner =
-    removeBannerRequested ? null : (newProfileBanner ?? profile?.profile_banner);
+  const displayBanner = removeBannerRequested
+    ? null
+    : (newProfileBanner ?? profile?.profile_banner);
   const hasCurrentBanner = !!(
     (profile?.profile_banner || newProfileBanner) &&
     !removeBannerRequested
@@ -324,17 +328,20 @@ export function ProfileEditModal({
   return (
     <>
       <CustomToaster />
-      <Dialog open={isOpen} onOpenChange={(open) => !open && !isWidgetOpen && onClose()}>
+      <Dialog
+        open={isOpen}
+        onOpenChange={(open) => !open && !isWidgetOpen && onClose()}
+      >
         <DialogContent
-          className="max-w-md bg-background/95 backdrop-blur-xl border border-border/50 z-[100]"
+          className="flex max-h-[min(90vh,720px)] max-w-md flex-col gap-0 overflow-hidden bg-background/95 backdrop-blur-xl border border-border/50 z-[100] p-0"
           onInteractOutside={(e) => isWidgetOpen && e.preventDefault()}
           onPointerDownOutside={(e) => isWidgetOpen && e.preventDefault()}
         >
-          <DialogHeader>
+          <DialogHeader className="shrink-0 px-6 pt-6 pb-2">
             <DialogTitle>Editar perfil</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-4 space-y-4">
             <div className="flex flex-col items-center gap-2">
               <label className="text-sm font-medium w-full">Banner</label>
               <div className="relative w-full aspect-[3/1] rounded-lg overflow-hidden ring-2 ring-primary/30 bg-muted">
@@ -402,7 +409,9 @@ export function ProfileEditModal({
             </div>
 
             <div className="flex flex-col items-center gap-2">
-              <label className="text-sm font-medium w-full">Foto de perfil</label>
+              <label className="text-sm font-medium w-full">
+                Foto de perfil
+              </label>
               <ProfileAvatar
                 displayName={profile?.name ?? user?.username ?? "?"}
                 username={profile?.username ?? user?.username}
@@ -418,7 +427,12 @@ export function ProfileEditModal({
                   options={{
                     uploadPreset: PresetsCloudinary.profile_image,
                     multiple: false,
-                    tags: [user?.username ?? "user", "profile", "image", "user"],
+                    tags: [
+                      user?.username ?? "user",
+                      "profile",
+                      "image",
+                      "user",
+                    ],
                     singleUploadAutoClose: true,
                     cropping: true,
                     croppingAspectRatio: 1,
@@ -515,7 +529,7 @@ export function ProfileEditModal({
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 border-t border-border pt-4">
               <Button
                 variant="outline"
                 onClick={onClose}

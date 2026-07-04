@@ -9,13 +9,13 @@ import {
 } from "lucide-react";
 
 export const tabsData = [
-  { id: "bio", label: "Bio", icon: User },
-  { id: "media", label: "Mídias", icon: ImageIcon },
-  { id: "posts", label: "Textos", icon: FileText },
-  { id: "game-stats", label: "Estatísticas", icon: TrendingUp },
-  { id: "milestones", label: "Marcos", icon: Target },
-  { id: "achievements", label: "Conquistas", icon: Trophy },
-  { id: "games", label: "Biblioteca", icon: Gamepad2 },
+  { id: "bio", label: "Bio", shortLabel: "Bio", icon: User },
+  { id: "media", label: "Mídias", shortLabel: "Mídia", icon: ImageIcon },
+  { id: "posts", label: "Textos", shortLabel: "Textos", icon: FileText },
+  { id: "game-stats", label: "Estatísticas", shortLabel: "Stats", icon: TrendingUp },
+  { id: "milestones", label: "Marcos", shortLabel: "Marcos", icon: Target },
+  { id: "achievements", label: "Conquistas", shortLabel: "Conq.", icon: Trophy },
+  { id: "games", label: "Biblioteca", shortLabel: "Jogos", icon: Gamepad2 },
 ];
 
 export const initialMilestones = [

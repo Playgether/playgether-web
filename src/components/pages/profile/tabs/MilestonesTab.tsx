@@ -55,15 +55,16 @@ export function MilestonesTab({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Marcos Pessoais</h3>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h3 className="text-base font-semibold sm:text-lg">Marcos Pessoais</h3>
         {isOwner && (
           <Button
-            className="bg-gradient-primary hover:shadow-neon transition-all duration-200"
+            size="sm"
+            className="w-full bg-gradient-primary transition-all duration-200 hover:shadow-neon sm:w-auto"
             onClick={onAddMilestone}
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="mr-2 h-4 w-4" />
             Adicionar Marco
           </Button>
         )}
@@ -85,19 +86,77 @@ export function MilestonesTab({
               className="hover:shadow-card transition-all duration-200 cursor-pointer"
               onClick={() => onMilestoneClick(milestone)}
             >
-              <CardContent className="p-6">
-                <div className="flex gap-4">
+              <CardContent className="p-4 sm:p-6">
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <h4 className="min-w-0 flex-1 font-semibold leading-tight">
+                    <TextLimitComponent text={milestone.title || ""} maxCharacters={50} />
+                  </h4>
+                  <div
+                    className="flex shrink-0 items-center gap-2"
+                    onClick={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    <Badge variant="outline" className="whitespace-nowrap text-xs">
+                      {formatDate(milestone.date)}
+                    </Badge>
+                    {isOwner && (
+                      <DropdownMenu modal={false}>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 shrink-0"
+                            onClick={(e) => e.stopPropagation()}
+                            onPointerDown={(e) => e.stopPropagation()}
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
+                          sideOffset={2}
+                          onOpenAutoFocus={(e) => e.preventDefault()}
+                          onClick={(e) => e.stopPropagation()}
+                          onPointerDown={(e) => e.stopPropagation()}
+                        >
+                          <DropdownMenuItem
+                            className="cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEditMilestone(milestone);
+                            }}
+                          >
+                            <Edit className="mr-2 h-4 w-4" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="cursor-pointer text-red-500 focus:text-red-500"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteMilestone(milestone);
+                            }}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
                   {milestone.medias && milestone.medias.length > 0 && (
-                    <div className="flex gap-1 flex-shrink-0">
-                      {milestone.medias.slice(0, 3).map((media, idx) => (
+                    <div className="flex shrink-0 gap-1">
+                      {milestone.medias.slice(0, 3).map((media) => (
                         <div
                           key={media.id}
-                          className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 pointer-events-none"
+                          className="pointer-events-none h-16 w-16 shrink-0 overflow-hidden rounded-lg"
                         >
                           {media.media_type === "video" ? (
                             <video
                               src={getCloudinaryVideoUrl(media.public_id)}
-                              className="w-full h-full object-cover"
+                              className="h-full w-full object-cover"
                               muted
                             />
                           ) : (
@@ -107,59 +166,16 @@ export function MilestonesTab({
                                 getCloudinaryUrl(media.public_id)
                               }
                               alt={milestone.title}
-                              className="w-full h-full object-cover"
+                              className="h-full w-full object-cover"
                             />
                           )}
                         </div>
                       ))}
                     </div>
                   )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <h4 className="font-semibold flex-1 min-w-0 pr-2">
-                        <TextLimitComponent text={milestone.title || ""} maxCharacters={50} />
-                      </h4>
-                      <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                        <Badge variant="outline" className="text-xs">
-                          {formatDate(milestone.date)}
-                        </Badge>
-                        {isOwner && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
-                              <DropdownMenuItem
-                                className="cursor-pointer"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onEditMilestone(milestone);
-                                }}
-                              >
-                                <Edit className="h-4 w-4 mr-2" />
-                                Editar
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="text-red-500 focus:text-red-500 cursor-pointer"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onDeleteMilestone(milestone);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Excluir
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </div>
-                    </div>
-                    <p className="text-muted-foreground text-sm leading-relaxed">
-                      <TextLimitComponent text={milestone.description || ""} maxCharacters={100} />
-                    </p>
-                  </div>
+                  <p className="min-w-0 flex-1 text-sm leading-relaxed text-muted-foreground">
+                    <TextLimitComponent text={milestone.description || ""} maxCharacters={100} />
+                  </p>
                 </div>
               </CardContent>
             </Card>
