@@ -1,6 +1,7 @@
 import {
   FileText,
   Gamepad2,
+  Heart,
   Image as ImageIcon,
   Repeat2,
   Target,
@@ -10,14 +11,15 @@ import {
 } from "lucide-react";
 
 export const tabsData = [
-  { id: "bio", label: "Bio", icon: User },
-  { id: "media", label: "Mídias", icon: ImageIcon },
-  { id: "posts", label: "Textos", icon: FileText },
-  { id: "reposts", label: "Reposts", icon: Repeat2 },
-  { id: "game-stats", label: "Estatísticas", icon: TrendingUp },
-  { id: "milestones", label: "Marcos", icon: Target },
-  { id: "achievements", label: "Conquistas", icon: Trophy },
-  { id: "games", label: "Biblioteca", icon: Gamepad2 },
+  { id: "bio", label: "Bio", icon: User, ownerOnly: false },
+  { id: "media", label: "Mídias", icon: ImageIcon, ownerOnly: false },
+  { id: "posts", label: "Textos", icon: FileText, ownerOnly: false },
+  { id: "reposts", label: "Reposts", icon: Repeat2, ownerOnly: false },
+  { id: "game-stats", label: "Estatísticas", icon: TrendingUp, ownerOnly: false },
+  { id: "milestones", label: "Marcos", icon: Target, ownerOnly: false },
+  { id: "achievements", label: "Conquistas", icon: Trophy, ownerOnly: false },
+  { id: "games", label: "Biblioteca", icon: Gamepad2, ownerOnly: false },
+  { id: "liked", label: "Curtidas", icon: Heart, ownerOnly: true },
 ];
 
 export const initialMilestones = [

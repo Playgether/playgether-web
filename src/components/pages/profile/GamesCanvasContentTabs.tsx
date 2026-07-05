@@ -13,6 +13,7 @@ import { AchievementsTab } from "./tabs/AchievementsTab";
 import { MilestonesTab } from "./tabs/MilestonesTab";
 import { GamesLibraryTab } from "./tabs/GamesLibraryTab";
 import { RepostsTab } from "./tabs/RepostsTab";
+import { LikedPostsTab } from "./tabs/LikedPostsTab";
 import { AddCommentModal } from "./modals/AddCommentModal";
 import { EditCommentModal } from "./modals/EditCommentModal";
 import { ConfirmationModal } from "./modals/ConfirmationModal";
@@ -72,6 +73,7 @@ export function GamesCanvasContentTabs({
     milestones: "marcos",
     achievements: "conquistas",
     games: "biblioteca",
+    liked: "curtidas",
   };
 
   const slugToTabId: Record<string, string> = Object.fromEntries(
@@ -96,7 +98,13 @@ export function GamesCanvasContentTabs({
     return "bio";
   };
 
-  const [activeTab, setActiveTab] = useState(() => getTabFromPathname());
+  const resolveTab = () => {
+    const tab = getTabFromPathname();
+    const tabDef = tabsData.find((t) => t.id === tab);
+    if (tabDef?.ownerOnly && !isOwner) return "bio";
+    return tab;
+  };
+  const [activeTab, setActiveTab] = useState(() => resolveTab());
   const [selectedGame, setSelectedGame] = useState("");
   const [comments, setComments] = useState<any[]>(initialComments.data ?? []);
   const [nextPage, setNextPage] = useState<string | null>(
@@ -141,7 +149,7 @@ export function GamesCanvasContentTabs({
 
   // Sincroniza a aba com a URL (para permitir acesso direto /profile/<tab>).
   useEffect(() => {
-    setActiveTab(getTabFromPathname());
+    setActiveTab(resolveTab());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
@@ -550,7 +558,7 @@ export function GamesCanvasContentTabs({
           className="w-full"
         >
           <TabsList className="flex flex-wrap justify-center lg:justify-start gap-1 bg-card border border-border p-1 mb-6 h-auto overflow-visible">
-            {tabsData.map((tab) => (
+            {tabsData.filter((tab) => !tab.ownerOnly || isOwner).map((tab) => (
               <TabsTrigger
                 key={tab.id}
                 value={tab.id}
@@ -659,6 +667,12 @@ export function GamesCanvasContentTabs({
             <TabsContent value="games" className="p-6">
               <GamesLibraryTab profile={profile} isOwner={isOwner} />
             </TabsContent>
+
+            {isOwner && (
+              <TabsContent value="liked" className="p-6">
+                <LikedPostsTab onPostClick={(postId) => setSelectedPostId(postId)} />
+              </TabsContent>
+            )}
           </div>
         </Tabs>
 
