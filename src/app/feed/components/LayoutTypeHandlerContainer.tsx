@@ -1,16 +1,16 @@
-"use client";
-import { useIsMobile } from "@/context/MobileContext";
-import React from "react";
-
-export default function LayoutTypeHandlerContainer({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const isMobile = useIsMobile();
-  return (
-    <div className={isMobile ? "ml-0" : "ml-20"}>
-      <div className="max-w-7xl mx-auto px-6 py-6">{children}</div>
-    </div>
-  );
-}
+"use client";
+import React from "react";
+
+export default function LayoutTypeHandlerContainer({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="w-full min-w-0 max-w-full lg:pl-20">
+      <div className="mx-auto w-full max-w-7xl px-4 py-4 lg:px-4 lg:py-4 xl:px-6 xl:py-6">
+        {children}
+      </div>
+    </div>
+  );
+}

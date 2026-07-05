@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Image, Video, X, Send, Loader2 } from "lucide-react";
+import { ImagePlay, X, Send, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { CldUploadWidget } from "next-cloudinary";
 
@@ -189,7 +189,7 @@ export const CreatePostModal = () => {
 
       <Dialog open={modalOpen} onOpenChange={handleCloseModal}>
         <DialogContent
-          className="max-w-2xl bg-background/95 backdrop-blur-xl border border-border/50"
+          className="flex max-h-[min(90dvh,calc(100dvh-var(--layout-header-height)-2rem))] max-w-2xl flex-col overflow-hidden bg-background/95 backdrop-blur-xl border border-border/50"
           // Previne que o modal feche quando o widget estiver aberto
           onInteractOutside={(e) => {
             if (isWidgetOpen) {
@@ -203,13 +203,13 @@ export const CreatePostModal = () => {
             }
           }}
         >
-          <DialogHeader>
+          <DialogHeader className="shrink-0">
             <DialogTitle className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
               Criar Post
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-0.5 py-1 pr-1">
             {/* User Info */}
             <div className="flex items-center space-x-3">
               <Avatar className="w-12 h-12 ring-2 ring-primary/20">
@@ -232,7 +232,7 @@ export const CreatePostModal = () => {
               placeholder="O que está acontecendo?"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="min-h-32 resize-none bg-muted/30 border-border/50 focus:border-primary/50"
+              className="min-h-32 resize-none border-border/50 bg-muted/30 focus:border-primary/50 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary/50 focus-visible:ring-offset-0"
             />
 
             {/* Media Preview */}
@@ -267,17 +267,18 @@ export const CreatePostModal = () => {
                 ))}
               </div>
             )}
+          </div>
 
-            {/* Actions */}
-            <div className="flex items-center justify-between pt-4 border-t border-border/50">
+          {/* Actions */}
+          <div className="flex shrink-0 items-center justify-between border-t border-border/50 pt-4">
               <div className="flex space-x-2">
                 <CldUploadWidget
-                  key={`image-${widgetKey}`}
+                  key={`media-${widgetKey}`}
                   signatureEndpoint="/api/signed-posts"
                   options={{
                     sources: ["local"],
-                    minImageHeight: 320,
-                    minImageWidth: 320,
+                    maxImageWidth: 8000,
+                    maxImageHeight: 8000,
                     maxFiles: 5 - uploadedFiles.length,
                     tags: [
                       user?.username || "user",
@@ -287,59 +288,10 @@ export const CreatePostModal = () => {
                     ],
                     detection: "unidet",
                     maxImageFileSize: 5000000,
-                    language: "pt-br",
-                    showCompletedButton: true,
-                    multiple: true,
-                    clientAllowedFormats: ["image"],
-                  }}
-                  onSuccess={handleUploadSuccess}
-                  onError={handleUploadError}
-                  onOpen={handleWidgetOpen}
-                  onClose={handleWidgetClose}
-                >
-                  {({ open }) => (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="text-muted-foreground hover:text-primary"
-                      onClick={() => {
-                        if (uploadedFiles.length >= 5) {
-                          CustomToast.warning("Limite de mídias", {
-                            description:
-                              "Você pode adicionar no máximo 5 mídias por post.",
-                            duration: CustomToastProps.defaultDuration,
-                          });
-                          return;
-                        }
-                        // Abre o widget diretamente
-                        open();
-                      }}
-                      disabled={uploadedFiles.length >= 5}
-                    >
-                      <Image className="w-5 h-5" />
-                    </Button>
-                  )}
-                </CldUploadWidget>
-
-                {/* <CldUploadWidget
-                  key={`video-${widgetKey}`}
-                  signatureEndpoint="/api/signed-posts"
-                  options={{
-                    sources: ["local"],
-                    maxFiles: 5 - uploadedFiles.length,
-                    tags: [
-                      user?.username || "user",
-                      getCurrentDate(),
-                      "post",
-                      "user",
-                    ],
-                    detection: "unidet",
                     maxVideoFileSize: 50000000,
                     language: "pt-br",
                     showCompletedButton: true,
                     multiple: true,
-                    clientAllowedFormats: ["video"],
                   }}
                   onSuccess={handleUploadSuccess}
                   onError={handleUploadError}
@@ -361,15 +313,15 @@ export const CreatePostModal = () => {
                           });
                           return;
                         }
-                        // Abre o widget diretamente
                         open();
                       }}
                       disabled={uploadedFiles.length >= 5}
+                      aria-label="Adicionar fotos ou vídeos"
                     >
-                      <Video className="w-5 h-5" /> 
+                      <ImagePlay className="w-5 h-5" />
                     </Button>
                   )}
-                </CldUploadWidget> */}
+                </CldUploadWidget>
               </div>
 
               <Button
@@ -393,7 +345,6 @@ export const CreatePostModal = () => {
                 )}
               </Button>
             </div>
-          </div>
         </DialogContent>
       </Dialog>
     </>

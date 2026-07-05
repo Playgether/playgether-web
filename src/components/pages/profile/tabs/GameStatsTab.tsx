@@ -337,8 +337,8 @@ export function GameStatsTab({
   return (
     <div className="space-y-6">
       {!selectedGame ? (
-        <div className="text-center space-y-6">
-          <h2 className="text-2xl font-bold text-card-foreground">
+        <div className="space-y-4 text-center sm:space-y-6">
+          <h2 className="text-xl font-bold text-card-foreground sm:text-2xl">
             Escolha um jogo para ver as estatísticas
           </h2>
           <p className="text-sm text-muted-foreground">
@@ -415,17 +415,17 @@ export function GameStatsTab({
           )}
         </div>
       ) : (
-        <div className="space-y-6">
-          <div className="flex items-center gap-4">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setSelectedGame("")}
-              className="hover:shadow-card transition-shadow duration-200"
+              className="w-fit transition-shadow duration-200 hover:shadow-card"
             >
               ← Voltar
             </Button>
-            <h2 className="text-xl font-bold text-card-foreground">
+            <h2 className="text-lg font-bold text-card-foreground sm:text-xl">
               Estatísticas -{" "}
               {selectedGame === "valorant"
                 ? "Valorant"

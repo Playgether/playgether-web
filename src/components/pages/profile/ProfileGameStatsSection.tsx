@@ -369,7 +369,8 @@ export function ProfileGameStatsSection({
   const [lolHistoryItems, setLolHistoryItems] = useState<LolMatchItem[]>([]);
   const [lolHistoryCursor, setLolHistoryCursor] = useState<string | null>(null);
   const [lolHistoryHasMore, setLolHistoryHasMore] = useState(false);
-  const [lolPerformanceScope, setLolPerformanceScope] = useState<LolPerformanceScope>("recent");
+  const [lolPerformanceScope, setLolPerformanceScope] =
+    useState<LolPerformanceScope>("recent");
   /** Evita resetar o histórico local quando o pai re-renderiza com novo objeto `historyPage` igual. */
   const lolHistoryHydrateTokenRef = useRef<string>("");
 
@@ -389,28 +390,29 @@ export function ProfileGameStatsSection({
 
   const hasLolRiotIdentity = Boolean(
     (lolStatsResponse?.account?.riotId ?? "").trim() ||
-      ((lolStatsResponse?.account?.gameName ?? "").trim() &&
-        (lolStatsResponse?.account?.tagLine ?? "").trim()),
+    ((lolStatsResponse?.account?.gameName ?? "").trim() &&
+      (lolStatsResponse?.account?.tagLine ?? "").trim()),
   );
 
   const useRealCs2Stats =
-    selectedGame === "csgo" && cs2Stats?.available === true && Boolean(cs2Stats?.stats);
+    selectedGame === "csgo" &&
+    cs2Stats?.available === true &&
+    Boolean(cs2Stats?.stats);
   const cs2ForceRemainingSeconds = Math.max(
     0,
     Number(cs2Stats?.force_refresh?.remaining_seconds ?? 0),
   );
   const cs2ForceBlockedByCooldown =
-    selectedGame === "csgo" &&
-    useRealCs2Stats &&
-    cs2ForceRemainingSeconds > 0;
-  const cs2ForceButtonDisabled = cs2ForceRefreshLoading || cs2ForceBlockedByCooldown;
-  const cs2ForceCooldownTitle =
-    cs2ForceBlockedByCooldown
-      ? `Atualização disponível em ${Math.ceil(cs2ForceRemainingSeconds / 60)} min. Evite spam de refresh na Steam API.`
-      : "Atualiza imediatamente as estatísticas puxando da Steam.";
+    selectedGame === "csgo" && useRealCs2Stats && cs2ForceRemainingSeconds > 0;
+  const cs2ForceButtonDisabled =
+    cs2ForceRefreshLoading || cs2ForceBlockedByCooldown;
+  const cs2ForceCooldownTitle = cs2ForceBlockedByCooldown
+    ? `Atualização disponível em ${Math.ceil(cs2ForceRemainingSeconds / 60)} min. Evite spam de refresh na Steam API.`
+    : "Atualiza imediatamente as estatísticas puxando da Steam.";
   const cs2SyncedLabel = formatSyncedAt(cs2Stats?.last_updated);
   const lolSyncedLabel = formatSyncedAt(
-    lolStatsResponse?.syncStatus?.lastSyncedAt ?? lolStatsResponse?.account?.lastSyncedAt,
+    lolStatsResponse?.syncStatus?.lastSyncedAt ??
+      lolStatsResponse?.account?.lastSyncedAt,
   );
   const useRealLolStats =
     selectedGame === "lol" &&
@@ -438,10 +440,14 @@ export function ProfileGameStatsSection({
 
   const allMatches = generateMatches(selectedGame, matchesLoaded);
   const matchesToShow = competitiveOnly ? allMatches : allMatches; // No filtro real, só UI
-  const lolMatchesToShow = (lolStatsResponse?.recentMatches ?? []).slice(0, matchesLoaded);
+  const lolMatchesToShow = (lolStatsResponse?.recentMatches ?? []).slice(
+    0,
+    matchesLoaded,
+  );
   const activeSeasonOptions = lolStatsResponse?.seasonOptions ?? [];
   const isLolBackfillRunning =
-    selectedGame === "lol" && (lolStatsResponse?.syncStatus?.state ?? "") === "syncing_backfill";
+    selectedGame === "lol" &&
+    (lolStatsResponse?.syncStatus?.state ?? "") === "syncing_backfill";
 
   const lolHistoryFilterKey = `${profile?.id ?? ""}:${lolTimeScope}:${lolQueueScope}:${lolSeasonId ?? ""}`;
   const lolHistoryPage = lolStatsResponse?.historyPage;
@@ -506,7 +512,9 @@ export function ProfileGameStatsSection({
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex flex-wrap items-center gap-4 min-w-0">
           <div className="relative inline-block shrink-0">
-            {useRealLolStats && selectedGame === "lol" && lolStatsResponse?.account?.profileIconUrl ? (
+            {useRealLolStats &&
+            selectedGame === "lol" &&
+            lolStatsResponse?.account?.profileIconUrl ? (
               <img
                 src={lolStatsResponse.account.profileIconUrl}
                 alt=""
@@ -520,7 +528,9 @@ export function ProfileGameStatsSection({
               />
             ) : selectedGame === "csgo" ? (
               <div className="h-14 w-14 rounded-md border-2 border-border ring-2 ring-primary/20 bg-muted/40 flex items-center justify-center">
-                <span className="text-xs font-semibold text-muted-foreground">Steam</span>
+                <span className="text-xs font-semibold text-muted-foreground">
+                  Steam
+                </span>
               </div>
             ) : (
               <ProfileAvatar
@@ -538,10 +548,14 @@ export function ProfileGameStatsSection({
               {profileNick}
             </h3>
             <p className="text-sm text-muted-foreground">
-              {useRealLolStats && selectedGame === "lol" && lolStatsResponse?.account ? (
+              {useRealLolStats &&
+              selectedGame === "lol" &&
+              lolStatsResponse?.account ? (
                 <>
                   Nível {lolStatsResponse.account.summonerLevel ?? 0} · Região{" "}
-                  {(lolStatsResponse.account.platformRegion ?? "").toUpperCase()}
+                  {(
+                    lolStatsResponse.account.platformRegion ?? ""
+                  ).toUpperCase()}
                 </>
               ) : selectedGame === "csgo" ? (
                 <>
@@ -628,8 +642,8 @@ export function ProfileGameStatsSection({
               </SelectContent>
             </Select>
 
-            {lolTimeScope === "season" && (
-              activeSeasonOptions.length > 0 ? (
+            {lolTimeScope === "season" &&
+              (activeSeasonOptions.length > 0 ? (
                 <Select
                   value={lolSeasonId ?? activeSeasonOptions[0]?.key}
                   onValueChange={(value) => onLolSeasonIdChange?.(value)}
@@ -649,12 +663,13 @@ export function ProfileGameStatsSection({
                 <div className="text-sm text-muted-foreground rounded-lg border border-border bg-card/50 px-3 py-2">
                   Nenhuma season sincronizada ainda
                 </div>
-              )
-            )}
+              ))}
 
             <Select
               value={lolQueueScope}
-              onValueChange={(value) => onLolQueueScopeChange?.(value as LolQueueScope)}
+              onValueChange={(value) =>
+                onLolQueueScopeChange?.(value as LolQueueScope)
+              }
             >
               <SelectTrigger className="w-[220px] bg-card border-border cursor-pointer">
                 <SelectValue placeholder="Fila" />
@@ -668,7 +683,8 @@ export function ProfileGameStatsSection({
             </Select>
           </div>
 
-          {((lolStatsResponse?.disclaimers ?? []).length > 0 || isLolBackfillRunning) ? (
+          {(lolStatsResponse?.disclaimers ?? []).length > 0 ||
+          isLolBackfillRunning ? (
             <div className="flex flex-col gap-2">
               {(lolStatsResponse?.disclaimers ?? []).map((disclaimer) => (
                 <div
@@ -683,7 +699,8 @@ export function ProfileGameStatsSection({
                 <div className="flex items-center gap-2 text-xs text-amber-200 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
                   <Info className="h-3.5 w-3.5 shrink-0" />
                   <span>
-                    Exibindo as partidas mais recentes. O restante da temporada ainda esta sincronizando em segundo plano.
+                    Exibindo as partidas mais recentes. O restante da temporada
+                    ainda esta sincronizando em segundo plano.
                   </span>
                 </div>
               ) : null}
@@ -743,7 +760,8 @@ export function ProfileGameStatsSection({
             >
               Overview
             </TabsTrigger>
-            {(selectedGame === "lol" || (!useRealCs2Stats && selectedGame !== "csgo")) && (
+            {(selectedGame === "lol" ||
+              (!useRealCs2Stats && selectedGame !== "csgo")) && (
               <TabsTrigger
                 value="matches"
                 className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white"
@@ -781,7 +799,9 @@ export function ProfileGameStatsSection({
               matches={
                 useRealLolStats && selectedGame === "lol"
                   ? mapLolMatchesToUi(
-                      lolHistoryItems.length > 0 ? lolHistoryItems : lolMatchesToShow,
+                      lolHistoryItems.length > 0
+                        ? lolHistoryItems
+                        : lolMatchesToShow,
                       lolStatsResponse?.staticAssets,
                     )
                   : matchesToShow
@@ -1018,9 +1038,7 @@ function mergeCs2WeaponEntries(lists: Cs2WeaponEntry[]): Cs2WeaponEntry[] {
   return [...byName.values()].sort((a, b) => b.kills - a.kills);
 }
 
-function splitWeaponsBySide(
-  allWeapons: Cs2WeaponEntry[],
-): {
+function splitWeaponsBySide(allWeapons: Cs2WeaponEntry[]): {
   ct: Cs2WeaponEntry[];
   t: Cs2WeaponEntry[];
   shared: Cs2WeaponEntry[];
@@ -1064,7 +1082,8 @@ function splitWeaponsBySide(
     other.push(weapon);
   }
 
-  const byKillsDesc = (a: Cs2WeaponEntry, b: Cs2WeaponEntry) => b.kills - a.kills;
+  const byKillsDesc = (a: Cs2WeaponEntry, b: Cs2WeaponEntry) =>
+    b.kills - a.kills;
   return {
     ct: ct.sort(byKillsDesc),
     t: t.sort(byKillsDesc),
@@ -1083,9 +1102,7 @@ function Cs2StatBar({
   className?: string;
 }) {
   const fillClass =
-    tone === "headshot"
-      ? "bg-foreground/85"
-      : "bg-foreground/55";
+    tone === "headshot" ? "bg-foreground/85" : "bg-foreground/55";
   return (
     <div
       className={cn(
@@ -1120,9 +1137,7 @@ function Cs2WeaponIcon({ name }: { name: string }) {
   }, [name, resolvedName, url]);
 
   if (!url || failed) {
-    return (
-      <Crosshair className="h-4 w-4 text-muted-foreground" aria-hidden />
-    );
+    return <Crosshair className="h-4 w-4 text-muted-foreground" aria-hidden />;
   }
 
   return (
@@ -1233,7 +1248,8 @@ function GameStatsUnavailable({ game }: { game: "cs2" | "lol" }) {
     <Card className="bg-card/50 border-border">
       <CardContent className="p-6 text-center">
         <p className="text-sm text-muted-foreground">
-          Este usuário não possui estatísticas disponíveis no {label} no momento.
+          Este usuário não possui estatísticas disponíveis no {label} no
+          momento.
         </p>
       </CardContent>
     </Card>
@@ -1298,9 +1314,7 @@ function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
           centered
           icon={<Clock className="h-4 w-4 text-neon-platinum" />}
           label="Horas totais"
-          value={
-            steamHours !== null ? formatCs2Hours(steamHours) : "—"
-          }
+          value={steamHours !== null ? formatCs2Hours(steamHours) : "—"}
           accent="text-neon-platinum"
         />
       </div>
@@ -1351,7 +1365,9 @@ function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
                 label="Win rate"
                 value={`${stats.winrate}%`}
                 valueClassName={
-                  stats.winrate >= 50 ? "text-neon-green font-medium" : undefined
+                  stats.winrate >= 50
+                    ? "text-neon-green font-medium"
+                    : undefined
                 }
               />
               <Row
@@ -1403,7 +1419,10 @@ function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
             </h4>
             <div className="space-y-2 text-sm">
               <Row label="Plants" value={stats.totalPlants.toLocaleString()} />
-              <Row label="Defuses" value={stats.totalDefuses.toLocaleString()} />
+              <Row
+                label="Defuses"
+                value={stats.totalDefuses.toLocaleString()}
+              />
               <Row
                 label="Kills faca"
                 value={stats.totalKillsKnife.toLocaleString()}
@@ -1436,10 +1455,7 @@ function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
                   label="Kills"
                   value={stats.sniperStats.totalKills.toLocaleString()}
                 />
-                <Row
-                  label="Percentual"
-                  value={`${stats.sniperStats.pct}%`}
-                />
+                <Row label="Percentual" value={`${stats.sniperStats.pct}%`} />
                 <Row
                   label="Kills vs sniper zoomado"
                   value={(
@@ -1460,7 +1476,9 @@ function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
         <div
           className={cn(
             "grid items-start grid-cols-1 gap-4",
-            weaponsBySide.other.length > 0 ? "lg:grid-cols-4" : "lg:grid-cols-3",
+            weaponsBySide.other.length > 0
+              ? "lg:grid-cols-4"
+              : "lg:grid-cols-3",
           )}
         >
           <Cs2WeaponsSideColumn
@@ -1733,8 +1751,12 @@ function FpsOverview({ stats }: { stats: FpsStats }) {
   );
 }
 
-type LolChampionRollupRow = NonNullable<LolStatsResponse["championsSeason"]>[number];
-type LolChampionMasteryRow = NonNullable<LolStatsResponse["championMastery"]>[number];
+type LolChampionRollupRow = NonNullable<
+  LolStatsResponse["championsSeason"]
+>[number];
+type LolChampionMasteryRow = NonNullable<
+  LolStatsResponse["championMastery"]
+>[number];
 
 /** WR / KDA nos cards principais do topo — único bloco com verde/vermelho forte. */
 function lolWinRateAccentClass(winRate: number): string {
@@ -1749,13 +1771,17 @@ function lolKdaRatioAccentClass(ratio: number): string {
   return "text-amber-400";
 }
 
-function parseSlashKda(formatted: string): { k: number; d: number; a: number } | null {
+function parseSlashKda(
+  formatted: string,
+): { k: number; d: number; a: number } | null {
   const m = formatted.trim().match(/^(\d+)\s*\/\s*(\d+)\s*\/\s*(\d+)$/);
   if (!m) return null;
   return { k: Number(m[1]), d: Number(m[2]), a: Number(m[3]) };
 }
 
-function lolKdaPerformanceTone(ratio: number | null | undefined): "bad" | "ok" | "good" {
+function lolKdaPerformanceTone(
+  ratio: number | null | undefined,
+): "bad" | "ok" | "good" {
   if (ratio == null || Number.isNaN(ratio)) return "ok";
   if (ratio < 1) return "bad";
   if (ratio < 2) return "ok";
@@ -1849,7 +1875,11 @@ function LolPerformanceScopeToggle({
   );
 }
 
-function LolChampionOverviewRow({ champion }: { champion: LolChampionRollupRow }) {
+function LolChampionOverviewRow({
+  champion,
+}: {
+  champion: LolChampionRollupRow;
+}) {
   return (
     <div className="flex items-center gap-2.5 rounded-lg border border-border/50 bg-muted/20 px-2.5 py-1.5">
       {champion.championImageUrl ? (
@@ -1864,13 +1894,19 @@ function LolChampionOverviewRow({ champion }: { champion: LolChampionRollupRow }
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold leading-tight">{champion.championName}</p>
+        <p className="truncate text-sm font-semibold leading-tight">
+          {champion.championName}
+        </p>
         <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
           <span className="text-foreground">{champion.games} jogos</span>
           <span className="mx-1.5">·</span>
-          <span className="font-medium text-foreground">{champion.winRate}% WR</span>
+          <span className="font-medium text-foreground">
+            {champion.winRate}% WR
+          </span>
           <span className="mx-1.5">·</span>
-          <span className={`font-medium tabular-nums ${lolRollupKdaRatioToneClass(champion.kda)}`}>
+          <span
+            className={`font-medium tabular-nums ${lolRollupKdaRatioToneClass(champion.kda)}`}
+          >
             KDA {champion.kda}
           </span>
         </p>
@@ -1894,7 +1930,9 @@ function LolRankedQueueBlock({
 }) {
   const text = queue?.label ?? "Sem dados";
   const lp =
-    typeof queue?.leaguePoints === "number" ? `${queue.leaguePoints.toLocaleString()} LP` : null;
+    typeof queue?.leaguePoints === "number"
+      ? `${queue.leaguePoints.toLocaleString()} LP`
+      : null;
   return (
     <div className="grid grid-cols-[52px_minmax(0,1fr)] gap-3 items-center text-sm">
       <div className="flex h-full min-h-[52px] items-center justify-center self-start pt-0.5">
@@ -1916,7 +1954,9 @@ function LolRankedQueueBlock({
         <p className="text-sm sm:text-base font-semibold leading-snug break-words text-foreground">
           {text}
         </p>
-        {lp ? <p className="text-xs tabular-nums text-muted-foreground">{lp}</p> : null}
+        {lp ? (
+          <p className="text-xs tabular-nums text-muted-foreground">{lp}</p>
+        ) : null}
       </div>
     </div>
   );
@@ -2018,11 +2058,15 @@ function LolChampionSyncedStatsModalCard({
         )}
         <div className="min-w-0 flex-1 space-y-4">
           <div>
-            <h3 className="text-lg font-bold leading-tight">{c.championName}</h3>
+            <h3 className="text-lg font-bold leading-tight">
+              {c.championName}
+            </h3>
             {showSubtitle ? (
               <p className="text-sm text-muted-foreground">
                 {scopeLabel} · filtro do overview:{" "}
-                <span className="font-medium text-foreground/90">{queueLabel}</span>
+                <span className="font-medium text-foreground/90">
+                  {queueLabel}
+                </span>
               </p>
             ) : null}
           </div>
@@ -2041,7 +2085,9 @@ function LolChampionSyncedStatsModalCard({
             </div>
             <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
               <p className="text-xs text-muted-foreground">Win rate</p>
-              <p className={`text-lg font-semibold tabular-nums ${lolWinRateAccentClass(c.winRate)}`}>
+              <p
+                className={`text-lg font-semibold tabular-nums ${lolWinRateAccentClass(c.winRate)}`}
+              >
                 {c.winRate}%
               </p>
             </div>
@@ -2061,7 +2107,11 @@ function LolChampionSyncedStatsModalCard({
             </div>
             <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
               <p className="text-xs text-muted-foreground">KDA</p>
-              <p className={`text-lg font-semibold tabular-nums ${lolRollupKdaRatioToneClass(c.kda)}`}>{c.kda}</p>
+              <p
+                className={`text-lg font-semibold tabular-nums ${lolRollupKdaRatioToneClass(c.kda)}`}
+              >
+                {c.kda}
+              </p>
             </div>
           </div>
         </div>
@@ -2070,7 +2120,9 @@ function LolChampionSyncedStatsModalCard({
   );
 }
 
-type LolChampionGeralModalRow = NonNullable<LolStatsResponse["championsOverallModal"]>[number];
+type LolChampionGeralModalRow = NonNullable<
+  LolStatsResponse["championsOverallModal"]
+>[number];
 
 function LolChampionGeralModalCard({
   row,
@@ -2097,7 +2149,9 @@ function LolChampionGeralModalCard({
         )}
         <div className="min-w-0 flex-1 space-y-4">
           <div>
-            <h3 className="text-lg font-bold leading-tight">{row.championName}</h3>
+            <h3 className="text-lg font-bold leading-tight">
+              {row.championName}
+            </h3>
           </div>
           {hasSync && s ? (
             <>
@@ -2108,15 +2162,21 @@ function LolChampionGeralModalCard({
                 </div>
                 <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
                   <p className="text-xs text-muted-foreground">Derrotas</p>
-                  <p className="text-lg font-semibold tabular-nums">{s.losses}</p>
+                  <p className="text-lg font-semibold tabular-nums">
+                    {s.losses}
+                  </p>
                 </div>
                 <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
                   <p className="text-xs text-muted-foreground">Partidas</p>
-                  <p className="text-lg font-semibold tabular-nums">{s.games}</p>
+                  <p className="text-lg font-semibold tabular-nums">
+                    {s.games}
+                  </p>
                 </div>
                 <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
                   <p className="text-xs text-muted-foreground">Win rate</p>
-                  <p className={`text-lg font-semibold tabular-nums ${lolWinRateAccentClass(s.winRate)}`}>
+                  <p
+                    className={`text-lg font-semibold tabular-nums ${lolWinRateAccentClass(s.winRate)}`}
+                  >
                     {s.winRate}%
                   </p>
                 </div>
@@ -2124,19 +2184,27 @@ function LolChampionGeralModalCard({
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
                   <p className="text-xs text-muted-foreground">Kills</p>
-                  <p className="text-lg font-semibold tabular-nums">{s.kills}</p>
+                  <p className="text-lg font-semibold tabular-nums">
+                    {s.kills}
+                  </p>
                 </div>
                 <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
                   <p className="text-xs text-muted-foreground">Mortes</p>
-                  <p className="text-lg font-semibold tabular-nums">{s.deaths}</p>
+                  <p className="text-lg font-semibold tabular-nums">
+                    {s.deaths}
+                  </p>
                 </div>
                 <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
                   <p className="text-xs text-muted-foreground">Assistências</p>
-                  <p className="text-lg font-semibold tabular-nums">{s.assists}</p>
+                  <p className="text-lg font-semibold tabular-nums">
+                    {s.assists}
+                  </p>
                 </div>
                 <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
                   <p className="text-xs text-muted-foreground">KDA</p>
-                  <p className={`text-lg font-semibold tabular-nums ${lolRollupKdaRatioToneClass(s.kda)}`}>
+                  <p
+                    className={`text-lg font-semibold tabular-nums ${lolRollupKdaRatioToneClass(s.kda)}`}
+                  >
                     {s.kda}
                   </p>
                 </div>
@@ -2144,8 +2212,9 @@ function LolChampionGeralModalCard({
             </>
           ) : (
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Sem informações de partidas sincronizadas na Playgether para este campeão em{" "}
-              <span className="font-medium">{statsQueueLabel}</span> (todas as temporadas).
+              Sem informações de partidas sincronizadas na Playgether para este
+              campeão em <span className="font-medium">{statsQueueLabel}</span>{" "}
+              (todas as temporadas).
             </p>
           )}
         </div>
@@ -2170,18 +2239,29 @@ function LolChampionMasteryOnlyModalCard({ m }: { m: LolChampionMasteryRow }) {
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <h3 className="text-base font-bold leading-tight">{m.championName}</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">Dados de maestria</p>
+          <h3 className="text-base font-bold leading-tight">
+            {m.championName}
+          </h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Dados de maestria
+          </p>
         </div>
-        <LolChampionMasteryLevelIcon level={m.championLevel} className="h-10 w-10" />
+        <LolChampionMasteryLevelIcon
+          level={m.championLevel}
+          className="h-10 w-10"
+        />
         <div className="grid w-full min-w-[200px] flex-1 grid-cols-2 gap-3 sm:w-auto sm:max-w-md">
           <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
             <p className="text-xs text-muted-foreground">Nível</p>
-            <p className="text-lg font-semibold tabular-nums">{m.championLevel}</p>
+            <p className="text-lg font-semibold tabular-nums">
+              {m.championLevel}
+            </p>
           </div>
           <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
             <p className="text-xs text-muted-foreground">Pontos</p>
-            <p className="text-lg font-semibold tabular-nums">{m.championPoints.toLocaleString()}</p>
+            <p className="text-lg font-semibold tabular-nums">
+              {m.championPoints.toLocaleString()}
+            </p>
           </div>
         </div>
       </div>
@@ -2225,7 +2305,11 @@ function LolChampionsExplorerDialog({
         ? "Campeões — geral (histórico Playgether)"
         : "Campeões — maestria (Riot)";
   const rows =
-    mode === "season" ? seasonRows : mode === "overall" ? overallModalRows : masteryRows;
+    mode === "season"
+      ? seasonRows
+      : mode === "overall"
+        ? overallModalRows
+        : masteryRows;
   const q = championSearch.trim().toLowerCase();
   const filteredSeason = q
     ? seasonRows.filter((c) => (c.championName || "").toLowerCase().includes(q))
@@ -2241,16 +2325,24 @@ function LolChampionsExplorerDialog({
     [overallModalRows],
   );
   const searchedOverallModal = q
-    ? sortedOverallModal.filter((r) => (r.championName || "").toLowerCase().includes(q))
+    ? sortedOverallModal.filter((r) =>
+        (r.championName || "").toLowerCase().includes(q),
+      )
     : sortedOverallModal;
   const displayedOverallModal = onlyPlayedOverall
     ? searchedOverallModal.filter((r) => (r.syncedMatchStats?.games ?? 0) > 0)
     : searchedOverallModal;
   const filteredMastery = q
-    ? masteryRows.filter((m) => (m.championName || "").toLowerCase().includes(q))
+    ? masteryRows.filter((m) =>
+        (m.championName || "").toLowerCase().includes(q),
+      )
     : masteryRows;
   const filteredRows =
-    mode === "season" ? filteredSeason : mode === "overall" ? displayedOverallModal : filteredMastery;
+    mode === "season"
+      ? filteredSeason
+      : mode === "overall"
+        ? displayedOverallModal
+        : filteredMastery;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -2259,17 +2351,22 @@ function LolChampionsExplorerDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription className="text-left text-xs sm:text-sm">
             {mode === "season" ? (
-              <>Estatísticas da temporada atual para <span className="font-medium">{queueLabel}</span>.</>
+              <>
+                Estatísticas da temporada atual para{" "}
+                <span className="font-medium">{queueLabel}</span>.
+              </>
             ) : mode === "overall" ? (
               queueScope === "all" ? (
                 <>
-                  Histórico plataforma em todas as filas e temporadas sincronizadas. Ordenação por partidas jogadas
-                  nesse recorte.
+                  Histórico plataforma em todas as filas e temporadas
+                  sincronizadas. Ordenação por partidas jogadas nesse recorte.
                 </>
               ) : (
                 <>
-                  Histórico plataforma em <span className="font-medium">{queueLabel}</span>, todas as temporadas
-                  sincronizadas. Ordenação por partidas jogadas nesse recorte.
+                  Histórico plataforma em{" "}
+                  <span className="font-medium">{queueLabel}</span>, todas as
+                  temporadas sincronizadas. Ordenação por partidas jogadas nesse
+                  recorte.
                 </>
               )
             ) : (
@@ -2300,7 +2397,10 @@ function LolChampionsExplorerDialog({
                 checked={onlyPlayedOverall}
                 onCheckedChange={(v) => setOnlyPlayedOverall(v === true)}
               />
-              <Label htmlFor="lol-champions-only-played" className="text-sm font-normal cursor-pointer leading-none">
+              <Label
+                htmlFor="lol-champions-only-played"
+                className="text-sm font-normal cursor-pointer leading-none"
+              >
                 Mostrar apenas campeões com partidas sincronizadas
               </Label>
             </div>
@@ -2332,13 +2432,23 @@ function LolChampionsExplorerDialog({
                     />
                   ))}
             {rows.length === 0 ? (
-              <p className="text-center text-sm text-muted-foreground py-8">Nenhum campeão para exibir.</p>
+              <p className="text-center text-sm text-muted-foreground py-8">
+                Nenhum campeão para exibir.
+              </p>
             ) : filteredRows.length === 0 ? (
               <p className="text-center text-sm text-muted-foreground py-8">
-                {mode === "overall" && onlyPlayedOverall && searchedOverallModal.length > 0 ? (
-                  <>Nenhum campeão com partidas sincronizadas para o filtro atual.</>
+                {mode === "overall" &&
+                onlyPlayedOverall &&
+                searchedOverallModal.length > 0 ? (
+                  <>
+                    Nenhum campeão com partidas sincronizadas para o filtro
+                    atual.
+                  </>
                 ) : championSearch.trim() ? (
-                  <>Nenhum campeão encontrado para &quot;{championSearch.trim()}&quot;.</>
+                  <>
+                    Nenhum campeão encontrado para &quot;{championSearch.trim()}
+                    &quot;.
+                  </>
                 ) : (
                   <>Nenhum resultado para o filtro atual.</>
                 )}
@@ -2358,7 +2468,9 @@ function RealLolOverview({
   stats: LolStatsResponse;
   performanceScope: LolPerformanceScope;
 }) {
-  const [championsDialog, setChampionsDialog] = useState<null | "season" | "overall" | "mastery">(null);
+  const [championsDialog, setChampionsDialog] = useState<
+    null | "season" | "overall" | "mastery"
+  >(null);
 
   const overview = stats.overview;
   const seasonChampions = stats.championsSeason ?? [];
@@ -2366,8 +2478,14 @@ function RealLolOverview({
   const overallModalChampions = stats.championsOverallModal ?? [];
   const masteryPreview = stats.championMastery ?? [];
   const masteryAll = stats.championMasteryAll ?? masteryPreview;
-  const visibleSeasonChampions = seasonChampions.slice(0, LOL_CHAMPIONS_OVERVIEW_PREVIEW);
-  const visibleOverallChampions = overallChampions.slice(0, LOL_CHAMPIONS_OVERVIEW_PREVIEW);
+  const visibleSeasonChampions = seasonChampions.slice(
+    0,
+    LOL_CHAMPIONS_OVERVIEW_PREVIEW,
+  );
+  const visibleOverallChampions = overallChampions.slice(
+    0,
+    LOL_CHAMPIONS_OVERVIEW_PREVIEW,
+  );
   const visibleMasteryChampions = masteryPreview.slice(0, 4);
   const last20 = stats.last20Summary;
   const completeness = stats.dataCompleteness;
@@ -2377,7 +2495,10 @@ function RealLolOverview({
     return (
       <Card className="bg-card/50 border-border">
         <CardContent className="p-6 text-center text-sm text-muted-foreground space-y-2">
-          <p>Não há dados suficientes para exibir estatísticas do League of Legends ainda.</p>
+          <p>
+            Não há dados suficientes para exibir estatísticas do League of
+            Legends ainda.
+          </p>
         </CardContent>
       </Card>
     );
@@ -2385,12 +2506,18 @@ function RealLolOverview({
 
   const hasOverviewMatchStats = overview.gamesPlayed > 0;
   const isRecentScope = performanceScope === "recent" && hasRecentMatchStats;
-  const activeWinRate = isRecentScope ? (last20?.winRate ?? 0) : overview.winRate;
+  const activeWinRate = isRecentScope
+    ? (last20?.winRate ?? 0)
+    : overview.winRate;
   const activeKdaFormatted = isRecentScope
     ? (last20?.kdaFormatted ?? "0.00:1")
     : overview.kdaFormatted;
-  const activeKdaRatio = isRecentScope ? (last20?.kdaRatio ?? 0) : overview.kdaRatio;
-  const hasActiveMatchStats = isRecentScope ? hasRecentMatchStats : hasOverviewMatchStats;
+  const activeKdaRatio = isRecentScope
+    ? (last20?.kdaRatio ?? 0)
+    : overview.kdaRatio;
+  const hasActiveMatchStats = isRecentScope
+    ? hasRecentMatchStats
+    : hasOverviewMatchStats;
   const winRateAccent = hasActiveMatchStats
     ? lolWinRateAccentClass(activeWinRate)
     : "text-muted-foreground";
@@ -2410,10 +2537,14 @@ function RealLolOverview({
   const showRolesCard = queueScope !== "aram";
   const showBothRankQueues = queueScope === "all";
   const showSoloRankRow =
-    showBothRankQueues || queueScope === "ranked_solo" || queueScope === "competitive";
+    showBothRankQueues ||
+    queueScope === "ranked_solo" ||
+    queueScope === "competitive";
   const showFlexRankRow = showBothRankQueues || queueScope === "ranked_flex";
-  const hasGeralCardContent = overallChampions.length > 0 || overallModalChampions.length > 0;
-  const championsEmptyFilterCopy = "Não existem registros de campeões disponíveis para este filtro.";
+  const hasGeralCardContent =
+    overallChampions.length > 0 || overallModalChampions.length > 0;
+  const championsEmptyFilterCopy =
+    "Não existem registros de campeões disponíveis para este filtro.";
 
   return (
     <div className="space-y-6">
@@ -2421,9 +2552,14 @@ function RealLolOverview({
         <Card className="bg-card/40 border-border">
           <CardContent className="p-4 text-xs text-muted-foreground flex flex-wrap gap-4">
             <span>Total sincronizadas: {completeness.totalMatchesSynced}</span>
-            <span>Temporada sincronizadas: {completeness.seasonMatchesSynced}</span>
             <span>
-              Cobertura: {completeness.isPartial ? "Parcial (limite de API / alvo)" : "Completa"}
+              Temporada sincronizadas: {completeness.seasonMatchesSynced}
+            </span>
+            <span>
+              Cobertura:{" "}
+              {completeness.isPartial
+                ? "Parcial (limite de API / alvo)"
+                : "Completa"}
             </span>
           </CardContent>
         </Card>
@@ -2451,7 +2587,10 @@ function RealLolOverview({
                   />
                 ) : null}
                 {showFlexRankRow ? (
-                  <LolRankedQueueBlock queueTitle="Flex" queue={stats.ranked?.queues?.RANKED_FLEX_SR} />
+                  <LolRankedQueueBlock
+                    queueTitle="Flex"
+                    queue={stats.ranked?.queues?.RANKED_FLEX_SR}
+                  />
                 ) : null}
               </div>
             </CardContent>
@@ -2488,12 +2627,24 @@ function RealLolOverview({
               KDA e Volume
             </h4>
             <div className="space-y-2 text-sm">
-              <Row label="Partidas" value={overview.gamesPlayed.toLocaleString()} />
+              <Row
+                label="Partidas"
+                value={overview.gamesPlayed.toLocaleString()}
+              />
               <Row label="Vitórias" value={overview.wins.toLocaleString()} />
               <Row label="Derrotas" value={overview.losses.toLocaleString()} />
-              <Row label="Kills" value={overview.totals.kills.toLocaleString()} />
-              <Row label="Mortes" value={overview.totals.deaths.toLocaleString()} />
-              <Row label="Assistências" value={overview.totals.assists.toLocaleString()} />
+              <Row
+                label="Kills"
+                value={overview.totals.kills.toLocaleString()}
+              />
+              <Row
+                label="Mortes"
+                value={overview.totals.deaths.toLocaleString()}
+              />
+              <Row
+                label="Assistências"
+                value={overview.totals.assists.toLocaleString()}
+              />
             </div>
           </CardContent>
         </Card>
@@ -2526,12 +2677,18 @@ function RealLolOverview({
               {queueScope === "all" ? (
                 <>
                   Temporada atual sincronizada na Playgether,{" "}
-                  <span className="font-medium text-foreground/90">todas as filas</span>.
+                  <span className="font-medium text-foreground/90">
+                    todas as filas
+                  </span>
+                  .
                 </>
               ) : (
                 <>
                   Temporada atual sincronizada na Playgether, apenas em{" "}
-                  <span className="font-medium text-foreground/90">{queueFilterLabel}</span>.
+                  <span className="font-medium text-foreground/90">
+                    {queueFilterLabel}
+                  </span>
+                  .
                 </>
               )}
             </p>
@@ -2572,11 +2729,18 @@ function RealLolOverview({
             </h4>
             <p className="mb-3 border-b border-border/50 pb-3 text-center text-xs leading-relaxed text-muted-foreground sm:text-left">
               {queueScope === "all" ? (
-                <>Histórico plataforma: todas as temporadas e filas sincronizadas na Playgether.</>
+                <>
+                  Histórico plataforma: todas as temporadas e filas
+                  sincronizadas na Playgether.
+                </>
               ) : (
                 <>
-                  Histórico plataforma: todas as temporadas sincronizadas na Playgether, apenas em{" "}
-                  <span className="font-medium text-foreground/90">{queueFilterLabel}</span>.
+                  Histórico plataforma: todas as temporadas sincronizadas na
+                  Playgether, apenas em{" "}
+                  <span className="font-medium text-foreground/90">
+                    {queueFilterLabel}
+                  </span>
+                  .
                 </>
               )}
             </p>
@@ -2644,7 +2808,9 @@ function RealLolOverview({
                           />
                         </span>
                       ) : null}
-                      <span className="font-semibold tracking-tight">{role.role}</span>
+                      <span className="font-semibold tracking-tight">
+                        {role.role}
+                      </span>
                       <span className="text-muted-foreground text-xs sm:text-sm">
                         {role.games} jogos
                       </span>
@@ -2688,11 +2854,17 @@ function RealLolOverview({
                             className="h-7 w-7 shrink-0 rounded-sm border border-border/70"
                           />
                         ) : null}
-                        <LolChampionMasteryLevelIcon level={mastery.championLevel} className="h-6 w-6 shrink-0" />
-                        <span className="truncate text-muted-foreground">{mastery.championName}</span>
+                        <LolChampionMasteryLevelIcon
+                          level={mastery.championLevel}
+                          className="h-6 w-6 shrink-0"
+                        />
+                        <span className="truncate text-muted-foreground">
+                          {mastery.championName}
+                        </span>
                       </div>
                       <span className="font-medium tabular-nums shrink-0">
-                        Lv. {mastery.championLevel} · {mastery.championPoints.toLocaleString()} pts
+                        Lv. {mastery.championLevel} ·{" "}
+                        {mastery.championPoints.toLocaleString()} pts
                       </span>
                     </div>
                   ))}
@@ -2749,10 +2921,7 @@ function StatCard({
   return (
     <Card className="bg-card/50 border-border overflow-hidden h-full flex flex-col">
       <CardContent
-        className={cn(
-          "p-3 h-full flex flex-col",
-          centered && "justify-center",
-        )}
+        className={cn("p-3 h-full flex flex-col", centered && "justify-center")}
       >
         <div className="flex items-center gap-2 text-muted-foreground mb-1">
           {icon}
@@ -2945,9 +3114,12 @@ function MatchHistory({
 }) {
   const getLolQueueBadgeClass = (queueLabel?: string | null) => {
     const queue = (queueLabel ?? "").toLowerCase();
-    if (queue.includes("solo")) return "bg-rose-500/15 text-rose-200 border-rose-500/40";
-    if (queue.includes("flex")) return "bg-blue-500/15 text-blue-200 border-blue-500/40";
-    if (queue.includes("aram")) return "bg-violet-500/15 text-violet-200 border-violet-500/40";
+    if (queue.includes("solo"))
+      return "bg-rose-500/15 text-rose-200 border-rose-500/40";
+    if (queue.includes("flex"))
+      return "bg-blue-500/15 text-blue-200 border-blue-500/40";
+    if (queue.includes("aram"))
+      return "bg-violet-500/15 text-violet-200 border-violet-500/40";
     return "bg-muted/50 text-muted-foreground border-border/70";
   };
 
@@ -2974,9 +3146,13 @@ function MatchHistory({
             className={`flex flex-wrap items-baseline gap-x-1 text-[15px] font-bold tabular-nums leading-tight tracking-tight sm:text-base ${toneCls}`}
           >
             <span>{parts.k}</span>
-            <span className="text-[0.85em] font-semibold text-muted-foreground/70">/</span>
+            <span className="text-[0.85em] font-semibold text-muted-foreground/70">
+              /
+            </span>
             <span>{parts.d}</span>
-            <span className="text-[0.85em] font-semibold text-muted-foreground/70">/</span>
+            <span className="text-[0.85em] font-semibold text-muted-foreground/70">
+              /
+            </span>
             <span>{parts.a}</span>
           </div>
         ) : (
@@ -2987,7 +3163,9 @@ function MatchHistory({
           </div>
         )}
         {ratio != null && Number.isFinite(ratio) ? (
-          <div className={`text-xs font-semibold tabular-nums sm:text-sm ${toneCls} opacity-95`}>
+          <div
+            className={`text-xs font-semibold tabular-nums sm:text-sm ${toneCls} opacity-95`}
+          >
             {ratio.toFixed(2)} KDA
           </div>
         ) : null}
@@ -2997,487 +3175,556 @@ function MatchHistory({
 
   return (
     <Card>
-      <CardContent className="p-6">
+      <CardContent className="p-4 lg:p-6">
         <h3 className="text-lg font-semibold mb-4">Partidas Recentes</h3>
         <div className="space-y-2">
           {matches.map((match) => {
             const isLolRemake = gameId === "lol" && Boolean(match.lolIsRemake);
             return (
-            <Collapsible
-              key={match.id}
-              open={expandedMatch === match.id}
-              onOpenChange={(open) => onToggleExpand(open ? match.id : null)}
-            >
-              <div
-                className={`rounded-lg border transition-colors ${
-                  expandedMatch === match.id
-                    ? "border-primary/50 bg-primary/5"
-                    : "border-border/50 bg-card/30 hover:bg-card/50"
-                }`}
+              <Collapsible
+                key={match.id}
+                open={expandedMatch === match.id}
+                onOpenChange={(open) => onToggleExpand(open ? match.id : null)}
               >
-                <CollapsibleTrigger asChild>
-                  <button className="w-full flex items-center justify-between overflow-visible p-3 text-left">
-                    {gameId === "lol" ? (
-                      <>
-                        <div className="flex min-w-0 items-start gap-3 sm:gap-4 overflow-visible">
-                          <div
-                            className={`w-2 self-stretch shrink-0 rounded-full ${
-                              isLolRemake
-                                ? "bg-zinc-500/85"
-                                : match.result === "win"
-                                  ? "bg-emerald-500/90"
-                                  : "bg-rose-500/90"
-                            }`}
-                          />
-                          <div className="flex shrink-0 flex-col items-stretch gap-1.5 self-center text-center">
-                            <div className="flex w-[5.5rem] shrink-0 flex-col items-center gap-1.5">
-                              <span
-                                className="line-clamp-2 w-full text-center text-[11px] font-bold leading-tight text-foreground sm:text-xs"
-                                title={
-                                  match.lolPreview?.championName?.trim() ||
-                                  match.map
-                                }
+                <div
+                  className={`rounded-lg border transition-colors ${
+                    expandedMatch === match.id
+                      ? "border-primary/50 bg-primary/5"
+                      : "border-border/50 bg-card/30 hover:bg-card/50"
+                  }`}
+                >
+                  <CollapsibleTrigger asChild>
+                    <button className="relative w-full flex flex-col gap-2 overflow-visible p-3 pr-10 text-left sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:pr-3">
+                      {gameId === "lol" ? (
+                        <>
+                          <div className="flex min-w-0 w-full items-start gap-2 overflow-visible sm:gap-3 lg:gap-4">
+                            <div
+                              className={`w-1.5 self-stretch shrink-0 rounded-full sm:w-2 ${
+                                isLolRemake
+                                  ? "bg-zinc-500/85"
+                                  : match.result === "win"
+                                    ? "bg-emerald-500/90"
+                                    : "bg-rose-500/90"
+                              }`}
+                            />
+                            <div className="flex shrink-0 flex-col items-stretch gap-1.5 self-center text-center">
+                              <div className="flex w-[4.25rem] shrink-0 flex-col items-center gap-1.5 sm:w-[5.5rem]">
+                                <span
+                                  className="line-clamp-2 w-full text-center text-[11px] font-bold leading-tight text-foreground sm:text-xs"
+                                  title={
+                                    match.lolPreview?.championName?.trim() ||
+                                    match.map
+                                  }
+                                >
+                                  {match.lolPreview?.championName?.trim() ||
+                                    match.map}
+                                </span>
+                                <div className="flex justify-center">
+                                  {match.lolPreview?.championImageUrl ? (
+                                    <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-visible rounded-md border border-border/70 bg-black/20">
+                                      <img
+                                        src={match.lolPreview.championImageUrl}
+                                        alt={
+                                          match.lolPreview?.championName?.trim() ||
+                                          match.map
+                                        }
+                                        className="max-h-10 max-w-10 object-contain"
+                                      />
+                                      {match.lolPreview?.roleIconUrl ? (
+                                        <span
+                                          className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center overflow-hidden rounded-sm bg-transparent"
+                                          title={
+                                            match.lolPreview.roleLabel ??
+                                            undefined
+                                          }
+                                        >
+                                          <img
+                                            src={match.lolPreview.roleIconUrl}
+                                            alt=""
+                                            className="h-[118%] w-[118%] max-w-none object-cover object-center"
+                                          />
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                  ) : null}
+                                </div>
+                              </div>
+                              <div className="flex justify-center gap-1">
+                                {match.lolPreview?.summonerSpell1Url ? (
+                                  <img
+                                    src={match.lolPreview.summonerSpell1Url}
+                                    alt="Spell 1"
+                                    className="h-4 w-4 rounded-sm border border-border/70 object-cover"
+                                  />
+                                ) : null}
+                                {match.lolPreview?.summonerSpell2Url ? (
+                                  <img
+                                    src={match.lolPreview.summonerSpell2Url}
+                                    alt="Spell 2"
+                                    className="h-4 w-4 rounded-sm border border-border/70 object-cover"
+                                  />
+                                ) : null}
+                              </div>
+                              <div
+                                className={`rounded-md border px-2 py-1 text-[11px] font-semibold leading-none ${
+                                  isLolRemake
+                                    ? "border-zinc-600/70 bg-zinc-900/60 text-zinc-400"
+                                    : match.result === "win"
+                                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
+                                      : "border-rose-500/40 bg-rose-500/10 text-rose-200"
+                                }`}
                               >
-                                {match.lolPreview?.championName?.trim() ||
-                                  match.map}
-                              </span>
-                              <div className="flex justify-center">
-                                {match.lolPreview?.championImageUrl ? (
-                                  <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-visible rounded-md border border-border/70 bg-black/20">
-                                    <img
-                                      src={match.lolPreview.championImageUrl}
-                                      alt={
-                                        match.lolPreview?.championName?.trim() ||
-                                        match.map
-                                      }
-                                      className="max-h-10 max-w-10 object-contain"
-                                    />
+                                {isLolRemake
+                                  ? "Remake"
+                                  : match.result === "win"
+                                    ? "Vitória"
+                                    : "Derrota"}
+                              </div>
+                              <div
+                                className={`h-px w-full ${
+                                  isLolRemake
+                                    ? "bg-zinc-600/55"
+                                    : match.result === "win"
+                                      ? "bg-emerald-500/35"
+                                      : "bg-rose-500/35"
+                                }`}
+                                aria-hidden
+                              />
+                              <div className="flex flex-col gap-0.5 text-[10px] leading-tight">
+                                <span className="font-medium text-foreground/90">
+                                  {match.date}
+                                </span>
+                                <span className="text-muted-foreground">
+                                  Duração:{" "}
+                                  <span className="tabular-nums text-foreground/80">
+                                    {match.duration}
+                                  </span>
+                                </span>
+                              </div>
+                            </div>
+                            <div className="min-w-0">
+                              {lolKdaBlock(match)}
+                              <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
+                                {match.lolPreview?.queueLabel ? (
+                                  <span
+                                    className={`rounded-full border px-2 py-0.5 ${getLolQueueBadgeClass(match.lolPreview.queueLabel)}`}
+                                  >
+                                    {match.lolPreview.queueLabel}
+                                  </span>
+                                ) : null}
+                                {match.lolPreview?.roleIconUrl ||
+                                match.lolPreview?.roleLabel ? (
+                                  <span className="inline-flex max-w-full flex-wrap items-center gap-1.5 rounded-full border border-border/70 bg-muted/50 py-0.5 pl-1.5 pr-2 text-muted-foreground">
                                     {match.lolPreview?.roleIconUrl ? (
-                                      <span
-                                        className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center overflow-hidden rounded-sm bg-transparent"
-                                        title={match.lolPreview.roleLabel ?? undefined}
-                                      >
+                                      <span className="relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-transparent">
                                         <img
                                           src={match.lolPreview.roleIconUrl}
                                           alt=""
+                                          title={
+                                            match.lolPreview.roleLabel ??
+                                            undefined
+                                          }
                                           className="h-[118%] w-[118%] max-w-none object-cover object-center"
                                         />
                                       </span>
                                     ) : null}
-                                  </div>
+                                    {match.lolPreview?.roleLabel ? (
+                                      <span className="font-medium text-foreground/90">
+                                        {match.lolPreview.roleLabel}
+                                      </span>
+                                    ) : null}
+                                  </span>
                                 ) : null}
                               </div>
-                            </div>
-                            <div className="flex justify-center gap-1">
-                              {match.lolPreview?.summonerSpell1Url ? (
-                                <img
-                                  src={match.lolPreview.summonerSpell1Url}
-                                  alt="Spell 1"
-                                  className="h-4 w-4 rounded-sm border border-border/70 object-cover"
-                                />
+                              <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+                                {(match.lolPreview?.primaryRuneUrl ||
+                                  match.lolPreview?.secondaryRuneUrl) && (
+                                  <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-muted/40 px-2 py-0.5">
+                                    {match.lolPreview?.primaryRuneUrl ? (
+                                      <img
+                                        src={match.lolPreview.primaryRuneUrl}
+                                        alt="Runa primária"
+                                        className="h-3.5 w-3.5 rounded-full"
+                                      />
+                                    ) : null}
+                                    {match.lolPreview?.secondaryRuneUrl ? (
+                                      <img
+                                        src={match.lolPreview.secondaryRuneUrl}
+                                        alt="Runa secundária"
+                                        className="h-3.5 w-3.5 rounded-full"
+                                      />
+                                    ) : null}
+                                    <span>Runas</span>
+                                  </span>
+                                )}
+                                {match.lolPreview?.buildItems &&
+                                match.lolPreview.buildItems.length > 0 ? (
+                                  <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-muted/40 px-2 py-0.5">
+                                    <span>Build</span>
+                                    <span className="inline-flex items-center gap-0.5">
+                                      {match.lolPreview.buildItems.map(
+                                        (item) => (
+                                          <img
+                                            key={`${match.id}-item-${item.itemId}`}
+                                            src={item.iconUrl}
+                                            alt={
+                                              item.name ?? `Item ${item.itemId}`
+                                            }
+                                            className="h-4 w-4 rounded-[3px] border border-border/70 object-cover"
+                                          />
+                                        ),
+                                      )}
+                                    </span>
+                                  </span>
+                                ) : null}
+                              </div>
+                              {match.lolPreview?.blueParticipants?.length ||
+                              match.lolPreview?.redParticipants?.length ? (
+                                <div className="mt-1 hidden flex-wrap items-center gap-2 text-[11px] lg:flex">
+                                  <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/40 bg-blue-500/10 px-2 py-0.5">
+                                    <span className="text-blue-200">Azul</span>
+                                    <span className="inline-flex items-center gap-1">
+                                      {match.lolPreview?.blueParticipants?.map(
+                                        (participant, index) => (
+                                          <span
+                                            key={`${match.id}-blue-${participant.gameName}-${index}`}
+                                            className="inline-flex items-center gap-0.5 max-w-[96px]"
+                                          >
+                                            {participant.laneIconUrl ? (
+                                              <span
+                                                className="relative flex h-3.5 w-3.5 shrink-0 items-center justify-center overflow-hidden rounded-[2px] bg-transparent"
+                                                title={
+                                                  participant.laneLabel ??
+                                                  undefined
+                                                }
+                                              >
+                                                <img
+                                                  src={participant.laneIconUrl}
+                                                  alt=""
+                                                  className="h-[120%] w-[120%] max-w-none object-cover object-center"
+                                                />
+                                              </span>
+                                            ) : null}
+                                            {participant.championImageUrl ? (
+                                              <img
+                                                src={
+                                                  participant.championImageUrl
+                                                }
+                                                alt={participant.gameName}
+                                                className="h-3.5 w-3.5 rounded-[3px] border border-blue-300/40 object-cover"
+                                              />
+                                            ) : null}
+                                            <span className="truncate text-blue-100">
+                                              {participant.gameName}
+                                            </span>
+                                          </span>
+                                        ),
+                                      )}
+                                    </span>
+                                  </div>
+                                  <div className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/40 bg-rose-500/10 px-2 py-0.5">
+                                    <span className="text-rose-200">
+                                      Vermelho
+                                    </span>
+                                    <span className="inline-flex items-center gap-1">
+                                      {match.lolPreview?.redParticipants?.map(
+                                        (participant, index) => (
+                                          <span
+                                            key={`${match.id}-red-${participant.gameName}-${index}`}
+                                            className="inline-flex items-center gap-0.5 max-w-[96px]"
+                                          >
+                                            {participant.laneIconUrl ? (
+                                              <span
+                                                className="relative flex h-3.5 w-3.5 shrink-0 items-center justify-center overflow-hidden rounded-[2px] bg-transparent"
+                                                title={
+                                                  participant.laneLabel ??
+                                                  undefined
+                                                }
+                                              >
+                                                <img
+                                                  src={participant.laneIconUrl}
+                                                  alt=""
+                                                  className="h-[120%] w-[120%] max-w-none object-cover object-center"
+                                                />
+                                              </span>
+                                            ) : null}
+                                            {participant.championImageUrl ? (
+                                              <img
+                                                src={
+                                                  participant.championImageUrl
+                                                }
+                                                alt={participant.gameName}
+                                                className="h-3.5 w-3.5 rounded-[3px] border border-rose-300/40 object-cover"
+                                              />
+                                            ) : null}
+                                            <span className="truncate text-rose-100">
+                                              {participant.gameName}
+                                            </span>
+                                          </span>
+                                        ),
+                                      )}
+                                    </span>
+                                  </div>
+                                </div>
                               ) : null}
-                              {match.lolPreview?.summonerSpell2Url ? (
-                                <img
-                                  src={match.lolPreview.summonerSpell2Url}
-                                  alt="Spell 2"
-                                  className="h-4 w-4 rounded-sm border border-border/70 object-cover"
-                                />
-                              ) : null}
                             </div>
+                          </div>
+                          <div className="absolute right-3 top-3 flex shrink-0 items-center gap-4 sm:static sm:right-auto sm:top-auto">
+                            <div className="hidden min-w-[190px] md:block text-right">
+                              <div className="text-xs text-muted-foreground">
+                                Dano{" "}
+                                <span className="font-medium text-foreground">
+                                  {match.expandedDetails?.damage?.toLocaleString() ??
+                                    "-"}
+                                </span>
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                CS{" "}
+                                <span className="font-medium text-foreground">
+                                  {match.expandedDetails?.cs ?? "-"}
+                                </span>
+                                {match.lolPreview?.csPerMinute != null
+                                  ? ` (${match.lolPreview.csPerMinute.toFixed(1)}/m)`
+                                  : ""}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                Visao{" "}
+                                <span className="font-medium text-foreground">
+                                  {match.expandedDetails?.vision ?? "-"}
+                                </span>
+                              </div>
+                            </div>
+                            {expandedMatch === match.id ? (
+                              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-4">
                             <div
-                              className={`rounded-md border px-2 py-1 text-[11px] font-semibold leading-none ${
-                                isLolRemake
-                                  ? "border-zinc-600/70 bg-zinc-900/60 text-zinc-400"
-                                  : match.result === "win"
-                                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-                                    : "border-rose-500/40 bg-rose-500/10 text-rose-200"
+                              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                                match.result === "win"
+                                  ? "bg-green-500/20 text-green-400"
+                                  : "bg-red-500/20 text-red-400"
                               }`}
                             >
-                              {isLolRemake ? "Remake" : match.result === "win" ? "Vitória" : "Derrota"}
+                              {match.result === "win" ? "V" : "D"}
                             </div>
-                            <div
-                              className={`h-px w-full ${
-                                isLolRemake
-                                  ? "bg-zinc-600/55"
-                                  : match.result === "win"
-                                    ? "bg-emerald-500/35"
-                                    : "bg-rose-500/35"
-                              }`}
-                              aria-hidden
-                            />
-                            <div className="flex flex-col gap-0.5 text-[10px] leading-tight">
-                              <span className="font-medium text-foreground/90">
-                                {match.date}
-                              </span>
-                              <span className="text-muted-foreground">
-                                Duração:{" "}
-                                <span className="tabular-nums text-foreground/80">
-                                  {match.duration}
-                                </span>
-                              </span>
-                            </div>
-                          </div>
-                          <div className="min-w-0">
-                            {lolKdaBlock(match)}
-                            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
-                              {match.lolPreview?.queueLabel ? (
-                                <span
-                                  className={`rounded-full border px-2 py-0.5 ${getLolQueueBadgeClass(match.lolPreview.queueLabel)}`}
-                                >
-                                  {match.lolPreview.queueLabel}
-                                </span>
-                              ) : null}
-                              {match.lolPreview?.roleIconUrl ||
-                              match.lolPreview?.roleLabel ? (
-                                <span className="inline-flex max-w-full flex-wrap items-center gap-1.5 rounded-full border border-border/70 bg-muted/50 py-0.5 pl-1.5 pr-2 text-muted-foreground">
-                                  {match.lolPreview?.roleIconUrl ? (
-                                    <span className="relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-transparent">
-                                      <img
-                                        src={match.lolPreview.roleIconUrl}
-                                        alt=""
-                                        title={match.lolPreview.roleLabel ?? undefined}
-                                        className="h-[118%] w-[118%] max-w-none object-cover object-center"
-                                      />
-                                    </span>
-                                  ) : null}
-                                  {match.lolPreview?.roleLabel ? (
-                                    <span className="font-medium text-foreground/90">
-                                      {match.lolPreview.roleLabel}
-                                    </span>
-                                  ) : null}
-                                </span>
-                              ) : null}
-                            </div>
-                            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
-                              {(match.lolPreview?.primaryRuneUrl || match.lolPreview?.secondaryRuneUrl) && (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-muted/40 px-2 py-0.5">
-                                  {match.lolPreview?.primaryRuneUrl ? (
-                                    <img
-                                      src={match.lolPreview.primaryRuneUrl}
-                                      alt="Runa primária"
-                                      className="h-3.5 w-3.5 rounded-full"
-                                    />
-                                  ) : null}
-                                  {match.lolPreview?.secondaryRuneUrl ? (
-                                    <img
-                                      src={match.lolPreview.secondaryRuneUrl}
-                                      alt="Runa secundária"
-                                      className="h-3.5 w-3.5 rounded-full"
-                                    />
-                                  ) : null}
-                                  <span>Runas</span>
-                                </span>
-                              )}
-                              {match.lolPreview?.buildItems && match.lolPreview.buildItems.length > 0 ? (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-muted/40 px-2 py-0.5">
-                                  <span>Build</span>
-                                  <span className="inline-flex items-center gap-0.5">
-                                    {match.lolPreview.buildItems.map((item) => (
-                                      <img
-                                        key={`${match.id}-item-${item.itemId}`}
-                                        src={item.iconUrl}
-                                        alt={item.name ?? `Item ${item.itemId}`}
-                                        className="h-4 w-4 rounded-[3px] border border-border/70 object-cover"
-                                      />
-                                    ))}
-                                  </span>
-                                </span>
-                              ) : null}
-                            </div>
-                            {(match.lolPreview?.blueParticipants?.length ||
-                              match.lolPreview?.redParticipants?.length) ? (
-                              <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px]">
-                                <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/40 bg-blue-500/10 px-2 py-0.5">
-                                  <span className="text-blue-200">Azul</span>
-                                  <span className="inline-flex items-center gap-1">
-                                    {match.lolPreview?.blueParticipants?.map((participant, index) => (
-                                      <span
-                                        key={`${match.id}-blue-${participant.gameName}-${index}`}
-                                        className="inline-flex items-center gap-0.5 max-w-[96px]"
-                                      >
-                                        {participant.laneIconUrl ? (
-                                          <span
-                                            className="relative flex h-3.5 w-3.5 shrink-0 items-center justify-center overflow-hidden rounded-[2px] bg-transparent"
-                                            title={participant.laneLabel ?? undefined}
-                                          >
-                                            <img
-                                              src={participant.laneIconUrl}
-                                              alt=""
-                                              className="h-[120%] w-[120%] max-w-none object-cover object-center"
-                                            />
-                                          </span>
-                                        ) : null}
-                                        {participant.championImageUrl ? (
-                                          <img
-                                            src={participant.championImageUrl}
-                                            alt={participant.gameName}
-                                            className="h-3.5 w-3.5 rounded-[3px] border border-blue-300/40 object-cover"
-                                          />
-                                        ) : null}
-                                        <span className="truncate text-blue-100">{participant.gameName}</span>
-                                      </span>
-                                    ))}
-                                  </span>
-                                </div>
-                                <div className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/40 bg-rose-500/10 px-2 py-0.5">
-                                  <span className="text-rose-200">Vermelho</span>
-                                  <span className="inline-flex items-center gap-1">
-                                    {match.lolPreview?.redParticipants?.map((participant, index) => (
-                                      <span
-                                        key={`${match.id}-red-${participant.gameName}-${index}`}
-                                        className="inline-flex items-center gap-0.5 max-w-[96px]"
-                                      >
-                                        {participant.laneIconUrl ? (
-                                          <span
-                                            className="relative flex h-3.5 w-3.5 shrink-0 items-center justify-center overflow-hidden rounded-[2px] bg-transparent"
-                                            title={participant.laneLabel ?? undefined}
-                                          >
-                                            <img
-                                              src={participant.laneIconUrl}
-                                              alt=""
-                                              className="h-[120%] w-[120%] max-w-none object-cover object-center"
-                                            />
-                                          </span>
-                                        ) : null}
-                                        {participant.championImageUrl ? (
-                                          <img
-                                            src={participant.championImageUrl}
-                                            alt={participant.gameName}
-                                            className="h-3.5 w-3.5 rounded-[3px] border border-rose-300/40 object-cover"
-                                          />
-                                        ) : null}
-                                        <span className="truncate text-rose-100">{participant.gameName}</span>
-                                      </span>
-                                    ))}
-                                  </span>
-                                </div>
+                            <div>
+                              <div className="font-medium">{match.map}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {match.kda}
                               </div>
-                            ) : null}
-                          </div>
-                        </div>
-                        <div className="flex shrink-0 items-center gap-4">
-                          <div className="hidden min-w-[190px] md:block text-right">
-                            <div className="text-xs text-muted-foreground">
-                              Dano{" "}
-                              <span className="font-medium text-foreground">
-                                {match.expandedDetails?.damage?.toLocaleString() ?? "-"}
-                              </span>
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              CS{" "}
-                              <span className="font-medium text-foreground">
-                                {match.expandedDetails?.cs ?? "-"}
-                              </span>
-                              {match.lolPreview?.csPerMinute != null
-                                ? ` (${match.lolPreview.csPerMinute.toFixed(1)}/m)`
-                                : ""}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              Visao{" "}
-                              <span className="font-medium text-foreground">
-                                {match.expandedDetails?.vision ?? "-"}
-                              </span>
                             </div>
                           </div>
-                          {expandedMatch === match.id ? (
-                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex items-center gap-4">
-                          <div
-                            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                              match.result === "win"
-                                ? "bg-green-500/20 text-green-400"
-                                : "bg-red-500/20 text-red-400"
-                            }`}
-                          >
-                            {match.result === "win" ? "V" : "D"}
-                          </div>
-                          <div>
-                            <div className="font-medium">{match.map}</div>
-                            <div className="text-sm text-muted-foreground">{match.kda}</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <div className="font-medium">{match.score}</div>
-                            <div className="flex flex-col gap-0.5 text-right text-xs leading-tight text-muted-foreground">
-                              <span className="font-medium text-foreground">
-                                {match.date}
-                              </span>
-                              <span>
-                                Duração:{" "}
-                                <span className="tabular-nums text-foreground/90">
-                                  {match.duration}
+                          <div className="flex items-center gap-4">
+                            <div className="text-right">
+                              <div className="font-medium">{match.score}</div>
+                              <div className="flex flex-col gap-0.5 text-right text-xs leading-tight text-muted-foreground">
+                                <span className="font-medium text-foreground">
+                                  {match.date}
                                 </span>
-                              </span>
+                                <span>
+                                  Duração:{" "}
+                                  <span className="tabular-nums text-foreground/90">
+                                    {match.duration}
+                                  </span>
+                                </span>
+                              </div>
                             </div>
+                            {expandedMatch === match.id ? (
+                              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                            )}
                           </div>
-                          {expandedMatch === match.id ? (
-                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        </>
+                      )}
+                    </button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    {gameId === "lol" && match.lolMatchDetail ? (
+                      <div className="px-1 pb-2 sm:px-2">
+                        <LolMatchHistoryDetail
+                          detail={match.lolMatchDetail}
+                          staticAssets={match.lolStaticAssets}
+                        />
+                      </div>
+                    ) : null}
+                    {gameId !== "lol" && match.expandedDetails && (
+                      <div className="px-3 pb-3 pt-0 border-t border-border/50 mt-0">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 pt-3 text-sm">
+                          {match.expandedDetails.headshotPct != null && (
+                            <div>
+                              <span className="text-muted-foreground">HS%</span>
+                              <p className="font-medium">
+                                {match.expandedDetails.headshotPct}%
+                              </p>
+                            </div>
+                          )}
+                          {match.expandedDetails.adr != null && (
+                            <div>
+                              <span className="text-muted-foreground">ADR</span>
+                              <p className="font-medium">
+                                {match.expandedDetails.adr}
+                              </p>
+                            </div>
+                          )}
+                          {match.expandedDetails.acs != null && (
+                            <div>
+                              <span className="text-muted-foreground">ACS</span>
+                              <p className="font-medium">
+                                {match.expandedDetails.acs}
+                              </p>
+                            </div>
+                          )}
+                          {match.expandedDetails.firstBloods != null && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                First Blood
+                              </span>
+                              <p className="font-medium">
+                                {match.expandedDetails.firstBloods}
+                              </p>
+                            </div>
+                          )}
+                          {match.expandedDetails.mvps != null && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                MVPs
+                              </span>
+                              <p className="font-medium">
+                                {match.expandedDetails.mvps}
+                              </p>
+                            </div>
+                          )}
+                          {match.expandedDetails.damage != null && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                Dano
+                              </span>
+                              <p className="font-medium">
+                                {match.expandedDetails.damage?.toLocaleString()}
+                              </p>
+                            </div>
+                          )}
+                          {match.expandedDetails.damageTaken != null && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                Dano recebido
+                              </span>
+                              <p className="font-medium">
+                                {match.expandedDetails.damageTaken?.toLocaleString()}
+                              </p>
+                            </div>
+                          )}
+                          {match.expandedDetails.cs != null && (
+                            <div>
+                              <span className="text-muted-foreground">CS</span>
+                              <p className="font-medium">
+                                {match.expandedDetails.cs}
+                              </p>
+                            </div>
+                          )}
+                          {match.expandedDetails.csPerMinute != null && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                CS/min
+                              </span>
+                              <p className="font-medium">
+                                {match.expandedDetails.csPerMinute.toFixed(1)}
+                              </p>
+                            </div>
+                          )}
+                          {match.expandedDetails.vision != null && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                Visão
+                              </span>
+                              <p className="font-medium">
+                                {match.expandedDetails.vision}
+                              </p>
+                            </div>
+                          )}
+                          {match.expandedDetails.gold != null && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                Ouro
+                              </span>
+                              <p className="font-medium">
+                                {match.expandedDetails.gold?.toLocaleString()}
+                              </p>
+                            </div>
+                          )}
+                          {match.expandedDetails.kdaRatio != null && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                KDA Ratio
+                              </span>
+                              <p className="font-medium">
+                                {match.expandedDetails.kdaRatio.toFixed(2)}:1
+                              </p>
+                            </div>
                           )}
                         </div>
-                      </>
+                      </div>
                     )}
-                  </button>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  {gameId === "lol" && match.lolMatchDetail ? (
-                    <div className="px-1 pb-2 sm:px-2">
-                      <LolMatchHistoryDetail
-                        detail={match.lolMatchDetail}
-                        staticAssets={match.lolStaticAssets}
-                      />
-                    </div>
-                  ) : null}
-                  {gameId !== "lol" && match.expandedDetails && (
-                    <div className="px-3 pb-3 pt-0 border-t border-border/50 mt-0">
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 pt-3 text-sm">
-                        {match.expandedDetails.headshotPct != null && (
-                          <div>
-                            <span className="text-muted-foreground">HS%</span>
-                            <p className="font-medium">
-                              {match.expandedDetails.headshotPct}%
-                            </p>
-                          </div>
-                        )}
-                        {match.expandedDetails.adr != null && (
-                          <div>
-                            <span className="text-muted-foreground">ADR</span>
-                            <p className="font-medium">
-                              {match.expandedDetails.adr}
-                            </p>
-                          </div>
-                        )}
-                        {match.expandedDetails.acs != null && (
-                          <div>
-                            <span className="text-muted-foreground">ACS</span>
-                            <p className="font-medium">
-                              {match.expandedDetails.acs}
-                            </p>
-                          </div>
-                        )}
-                        {match.expandedDetails.firstBloods != null && (
-                          <div>
-                            <span className="text-muted-foreground">
-                              First Blood
-                            </span>
-                            <p className="font-medium">
-                              {match.expandedDetails.firstBloods}
-                            </p>
-                          </div>
-                        )}
-                        {match.expandedDetails.mvps != null && (
-                          <div>
-                            <span className="text-muted-foreground">MVPs</span>
-                            <p className="font-medium">
-                              {match.expandedDetails.mvps}
-                            </p>
-                          </div>
-                        )}
-                        {match.expandedDetails.damage != null && (
-                          <div>
-                            <span className="text-muted-foreground">Dano</span>
-                            <p className="font-medium">
-                              {match.expandedDetails.damage?.toLocaleString()}
-                            </p>
-                          </div>
-                        )}
-                        {match.expandedDetails.damageTaken != null && (
-                          <div>
-                            <span className="text-muted-foreground">Dano recebido</span>
-                            <p className="font-medium">
-                              {match.expandedDetails.damageTaken?.toLocaleString()}
-                            </p>
-                          </div>
-                        )}
-                        {match.expandedDetails.cs != null && (
-                          <div>
-                            <span className="text-muted-foreground">CS</span>
-                            <p className="font-medium">
-                              {match.expandedDetails.cs}
-                            </p>
-                          </div>
-                        )}
-                        {match.expandedDetails.csPerMinute != null && (
-                          <div>
-                            <span className="text-muted-foreground">CS/min</span>
-                            <p className="font-medium">{match.expandedDetails.csPerMinute.toFixed(1)}</p>
-                          </div>
-                        )}
-                        {match.expandedDetails.vision != null && (
-                          <div>
-                            <span className="text-muted-foreground">Visão</span>
-                            <p className="font-medium">
-                              {match.expandedDetails.vision}
-                            </p>
-                          </div>
-                        )}
-                        {match.expandedDetails.gold != null && (
-                          <div>
-                            <span className="text-muted-foreground">Ouro</span>
-                            <p className="font-medium">
-                              {match.expandedDetails.gold?.toLocaleString()}
-                            </p>
-                          </div>
-                        )}
-                        {match.expandedDetails.kdaRatio != null && (
-                          <div>
-                            <span className="text-muted-foreground">KDA Ratio</span>
-                            <p className="font-medium">{match.expandedDetails.kdaRatio.toFixed(2)}:1</p>
-                          </div>
-                        )}
+                    {gameId === "lol" &&
+                    !match.lolMatchDetail &&
+                    match.expandedDetails ? (
+                      <div className="px-3 pb-3 pt-0 border-t border-border/50 mt-0">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 pt-3 text-sm">
+                          {match.expandedDetails.damage != null && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                Dano
+                              </span>
+                              <p className="font-medium">
+                                {match.expandedDetails.damage?.toLocaleString()}
+                              </p>
+                            </div>
+                          )}
+                          {match.expandedDetails.cs != null && (
+                            <div>
+                              <span className="text-muted-foreground">CS</span>
+                              <p className="font-medium">
+                                {match.expandedDetails.cs}
+                              </p>
+                            </div>
+                          )}
+                          {match.expandedDetails.vision != null && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                Visão
+                              </span>
+                              <p className="font-medium">
+                                {match.expandedDetails.vision}
+                              </p>
+                            </div>
+                          )}
+                          {match.expandedDetails.gold != null && (
+                            <div>
+                              <span className="text-muted-foreground">
+                                Ouro
+                              </span>
+                              <p className="font-medium">
+                                {match.expandedDetails.gold?.toLocaleString()}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground px-3 pb-2">
+                          Detalhe completo da partida (todos os jogadores)
+                          aparece após a próxima sincronização com a Riot.
+                        </p>
                       </div>
-                    </div>
-                  )}
-                  {gameId === "lol" && !match.lolMatchDetail && match.expandedDetails ? (
-                    <div className="px-3 pb-3 pt-0 border-t border-border/50 mt-0">
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 pt-3 text-sm">
-                        {match.expandedDetails.damage != null && (
-                          <div>
-                            <span className="text-muted-foreground">Dano</span>
-                            <p className="font-medium">
-                              {match.expandedDetails.damage?.toLocaleString()}
-                            </p>
-                          </div>
-                        )}
-                        {match.expandedDetails.cs != null && (
-                          <div>
-                            <span className="text-muted-foreground">CS</span>
-                            <p className="font-medium">{match.expandedDetails.cs}</p>
-                          </div>
-                        )}
-                        {match.expandedDetails.vision != null && (
-                          <div>
-                            <span className="text-muted-foreground">Visão</span>
-                            <p className="font-medium">{match.expandedDetails.vision}</p>
-                          </div>
-                        )}
-                        {match.expandedDetails.gold != null && (
-                          <div>
-                            <span className="text-muted-foreground">Ouro</span>
-                            <p className="font-medium">
-                              {match.expandedDetails.gold?.toLocaleString()}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground px-3 pb-2">
-                        Detalhe completo da partida (todos os jogadores) aparece após a próxima sincronização com a
-                        Riot.
-                      </p>
-                    </div>
-                  ) : null}
-                </CollapsibleContent>
-              </div>
-            </Collapsible>
+                    ) : null}
+                  </CollapsibleContent>
+                </div>
+              </Collapsible>
             );
           })}
         </div>
@@ -3491,7 +3738,9 @@ function MatchHistory({
             {loadingMore ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
             ) : null}
-            {loadMoreDisabled ? (loadMoreDisabledLabel ?? "Sincronizando...") : "Carregar mais"}
+            {loadMoreDisabled
+              ? (loadMoreDisabledLabel ?? "Sincronizando...")
+              : "Carregar mais"}
           </Button>
         ) : (
           <p className="text-center mt-4 text-xs text-muted-foreground">

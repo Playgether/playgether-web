@@ -14,11 +14,11 @@ const Login = ({ onClickX, onClickAqui }: LoginProps) => {
         onClick={onClickX}
       />
 
-      <div className="relative w-full max-w-md rounded-2xl overflow-hidden border border-foreground/10 bg-background shadow-glow-primary">
+      <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-foreground/10 bg-background shadow-glow-primary">
         <button
           type="button"
           onClick={onClickX}
-          className="w-full py-3 text-primary-foreground font-bold text-lg tracking-wider hover:opacity-90 transition-opacity"
+          className="w-full py-3 text-primary-foreground font-bold text-lg tracking-wider hover:opacity-90 transition-opacity sticky top-0 z-10"
           aria-label="Fechar"
         >
           ✕
@@ -30,7 +30,7 @@ const Login = ({ onClickX, onClickAqui }: LoginProps) => {
             <div className="w-12 h-12 rounded-full bg-neon-blue" />
           </div>
 
-          <h2 className="text-2xl font-bold tracking-[0.2em] text-foreground">
+          <h2 className="pb-1 text-2xl font-bold leading-normal tracking-[0.12em] text-foreground sm:tracking-[0.2em]">
             <span className="text-secondary">PLAY</span>
             <span className="text-neon-blue">GETHER</span>
           </h2>

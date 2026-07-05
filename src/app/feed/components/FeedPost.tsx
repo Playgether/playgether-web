@@ -23,6 +23,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useFeedContext } from "../context/FeedContext";
 import { CustomToast } from "@/components/ui/customSonner";
+import { FeedPostFollowButton } from "./FeedPostFollowButton";
 
 export const FeedPost = ({ post }) => {
   const [alertOpen, setAlertOpen] = useState(false);
@@ -132,71 +133,119 @@ export const FeedPost = ({ post }) => {
   };
 
   return (
-    <Card className="bg-card border-border/50 backdrop-blur-sm hover:shadow-glow-primary/30 hover:scale-[1.02] hover:border-primary/40 transition-all duration-300 animate-fade-up hover:cursor-pointer mb-7">
-      <CardContent className="p-6">
+    <Card className="relative mb-3 animate-fade-up border-border/50 bg-card backdrop-blur-sm transition-all duration-300 hover:cursor-pointer hover:border-primary/40 hover:shadow-glow-primary/30 sm:mb-5 lg:mb-7 lg:hover:scale-[1.02]">
+      <CardContent className="relative p-3 sm:p-5 lg:p-6">
         {post && (
-          <Link href={`/feed/${post.id}`} scroll={false}>
+          <>
+            <Link
+              href={`/feed/${post.id}`}
+              scroll={false}
+              className="absolute inset-0 z-0 rounded-[inherit]"
+              aria-label={`Abrir post de ${post.name}`}
+              tabIndex={-1}
+            />
+            <div className="relative z-[1] pointer-events-none">
             {/* Repost Header */}
-            {post.isRepost && <RepostFlag post={post} />}
+            {post.isRepost && (
+              <div className="pointer-events-none">
+                <RepostFlag post={post} />
+              </div>
+            )}
             {/* Header */}
-            <div className="flex items-center justify-between mb-4 gap-2 min-w-0">
-              <div className="flex items-center space-x-3 min-w-0 flex-1">
-                <div className="shrink-0">
-                  <ProfileAvatar
-                    displayName={post.name}
-                    username={post.username}
-                    profilePhoto={post.profile_photo}
-                    sizeClass="h-12 w-12"
-                    ringClass="ring-2 ring-primary/20"
-                    fallbackTextClassName="text-sm"
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                    <div className="inline-flex min-w-0 max-w-full shrink-0 items-center gap-2">
-                      <h3
-                        className="inline-block w-fit max-w-full min-w-0 font-semibold text-foreground"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push(`/profile/${post.username}`);
-                        }}
-                      >
-                        {post.name}
-                      </h3>
-                      {post.verified && (
-                        <span className="inline-flex shrink-0">
-                          {components.VerifiedProfile}
-                        </span>
-                      )}
+            <div className="mb-3 flex min-w-0 items-start gap-2.5 sm:mb-4 sm:gap-3">
+              <div className="pointer-events-none shrink-0">
+                <ProfileAvatar
+                  displayName={post.name}
+                  username={post.username}
+                  profilePhoto={post.profile_photo}
+                  sizeClass="h-10 w-10 sm:h-12 sm:w-12"
+                  ringClass="ring-2 ring-primary/20"
+                  fallbackTextClassName="text-sm"
+                />
+              </div>
+              <div className="relative min-w-0 flex-1">
+                <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1">
+                  {/* Desktop — nome + tags na mesma célula */}
+                  <div className="hidden min-w-0 lg:block">
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                      <div className="inline-flex min-w-0 max-w-full shrink-0 items-center gap-2">
+                        <h3
+                          className="pointer-events-auto inline-block w-fit max-w-full min-w-0 font-semibold text-foreground"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            router.push(`/profile/${post.username}`);
+                          }}
+                        >
+                          {post.name}
+                        </h3>
+                        {post.verified && (
+                          <span className="inline-flex shrink-0">
+                            {components.VerifiedProfile}
+                          </span>
+                        )}
+                      </div>
+                      <HighlightedAchievementBadges
+                        achievements={post.highlighted_achievements}
+                        className="pointer-events-auto relative z-10 min-w-0"
+                      />
                     </div>
-                    <HighlightedAchievementBadges
-                      achievements={post.highlighted_achievements}
-                      className="min-w-0"
-                    />
                   </div>
-                  <p className="text-sm text-muted-foreground">
+
+                  {/* Mobile — nome na linha de cima */}
+                  <div className="flex min-w-0 items-center gap-1.5 sm:gap-2 lg:hidden">
+                    <h3
+                      className="pointer-events-auto min-w-0 truncate font-semibold text-foreground"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        router.push(`/profile/${post.username}`);
+                      }}
+                    >
+                      {post.name}
+                    </h3>
+                    {post.verified && (
+                      <span className="inline-flex shrink-0">
+                        {components.VerifiedProfile}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="pointer-events-auto col-start-2 row-start-1 flex shrink-0 items-center gap-1 self-start sm:gap-2">
+                    <FeedPostFollowButton post={post} />
+                    <DropdownMenu>
+                      <div className="pointer-events-auto">
+                        {components.MoreOptions}
+                        <DropdownMenuContent
+                          align="end"
+                          className="bg-background/95 backdrop-blur-xl border border-border/50"
+                        >
+                          {post.is_own || post.isOwn ? (
+                            <ContextMenuOwn
+                              handleContextAction={handleContextAction}
+                              commentsDisabled={post.comments_disabled}
+                            />
+                          ) : (
+                            <ContextMenuNotMine
+                              handleContextAction={handleContextAction}
+                            />
+                          )}
+                        </DropdownMenuContent>
+                      </div>
+                    </DropdownMenu>
+                  </div>
+
+                  <HighlightedAchievementBadges
+                    achievements={post.highlighted_achievements}
+                    className="pointer-events-auto relative z-20 col-span-2 row-start-2 lg:hidden"
+                    compact
+                  />
+
+                  <p className="pointer-events-none col-span-2 row-start-3 truncate text-sm text-muted-foreground lg:row-start-2">
                     @{post.username} • <DateAndHour date={post.timestamp} />
                   </p>
                 </div>
               </div>
-              <DropdownMenu>
-                {components.MoreOptions}
-                <DropdownMenuContent
-                  align="end"
-                  className="bg-background/95 backdrop-blur-xl border border-border/50"
-                >
-                  {(post.is_own || post.isOwn) ? (
-                    <ContextMenuOwn
-                      handleContextAction={handleContextAction}
-                      commentsDisabled={post.comments_disabled}
-                    />
-                  ) : (
-                    <ContextMenuNotMine
-                      handleContextAction={handleContextAction}
-                    />
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
 
             {/* Content */}
@@ -206,7 +255,7 @@ export const FeedPost = ({ post }) => {
             {post.medias && post.medias.length > 0 && (
               <div
                 className={cn(
-                  "mb-4 rounded-xl overflow-hidden  h-64",
+                  "pointer-events-auto mb-3 h-40 overflow-hidden rounded-lg sm:mb-4 sm:h-48 sm:rounded-xl lg:h-64",
                   post.medias.length === 1
                     ? "grid grid-cols-1"
                     : "grid grid-cols-2 gap-2"
@@ -215,14 +264,14 @@ export const FeedPost = ({ post }) => {
                 {post.medias.slice(0, 2).map((item, index) => (
                   <div
                     key={index}
-                    className="relative group cursor-pointer"
+                    className="relative group cursor-pointer overflow-hidden"
                     onClick={handlePostClick}
                   >
                     {item.media_type === "image" ? (
                       <ImageComponent
                         media_id={item.media_file}
                         alt="Post media"
-                        className={`w-full h-64 object-cover transition-transform duration-300 ${
+                        className={`h-40 w-full object-cover transition-transform duration-300 sm:h-48 lg:h-64 ${
                           post.medias.length < 2 && "group-hover:scale-105"
                         }`}
                       />
@@ -230,7 +279,7 @@ export const FeedPost = ({ post }) => {
                       <div className="relative video-container">
                         <VideoComponent
                           media_id={item.media_file}
-                          className="w-full h-64 object-cover rounded-lg"
+                          className="h-40 w-full object-cover sm:h-48 lg:h-64"
                           preload="metadata"
                           style={{
                             background:
@@ -242,7 +291,7 @@ export const FeedPost = ({ post }) => {
                       </div>
                     )}
                     {post.medias.length > 2 && index === 1 && (
-                      <div className="absolute inset-0 bg-black/70 flex items-center justify-center rounded-xl z-10">
+                      <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/70">
                         <div className="text-center">
                           <span className="text-white text-3xl font-bold">
                             +{post.medias.length - 2}
@@ -257,12 +306,13 @@ export const FeedPost = ({ post }) => {
             )}
 
             {/* Actions */}
-            <div className="flex items-center justify-between pt-4 border-t border-border/50">
-              <div className="flex items-center space-x-6">
+            <div className="pointer-events-auto flex items-center justify-between gap-2 border-t border-border/50 pt-2.5 sm:pt-4">
+              <div className="flex items-center space-x-2 sm:space-x-6">
                 <PostActions post={post} handleShareModal={handleShareModal} />
               </div>
             </div>
-          </Link>
+            </div>
+          </>
         )}
       </CardContent>
 

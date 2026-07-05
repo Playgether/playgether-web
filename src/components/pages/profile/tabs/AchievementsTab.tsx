@@ -161,9 +161,9 @@ export function AchievementsTab({
   const [syncDialogOpen, setSyncDialogOpen] = useState(false);
   const [pickSlug, setPickSlug] = useState<string>("");
   const [syncBusy, setSyncBusy] = useState(false);
-  const [hoveredAchievementId, setHoveredAchievementId] = useState<number | null>(
-    null,
-  );
+  const [hoveredAchievementId, setHoveredAchievementId] = useState<
+    number | null
+  >(null);
   /** Slugs cujas conquistas aparecem na grade (pode combinar vários). */
   const [selectedGameSlugs, setSelectedGameSlugs] = useState<Set<string>>(
     () => new Set(),
@@ -192,8 +192,7 @@ export function AchievementsTab({
   const profileId = profile?.id;
 
   const highlightedIds = useMemo(
-    () =>
-      profile?.highlighted_achievements?.map((h) => Number(h.id)) ?? [],
+    () => profile?.highlighted_achievements?.map((h) => Number(h.id)) ?? [],
     [profile?.highlighted_achievements],
   );
 
@@ -299,8 +298,7 @@ export function AchievementsTab({
       }
       setLoadingList(true);
       try {
-        const allRarities =
-          selectedRarities.size === RARITY_ORDER.length;
+        const allRarities = selectedRarities.size === RARITY_ORDER.length;
         const data = await getProfileAchievements(profileId, {
           page,
           page_size: ACHIEVEMENTS_PAGE_SIZE,
@@ -514,7 +512,7 @@ export function AchievementsTab({
               </p>
             </div>
           )}
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-border bg-card/40 px-4 py-3">
+          <div className="flex flex-col gap-3 rounded-lg border border-border bg-card/40 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-wrap items-center gap-3">
               <Button
                 type="button"
@@ -534,7 +532,7 @@ export function AchievementsTab({
                   </Badge>
                 ) : null}
               </Button>
-              <p className="text-xs text-muted-foreground leading-snug">
+              <p className="text-xs text-muted-foreground leading-snug text-left">
                 Jogos e nível de raridade (comum, raro, lendário…). Combine os
                 dois; a lista mostra só o que atende a tudo. Ordem:{" "}
                 <span className="text-foreground/90 font-medium">
@@ -604,46 +602,46 @@ export function AchievementsTab({
         </p>
       ) : (
         <div className="relative space-y-4 overflow-visible">
-            {loadingList && displayedAchievements.length > 0 && !syncBusy ? (
-              <div className="flex justify-center py-1" aria-live="polite">
-                <Loader2
-                  className="h-5 w-5 animate-spin text-muted-foreground"
-                  aria-hidden
-                />
-              </div>
-            ) : null}
-            <motion.div
-              key={`${listQueryKey}-${listPage}`}
-              className="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-visible"
-              initial="hidden"
-              animate="visible"
-              variants={{
-                hidden: {},
-                visible: { transition: { staggerChildren: 0.04 } },
-              }}
-            >
-              {displayedAchievements.map((achievement) => (
-                <AchievementCardItem
-                  key={achievement.id}
-                  achievement={achievement}
-                  sessionNewIds={sessionNewIds}
-                  showRecentBadge
-                  isOwner={isOwner}
-                  highlightedIds={highlightedIds}
-                  highlightBusy={highlightBusy}
-                  isHovered={hoveredAchievementId === achievement.id}
-                  onHoverChange={(hovered) =>
-                    setHoveredAchievementId(hovered ? achievement.id : null)
-                  }
-                  onSaveHighlights={saveHighlights}
-                  onOpen={() =>
-                    onAchievementClick(
-                      toModalAchievement(achievement, sessionNewIds),
-                    )
-                  }
-                />
-              ))}
-            </motion.div>
+          {loadingList && displayedAchievements.length > 0 && !syncBusy ? (
+            <div className="flex justify-center py-1" aria-live="polite">
+              <Loader2
+                className="h-5 w-5 animate-spin text-muted-foreground"
+                aria-hidden
+              />
+            </div>
+          ) : null}
+          <motion.div
+            key={`${listQueryKey}-${listPage}`}
+            className="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-visible"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: {},
+              visible: { transition: { staggerChildren: 0.04 } },
+            }}
+          >
+            {displayedAchievements.map((achievement) => (
+              <AchievementCardItem
+                key={achievement.id}
+                achievement={achievement}
+                sessionNewIds={sessionNewIds}
+                showRecentBadge
+                isOwner={isOwner}
+                highlightedIds={highlightedIds}
+                highlightBusy={highlightBusy}
+                isHovered={hoveredAchievementId === achievement.id}
+                onHoverChange={(hovered) =>
+                  setHoveredAchievementId(hovered ? achievement.id : null)
+                }
+                onSaveHighlights={saveHighlights}
+                onOpen={() =>
+                  onAchievementClick(
+                    toModalAchievement(achievement, sessionNewIds),
+                  )
+                }
+              />
+            ))}
+          </motion.div>
 
           {listMeta.count > 0 && listMeta.total_pages > 1 && (
             <div className="flex flex-col items-center gap-3 border-t border-border pt-6">
@@ -700,7 +698,7 @@ export function AchievementsTab({
               </div>
             </div>
           )}
-          </div>
+        </div>
       )}
 
       <Dialog open={filtersModalOpen} onOpenChange={setFiltersModalOpen}>
@@ -997,7 +995,7 @@ function AchievementCardItem({
         "relative rounded-xl",
         !achievement.unlocked && "opacity-[0.72]",
       )}
-      style={{ zIndex: isHovered || menuOpen ? 200 : 1 }}
+      style={{ zIndex: menuOpen ? 40 : undefined }}
       onMouseEnter={() => onHoverChange(true)}
       onMouseLeave={() => {
         if (!menuOpen) onHoverChange(false);
@@ -1010,7 +1008,10 @@ function AchievementCardItem({
         Icon={iconNode}
         rarity={achievement.rarity}
         recentlyUnlocked={recentlyUnlocked}
-        onCardClick={onOpen}
+        onCardClick={() => {
+          onHoverChange(false);
+          onOpen();
+        }}
         interactionLocked={menuOpen}
         leadingBadgeSlot={
           isHighlighted ? (
@@ -1025,7 +1026,11 @@ function AchievementCardItem({
         }
         headerEndSlot={
           isOwner && achievement.unlocked ? (
-            <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
+            <DropdownMenu
+              open={menuOpen}
+              onOpenChange={setMenuOpen}
+              modal={false}
+            >
               <DropdownMenuTrigger asChild>
                 <Button
                   type="button"
@@ -1068,10 +1073,7 @@ function AchievementCardItem({
                     onClick={(e) => {
                       e.stopPropagation();
                       onSaveHighlights(
-                        [...highlightedIds, Number(achievement.id)].slice(
-                          0,
-                          3,
-                        ),
+                        [...highlightedIds, Number(achievement.id)].slice(0, 3),
                       );
                     }}
                   >

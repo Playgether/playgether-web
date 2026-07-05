@@ -13,7 +13,7 @@ interface ViewAllModalProps {
 export const ViewAllModal = ({ open, onOpenChange, title, items, renderItem }: ViewAllModalProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md w-full h-[70vh] bg-background/95 backdrop-blur-xl border border-primary/20">
+      <DialogContent className="max-w-md h-[70vh] bg-background/95 backdrop-blur-xl border border-primary/20">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
             {title}

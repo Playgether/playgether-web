@@ -28,6 +28,7 @@ import {
 import type { ConversationInterface } from "../../types/chat/ConversationInterface";
 import type { MessageInterface } from "../../types/chat/MessageInterface";
 import { resolvePlaygetherMediaUrl } from "@/lib/resolvePlaygetherMediaUrl";
+import { cn } from "@/lib/utils";
 
 
 interface ConversationsContentProps {
@@ -456,10 +457,15 @@ export function ConversationsContent({
   return (
     <div className="flex h-full">
       {/* Conversation list */}
-      <div className="w-1/3 border-r border-border/50 flex flex-col">
-        <Tabs defaultValue="private" className="h-full flex flex-col">
-          <div className="pt-4">
-            <div className="flex items-center px-4 mb-2 gap-2">
+      <div
+        className={cn(
+          "flex w-full flex-col border-border/50 md:w-1/3 md:border-r",
+          selectedConversation ? "hidden md:flex" : "flex"
+        )}
+      >
+        <Tabs defaultValue="private" className="flex h-full flex-col">
+          <div className="pt-3 sm:pt-4">
+            <div className="mb-2 flex items-center gap-2 px-3 sm:px-4">
               <div className="min-w-0 flex-1">
                 <ChatTabs />
               </div>
@@ -472,7 +478,7 @@ export function ConversationsContent({
               </button>
             </div>
             {showNewConv && (
-              <div className="px-4 pb-2 space-y-1">
+              <div className="space-y-1 px-3 pb-2 sm:px-4">
                 <input
                   autoFocus
                   value={searchQuery}
@@ -509,11 +515,12 @@ export function ConversationsContent({
                     <div
                       key={conv.id}
                       onClick={() => selectConversation(conv)}
-                      className={`group p-4 cursor-pointer hover:bg-muted/20 transition-colors border-l-2 ${
-                        selectedConversation?.id === conv.id
-                          ? "border-primary bg-primary/10"
-                          : "border-transparent"
-                      }`}
+                      className={cn(
+                          "group cursor-pointer border-l-2 p-3 transition-colors hover:bg-muted/20 sm:p-4",
+                          selectedConversation?.id === conv.id
+                            ? "border-primary bg-primary/10"
+                            : "border-transparent"
+                        )}
                     >
                       <div className="flex items-center space-x-3">
                         <div className="flex-1 min-w-0">
@@ -684,11 +691,19 @@ export function ConversationsContent({
       </div>
 
       {/* Chat area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div
+        className={cn(
+          "flex min-w-0 flex-1 flex-col overflow-hidden",
+          selectedConversation ? "flex" : "hidden md:flex"
+        )}
+      >
         {selectedConversation ? (
           <>
-            <ChatHeader selectedConversation={selectedLegacy} />
-            <ScrollArea className={chatHeight + " p-4 pt-2"}>
+            <ChatHeader
+              selectedConversation={selectedLegacy}
+              onBack={() => setSelectedConversation(null)}
+            />
+            <ScrollArea className={chatHeight + " p-3 pt-2 sm:p-4 sm:pt-2"}>
               {loadingMessages ? (
                 <p className="text-sm text-muted-foreground text-center py-4">Carregando...</p>
               ) : (

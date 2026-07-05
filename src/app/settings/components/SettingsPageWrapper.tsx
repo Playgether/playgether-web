@@ -9,9 +9,9 @@ interface Props {
 
 export function SettingsPageWrapper({ title, description, children }: Props) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+        <h1 className="text-xl font-bold text-foreground sm:text-2xl">{title}</h1>
         {description && (
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         )}

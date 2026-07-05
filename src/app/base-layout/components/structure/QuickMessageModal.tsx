@@ -19,16 +19,16 @@ export const QuickMessageModal = ({
   if (!message) return null;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl w-full bg-background/95 backdrop-blur-xl border border-primary/20">
+      <DialogContent className="max-w-2xl bg-background/95 backdrop-blur-xl border border-primary/20 p-4 sm:p-6">
         {components.QuickMessagesModalHeader}
         <div
-          className={`rounded-xl p-6 bg-gradient-to-r from-primary-start/10 to-primary-end/10 ${getPriorityColorQuickMessagesConfig(
+          className={`rounded-xl bg-gradient-to-r from-primary-start/10 to-primary-end/10 p-4 sm:p-6 ${getPriorityColorQuickMessagesConfig(
             message.priority
           )}`}
         >
           {/* Message Header */}
-          <div className="flex items-center space-x-4 mb-4">
-            <Avatar className="w-16 h-16 ring-2 ring-primary/30">
+          <div className="mb-3 flex items-center gap-3 sm:mb-4 sm:space-x-4">
+            <Avatar className="h-12 w-12 shrink-0 ring-2 ring-primary/30 sm:h-16 sm:w-16">
               <AvatarImage src={message.user.avatar} alt={message.user.name} />
               <AvatarFallback className="bg-gradient-primary text-white text-lg">
                 {message.user.name

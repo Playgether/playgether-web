@@ -1,4 +1,5 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import React, { useCallback } from "react";
@@ -6,6 +7,9 @@ import { useFeedContext } from "../context/FeedContext";
 import { Virtuoso } from "react-virtuoso";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 import { FeedPost } from "./FeedPost";
+import { FeedTabs } from "./FeedTabs";
+import { FeedEmptyState } from "./FeedEmptyState";
+import { FeedListFooter } from "./FeedListFooter";
 
 export default function CenterColumn() {
   const {
@@ -14,44 +18,56 @@ export default function CenterColumn() {
     fetchNextPage,
     handleCreatePostModal,
     posts,
+    feedMode,
+    setFeedMode,
+    isFeedLoading,
   } = useFeedContext();
+
   const loadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
+      void fetchNextPage();
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const showEmpty =
+    !isFeedLoading && !isFetchingNextPage && posts.length === 0;
+
   return (
-    <div className="col-span-6 space-y-6 relative">
-      {/* Create Post Button */}
-      <div className="mb-6">
+    <div className="relative col-span-6 space-y-6">
+      <div className="mb-3 lg:mb-6">
         <Button
           onClick={() => handleCreatePostModal(true)}
-          className="w-full h-16 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+          variant="outline"
+          className="h-11 w-full justify-start gap-2 rounded-full border-border/60 bg-muted/30 px-4 text-sm font-medium text-muted-foreground shadow-none hover:bg-muted/50 hover:text-foreground lg:h-14 lg:gap-3 lg:px-6 lg:text-base"
         >
-          <Plus className="w-6 h-6 mr-3" />
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-primary lg:h-9 lg:w-9">
+            <Plus className="h-4 w-4 text-white lg:h-5 lg:w-5" />
+          </span>
           Compartilhe algo conosco
         </Button>
       </div>
-      <div className="flex flex-col gap-[70px] relative">
-        <Virtuoso
-          useWindowScroll
-          style={{ height: "100%" }}
-          increaseViewportBy={200}
-          overscan={3}
-          data={posts}
-          endReached={loadMore}
-          itemContent={(index, post) => (
-            <div key={post.id} style={{ animationDelay: `${index * 200}ms` }}>
-              {/* {React.cloneElement(FeedPost, { post })} */}
-              {/* <FeedPost initialPostId={post.id} /> */}
-              <FeedPost post={post} />
-            </div>
-          )}
-        />
-        {isFetchingNextPage && (
-          <div className="h-fit w-full z-40 mt-[30px]">
-            <LoadingComponent text="Carregando novos posts" showText={true} />
-          </div>
+
+      <FeedTabs mode={feedMode} onChange={setFeedMode} />
+
+      <div className="relative flex flex-col">
+        {isFeedLoading ? (
+          <LoadingComponent text="Carregando feed..." showText />
+        ) : showEmpty ? (
+          <FeedEmptyState
+            mode={feedMode}
+            onCreatePost={() => handleCreatePostModal(true)}
+          />
+        ) : (
+          <Virtuoso
+            useWindowScroll
+            increaseViewportBy={200}
+            overscan={3}
+            atBottomThreshold={400}
+            data={posts}
+            endReached={loadMore}
+            components={{ Footer: FeedListFooter }}
+            itemContent={(_index, post) => <FeedPost post={post} />}
+          />
         )}
       </div>
     </div>

@@ -580,9 +580,12 @@ export const ConquistText = ({
     return () => clearTimeout(t);
   }, [recentlyUnlocked]);
 
+  const usesExternalModal = Boolean(onCardClick);
+
   const handleClick = useCallback(() => {
     if (interactionLocked) return;
     if (onCardClick) {
+      setIsHovered(false);
       onCardClick();
     } else {
       setIsExpanded((v) => !v);
@@ -591,8 +594,10 @@ export const ConquistText = ({
 
   const isCommon = rarity === "common";
 
-  const effectiveHovered = isHovered || interactionLocked;
-  const isRaised = effectiveHovered || isExpanded;
+  const effectiveHovered = usesExternalModal
+    ? interactionLocked && isHovered
+    : isHovered || interactionLocked;
+  const isRaised = usesExternalModal ? false : effectiveHovered || isExpanded;
   const cardScale =
     !reducedMotion &&
     config.hoverScale > 1 &&
@@ -632,10 +637,10 @@ export const ConquistText = ({
           </AnimatePresence>
         }
       >
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-3 lg:gap-4">
           {/* Icon box */}
           <motion.div
-            className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 relative overflow-hidden"
+            className="h-10 w-10 lg:h-12 lg:w-12 rounded-lg flex items-center justify-center flex-shrink-0 relative overflow-hidden"
             animate={
               isAnimated && !isCommon
                 ? {
@@ -682,15 +687,15 @@ export const ConquistText = ({
           </motion.div>
 
           {/* Text content */}
-          <div className="flex-1 min-w-0 space-y-1">
+          <div className="flex-1 min-w-0 space-y-1 text-left">
             {/* Header row */}
-            <div className="relative z-30 flex items-start justify-between gap-2 flex-wrap overflow-visible">
+            <div className="relative z-30 flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between sm:gap-2 overflow-visible">
               <h4
-                className={`min-w-0 flex-1 font-semibold ${config.textColor} leading-snug`}
+                className={`min-w-0 font-semibold ${config.textColor} leading-snug text-left`}
               >
                 {title}
               </h4>
-              <div className="relative z-30 flex items-center gap-0.5 flex-shrink-0 overflow-visible">
+              <div className="relative z-30 flex w-full items-center justify-between gap-1 sm:w-auto sm:justify-end sm:gap-0.5 flex-shrink-0 overflow-visible">
                 <span className="text-xs text-zinc-300 px-2 py-0.5 rounded border border-border/40 bg-black/20 whitespace-nowrap">
                   {date}
                 </span>
@@ -707,7 +712,7 @@ export const ConquistText = ({
             </div>
 
             {/* Rarity badge */}
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap text-left">
               {leadingBadgeSlot}
               <RarityBadge
                 config={config}
@@ -716,9 +721,11 @@ export const ConquistText = ({
                 reducedMotion={reducedMotion}
               />
 
-              {/* Collapsed description preview */}
+              {/* Collapsed description preview — hidden on narrow screens; full text in modal */}
               {!isExpanded && (
-                <p className="text-xs text-zinc-300 truncate flex-1">{text}</p>
+                <p className="hidden text-xs text-zinc-300 truncate flex-1 sm:block">
+                  {text}
+                </p>
               )}
 
               {/* Chevron */}

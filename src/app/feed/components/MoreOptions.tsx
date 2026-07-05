@@ -9,9 +9,9 @@ export default function MoreOptions() {
       <Button
         variant="ghost"
         size="icon"
-        className="text-muted-foreground hover:text-foreground"
+        className="h-7 w-7 text-muted-foreground hover:text-foreground lg:h-8 lg:w-8"
       >
-        <MoreHorizontal className="w-5 h-5" />
+        <MoreHorizontal className="h-4 w-4 lg:h-5 lg:w-5" />
       </Button>
     </DropdownMenuTrigger>
   );

@@ -94,10 +94,13 @@ export const FormLoginImplementation = ({
     }
 
     if (error && error !== "wrong_password") {
-      CustomToast.error("Oops, parece que algo deu errado com a sua requisição", {
-        description: CustomToastErrorMessages.wrongAuthRequest,
-        duration: CustomToastProps.defaultDuration,
-      });
+      CustomToast.error(
+        "Oops, parece que algo deu errado com a sua requisição",
+        {
+          description: CustomToastErrorMessages.wrongAuthRequest,
+          duration: CustomToastProps.defaultDuration,
+        },
+      );
     }
     setIsLoggedOut(false);
     router.push("/feed");

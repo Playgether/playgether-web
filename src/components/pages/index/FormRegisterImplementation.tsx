@@ -24,7 +24,12 @@ interface FormCadastroImplementationProps {
   errors: FieldErrors<any>;
   setValue: UseFormSetValue<any>;
   watch: UseFormWatch<any>;
-  backendErrors?: { username?: string; email?: string; general?: string; accepted_documents?: string };
+  backendErrors?: {
+    username?: string;
+    email?: string;
+    general?: string;
+    accepted_documents?: string;
+  };
   Submiting: any;
   onClickAqui: () => void;
   handleAvailableUsernames: (username: string) => Promise<void>;
@@ -70,8 +75,8 @@ export const FormRegisterImplementation = ({
             {backendErrors.general}
           </div>
         )}
-        <div className="grid grid-cols-6 gap-2 w-full">
-          <div className="col-span-5 space-y-1">
+        <div className="flex w-full gap-2">
+          <div className="min-w-0 flex-1 space-y-1">
             <InputLayout
               type="text"
               placeholder="Nome de usuário"
@@ -80,17 +85,22 @@ export const FormRegisterImplementation = ({
               inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue focus:shadow-glow-neon transition-all duration-300 backdrop-blur-sm"
             />
             {availableUsernameResult}
-            <ErrosInput field={errors.username || (backendErrors.username ? { message: backendErrors.username } : undefined)} />
+            <ErrosInput
+              field={
+                errors.username ||
+                (backendErrors.username
+                  ? { message: backendErrors.username }
+                  : undefined)
+              }
+            />
           </div>
-          <div className="col-span-1 flex items-start">
-            <button
-              type="button"
-              onClick={() => handleAvailableUsernames(getValues("username"))}
-              className="w-full h-[46px] rounded-lg gradient-primary text-primary-foreground font-bold text-xs tracking-widest uppercase hover:scale-[1.02] hover:shadow-glow-primary transition-all duration-300"
-            >
-              Testar
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => handleAvailableUsernames(getValues("username"))}
+            className="h-[46px] shrink-0 rounded-lg px-3 gradient-primary text-primary-foreground text-xs font-bold uppercase tracking-wide hover:scale-[1.02] hover:shadow-glow-primary transition-all duration-300"
+          >
+            Testar
+          </button>
         </div>
 
         <div className="space-y-1">
@@ -100,7 +110,14 @@ export const FormRegisterImplementation = ({
             register={{ ...register("email") }}
             inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue focus:shadow-glow-neon transition-all duration-300 backdrop-blur-sm"
           />
-          <ErrosInput field={errors.email || (backendErrors.email ? { message: backendErrors.email } : undefined)} />
+          <ErrosInput
+            field={
+              errors.email ||
+              (backendErrors.email
+                ? { message: backendErrors.email }
+                : undefined)
+            }
+          />
         </div>
 
         <div className="space-y-1">
@@ -149,7 +166,9 @@ export const FormRegisterImplementation = ({
           {loading ? (
             <div className="flex items-center gap-2 py-2">
               <LoadingComponent showText={false} className="h-4 w-4" />
-              <span className="text-muted-foreground text-sm">Carregando termos...</span>
+              <span className="text-muted-foreground text-sm">
+                Carregando termos...
+              </span>
             </div>
           ) : documents.length > 0 ? (
             <>
@@ -163,9 +182,10 @@ export const FormRegisterImplementation = ({
                     <label
                       key={doc.id}
                       className={`flex items-center gap-3 cursor-pointer px-3 py-2.5 rounded-xl border transition-all duration-200
-                        ${checked
-                          ? "border-primary/60 bg-gradient-to-r from-primary/10 to-secondary/10 shadow-[0_0_8px_rgba(var(--primary),0.15)]"
-                          : "border-border/40 bg-background/30 hover:border-border hover:bg-muted/20"
+                        ${
+                          checked
+                            ? "border-primary/60 bg-gradient-to-r from-primary/10 to-secondary/10 shadow-[0_0_8px_rgba(var(--primary),0.15)]"
+                            : "border-border/40 bg-background/30 hover:border-border hover:bg-muted/20"
                         }`}
                     >
                       {/* Hidden native checkbox for accessibility */}
@@ -179,21 +199,33 @@ export const FormRegisterImplementation = ({
                       {/* Custom checkbox */}
                       <div
                         className={`shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-200
-                          ${checked
-                            ? "border-primary bg-gradient-primary"
-                            : "border-border/60 bg-transparent"
+                          ${
+                            checked
+                              ? "border-primary bg-gradient-primary"
+                              : "border-border/60 bg-transparent"
                           }`}
                       >
-                        {checked && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                        {checked && (
+                          <Check
+                            className="w-3 h-3 text-white"
+                            strokeWidth={3}
+                          />
+                        )}
                       </div>
 
                       {/* Icon */}
-                      <div className={`shrink-0 p-1 rounded-lg transition-colors duration-200 ${checked ? "bg-primary/20" : "bg-muted/40"}`}>
-                        <FileText className={`w-3.5 h-3.5 ${checked ? "text-primary" : "text-muted-foreground"}`} />
+                      <div
+                        className={`shrink-0 p-1 rounded-lg transition-colors duration-200 ${checked ? "bg-primary/20" : "bg-muted/40"}`}
+                      >
+                        <FileText
+                          className={`w-3.5 h-3.5 ${checked ? "text-primary" : "text-muted-foreground"}`}
+                        />
                       </div>
 
                       {/* Label */}
-                      <span className={`flex-1 text-xs leading-tight transition-colors duration-200 ${checked ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                      <span
+                        className={`flex-1 text-xs leading-tight transition-colors duration-200 ${checked ? "text-foreground font-medium" : "text-muted-foreground"}`}
+                      >
                         {doc.title}
                       </span>
 
@@ -223,7 +255,8 @@ export const FormRegisterImplementation = ({
             </>
           ) : (
             <p className="text-muted-foreground text-sm">
-              Nenhum termo disponível no momento. Entre em contato com o suporte.
+              Nenhum termo disponível no momento. Entre em contato com o
+              suporte.
             </p>
           )}
         </div>

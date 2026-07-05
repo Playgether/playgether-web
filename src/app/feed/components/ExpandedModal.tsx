@@ -196,7 +196,7 @@ export const ExpandedModal = ({ open, onOpenChange, post }: ExpandedModalProps) 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-7xl w-full h-[90vh] p-0 bg-background/95 backdrop-blur-xl border border-primary/20">
+        <DialogContent className="max-w-7xl h-[90vh] p-0 bg-background/95 backdrop-blur-xl border border-primary/20">
           <div className="flex h-full">
             {/* Media Section */}
             {hasMedia && (

@@ -32,7 +32,10 @@ function GoogleIcon() {
   );
 }
 
-export function GoogleAuthButton({ label = "Continuar com Google", onError }: GoogleAuthButtonProps) {
+export function GoogleAuthButton({
+  label = "Continuar com Google",
+  onError,
+}: GoogleAuthButtonProps) {
   const [loading, setLoading] = useState(false);
   const submittingRef = useRef(false);
 

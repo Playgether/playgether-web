@@ -77,9 +77,7 @@ const Step3 = ({
     <div className="h-full flex flex-col gap-1 p-2 Step3-wrapper">
       <CustomToaster />
       <div className="flex flex-col gap-1 w-full text-center">
-        <p className="text-xs">
-          Envie até 5 fotos ou vídeos (mínimo 320x320 pixels).
-        </p>
+        <p className="text-xs">Envie até 5 fotos ou vídeos.</p>
         <p className="text-xs">Fotos podem ter no máximo 5mb e vídeos 50mb.</p>
         <p className="text-xs">
           Videos maiores do que 30seg serão cortados para esta duração.
@@ -91,8 +89,8 @@ const Step3 = ({
           signatureEndpoint="/api/signed-posts"
           options={{
             sources: ["local"],
-            minImageHeight: 320,
-            minImageWidth: 320,
+            maxImageWidth: 8000,
+            maxImageHeight: 8000,
             maxFiles: 5,
             tags: [`${user?.username}`, getCurrentDate(), "post", "user"],
             detection: "unidet",

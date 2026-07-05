@@ -36,7 +36,7 @@ export const ReplyModal = ({ open, onOpenChange, comment, onSubmitReply }: Reply
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md w-full bg-background/95 backdrop-blur-xl border border-primary/20">
+      <DialogContent className="max-w-md bg-background/95 backdrop-blur-xl border border-primary/20">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold">Responder comentário</DialogTitle>
         </DialogHeader>

@@ -10,6 +10,8 @@ import { useBaseLayoutServerContext } from "../../context/BaseLayoutServerContex
 import { useRouter } from "next/navigation";
 import { useDMUnread } from "@/context/DMUnreadContext";
 import { GlobalSearchDropdown } from "./GlobalSearchDropdown";
+import { FriendsModal } from "../friends/FriendsModal";
+import { Users } from "lucide-react";
 
 export const TopNavigation = () => {
   const { logout } = useAuthContext();
@@ -19,6 +21,7 @@ export const TopNavigation = () => {
   const isDarkMode = themeMounted && resolvedTheme === "dark";
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [friendsOpen, setFriendsOpen] = useState(false);
   const { BaseLayout } = useBaseLayoutServerContext();
   const router = useRouter();
   const icons = BaseLayout?.ServerTopNavigation.icons;
@@ -32,20 +35,21 @@ export const TopNavigation = () => {
     setTheme(isDarkMode ? "light" : "dark");
   };
 
+  const actionBtn =
+    "h-9 w-9 rounded-xl transition-all duration-300 hover:bg-muted/50 hover:shadow-glow-neon sm:h-10 sm:w-10 lg:h-11 lg:w-11";
+
   return (
-    <header className="fixed top-0 left-20 right-0 h-16 bg-background/80 backdrop-blur-xl border-b border-border/50 z-30 flex items-center justify-between px-6">
-      {/* Search Bar */}
-      <div className="flex-1 max-w-xl">
+    <header className="fixed top-0 left-0 right-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-border/50 bg-background/80 px-3 backdrop-blur-xl sm:gap-3 sm:px-4 lg:left-20 lg:h-16 lg:px-6">
+      <div className="min-w-0 flex-1 lg:max-w-xl">
         <GlobalSearchDropdown />
       </div>
 
-      {/* Right Actions */}
-      <div className="flex items-center space-x-3">
+      <div className="flex shrink-0 items-center gap-1 sm:gap-2 lg:gap-3">
         <Button
           variant="ghost"
           size="icon"
           onClick={toggleDarkMode}
-          className="w-11 h-11 rounded-xl hover:bg-muted/50 hover:shadow-glow-neon transition-all duration-300"
+          className={actionBtn}
           aria-label="Toggle dark mode"
           title="Toggle dark mode"
           aria-pressed={isDarkMode}
@@ -57,13 +61,13 @@ export const TopNavigation = () => {
           variant="ghost"
           size="icon"
           onClick={() => router.push("/conversations")}
-          className="w-11 h-11 rounded-xl hover:bg-muted/50 hover:shadow-glow-neon transition-all duration-300 relative"
+          className={`${actionBtn} relative`}
           aria-label="Open chat"
           title="Open chat"
         >
           {icons.MessageSquare}
           {dmUnreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-secondary rounded-full text-xs font-bold text-white flex items-center justify-center animate-glow-pulse">
+            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-gradient-secondary text-[10px] font-bold text-white animate-glow-pulse sm:h-5 sm:w-5 sm:text-xs">
               {dmUnreadCount > 99 ? "99+" : dmUnreadCount}
             </span>
           )}
@@ -72,14 +76,25 @@ export const TopNavigation = () => {
         <Button
           variant="ghost"
           size="icon"
+          onClick={() => setFriendsOpen(true)}
+          className={`${actionBtn} lg:hidden`}
+          aria-label="Amigos"
+          title="Amigos"
+        >
+          <Users className="h-5 w-5" />
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => setNotificationsOpen(true)}
-          className="w-11 h-11 rounded-xl hover:bg-muted/50 hover:shadow-glow-neon transition-all duration-300 relative"
+          className={`${actionBtn} relative`}
           aria-label="Open notifications"
           title="Open notifications"
         >
           {icons.Bell}
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-primary rounded-full text-xs font-bold text-white flex items-center justify-center animate-glow-pulse">
+            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-gradient-primary text-[10px] font-bold text-white animate-glow-pulse sm:h-5 sm:w-5 sm:text-xs">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           )}
@@ -89,7 +104,7 @@ export const TopNavigation = () => {
           variant="ghost"
           size="icon"
           onClick={() => setSettingsOpen(true)}
-          className="w-11 h-11 rounded-xl hover:bg-muted/50 hover:shadow-glow-neon transition-all duration-300"
+          className={actionBtn}
           aria-label="Open settings"
           title="Open settings"
         >
@@ -100,7 +115,7 @@ export const TopNavigation = () => {
           variant="ghost"
           size="icon"
           onClick={() => logout()}
-          className="w-11 h-11 rounded-xl hover:bg-muted/50 hover:shadow-glow-neon transition-all duration-300"
+          className={actionBtn}
           aria-label="Log out"
           title="Log out"
         >
@@ -108,12 +123,12 @@ export const TopNavigation = () => {
         </Button>
       </div>
 
-      {/* Modals */}
       <NotificationsModal
         open={notificationsOpen}
         onOpenChange={setNotificationsOpen}
       />
       <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <FriendsModal open={friendsOpen} onOpenChange={setFriendsOpen} />
     </header>
   );
 };

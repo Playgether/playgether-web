@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
   const accessToken = (await cookies()).get("accessToken")?.value;
   const { searchParams } = new URL(request.url);
   const cursor = searchParams.get("cursor");
+  const mode = searchParams.get("mode") || "following";
 
   try {
     const response = await api.get(`/api/v1/feed/`, {
@@ -15,6 +16,7 @@ export async function GET(request: NextRequest) {
       },
       params: {
         cursor,
+        mode,
       },
     });
 

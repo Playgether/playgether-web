@@ -15,12 +15,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { ImagePlus, X, Loader2 } from "lucide-react";
 import { CldUploadWidget } from "next-cloudinary";
-import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
+import { CustomToast } from "@/components/ui/customSonner";
 import { CustomToastProps } from "@/error/custom-toaster/enum";
 import { deletePostFile } from "@/services/cloudinary_requests/deletePostFile";
 import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
 import type { MilestoneMediaInput } from "@/actions/milestones";
-import type { ProfileMilestone, ProfileMilestoneMedia } from "@/services/getProfileMilestones";
+import type {
+  ProfileMilestone,
+  ProfileMilestoneMedia,
+} from "@/services/getProfileMilestones";
 
 interface MilestoneFormData {
   title: string;
@@ -79,7 +82,7 @@ export function MilestoneModal({
           media_url: m.media_url,
           media_type: m.media_type,
           public_id: m.public_id,
-        }))
+        })),
       );
     }
   }, [isOpen, milestone]);
@@ -125,7 +128,12 @@ export function MilestoneModal({
       });
       return;
     }
-    await onSubmit({ title: title.trim(), description: description.trim() || "", date, medias: uploadedFiles });
+    await onSubmit({
+      title: title.trim(),
+      description: description.trim() || "",
+      date,
+      medias: uploadedFiles,
+    });
     setTitle("");
     setDescription("");
     setDate("");
@@ -146,152 +154,151 @@ export function MilestoneModal({
   };
 
   return (
-    <>
-      <CustomToaster />
-      <div style={{ pointerEvents: isWidgetOpen ? "none" : "auto" }}>
-        <Dialog open={isOpen} onOpenChange={handleCloseModal}>
-          <DialogContent
-            className="max-w-lg"
-            onInteractOutside={(e) => {
-              if (isWidgetOpen) e.preventDefault();
-            }}
-            onPointerDownOutside={(e) => {
-              if (isWidgetOpen) e.preventDefault();
-            }}
-          >
-          <DialogHeader>
+    <div style={{ pointerEvents: isWidgetOpen ? "none" : "auto" }}>
+      <Dialog open={isOpen} onOpenChange={handleCloseModal}>
+        <DialogContent
+          className="flex max-h-[min(90vh,640px)] max-w-lg flex-col gap-0 overflow-hidden p-0"
+          onInteractOutside={(e) => {
+            if (isWidgetOpen) e.preventDefault();
+          }}
+          onPointerDownOutside={(e) => {
+            if (isWidgetOpen) e.preventDefault();
+          }}
+        >
+          <DialogHeader className="shrink-0 px-6 pt-6 pb-2 text-left">
             <DialogTitle>
               {mode === "add" ? "Adicionar Marco" : "Editar Marco"}
             </DialogTitle>
-            <DialogDescription>
-              Preencha as informações do marco (até 3 mídias).
+            <DialogDescription className="sr-only">
+              {mode === "add" ? "Adicionar" : "Editar"} marco pessoal com título,
+              descrição, data e até 3 mídias.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-4 space-y-4">
+              <div>
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Título"
+                  maxLength={255}
+                />
+                <p className="text-xs text-muted-foreground mt-0.5 text-right">
+                  {title.length}/255
+                </p>
+              </div>
+              <div>
+                <Textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Descrição"
+                  maxLength={500}
+                  className="resize-none"
+                />
+                <p className="text-xs text-muted-foreground mt-0.5 text-right">
+                  {description.length}/500
+                </p>
+              </div>
               <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Título"
-                maxLength={255}
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                placeholder="Data"
+                max={maxDate}
               />
-              <p className="text-xs text-muted-foreground mt-0.5 text-right">
-                {title.length}/255
-              </p>
+              <div>
+                <p className="text-sm font-medium mb-2">Mídias (máx. 3)</p>
+                {uploadedFiles.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2 mb-2">
+                    {uploadedFiles.map((file, index) => (
+                      <Card key={index} className="relative overflow-hidden">
+                        <div className="relative aspect-square">
+                          {file.media_type === "video" ? (
+                            <video
+                              src={file.media_url}
+                              className="w-full h-full object-cover"
+                              controls
+                            />
+                          ) : (
+                            <img
+                              src={file.media_url}
+                              alt="Preview"
+                              className="w-full h-full object-cover"
+                            />
+                          )}
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-1 right-1 w-7 h-7"
+                            onClick={() => removeMedia(index)}
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+                {uploadedFiles.length < 3 && (
+                  <CldUploadWidget
+                    key={`milestone-${widgetKey}`}
+                    signatureEndpoint="/api/signed-milestones"
+                    uploadPreset={PresetsCloudinary.profile_milestones}
+                    options={{
+                      detection: "unidet",
+                      sources: ["local"],
+                      maxFiles: 3 - uploadedFiles.length,
+                      multiple: true,
+                      clientAllowedFormats: ["image", "video"],
+                      maxImageFileSize: 5000000,
+                      maxVideoFileSize: 50000000,
+                      language: "pt-br",
+                      showCompletedButton: true,
+                    }}
+                    onSuccess={handleUploadSuccess}
+                    onError={handleUploadError}
+                    onOpen={handleWidgetOpen}
+                    onClose={handleWidgetClose}
+                  >
+                    {({ open }) => (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="w-full sm:w-auto"
+                        onClick={() => {
+                          if (uploadedFiles.length >= 3) return;
+                          open();
+                        }}
+                        disabled={uploadedFiles.length >= 3}
+                      >
+                        <ImagePlus className="w-4 h-4 mr-2" />
+                        Adicionar mídia
+                      </Button>
+                    )}
+                  </CldUploadWidget>
+                )}
+              </div>
             </div>
-            <div>
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Descrição"
-                maxLength={500}
-                className="resize-none"
-              />
-              <p className="text-xs text-muted-foreground mt-0.5 text-right">
-                {description.length}/500
-              </p>
-            </div>
-            <Input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              placeholder="Data"
-              max={maxDate}
-            />
-            <div>
-              <p className="text-sm font-medium mb-2">Mídias (máx. 3)</p>
-              {uploadedFiles.length > 0 && (
-                <div className="grid grid-cols-3 gap-2 mb-2">
-                  {uploadedFiles.map((file, index) => (
-                    <Card key={index} className="relative overflow-hidden">
-                      <div className="relative aspect-square">
-                        {file.media_type === "video" ? (
-                          <video
-                            src={file.media_url}
-                            className="w-full h-full object-cover"
-                            controls
-                          />
-                        ) : (
-                          <img
-                            src={file.media_url}
-                            alt="Preview"
-                            className="w-full h-full object-cover"
-                          />
-                        )}
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          className="absolute top-1 right-1 w-7 h-7"
-                          onClick={() => removeMedia(index)}
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
-              {uploadedFiles.length < 3 && (
-                <CldUploadWidget
-                  key={`milestone-${widgetKey}`}
-                  signatureEndpoint="/api/signed-milestones"
-                  uploadPreset={PresetsCloudinary.profile_milestones}
-                  options={{
-                    detection: "unidet",
-                    sources: ["local"],
-                    maxFiles: 3 - uploadedFiles.length,
-                    multiple: true,
-                    clientAllowedFormats: ["image", "video"],
-                    maxImageFileSize: 5000000,
-                    maxVideoFileSize: 50000000,
-                    language: "pt-br",
-                    showCompletedButton: true,
-                  }}
-                  onSuccess={handleUploadSuccess}
-                  onError={handleUploadError}
-                  onOpen={handleWidgetOpen}
-                  onClose={handleWidgetClose}
-                >
-                  {({ open }) => (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="text-muted-foreground hover:text-primary"
-                      onClick={() => {
-                        if (uploadedFiles.length >= 3) return;
-                        open();
-                      }}
-                      disabled={uploadedFiles.length >= 3}
-                    >
-                      <ImagePlus className="w-5 h-5" />
-                    </Button>
-                  )}
-                </CldUploadWidget>
-              )}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={isSubmitting || !title.trim() || !date.trim()}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Salvando...
-                </>
-              ) : (
-                "Salvar"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter className="shrink-0 border-t border-border px-6 py-4">
+              <Button variant="outline" onClick={onClose}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting || !title.trim() || !date.trim()}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  "Salvar"
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-    </>
-  );
+    );
 }

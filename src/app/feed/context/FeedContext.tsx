@@ -6,6 +6,8 @@ import React, {
   useState,
   useCallback,
   useEffect,
+  useMemo,
+  useRef,
 } from "react";
 import { useCreatePostContext } from "@/context/CreatePostContext";
 import { PostProps } from "../types/PostProps";
@@ -13,12 +15,13 @@ import { FeedContextType } from "./FeedContextType";
 import { ResponseFeed } from "../types/ResponseFeed";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useAuthContext } from "@/context/AuthContext";
+import { useProfileContext } from "@/context/ProfileContext";
 import { getFeedClient } from "../services/getFeedClient";
+import { parseFeedCursor } from "../utils/parseFeedCursor";
+import type { FeedMode } from "../types/FeedMode";
 
-// Criando o contexto
 export const FeedContext = createContext<FeedContextType | undefined>(undefined);
 
-// Hook de acesso
 export const useFeedContext = () => {
   const context = useContext(FeedContext);
   if (!context) {
@@ -27,7 +30,6 @@ export const useFeedContext = () => {
   return context;
 };
 
-// Provider
 export const FeedProvider = ({
   children,
   response,
@@ -37,28 +39,91 @@ export const FeedProvider = ({
 }) => {
   const [posts, setPosts] = useState<PostProps[]>(response.data);
   const [createPostOpen, setCreatePostOpen] = useState(false);
+  const [feedMode, setFeedModeState] = useState<FeedMode>("following");
+  const userPickedTabRef = useRef(false);
+  const initialRedirectDoneRef = useRef(false);
   const { user } = useAuthContext();
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useInfiniteQuery({
-      queryKey: ["feed-posts"],
-      queryFn: ({ pageParam }) => getFeedClient(pageParam),
-      getNextPageParam: (lastPage) => {
-        if (lastPage?.next_page) {
-          const url = new URL(lastPage.next_page);
-          return url.searchParams.get("cursor");
-        }
-        return null;
-      },
-      enabled: !!user,
-      initialPageParam: null,
-    });
+  const { profile, fetchProfile } = useProfileContext();
+
+  const followingCount = useMemo(() => {
+    if (!profile || !Array.isArray(profile.follows)) return 0;
+    return profile.follows.filter((followedId) => followedId !== profile.id)
+      .length;
+  }, [profile]);
 
   useEffect(() => {
-    if (data?.pages) {
-      const merged = data.pages.flatMap((page) => page.data ?? []);
-      setPosts(merged);
-    }
+    if (!user?.user_id) return;
+    void fetchProfile();
+  }, [user?.user_id, fetchProfile]);
+
+  const setFeedMode = useCallback((mode: FeedMode) => {
+    userPickedTabRef.current = true;
+    setFeedModeState(mode);
+    setPosts([]);
+  }, []);
+
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isPending,
+    isFetching,
+  } = useInfiniteQuery({
+    queryKey: ["feed-posts", feedMode],
+    queryFn: ({ pageParam }) => getFeedClient(pageParam, feedMode),
+    getNextPageParam: (lastPage) => parseFeedCursor(lastPage?.next_page),
+    enabled: !!user,
+    initialPageParam: null as string | null,
+    initialData:
+      feedMode === "following"
+        ? {
+            pages: [
+              {
+                data: response.data,
+                next_page: response.next_page ?? null,
+              },
+            ],
+            pageParams: [null],
+          }
+        : undefined,
+    refetchOnWindowFocus: false,
+  });
+
+  const isFeedLoading = isPending && !isFetchingNextPage;
+
+  useEffect(() => {
+    if (!data?.pages) return;
+    const merged = data.pages.flatMap((page) => page.data ?? []);
+    setPosts(merged);
   }, [data]);
+
+  useEffect(() => {
+    if (userPickedTabRef.current || initialRedirectDoneRef.current) return;
+    if (profile === undefined) return;
+    if (feedMode !== "following") return;
+    if (isPending || isFetching) return;
+
+    const followingPosts = data?.pages.flatMap((page) => page.data ?? []) ?? [];
+    const hasFollowingPosts =
+      followingPosts.length > 0 ||
+      (data?.pages.length === 1 && response.data.length > 0);
+
+    if (followingCount === 0 || !hasFollowingPosts) {
+      setFeedModeState("explore");
+      setPosts([]);
+    }
+
+    initialRedirectDoneRef.current = true;
+  }, [
+    profile,
+    followingCount,
+    feedMode,
+    isPending,
+    isFetching,
+    data,
+    response.data.length,
+  ]);
 
   const handlePostCreated = useCallback((newPost: PostProps) => {
     setPosts((prev) => [newPost, ...prev]);
@@ -79,7 +144,7 @@ export const FeedProvider = ({
       setCreatePostOpen(argument);
       globalCreatePost?.handleCreatePostModal(argument);
     },
-    [globalCreatePost]
+    [globalCreatePost],
   );
 
   const handleRepost = useCallback((postId: number, repostId: number | null) => {
@@ -87,10 +152,18 @@ export const FeedProvider = ({
       prev.map((p) => {
         if (p.id !== postId) return p;
         if (repostId === null) {
-          return { ...p, quantity_reposts: Math.max(0, p.quantity_reposts - 1), user_repost_id: null };
+          return {
+            ...p,
+            quantity_reposts: Math.max(0, p.quantity_reposts - 1),
+            user_repost_id: null,
+          };
         }
-        return { ...p, quantity_reposts: p.quantity_reposts + 1, user_repost_id: repostId };
-      })
+        return {
+          ...p,
+          quantity_reposts: p.quantity_reposts + 1,
+          user_repost_id: repostId,
+        };
+      }),
     );
   }, []);
 
@@ -108,16 +181,20 @@ export const FeedProvider = ({
   const increaseCommentCount = (postId: number) => {
     setPosts((prev) =>
       prev.map((p) =>
-        p.id === postId ? { ...p, quantity_comment: p.quantity_comment + 1 } : p
-      )
+        p.id === postId
+          ? { ...p, quantity_comment: p.quantity_comment + 1 }
+          : p,
+      ),
     );
   };
 
   const decreaseCommentCount = (postId: number) => {
     setPosts((prev) =>
       prev.map((p) =>
-        p.id === postId ? { ...p, quantity_comment: p.quantity_comment - 1 } : p
-      )
+        p.id === postId
+          ? { ...p, quantity_comment: p.quantity_comment - 1 }
+          : p,
+      ),
     );
   };
 
@@ -132,8 +209,8 @@ export const FeedProvider = ({
                 ? p.quantity_likes - 1
                 : p.quantity_likes + 1,
             }
-          : p
-      )
+          : p,
+      ),
     );
   };
 
@@ -146,25 +223,39 @@ export const FeedProvider = ({
               ? ({ ...p, isRemoving: true } as PostProps & {
                   isRemoving: boolean;
                 })
-              : p
-          )
+              : p,
+          ),
         );
         setTimeout(() => {
           setPosts((prev) => prev.filter((p) => p.id !== postId));
         }, 300);
       } else {
         setPosts((prev) =>
-          prev.map((p) => (p.id === postId ? updatedPost : p))
+          prev.map((p) => (p.id === postId ? updatedPost : p)),
         );
       }
     },
-    []
+    [],
+  );
+
+  const handleAuthorFollow = useCallback(
+    (postId: number, following = true) => {
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId ? { ...p, user_already_follow: following } : p,
+        ),
+      );
+    },
+    [],
   );
 
   return (
     <FeedContext.Provider
       value={{
         posts,
+        feedMode,
+        setFeedMode,
+        isFeedLoading,
         handlePostCreated,
         handleRepost,
         handlePostUpdate,
@@ -178,6 +269,7 @@ export const FeedProvider = ({
         increaseCommentCount,
         decreaseCommentCount,
         injectPost,
+        handleAuthorFollow,
       }}
     >
       {children}

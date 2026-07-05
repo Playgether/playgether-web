@@ -37,6 +37,8 @@ import { createMilestone, updateMilestone } from "@/actions/milestones";
 import { deleteMilestone } from "@/services/deleteMilestone";
 import { deletePostFile } from "@/services/cloudinary_requests/deletePostFile";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
+import { GamesCanvasUserProfile } from "./GamesCanvasUserProfile";
+import { cn } from "@/lib/utils";
 
 interface GamesCanvasContentTabsProps {
   profile: getProfileByUsernameProps | null;
@@ -555,8 +557,49 @@ export function GamesCanvasContentTabs({
               window.history.replaceState(null, "", nextUrl);
             }
           }}
-          className="w-full"
+          className="w-full min-w-0"
         >
+          <div className="sticky top-[var(--layout-header-height)] z-10 bg-background/95 backdrop-blur-sm lg:static lg:z-auto lg:bg-transparent lg:backdrop-blur-none">
+            {/* Mobile: perfil + abas — sem bordas arredondadas para evitar vãos na junção */}
+            <div className="border border-border bg-card shadow-card lg:hidden">
+              <GamesCanvasUserProfile
+                profile={profile}
+                variant="compact"
+                embedded
+                onProfileUpdated={onProfileUpdated}
+              />
+              <TabsList className="!flex h-auto w-full min-w-0 flex-row gap-0 rounded-none border-0 border-t border-border/50 bg-muted/20 p-0">
+                {tabsData.map((tab) => (
+                  <TabsTrigger
+                    key={tab.id}
+                    value={tab.id}
+                    title={tab.label}
+                    className={cn(
+                      "flex h-9 min-h-0 min-w-0 flex-1 basis-0 flex-col items-center justify-center rounded-none border-b-2 border-transparent !px-0 py-0 transition-colors",
+                      "data-[state=active]:border-primary data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none",
+                    )}
+                  >
+                    <tab.icon className="h-4 w-4 shrink-0" />
+                    <span className="sr-only">{tab.label}</span>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </div>
+
+            {/* Desktop: abas separadas — largura total distribuída entre os itens */}
+            <TabsList className="mb-6 hidden h-auto w-full gap-1 border border-border bg-card p-1 lg:!flex lg:flex-row">
+              {tabsData.map((tab) => (
+                <TabsTrigger
+                  key={tab.id}
+                  value={tab.id}
+                  className="flex h-auto min-w-0 flex-1 basis-0 flex-col items-center gap-1 p-3 transition-all duration-200 data-[state=active]:bg-gradient-primary data-[state=active]:text-white data-[state=active]:shadow-neon"
+                >
+                  <tab.icon className="h-4 w-4 shrink-0" />
+                  <span className="whitespace-nowrap text-xs">{tab.label}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
           <TabsList className="flex flex-wrap justify-center lg:justify-start gap-1 bg-card border border-border p-1 mb-6 h-auto overflow-visible">
             {tabsData.filter((tab) => !tab.ownerOnly || isOwner).map((tab) => (
               <TabsTrigger
@@ -570,8 +613,8 @@ export function GamesCanvasContentTabs({
             ))}
           </TabsList>
 
-          <div className="overflow-visible rounded-lg border border-border bg-card shadow-card">
-            <TabsContent value="bio" className="p-6 space-y-4">
+          <div className="mt-3 overflow-visible rounded-lg border border-border bg-card shadow-card lg:mt-0">
+            <TabsContent value="bio" className="space-y-4 p-4 sm:p-6">
               <BioTab
                 profile={profile}
                 comments={comments}
@@ -590,7 +633,7 @@ export function GamesCanvasContentTabs({
               />
             </TabsContent>
 
-            <TabsContent value="game-stats" className="p-6">
+            <TabsContent value="game-stats" className="p-4 sm:p-6">
               <GameStatsTab
                 profile={profile}
                 selectedGame={selectedGame}
@@ -599,7 +642,7 @@ export function GamesCanvasContentTabs({
               />
             </TabsContent>
 
-            <TabsContent value="media" className="p-6">
+            <TabsContent value="media" className="p-4 sm:p-6">
               <MediaTab
                 profile={profile}
                 isOwner={isOwner}
@@ -608,7 +651,7 @@ export function GamesCanvasContentTabs({
               />
             </TabsContent>
 
-            <TabsContent value="posts" className="p-6 space-y-4">
+            <TabsContent value="posts" className="space-y-4 p-4 sm:p-6">
               <PostsTab
                 profile={profile}
                 isOwner={isOwner}
@@ -624,7 +667,7 @@ export function GamesCanvasContentTabs({
               />
             </TabsContent>
 
-            <TabsContent value="achievements" className="overflow-visible p-6">
+            <TabsContent value="achievements" className="overflow-visible p-4 sm:p-6">
               <AchievementsTab
                 profile={profile}
                 isOwner={isOwner}
@@ -636,7 +679,7 @@ export function GamesCanvasContentTabs({
               />
             </TabsContent>
 
-            <TabsContent value="milestones" className="p-6">
+            <TabsContent value="milestones" className="p-4 sm:p-6">
               <MilestonesTab
                 milestones={milestones}
                 isLoading={isLoadingMilestones}
@@ -664,7 +707,7 @@ export function GamesCanvasContentTabs({
               />
             </TabsContent>
 
-            <TabsContent value="games" className="p-6">
+            <TabsContent value="games" className="p-4 sm:p-6">
               <GamesLibraryTab profile={profile} isOwner={isOwner} />
             </TabsContent>
 

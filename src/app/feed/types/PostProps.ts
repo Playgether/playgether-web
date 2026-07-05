@@ -20,6 +20,7 @@ export interface PostProps {
   has_post_media: boolean;
   link: string;
   user_already_like: boolean;
+  user_already_follow?: boolean;
   verified: boolean;
   username: string;
   is_own?: boolean;

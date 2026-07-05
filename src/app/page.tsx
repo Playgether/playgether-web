@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function Initial() {
   return (
-    <div className="relative min-h-screen overflow-hidden">
+    <div className="relative min-h-screen overflow-x-hidden">
       <Video />
       <div className="absolute inset-0 bg-background/60" />
       <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-background/40" />

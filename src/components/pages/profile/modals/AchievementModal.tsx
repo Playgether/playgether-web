@@ -193,12 +193,12 @@ export function AchievementModal({
                 >
                   <X className="h-4 w-4" />
                 </DialogClose>
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
+                <DialogHeader className="text-left">
+                  <DialogTitle className="flex items-center gap-2 text-left">
                     <span>{achievement.icon}</span>
                     {achievement.title}
                   </DialogTitle>
-                  <DialogDescription>
+                  <DialogDescription className="text-left">
                     {achievement.description}
                   </DialogDescription>
                 </DialogHeader>
@@ -211,7 +211,10 @@ export function AchievementModal({
                       className="text-white border-0 text-xs gap-1.5"
                       style={{ background: config.badgeGradient }}
                     >
-                      <RarityLevelDot rarity={achievement.rarity} className="h-2 w-2" />
+                      <RarityLevelDot
+                        rarity={achievement.rarity}
+                        className="h-2 w-2"
+                      />
                       {config.label}
                     </Badge>
                   </div>

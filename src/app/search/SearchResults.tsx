@@ -67,13 +67,13 @@ function UserCard({ user, onClick }: { user: SearchUser; onClick: () => void }) 
     <button
       type="button"
       onClick={onClick}
-      className="w-full flex items-center gap-4 px-4 py-4 hover:bg-muted/40 transition-colors text-left border-b border-border/30 last:border-0"
+      className="flex w-full items-center gap-3 border-b border-border/30 px-3 py-3 text-left transition-colors last:border-0 hover:bg-muted/40 sm:gap-4 sm:px-4 sm:py-4"
     >
       <ProfileAvatar
         displayName={user.name}
         username={user.username}
         profilePhoto={user.profile_photo}
-        sizeClass="h-12 w-12"
+        sizeClass="h-10 w-10 sm:h-12 sm:w-12"
       />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
@@ -93,28 +93,28 @@ function PostCard({ post, onClick }: { post: SearchPost; onClick: () => void }) 
     <button
       type="button"
       onClick={onClick}
-      className="w-full flex gap-3 px-4 py-4 hover:bg-muted/40 transition-colors text-left border-b border-border/30 last:border-0"
+      className="flex w-full gap-2.5 border-b border-border/30 px-3 py-3 text-left transition-colors last:border-0 hover:bg-muted/40 sm:gap-3 sm:px-4 sm:py-4"
     >
       <ProfileAvatar
         displayName={post.name}
         username={post.username}
         profilePhoto={post.profile_photo}
-        sizeClass="h-10 w-10 shrink-0"
+        sizeClass="h-9 w-9 shrink-0 sm:h-10 sm:w-10"
       />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="font-semibold text-sm truncate">{post.name}</span>
-          <span className="text-xs text-muted-foreground shrink-0">@{post.username}</span>
-          <span className="text-xs text-muted-foreground shrink-0">·</span>
-          <span className="text-xs text-muted-foreground shrink-0">{timeAgo(post.timestamp)}</span>
+      <div className="min-w-0 flex-1">
+        <div className="mb-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 sm:gap-x-2">
+          <span className="truncate text-sm font-semibold">{post.name}</span>
+          <span className="shrink-0 text-xs text-muted-foreground">@{post.username}</span>
+          <span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">·</span>
+          <span className="shrink-0 text-xs text-muted-foreground">{timeAgo(post.timestamp)}</span>
         </div>
-        <p className="text-sm text-foreground/90 line-clamp-3 break-words">{post.comment}</p>
+        <p className="line-clamp-2 break-words text-sm text-foreground/90 sm:line-clamp-3">{post.comment}</p>
         {post.has_post_media && (
           <span className="inline-flex items-center gap-1 mt-1.5 text-xs text-muted-foreground">
             <ImageIcon className="w-3.5 h-3.5" />Mídia
           </span>
         )}
-        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+        <div className="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground sm:mt-2 sm:gap-4">
           <span className="flex items-center gap-1">
             <Heart className="w-3.5 h-3.5" />{formatCount(post.quantity_likes)}
           </span>
@@ -136,9 +136,9 @@ function RoomCard({ room, onClick }: { room: SearchRoom; onClick: () => void }) 
     <button
       type="button"
       onClick={onClick}
-      className="w-full flex items-center gap-4 px-4 py-4 hover:bg-muted/40 transition-colors text-left border-b border-border/30 last:border-0"
+      className="flex w-full items-center gap-3 border-b border-border/30 px-3 py-3 text-left transition-colors last:border-0 hover:bg-muted/40 sm:gap-4 sm:px-4 sm:py-4"
     >
-      <div className="w-12 h-12 rounded-xl bg-muted overflow-hidden shrink-0 flex items-center justify-center">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted sm:h-12 sm:w-12">
         {src ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={src} alt={room.group_name} className="w-full h-full object-cover" />
@@ -165,9 +165,9 @@ function GameCard({ game, onClick }: { game: SearchGame; onClick: () => void }) 
     <button
       type="button"
       onClick={onClick}
-      className="w-full flex items-center gap-4 px-4 py-4 hover:bg-muted/40 transition-colors text-left border-b border-border/30 last:border-0"
+      className="flex w-full items-center gap-3 border-b border-border/30 px-3 py-3 text-left transition-colors last:border-0 hover:bg-muted/40 sm:gap-4 sm:px-4 sm:py-4"
     >
-      <div className="w-12 h-12 rounded-xl bg-muted overflow-hidden shrink-0 flex items-center justify-center">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted sm:h-12 sm:w-12">
         {src ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={src} alt={game.name} className="w-full h-full object-cover" />
@@ -185,7 +185,7 @@ function GameCard({ game, onClick }: { game: SearchGame; onClick: () => void }) 
 
 function SectionHeader({ title }: { title: string }) {
   return (
-    <p className="px-4 pt-5 pb-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
+    <p className="px-3 pb-1.5 pt-4 text-xs font-bold uppercase tracking-widest text-muted-foreground sm:px-4 sm:pt-5 sm:pb-2">
       {title}
     </p>
   );
@@ -198,6 +198,27 @@ function EmptyState({ query }: { query: string }) {
       <p className="text-base">Nenhum resultado para &ldquo;{query}&rdquo;</p>
     </div>
   );
+}
+
+function hasResultsForTab(tab: Tab, data: GlobalSearchResults): boolean {
+  switch (tab) {
+    case "pessoas":
+      return data.users.length > 0;
+    case "posts":
+    case "midia":
+      return data.posts.length > 0;
+    case "salas":
+      return data.rooms.length > 0;
+    case "jogos":
+      return data.games.length > 0;
+    default:
+      return (
+        data.users.length > 0 ||
+        data.posts.length > 0 ||
+        data.rooms.length > 0 ||
+        data.games.length > 0
+      );
+  }
 }
 
 function LoadingState() {
@@ -318,19 +339,14 @@ export function SearchResults() {
 
   // ── render ────────────────────────────────────────────────────────────────
 
-  const hasResults =
-    results &&
-    (results.users.length > 0 ||
-      results.games.length > 0 ||
-      results.rooms.length > 0 ||
-      results.posts.length > 0);
+  const hasResults = results ? hasResultsForTab(activeTab, results) : false;
 
   return (
-    <div className="max-w-2xl mx-auto w-full">
+    <div className="mx-auto w-full max-w-2xl">
       {/* Header */}
       {q && (
-        <div className="px-4 pt-6 pb-2">
-          <h1 className="text-xl font-bold">
+        <div className="px-3 pb-2 pt-4 sm:px-4 sm:pt-6">
+          <h1 className="text-lg font-bold leading-snug sm:text-xl">
             Resultados para{" "}
             <span className="text-primary">&ldquo;{q}&rdquo;</span>
           </h1>
@@ -338,7 +354,7 @@ export function SearchResults() {
       )}
 
       {/* Tab bar */}
-      <div className="sticky top-[var(--layout-header-height)] z-20 bg-background/95 backdrop-blur-xl border-b border-border/40">
+      <div className="sticky top-[var(--layout-header-height)] z-20 border-b border-border/40 bg-background/95 backdrop-blur-xl">
         <div className="flex overflow-x-auto scrollbar-hide">
           {TABS.map((tab) => (
             <button
@@ -346,10 +362,10 @@ export function SearchResults() {
               type="button"
               onClick={() => switchTab(tab.id)}
               className={cn(
-                "flex items-center gap-2 px-5 py-3.5 text-sm font-medium whitespace-nowrap transition-colors border-b-2 shrink-0",
+                "flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2.5 text-xs font-medium whitespace-nowrap transition-colors sm:gap-2 sm:px-5 sm:py-3.5 sm:text-sm",
                 activeTab === tab.id
                   ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                  : "border-transparent text-muted-foreground hover:bg-muted/40 hover:text-foreground"
               )}
             >
               {tab.icon}
@@ -360,7 +376,7 @@ export function SearchResults() {
       </div>
 
       {/* Content */}
-      <div className="pb-8">
+      <div className="pb-6 sm:pb-8">
         {!q || q.length < 2 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-muted-foreground">
             <Search className="w-12 h-12 opacity-20" />
@@ -378,7 +394,7 @@ export function SearchResults() {
                 {results.users.length > 0 && (
                   <div>
                     <SectionHeader title="Pessoas" />
-                    <div className="bg-card/40 rounded-xl mx-4 overflow-hidden border border-border/30">
+                    <div className="mx-3 overflow-hidden rounded-xl border border-border/30 bg-card/40 sm:mx-4">
                       {results.users.map((u) => (
                         <UserCard
                           key={u.username}
@@ -402,7 +418,7 @@ export function SearchResults() {
                 {results.posts.length > 0 && (
                   <div>
                     <SectionHeader title="Posts" />
-                    <div className="bg-card/40 rounded-xl mx-4 overflow-hidden border border-border/30">
+                    <div className="mx-3 overflow-hidden rounded-xl border border-border/30 bg-card/40 sm:mx-4">
                       {results.posts.map((p) => (
                         <PostCard
                           key={p.id}
@@ -426,7 +442,7 @@ export function SearchResults() {
                 {results.rooms.length > 0 && (
                   <div>
                     <SectionHeader title="Salas" />
-                    <div className="bg-card/40 rounded-xl mx-4 overflow-hidden border border-border/30">
+                    <div className="mx-3 overflow-hidden rounded-xl border border-border/30 bg-card/40 sm:mx-4">
                       {results.rooms.map((r) => (
                         <RoomCard
                           key={r.id}
@@ -450,7 +466,7 @@ export function SearchResults() {
                 {results.games.length > 0 && (
                   <div>
                     <SectionHeader title="Jogos" />
-                    <div className="bg-card/40 rounded-xl mx-4 overflow-hidden border border-border/30">
+                    <div className="mx-3 overflow-hidden rounded-xl border border-border/30 bg-card/40 sm:mx-4">
                       {results.games.map((g) => (
                         <GameCard
                           key={g.id}
@@ -475,7 +491,7 @@ export function SearchResults() {
 
             {/* ── PESSOAS ── */}
             {activeTab === "pessoas" && results && (
-              <div className="bg-card/40 rounded-xl mx-4 mt-4 overflow-hidden border border-border/30">
+              <div className="mx-3 mt-3 overflow-hidden rounded-xl border border-border/30 bg-card/40 sm:mx-4 sm:mt-4">
                 {results.users.map((u) => (
                   <UserCard
                     key={u.username}
@@ -488,7 +504,7 @@ export function SearchResults() {
 
             {/* ── POSTS ── */}
             {activeTab === "posts" && results && (
-              <div className="bg-card/40 rounded-xl mx-4 mt-4 overflow-hidden border border-border/30">
+              <div className="mx-3 mt-3 overflow-hidden rounded-xl border border-border/30 bg-card/40 sm:mx-4 sm:mt-4">
                 {results.posts.map((p) => (
                   <PostCard
                     key={p.id}
@@ -501,24 +517,20 @@ export function SearchResults() {
 
             {/* ── MÍDIA ── */}
             {activeTab === "midia" && results && (
-              <div className="bg-card/40 rounded-xl mx-4 mt-4 overflow-hidden border border-border/30">
-                {results.posts.length > 0 ? (
-                  results.posts.map((p) => (
-                    <PostCard
-                      key={p.id}
-                      post={p}
-                      onClick={() => navigate(`/feed/${p.id}`)}
-                    />
-                  ))
-                ) : (
-                  <EmptyState query={q} />
-                )}
+              <div className="mx-3 mt-3 overflow-hidden rounded-xl border border-border/30 bg-card/40 sm:mx-4 sm:mt-4">
+                {results.posts.map((p) => (
+                  <PostCard
+                    key={p.id}
+                    post={p}
+                    onClick={() => navigate(`/feed/${p.id}`)}
+                  />
+                ))}
               </div>
             )}
 
             {/* ── SALAS ── */}
             {activeTab === "salas" && results && (
-              <div className="bg-card/40 rounded-xl mx-4 mt-4 overflow-hidden border border-border/30">
+              <div className="mx-3 mt-3 overflow-hidden rounded-xl border border-border/30 bg-card/40 sm:mx-4 sm:mt-4">
                 {results.rooms.map((r) => (
                   <RoomCard
                     key={r.id}
@@ -531,7 +543,7 @@ export function SearchResults() {
 
             {/* ── JOGOS ── */}
             {activeTab === "jogos" && results && (
-              <div className="bg-card/40 rounded-xl mx-4 mt-4 overflow-hidden border border-border/30">
+              <div className="mx-3 mt-3 overflow-hidden rounded-xl border border-border/30 bg-card/40 sm:mx-4 sm:mt-4">
                 {results.games.map((g) => (
                   <GameCard
                     key={g.id}

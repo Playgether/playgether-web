@@ -247,14 +247,14 @@ export function BioTab({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Sobre mim</h3>
+      <h3 className="text-base font-semibold sm:text-lg">Sobre mim</h3>
       <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
         {profile?.bio}
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
+      <div className="grid grid-cols-1 gap-4 pt-4 sm:gap-6 sm:pt-6 md:grid-cols-2">
         <div className="space-y-4">
-          <h4 className="font-semibold text-lg flex items-center gap-2">
+          <h4 className="font-semibold text-base flex items-center gap-2 sm:text-lg">
             <Gamepad2Icon className="h-6 w-6 text-card-foreground" />
             Jogos
           </h4>
@@ -283,7 +283,7 @@ export function BioTab({
         </div>
 
         <div className="space-y-4">
-          <h4 className="font-semibold text-lg flex items-center gap-2">
+          <h4 className="font-semibold text-base flex items-center gap-2 sm:text-lg">
             <ChartNoAxesColumn className="h-6 w-6 text-card-foreground" />
             Estatísticas Rápidas
           </h4>
@@ -316,7 +316,7 @@ export function BioTab({
       </Dialog>
 
       <div className="pt-8 border-t border-border">
-        <h4 className="font-semibold text-lg mb-4 flex items-center gap-2">
+        <h4 className="mb-3 flex items-center gap-2 text-base font-semibold sm:mb-4 sm:text-lg">
           <MessageCircle className="h-5 w-5 text-card-foreground" />
           Comentários
         </h4>
@@ -337,7 +337,7 @@ export function BioTab({
             comments?.map((comment: any) => (
               <div
                 key={comment.id}
-                className="flex gap-3 p-4 bg-card/30 rounded-lg border border-border/50"
+                className="flex gap-3 rounded-lg border border-border/50 bg-card/30 p-3 sm:p-4"
               >
                 <div className="mt-1 shrink-0">
                   <ProfileAvatar

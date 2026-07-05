@@ -4,10 +4,10 @@ import React from "react";
 export default function QuickMessagesFooterTitle() {
   return (
     <>
-      <div className="w-8 h-8 bg-gradient-secondary rounded-lg flex items-center justify-center">
-        <Megaphone className="w-4 h-4 text-white" />
+      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-secondary lg:h-8 lg:w-8">
+        <Megaphone className="h-3.5 w-3.5 text-white lg:h-4 lg:w-4" />
       </div>
-      <span className="font-bold hover:text-primary transition-colors w-[160px]">
+      <span className="shrink-0 text-sm font-bold transition-colors hover:text-primary lg:w-[160px] lg:text-base">
         Alto Falante
       </span>
     </>
