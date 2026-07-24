@@ -44,14 +44,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ChevronUp,
+  Maximize2,
   MoreHorizontal,
   PenLine,
   Repeat2,
   X as XIcon,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { CustomToast } from "@/components/ui/customSonner";
+import {
+  MOBILE_COMMENTS_HANDLE_HEIGHT,
+  useMobileCommentsSheet,
+} from "./useMobileCommentsSheet";
 
 export const PostModal = ({
   postId,
@@ -64,6 +72,7 @@ export const PostModal = ({
 }) => {
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [isCurrentMediaLoaded, setIsCurrentMediaLoaded] = useState(false);
+  const [mediaFullscreenOpen, setMediaFullscreenOpen] = useState(false);
   const [openReplies, setOpenReplies] = useState<Set<number>>(new Set());
   const [loadingReplies, setLoadingReplies] = useState<Set<number>>(new Set());
   const [showFullText, setShowFullText] = useState(false);
@@ -71,6 +80,24 @@ export const PostModal = ({
   const searchParams = useSearchParams();
   const [mobileCommentsExpanded, setMobileCommentsExpanded] = useState(
     () => searchParams.get("focus") === "comments",
+  );
+  const {
+    isLgDesktop,
+    containerRef: commentsSheetContainerRef,
+    sheetY,
+    sheetMaxY,
+    captionOpacity,
+    captionY,
+    textHeroOpacity,
+    dragControls,
+    onDragStart,
+    onDrag,
+    onDragEnd,
+    onHandleClick,
+  } = useMobileCommentsSheet(
+    mobileCommentsExpanded,
+    setMobileCommentsExpanded,
+    postId,
   );
   const [newComment, setNewComment] = useState("");
   const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -638,6 +665,7 @@ export const PostModal = ({
 
   const postBodyContent = (
     <div
+      ref={commentsSheetContainerRef}
       className={cn(
         "relative flex h-full min-h-0 w-full flex-col",
         "lg:flex-row",
@@ -662,7 +690,7 @@ export const PostModal = ({
             <div
               className={cn(
                 "relative min-h-0 flex-1 flex-col overflow-hidden lg:hidden",
-                mobileCommentsExpanded ? "absolute inset-0 flex" : "flex",
+                "flex",
               )}
             >
               <div className="absolute inset-0 bg-gradient-to-b from-primary/20 via-background to-background" />
@@ -686,11 +714,9 @@ export const PostModal = ({
                   </Button>
                 </div>
               ) : null}
-              <div
-                className={cn(
-                  "relative z-10 flex min-h-0 flex-1 flex-col justify-center px-3 pb-3 pt-12",
-                  mobileCommentsExpanded && "opacity-40",
-                )}
+              <motion.div
+                className="relative z-10 flex min-h-0 flex-1 flex-col justify-center px-3 pb-3 pt-12"
+                style={{ opacity: textHeroOpacity }}
               >
                 {/* Hug content quando curto; scroll com padding quando longo */}
                 <div className="mx-auto max-h-full w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-border/50 bg-card/70 shadow-lg backdrop-blur-md">
@@ -749,7 +775,12 @@ export const PostModal = ({
                     </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
+              <div
+                className="shrink-0"
+                style={{ height: MOBILE_COMMENTS_HANDLE_HEIGHT }}
+                aria-hidden
+              />
             </div>
           ) : null}
 
@@ -757,9 +788,9 @@ export const PostModal = ({
           {hasMedia && (
             <div
               className={cn(
-                "relative flex w-full bg-black/50",
-                // Mobile: coluna (mídia + legenda); desktop: centraliza
-                "min-h-0 flex-1 flex-col lg:h-full lg:flex-none lg:items-center lg:justify-center",
+                "relative flex w-full",
+                // Mobile: mídia + legenda no topo (sem stage esticado); desktop: coluna cheia
+                "min-h-0 flex-1 flex-col justify-start bg-card lg:h-full lg:flex-none lg:items-center lg:justify-center lg:bg-black/50",
                 "lg:w-1/2 2xl:w-4/6",
               )}
             >
@@ -784,8 +815,40 @@ export const PostModal = ({
                   </Button>
                 </div>
               ) : null}
-              {/* Mobile: mídia ocupa o espaço; legenda preta só do tamanho do conteúdo */}
-              <div className="relative flex min-h-0 w-full flex-1 items-center justify-center overflow-hidden">
+              {/* Mobile: stage 4:5 com max-height + contain (sem crop); desktop: preenche a coluna */}
+              <div
+                role={
+                  post.medias[currentMediaIndex].media_type === "image"
+                    ? "button"
+                    : undefined
+                }
+                tabIndex={
+                  post.medias[currentMediaIndex].media_type === "image"
+                    ? 0
+                    : undefined
+                }
+                onClick={() => {
+                  if (post.medias[currentMediaIndex].media_type === "image") {
+                    setMediaFullscreenOpen(true);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (
+                    post.medias[currentMediaIndex].media_type === "image" &&
+                    (e.key === "Enter" || e.key === " ")
+                  ) {
+                    e.preventDefault();
+                    setMediaFullscreenOpen(true);
+                  }
+                }}
+                className={cn(
+                  "relative flex w-full items-center justify-center overflow-hidden bg-black",
+                  "max-lg:mx-auto max-lg:aspect-[4/5] max-lg:max-h-[min(58dvh,100%)] max-lg:shrink-0 max-lg:cursor-zoom-in",
+                  "lg:min-h-0 lg:flex-1 lg:cursor-default",
+                  post.medias[currentMediaIndex].media_type === "image" &&
+                    "lg:cursor-zoom-in",
+                )}
+              >
                 {!isCurrentMediaLoaded && (
                   <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
                     <LoadingComponent
@@ -798,11 +861,10 @@ export const PostModal = ({
                   <ImageComponent
                     media_id={post.medias[currentMediaIndex].media_file || ""}
                     alt="Post media"
-                    objectFit="cover"
+                    objectFit="contain"
                     objectPosition="center"
                     className={cn(
-                      // Mobile: preenche o stage (sem barras pretas); desktop: mostra a imagem inteira
-                      "w-full !object-cover transition-opacity duration-300 lg:!object-contain",
+                      "w-full transition-opacity duration-300",
                       isCurrentMediaLoaded ? "opacity-100" : "opacity-0",
                     )}
                     onLoad={() => setIsCurrentMediaLoaded(true)}
@@ -813,11 +875,26 @@ export const PostModal = ({
                     className={cn(
                       "max-h-full max-w-full transition-opacity duration-300",
                       isCurrentMediaLoaded ? "opacity-100" : "opacity-0",
-                      "h-full w-full object-cover",
+                      "h-full w-full object-contain",
                     )}
                     onLoadedData={() => setIsCurrentMediaLoaded(true)}
+                    onClick={(e) => e.stopPropagation()}
                   />
                 )}
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute bottom-3 right-3 z-20 h-9 w-9 rounded-full bg-black/55 text-white hover:bg-black/75 hover:text-white"
+                  aria-label="Ver mídia em tela cheia"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMediaFullscreenOpen(true);
+                  }}
+                >
+                  <Maximize2 className="h-4 w-4" />
+                </Button>
 
                 {/* Media Navigation — centralizado no stage da mídia (mobile + desktop) */}
                 {post?.medias && post.medias.length > 1 && (
@@ -827,7 +904,10 @@ export const PostModal = ({
                         variant="ghost"
                         size="icon"
                         className="absolute left-2 top-1/2 z-20 h-9 w-9 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 hover:text-white lg:left-4"
-                        onClick={prevMedia}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          prevMedia();
+                        }}
                       >
                         {icons.ChevronLeft}
                       </Button>
@@ -837,7 +917,10 @@ export const PostModal = ({
                         variant="ghost"
                         size="icon"
                         className="absolute right-2 top-1/2 z-20 h-9 w-9 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 hover:text-white lg:right-4"
-                        onClick={nextMedia}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          nextMedia();
+                        }}
                       >
                         {icons.ChevronRight}
                       </Button>
@@ -858,16 +941,22 @@ export const PostModal = ({
                 )}
               </div>
 
-              {/* Legenda mobile: altura do conteúdo | overlay com fade (expandido) */}
-              <div
+              {/* Legenda mobile: cola na mídia | overlay com fade (expandido) */}
+              <motion.div
                 className={cn(
                   "z-10 w-full lg:hidden",
                   overlayTextExpanded
                     ? "pointer-events-none absolute inset-0 flex flex-col bg-gradient-to-t from-black via-black/90 to-black/50 px-4 pb-14 pt-16"
-                    : "relative shrink-0 bg-black px-4 pb-3 pt-4",
+                    : "relative shrink-0 bg-card px-4 pb-3 pt-4",
                   mobileCommentsExpanded &&
-                    "pointer-events-none absolute inset-x-0 bottom-0 opacity-0",
+                    !overlayTextExpanded &&
+                    "pointer-events-none",
                 )}
+                style={
+                  overlayTextExpanded
+                    ? undefined
+                    : { opacity: captionOpacity, y: captionY }
+                }
               >
                 <div
                   className={cn(
@@ -878,37 +967,50 @@ export const PostModal = ({
                 >
                   {mobileCaptionBlock}
                 </div>
-              </div>
+              </motion.div>
+
+              {/* Empurra a barra de comentários para o fundo no mobile */}
+              <div className="min-h-0 flex-1 bg-card lg:hidden" aria-hidden />
+              {/* Espaço do handle do sheet no mobile */}
+              <div
+                className="shrink-0 lg:hidden"
+                style={{ height: MOBILE_COMMENTS_HANDLE_HEIGHT }}
+                aria-hidden
+              />
             </div>
           )}
 
-          <div
+          <motion.div
             className={cn(
               "flex min-h-0 flex-col bg-card",
-              hasMedia
-                ? cn(
-                    "lg:relative lg:min-h-0 lg:w-1/2 lg:flex-1 lg:overflow-hidden 2xl:w-2/6",
-                    "z-20 lg:z-auto",
-                    mobileCommentsExpanded
-                      ? "absolute inset-0 z-30 overflow-hidden lg:static lg:inset-auto lg:z-auto"
-                      : "relative shrink-0 lg:static",
-                  )
-                : cn(
-                    // Desktop: flatten into split layout
-                    "lg:contents",
-                    // Mobile: sheet cobre 100% da legenda
-                    "z-20",
-                    mobileCommentsExpanded
-                      ? "absolute inset-0 z-30 overflow-hidden"
-                      : "relative shrink-0",
-                  ),
+              isLgDesktop
+                ? hasMedia
+                  ? "relative min-h-0 w-1/2 flex-1 overflow-hidden 2xl:w-2/6"
+                  : "contents"
+                : "absolute inset-0 z-30 overflow-hidden",
             )}
+            style={isLgDesktop ? undefined : { y: sheetY }}
+            drag={isLgDesktop ? false : "y"}
+            dragControls={dragControls}
+            dragListener={false}
+            dragConstraints={
+              isLgDesktop ? undefined : { top: 0, bottom: sheetMaxY }
+            }
+            dragElastic={0.06}
+            onDragStart={onDragStart}
+            onDrag={onDrag}
+            onDragEnd={onDragEnd}
           >
             {/* Handle mobile: seta sobe/desce comentários */}
             <button
               type="button"
-              onClick={() => setMobileCommentsExpanded((v) => !v)}
-              className="flex w-full shrink-0 items-center justify-center gap-1 border-b border-border/50 py-2 text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground lg:hidden"
+              onPointerDown={(e) => {
+                if (isLgDesktop) return;
+                dragControls.start(e);
+              }}
+              onClick={onHandleClick}
+              className="flex w-full shrink-0 touch-none items-center justify-center gap-1 border-b border-border/50 py-2 text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground lg:hidden"
+              style={{ height: MOBILE_COMMENTS_HANDLE_HEIGHT }}
               aria-label={
                 mobileCommentsExpanded
                   ? hasMedia
@@ -1089,8 +1191,6 @@ export const PostModal = ({
                 hasMedia
                   ? "min-h-0 flex-1"
                   : "min-h-0 flex-1 lg:h-auto lg:w-1/2 lg:min-h-0 lg:overflow-hidden",
-                // Mobile: no modo peek, só a seta fica visível
-                !mobileCommentsExpanded && "hidden lg:flex",
               )}
             >
               {hasMedia ? (
@@ -1575,7 +1675,7 @@ export const PostModal = ({
               </form>
               )}
             </div>
-          </div>
+          </motion.div>
         </div>
 
   );
@@ -1610,6 +1710,97 @@ export const PostModal = ({
         confirmAction={confirmPostContextAction}
         setAlertOpen={setContextAlertOpen}
       />
+
+      {hasMedia ? (
+        <Dialog
+          open={mediaFullscreenOpen}
+          onOpenChange={setMediaFullscreenOpen}
+        >
+          <DialogContent
+            hideCloseButton
+            className={cn(
+              "!fixed !inset-0 !left-0 !top-0 z-[100] flex h-dvh w-screen !max-w-none !translate-x-0 !translate-y-0 flex-col gap-0 rounded-none border-0 bg-black p-0 shadow-none",
+              "data-[state=open]:zoom-in-100 data-[state=closed]:zoom-out-100",
+            )}
+          >
+            <VisuallyHidden>
+              <DialogTitle>Mídia em tela cheia</DialogTitle>
+            </VisuallyHidden>
+            <div className="absolute top-0 right-0 z-20 flex items-center gap-1 p-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-full text-white hover:bg-white/15 hover:text-white"
+                aria-label="Fechar tela cheia"
+                onClick={() => setMediaFullscreenOpen(false)}
+              >
+                <XIcon className="h-5 w-5" />
+              </Button>
+            </div>
+            <div className="relative flex min-h-0 flex-1 items-center justify-center p-2 sm:p-4">
+              {post.medias[currentMediaIndex].media_type === "image" ? (
+                <ImageComponent
+                  media_id={post.medias[currentMediaIndex].media_file || ""}
+                  alt="Post media fullscreen"
+                  objectFit="contain"
+                  objectPosition="center"
+                  className="h-full w-full"
+                />
+              ) : (
+                <VideoComponent
+                  media_id={post.medias[currentMediaIndex].media_file || ""}
+                  className="max-h-full max-w-full object-contain"
+                  controls
+                  autoPlay
+                />
+              )}
+
+              {post.medias.length > 1 ? (
+                <>
+                  {currentMediaIndex > 0 ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute left-2 top-1/2 z-20 h-10 w-10 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 hover:text-white sm:left-4"
+                      aria-label="Mídia anterior"
+                      onClick={prevMedia}
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </Button>
+                  ) : null}
+                  {currentMediaIndex < post.medias.length - 1 ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 top-1/2 z-20 h-10 w-10 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 hover:text-white sm:right-4"
+                      aria-label="Próxima mídia"
+                      onClick={nextMedia}
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </Button>
+                  ) : null}
+                  <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 space-x-2">
+                    {post.medias.map((_, index) => (
+                      <div
+                        key={index}
+                        className={cn(
+                          "h-2 w-2 rounded-full",
+                          index === currentMediaIndex
+                            ? "bg-white"
+                            : "bg-white/50",
+                        )}
+                      />
+                    ))}
+                  </div>
+                </>
+              ) : null}
+            </div>
+          </DialogContent>
+        </Dialog>
+      ) : null}
     </>
   );
 

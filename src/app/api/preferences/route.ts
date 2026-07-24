@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { api } from "@/services/api";
-
-async function getToken() {
-  return (await cookies()).get("accessToken")?.value;
-}
+import { ensureAccessTokenCookie } from "@/actions/refreshToken";
 
 export async function GET() {
-  const accessToken = await getToken();
-  if (!accessToken) return NextResponse.json({ detail: "Não autorizado" }, { status: 401 });
+  const accessToken = await ensureAccessTokenCookie();
+  if (!accessToken) {
+    return NextResponse.json({ detail: "Não autorizado" }, { status: 401 });
+  }
 
   try {
     const response = await api.get("/api/v1/preferences/", {
@@ -17,13 +15,18 @@ export async function GET() {
     return NextResponse.json(response.data);
   } catch (error: any) {
     const status = error.response?.status ?? 500;
-    return NextResponse.json({ detail: error.response?.data?.detail ?? "Erro" }, { status });
+    return NextResponse.json(
+      { detail: error.response?.data?.detail ?? "Erro" },
+      { status },
+    );
   }
 }
 
 export async function PATCH(request: NextRequest) {
-  const accessToken = await getToken();
-  if (!accessToken) return NextResponse.json({ detail: "Não autorizado" }, { status: 401 });
+  const accessToken = await ensureAccessTokenCookie();
+  if (!accessToken) {
+    return NextResponse.json({ detail: "Não autorizado" }, { status: 401 });
+  }
 
   try {
     const body = await request.json();

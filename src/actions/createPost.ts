@@ -1,7 +1,7 @@
 "use server";
 
 import { api } from "@/services/api";
-import { cookies } from "next/headers";
+import { ensureSessionAuth } from "@/actions/refreshToken";
 
 export interface PostMediaProps {
   media_file: string;
@@ -32,10 +32,9 @@ export async function createPost(data: {
   medias: PostMediaProps[];
 }) {
   try {
-    const accessToken = (await cookies()).get("accessToken")?.value;
-    const userId = (await cookies()).get("user_id")?.value;
+    const session = await ensureSessionAuth();
 
-    if (!accessToken || !userId) {
+    if (!session) {
       return {
         status: 401,
         error: "Unauthorized",
@@ -54,7 +53,7 @@ export async function createPost(data: {
 
     const response = await api.post("/api/v1/posts/", payload, {
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${session.access}`,
       },
     });
 

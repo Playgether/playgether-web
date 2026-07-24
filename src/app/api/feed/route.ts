@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { api } from "@/services/api";
-import { cookies } from "next/headers";
 import { handleApiError } from "../utils/handleApiError";
+import { ensureAccessTokenCookie } from "@/actions/refreshToken";
 
 export async function GET(request: NextRequest) {
-  const accessToken = (await cookies()).get("accessToken")?.value;
+  const accessToken = await ensureAccessTokenCookie();
+  if (!accessToken) {
+    return NextResponse.json({ detail: "Não autorizado" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
   const cursor = searchParams.get("cursor");
   const mode = searchParams.get("mode") || "following";

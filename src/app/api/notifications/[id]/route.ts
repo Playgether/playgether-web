@@ -1,24 +1,26 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { api } from "@/services/api";
+import { ensureSessionAuth } from "@/actions/refreshToken";
 
 export async function PATCH(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const jar = await cookies();
-  const accessToken = jar.get("accessToken")?.value;
-  const userId = jar.get("user_id")?.value;
+  const session = await ensureSessionAuth();
   const { id } = await params;
 
-  if (!accessToken || !userId) {
+  if (!session) {
     return NextResponse.json({ detail: "Não autorizado" }, { status: 401 });
   }
 
   try {
-    await api.patch(`/api/v1/users/${userId}/notifications/${id}/read/`, {}, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
+    await api.patch(
+      `/api/v1/users/${session.userId}/notifications/${id}/read/`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${session.access}` },
+      },
+    );
     return NextResponse.json({ detail: "Marcada como lida." });
   } catch (error: any) {
     const status = error.response?.status ?? 500;
@@ -30,19 +32,20 @@ export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const jar = await cookies();
-  const accessToken = jar.get("accessToken")?.value;
-  const userId = jar.get("user_id")?.value;
+  const session = await ensureSessionAuth();
   const { id } = await params;
 
-  if (!accessToken || !userId) {
+  if (!session) {
     return NextResponse.json({ detail: "Não autorizado" }, { status: 401 });
   }
 
   try {
-    await api.delete(`/api/v1/users/${userId}/notifications/${id}/delete/`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
+    await api.delete(
+      `/api/v1/users/${session.userId}/notifications/${id}/delete/`,
+      {
+        headers: { Authorization: `Bearer ${session.access}` },
+      },
+    );
     return new NextResponse(null, { status: 204 });
   } catch (error: any) {
     const status = error.response?.status ?? 500;
