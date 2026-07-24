@@ -882,22 +882,24 @@ export const PostModal = ({
                   />
                 )}
 
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute bottom-3 right-3 z-20 h-9 w-9 rounded-full bg-black/55 text-white hover:bg-black/75 hover:text-white"
-                  aria-label="Ver mídia em tela cheia"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setMediaFullscreenOpen(true);
-                  }}
-                >
-                  <Maximize2 className="h-4 w-4" />
-                </Button>
+                {!overlayTextExpanded ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute bottom-3 right-3 z-20 h-9 w-9 rounded-full bg-black/55 text-white hover:bg-black/75 hover:text-white"
+                    aria-label="Ver mídia em tela cheia"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMediaFullscreenOpen(true);
+                    }}
+                  >
+                    <Maximize2 className="h-4 w-4" />
+                  </Button>
+                ) : null}
 
                 {/* Media Navigation — centralizado no stage da mídia (mobile + desktop) */}
-                {post?.medias && post.medias.length > 1 && (
+                {!overlayTextExpanded && post?.medias && post.medias.length > 1 && (
                   <>
                     {currentMediaIndex > 0 && (
                       <Button
@@ -944,10 +946,10 @@ export const PostModal = ({
               {/* Legenda mobile: cola na mídia | overlay com fade (expandido) */}
               <motion.div
                 className={cn(
-                  "z-10 w-full lg:hidden",
+                  "w-full lg:hidden",
                   overlayTextExpanded
-                    ? "pointer-events-none absolute inset-0 flex flex-col bg-gradient-to-t from-black via-black/90 to-black/50 px-4 pb-14 pt-16"
-                    : "relative shrink-0 bg-card px-4 pb-5 pt-4",
+                    ? "pointer-events-none absolute inset-0 z-30 flex flex-col bg-gradient-to-t from-black via-black/90 to-black/50 px-4 pb-14 pt-16"
+                    : "relative z-10 shrink-0 bg-card px-4 pb-5 pt-4",
                   mobileCommentsExpanded &&
                     !overlayTextExpanded &&
                     "pointer-events-none",
@@ -1108,26 +1110,34 @@ export const PostModal = ({
               {/* Texto do post — no mobile fica no overlay/hero; no PC permanece aqui */}
               {post.comment && (
                 <div className="mb-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowFullText((s) => !s)}
-                    className="text-primary hover:text-primary/80 px-3 py-1.5 rounded-md hover:bg-primary/10 -ml-2 mb-2"
-                  >
-                    {showFullText ? (
-                      <>
-                        {icons.EyeOff}
-                        Esconder texto
-                      </>
-                    ) : (
-                      <>
-                        {icons.Eye}
-                        Ver texto completo
-                      </>
-                    )}
-                  </Button>
-                  {showFullText && (
-                    <p className="text-foreground leading-relaxed whitespace-pre-wrap">
+                  {hasMedia ? (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowFullText((s) => !s)}
+                        className="text-primary hover:text-primary/80 px-3 py-1.5 rounded-md hover:bg-primary/10 -ml-2 mb-2"
+                      >
+                        {showFullText ? (
+                          <>
+                            {icons.EyeOff}
+                            Esconder texto
+                          </>
+                        ) : (
+                          <>
+                            {icons.Eye}
+                            Ver texto completo
+                          </>
+                        )}
+                      </Button>
+                      {showFullText ? (
+                        <p className="text-foreground leading-relaxed whitespace-pre-wrap">
+                          {post.comment}
+                        </p>
+                      ) : null}
+                    </>
+                  ) : (
+                    <p className="px-3 text-foreground leading-relaxed whitespace-pre-wrap">
                       {post.comment}
                     </p>
                   )}
@@ -1849,7 +1859,7 @@ export const PostModal = ({
         <div
           className={cn(
             "mx-auto w-full min-w-0 px-3 pt-3 pb-10 sm:px-4 sm:pt-4",
-            hasMedia ? "max-w-5xl" : "max-w-3xl",
+            hasMedia ? "max-w-5xl" : "max-w-4xl",
           )}
         >
           <div
@@ -1857,9 +1867,11 @@ export const PostModal = ({
               postShellClassName,
               "w-full min-w-0 overflow-hidden",
               // Desconta header + global messages (altura dinâmica) + folga
+              // Mídia: deixa ~uma faixa do "Mais posts" visível no viewport
+              // Texto: um pouco mais alto que o card compacto anterior
               hasMedia
-                ? "h-[calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-1.25rem)] max-h-[calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-1.25rem)]"
-                : "h-[min(32rem,calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-2rem))] max-h-[calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-2rem)]",
+                ? "h-[calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-8.5rem)] max-h-[calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-8.5rem)]"
+                : "h-[min(36rem,calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-2rem))] max-h-[calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-2rem)]",
             )}
           >
             {postBodyContent}
