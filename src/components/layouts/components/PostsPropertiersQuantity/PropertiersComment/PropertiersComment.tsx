@@ -18,6 +18,7 @@ interface PropertiersCommentProps
 const PropertiersComment = ({
   quantity_comment,
   iconClassName,
+  className,
   ...rest
 }: PropertiersCommentProps) => {
   function formatNumber(number: number) {
@@ -46,8 +47,9 @@ const PropertiersComment = ({
       size="sm"
       className={twJoin(
         "text-muted-foreground hover:text-primary p-2",
-        rest.className
+        className
       )}
+      {...rest}
     >
       <MessageCircle className={twMerge("w-5 h-5 mr-2", iconClassName)} />
       {formatNumber(quantity_comment)}

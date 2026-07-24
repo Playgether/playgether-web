@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { PostModal } from "@/app/feed/components/PostModal";
 import { CommentsContextProvider } from "@/context/CommentsContext";
 import { getCommentsClient } from "@/services/getComments";
@@ -55,7 +55,9 @@ export function ProfilePostModal({
 
   return (
     <CommentsContextProvider response={commentsResponse} postId={postId}>
-      <PostModal postId={postId} onClose={onClose} />
+      <Suspense fallback={null}>
+        <PostModal postId={postId} onClose={onClose} />
+      </Suspense>
     </CommentsContextProvider>
   );
 }

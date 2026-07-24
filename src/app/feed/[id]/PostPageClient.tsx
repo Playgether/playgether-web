@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { PostModal } from "@/app/feed/components/PostModal";
 import { useFeedContext } from "@/app/feed/context/FeedContext";
@@ -11,7 +11,7 @@ interface PostPageClientProps {
   post: PostProps;
 }
 
-export function PostPageClient({ postId, post }: PostPageClientProps) {
+function PostPageClientInner({ postId, post }: PostPageClientProps) {
   const router = useRouter();
   const { injectPost, getPostById } = useFeedContext();
 
@@ -26,4 +26,12 @@ export function PostPageClient({ postId, post }: PostPageClientProps) {
   if (!postInContext) return null;
 
   return <PostModal postId={postId} onClose={() => router.push("/feed")} fullPage />;
+}
+
+export function PostPageClient(props: PostPageClientProps) {
+  return (
+    <Suspense fallback={null}>
+      <PostPageClientInner {...props} />
+    </Suspense>
+  );
 }

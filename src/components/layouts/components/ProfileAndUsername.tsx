@@ -62,7 +62,7 @@ const ProfileAndUsername = ({
             </div>
             <HighlightedAchievementBadges
               achievements={highlightedAchievements}
-              className="min-w-0"
+              className="max-w-full"
             />
           </div>
           {timestamp ? (
