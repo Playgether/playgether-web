@@ -785,7 +785,7 @@ export const PostModal = ({
                 </div>
               ) : null}
               {/* Mobile: mídia ocupa o espaço; legenda preta só do tamanho do conteúdo */}
-              <div className="relative flex min-h-0 w-full flex-1 items-center justify-center">
+              <div className="relative flex min-h-0 w-full flex-1 items-center justify-center overflow-hidden">
                 {!isCurrentMediaLoaded && (
                   <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
                     <LoadingComponent
@@ -798,10 +798,11 @@ export const PostModal = ({
                   <ImageComponent
                     media_id={post.medias[currentMediaIndex].media_file || ""}
                     alt="Post media"
-                    objectFit="contain"
+                    objectFit="cover"
                     objectPosition="center"
                     className={cn(
-                      "w-full transition-opacity duration-300",
+                      // Mobile: preenche o stage (sem barras pretas); desktop: mostra a imagem inteira
+                      "w-full !object-cover transition-opacity duration-300 lg:!object-contain",
                       isCurrentMediaLoaded ? "opacity-100" : "opacity-0",
                     )}
                     onLoad={() => setIsCurrentMediaLoaded(true)}
@@ -812,7 +813,7 @@ export const PostModal = ({
                     className={cn(
                       "max-h-full max-w-full transition-opacity duration-300",
                       isCurrentMediaLoaded ? "opacity-100" : "opacity-0",
-                      "h-full w-full object-contain lg:object-cover",
+                      "h-full w-full object-cover",
                     )}
                     onLoadedData={() => setIsCurrentMediaLoaded(true)}
                   />
@@ -889,16 +890,16 @@ export const PostModal = ({
                     "lg:relative lg:min-h-0 lg:w-1/2 lg:flex-1 lg:overflow-hidden 2xl:w-2/6",
                     "z-20 lg:z-auto",
                     mobileCommentsExpanded
-                      ? "absolute inset-x-0 bottom-0 top-[7%] overflow-hidden rounded-t-2xl shadow-[0_-8px_30px_rgba(0,0,0,0.35)] lg:static lg:inset-auto lg:rounded-none lg:shadow-none"
+                      ? "absolute inset-0 z-30 overflow-hidden lg:static lg:inset-auto lg:z-auto"
                       : "relative shrink-0 lg:static",
                   )
                 : cn(
                     // Desktop: flatten into split layout
                     "lg:contents",
-                    // Mobile: sheet sobre a legenda
+                    // Mobile: sheet cobre 100% da legenda
                     "z-20",
                     mobileCommentsExpanded
-                      ? "absolute inset-x-0 bottom-0 top-[10%] overflow-hidden rounded-t-2xl shadow-[0_-8px_30px_rgba(0,0,0,0.35)]"
+                      ? "absolute inset-0 z-30 overflow-hidden"
                       : "relative shrink-0",
                   ),
             )}
