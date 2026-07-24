@@ -58,7 +58,6 @@ function QuickMessagesModals({
         onMessageClick={(message) => {
           setSelectedMessage(message);
           setMessageModalOpen(true);
-          setHistoryOpen(false);
         }}
         historyMessages={historyMessages}
       />

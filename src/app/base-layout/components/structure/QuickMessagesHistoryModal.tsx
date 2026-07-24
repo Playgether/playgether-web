@@ -31,11 +31,11 @@ export const QuickMessagesHistoryModal = ({
         {components.QuickMessagesHistoryModalHeader}
 
         <ScrollArea className="flex-1 min-h-0 pr-2 sm:pr-4">
-          <div className="space-y-3 sm:space-y-4">
+          <div className="space-y-3 px-1 py-1.5 sm:space-y-4">
             {historyMessages.map((message) => (
               <div
                 key={message.id}
-                className={`rounded-lg p-3 sm:rounded-xl sm:p-4 border transition-all duration-300 hover:scale-[1.01] cursor-pointer ${
+                className={`rounded-lg p-3 sm:rounded-xl sm:p-4 border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md cursor-pointer ${
                   message.status === "expired" ? "opacity-60" : ""
                 } ${getPriorityConfig(message.priority).color}`}
                 onClick={() => onMessageClick?.(message)}

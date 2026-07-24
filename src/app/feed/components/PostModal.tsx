@@ -413,10 +413,6 @@ export const PostModal = ({
   const postShellClassName =
     "bg-card border border-border/50 backdrop-blur-sm shadow-card rounded-2xl overflow-hidden";
 
-  const postShellHeightStyle = hasMedia
-    ? { height: "calc(100vh - var(--layout-header-height) - 2rem)" }
-    : undefined;
-
   const isRepliesOpen = (id: number) => openReplies.has(id);
   const isRepliesLoading = (id: number) => loadingReplies.has(id);
   const isLoadingMoreReplies = (id: number) => loadingMoreReplies.has(id);
@@ -791,7 +787,10 @@ export const PostModal = ({
                 "relative flex w-full",
                 // Mobile: mídia + legenda no topo (sem stage esticado); desktop: coluna cheia
                 "min-h-0 flex-1 flex-col justify-start bg-card lg:h-full lg:flex-none lg:items-center lg:justify-center lg:bg-black/50",
-                "lg:w-1/2 2xl:w-4/6",
+                // Modal: proporção atual. Full page (URL): mídia um pouco menor pra dar espaço aos comentários
+                fullPage
+                  ? "lg:w-[52%] 2xl:w-[55%]"
+                  : "lg:w-1/2 2xl:w-4/6",
               )}
             >
               {/* Fechar + menu no mobile quando a mídia está em destaque */}
@@ -843,7 +842,8 @@ export const PostModal = ({
                 }}
                 className={cn(
                   "relative flex w-full items-center justify-center overflow-hidden bg-black",
-                  "max-lg:mx-auto max-lg:aspect-[4/5] max-lg:max-h-[min(58dvh,100%)] max-lg:shrink-0 max-lg:cursor-zoom-in",
+                  // Mobile: cabe na viewport deixando espaço pra legenda + handle; pode encolher se faltar altura
+                  "max-lg:mx-auto max-lg:aspect-[4/5] max-lg:max-h-[min(52dvh,100%)] max-lg:min-h-0 max-lg:shrink max-lg:cursor-zoom-in",
                   "lg:min-h-0 lg:flex-1 lg:cursor-default",
                   post.medias[currentMediaIndex].media_type === "image" &&
                     "lg:cursor-zoom-in",
@@ -947,7 +947,7 @@ export const PostModal = ({
                   "z-10 w-full lg:hidden",
                   overlayTextExpanded
                     ? "pointer-events-none absolute inset-0 flex flex-col bg-gradient-to-t from-black via-black/90 to-black/50 px-4 pb-14 pt-16"
-                    : "relative shrink-0 bg-card px-4 pb-3 pt-4",
+                    : "relative shrink-0 bg-card px-4 pb-5 pt-4",
                   mobileCommentsExpanded &&
                     !overlayTextExpanded &&
                     "pointer-events-none",
@@ -985,8 +985,17 @@ export const PostModal = ({
               "flex min-h-0 flex-col bg-card",
               isLgDesktop
                 ? hasMedia
-                  ? "relative min-h-0 w-1/2 flex-1 overflow-hidden 2xl:w-2/6"
-                  : "contents"
+                  ? cn(
+                      "relative min-h-0 flex-1 overflow-hidden",
+                      // Modal: proporção atual. Full page: coluna de comentários mais larga
+                      fullPage
+                        ? "w-[48%] 2xl:w-[45%]"
+                        : "w-1/2 2xl:w-2/6",
+                    )
+                  : // Full page texto: flex real (evita estourar com `contents`). Modal: inalterado
+                    fullPage
+                    ? "relative flex min-h-0 w-full min-w-0 flex-1 flex-row overflow-hidden"
+                    : "contents"
                 : "absolute inset-0 z-30 overflow-hidden",
             )}
             style={isLgDesktop ? undefined : { y: sheetY }}
@@ -1038,8 +1047,15 @@ export const PostModal = ({
               className={cn(
                 "relative z-20 hidden shrink-0 border-b border-border/50 bg-card lg:block",
                 hasMedia
-                  ? "max-h-[45%] overflow-y-auto"
-                  : "lg:w-1/2 lg:overflow-y-auto lg:border-r lg:border-border/50",
+                  ? cn(
+                      "overflow-y-auto",
+                      // Texto expandido: ocupa mais da coluna; recolhido: fica compacto
+                      showFullText ? "max-h-[75%]" : "max-h-[45%]",
+                    )
+                  : cn(
+                      "lg:w-1/2 lg:overflow-y-auto lg:border-r lg:border-border/50",
+                      fullPage && "min-h-0 min-w-0 lg:max-h-full",
+                    ),
               )}
             >
               <div className="absolute top-0 right-0 z-30 flex items-center">
@@ -1190,18 +1206,22 @@ export const PostModal = ({
                 "relative flex min-h-0 flex-col overflow-hidden bg-card",
                 hasMedia
                   ? "min-h-0 flex-1"
-                  : "min-h-0 flex-1 lg:h-auto lg:w-1/2 lg:min-h-0 lg:overflow-hidden",
+                  : cn(
+                      "min-h-0 flex-1 lg:w-1/2 lg:min-h-0 lg:overflow-hidden",
+                      // Modal: h-auto. Full page: preenche a coluna sem estourar
+                      fullPage ? "lg:h-full" : "lg:h-auto",
+                    ),
               )}
             >
               {hasMedia ? (
-                <div className="hidden shrink-0 border-b border-border/50 px-4 py-2 lg:block">
+                <div className="hidden shrink-0 border-b border-border/50 px-4 pb-3 pt-3 lg:block">
                   <h4 className="text-sm font-semibold">Comentários</h4>
                 </div>
               ) : (
                 <div className="hidden lg:block">{texts.comments}</div>
               )}
 
-              <div className="min-h-0 flex-1 overflow-hidden max-lg:pt-4">
+              <div className="min-h-0 flex-1 overflow-hidden max-lg:pt-4 lg:pt-2">
               {comments.data.length > 0 ? (
                 <Virtuoso
                   style={{ height: "100%" }}
@@ -1211,7 +1231,7 @@ export const PostModal = ({
                   components={{
                     Scroller: ScrollArea,
                     Header: () => (
-                      <div className="h-2 lg:hidden" aria-hidden />
+                      <div className="h-2 lg:h-3" aria-hidden />
                     ),
                   }}
                   overscan={3}
@@ -1738,14 +1758,26 @@ export const PostModal = ({
                 <XIcon className="h-5 w-5" />
               </Button>
             </div>
-            <div className="relative flex min-h-0 flex-1 items-center justify-center p-2 sm:p-4">
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label="Fechar tela cheia"
+              className="relative flex min-h-0 flex-1 cursor-zoom-out items-center justify-center p-2 sm:p-4 [&_img]:cursor-zoom-out [&_span]:cursor-zoom-out"
+              onClick={() => setMediaFullscreenOpen(false)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setMediaFullscreenOpen(false);
+                }
+              }}
+            >
               {post.medias[currentMediaIndex].media_type === "image" ? (
                 <ImageComponent
                   media_id={post.medias[currentMediaIndex].media_file || ""}
                   alt="Post media fullscreen"
                   objectFit="contain"
                   objectPosition="center"
-                  className="h-full w-full"
+                  className="h-full w-full cursor-zoom-out"
                 />
               ) : (
                 <VideoComponent
@@ -1753,6 +1785,7 @@ export const PostModal = ({
                   className="max-h-full max-w-full object-contain"
                   controls
                   autoPlay
+                  onClick={(e) => e.stopPropagation()}
                 />
               )}
 
@@ -1765,7 +1798,10 @@ export const PostModal = ({
                       size="icon"
                       className="absolute left-2 top-1/2 z-20 h-10 w-10 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 hover:text-white sm:left-4"
                       aria-label="Mídia anterior"
-                      onClick={prevMedia}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        prevMedia();
+                      }}
                     >
                       <ChevronLeft className="h-5 w-5" />
                     </Button>
@@ -1777,7 +1813,10 @@ export const PostModal = ({
                       size="icon"
                       className="absolute right-2 top-1/2 z-20 h-10 w-10 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 hover:text-white sm:right-4"
                       aria-label="Próxima mídia"
-                      onClick={nextMedia}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        nextMedia();
+                      }}
                     >
                       <ChevronRight className="h-5 w-5" />
                     </Button>
@@ -1806,24 +1845,29 @@ export const PostModal = ({
 
   if (fullPage) {
     return (
-      <div className="ml-0 md:ml-20">
+      <div className="ml-0 min-w-0 lg:ml-20">
         <div
           className={cn(
-            "mx-auto px-2 pt-2 pb-8 sm:px-4 sm:pt-4 sm:pb-10",
-            hasMedia ? "lg:max-w-[70vw]" : "max-w-5xl",
+            "mx-auto w-full min-w-0 px-3 pt-3 pb-10 sm:px-4 sm:pt-4",
+            hasMedia ? "max-w-5xl" : "max-w-3xl",
           )}
         >
           <div
             className={cn(
               postShellClassName,
-              "h-[calc(100dvh-var(--layout-header-height)-2rem)]",
-              !hasMedia && "lg:h-[calc(100vh-var(--layout-header-height)-2rem)]",
+              "w-full min-w-0 overflow-hidden",
+              // Desconta header + global messages (altura dinâmica) + folga
+              hasMedia
+                ? "h-[calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-1.25rem)] max-h-[calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-1.25rem)]"
+                : "h-[min(32rem,calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-2rem))] max-h-[calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-2rem)]",
             )}
-            style={hasMedia ? postShellHeightStyle : undefined}
           >
             {postBodyContent}
           </div>
-          <PostPageRecommendations currentPostId={postId} authorUsername={post.username} />
+          <PostPageRecommendations
+            currentPostId={postId}
+            authorUsername={post.username}
+          />
         </div>
         {sharables}
       </div>
