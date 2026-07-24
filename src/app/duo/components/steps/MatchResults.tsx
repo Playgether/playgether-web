@@ -227,13 +227,15 @@ export function MatchResults({
   const bootstrapping = queueStatus === null && !error;
 
   return (
-    <div className="min-h-layout-main w-full max-w-full py-8 px-4">
-      <div className="w-full max-w-5xl mx-auto animate-slide-in-up">
+    <div className="min-h-layout-main w-full max-w-full px-4 py-5 sm:py-8">
+      <div className="mx-auto w-full max-w-5xl animate-slide-in-up">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6 mt-12">
-          <div>
-            <h1 className="text-3xl font-bold text-card-foreground">{game.name} – Duos</h1>
-            <p className="text-muted-foreground mt-1 max-w-xl">
+        <div className="mb-5 mt-4 flex flex-col gap-3 sm:mb-6 sm:mt-12 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl font-bold leading-tight text-card-foreground sm:text-3xl">
+              {game.name} – Duos
+            </h1>
+            <p className="mt-1.5 text-sm text-muted-foreground sm:mt-1 sm:max-w-xl sm:text-base">
               {sortedMatches.length > 0 ? (
                 <>
                   {sortedMatches.length} parceiro{sortedMatches.length !== 1 ? "s" : ""}{" "}
@@ -252,11 +254,11 @@ export function MatchResults({
             </p>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex shrink-0 items-center gap-1.5 self-start rounded-full border border-border/50 bg-muted/20 px-2.5 py-1 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
             {connected ? (
-              <Wifi className="w-4 h-4 text-neon-green" />
+              <Wifi className="h-3.5 w-3.5 text-neon-green sm:h-4 sm:w-4" />
             ) : (
-              <WifiOff className="w-4 h-4 text-muted-foreground" />
+              <WifiOff className="h-3.5 w-3.5 text-muted-foreground sm:h-4 sm:w-4" />
             )}
             <span className="text-xs text-muted-foreground">
               {connected ? "Conectado" : "Reconectando..."}
@@ -268,39 +270,44 @@ export function MatchResults({
         {(queueStatus === "in_queue" ||
           queueStatus === "searching" ||
           queueStatus === "renewed") && (
-          <div className="card-glass rounded-xl p-4 mb-6 flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse" />
-              <span className="text-sm text-muted-foreground">
-                Na fila{" "}
-                {liveExpiryLabel ? `· Expira em ${liveExpiryLabel}` : null}
-              </span>
+          <div className="card-glass mb-5 flex flex-col gap-3 rounded-xl p-3.5 sm:mb-6 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-4">
+            <div className="flex min-w-0 items-start gap-2.5 sm:items-center sm:gap-3">
+              <div className="mt-1.5 h-2 w-2 shrink-0 animate-pulse rounded-full bg-neon-green sm:mt-0" />
+              <div className="min-w-0 text-sm text-muted-foreground">
+                <span className="font-medium text-card-foreground/90">Na fila</span>
+                {liveExpiryLabel ? (
+                  <span className="mt-0.5 block sm:mt-0 sm:inline">
+                    <span className="hidden sm:inline"> · </span>
+                    Expira em {liveExpiryLabel}
+                  </span>
+                ) : null}
+              </div>
             </div>
-            <div className="flex items-center flex-wrap gap-2 justify-end">
+            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
               <Button
                 size="sm"
                 variant="outline"
-                className="text-xs border-border"
+                className="h-8 flex-1 text-xs border-border sm:flex-none"
                 onClick={onEditFilters}
               >
-                <SlidersHorizontal className="w-3 h-3 mr-1" />
+                <SlidersHorizontal className="mr-1 h-3 w-3" />
                 Mudar filtros
               </Button>
               {isNearExpiry && (
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-xs border-yellow-500/50 text-yellow-400 hover:bg-yellow-500/10"
+                  className="h-8 flex-1 text-xs border-yellow-500/50 text-yellow-400 hover:bg-yellow-500/10 sm:flex-none"
                   onClick={renewQueue}
                 >
-                  <RefreshCw className="w-3 h-3 mr-1" />
+                  <RefreshCw className="mr-1 h-3 w-3" />
                   Renovar
                 </Button>
               )}
               <Button
                 size="sm"
                 variant="ghost"
-                className="text-xs text-muted-foreground hover:text-destructive"
+                className="h-8 flex-1 text-xs text-muted-foreground hover:text-destructive sm:flex-none"
                 onClick={leaveQueue}
               >
                 Sair da fila

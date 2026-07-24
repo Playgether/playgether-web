@@ -22,6 +22,7 @@ export const TopNavigation = () => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [friendsOpen, setFriendsOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const { BaseLayout } = useBaseLayoutServerContext();
   const router = useRouter();
   const icons = BaseLayout?.ServerTopNavigation.icons;
@@ -41,10 +42,14 @@ export const TopNavigation = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-border/50 bg-background/80 px-3 backdrop-blur-xl sm:gap-3 sm:px-4 lg:left-20 lg:h-16 lg:px-6">
       <div className="min-w-0 flex-1 lg:max-w-xl">
-        <GlobalSearchDropdown />
+        <GlobalSearchDropdown onOpenChange={setSearchOpen} />
       </div>
 
-      <div className="flex shrink-0 items-center gap-1 sm:gap-2 lg:gap-3">
+      <div
+        className={`flex shrink-0 items-center gap-1 sm:gap-2 lg:gap-3 ${
+          searchOpen ? "max-sm:hidden" : ""
+        }`}
+      >
         <Button
           variant="ghost"
           size="icon"
