@@ -131,9 +131,10 @@ type ChatHandlerContextProps = {
   clearRoomMusicError: () => void;
   roomAmbience: RoomAmbienceState;
   roomAmbienceMessages: RoomAmbienceMessage[];
-  sendRoomAmbience: (payload: RoomAmbienceClientAction) => void;
+  sendRoomAmbience: (payload: RoomAmbienceClientAction) => boolean;
   roomAmbienceError: string | null;
   clearRoomAmbienceError: () => void;
+  setRoomAmbienceError: (message: string | null) => void;
 };
 
 const ChatHandlerContext = createContext<ChatHandlerContextProps>(
@@ -256,8 +257,14 @@ const ChatHandlerContextProvider = ({
 
   const sendRoomAmbience = useCallback(
     (payload: RoomAmbienceClientAction) => {
-      if (readyState !== ReadyState.OPEN) return;
+      if (readyState !== ReadyState.OPEN) {
+        setRoomAmbienceError(
+          "Conexão da sala indisponível. Atualize a página e tente de novo.",
+        );
+        return false;
+      }
       sendJsonMessage({ type: "room_ambience", ...payload });
+      return true;
     },
     [readyState, sendJsonMessage],
   );
@@ -496,8 +503,11 @@ const ChatHandlerContextProvider = ({
           .map((x) => {
             const m = x as Record<string, unknown>;
             const author_user_id =
-              typeof m.author_user_id === "string" ? m.author_user_id : null;
-              typeof m.author_user_id === "number" ? m.author_user_id : 0;
+              typeof m.author_user_id === "string"
+                ? m.author_user_id
+                : typeof m.author_user_id === "number" && m.author_user_id > 0
+                  ? String(m.author_user_id)
+                  : null;
             const replyToId =
               typeof m.reply_to_id === "number" && m.reply_to_id > 0
                 ? m.reply_to_id
@@ -506,9 +516,13 @@ const ChatHandlerContextProvider = ({
               typeof m.transmission_session_id === "string"
                 ? m.transmission_session_id
                 : undefined;
+            const is_system =
+              Boolean(m.is_system) ||
+              author_user_id == null ||
+              author_user_id === "0";
             return {
               id: typeof m.id === "number" ? m.id : 0,
-              author_user_id,
+              author_user_id: is_system ? null : author_user_id,
               author_username:
                 typeof m.author_username === "string" ? m.author_username : "",
               author_photo:
@@ -516,7 +530,7 @@ const ChatHandlerContextProvider = ({
               body: typeof m.body === "string" ? m.body : "",
               created_at_ms:
                 typeof m.created_at_ms === "number" ? m.created_at_ms : 0,
-              is_system: author_user_id === 0,
+              is_system,
               reply_to_id: replyToId,
               reply_to_username:
                 typeof m.reply_to_username === "string"
@@ -549,9 +563,17 @@ const ChatHandlerContextProvider = ({
       if (currentSession && msgSession && msgSession !== currentSession) return;
       const normalized: RoomAmbienceMessage = {
         ...m,
+        author_user_id:
+          typeof m.author_user_id === "string"
+            ? m.author_user_id
+            : typeof m.author_user_id === "number" && m.author_user_id > 0
+              ? String(m.author_user_id)
+              : null,
         is_system:
-          m.is_system ??
-          (typeof m.author_user_id === "number" && m.author_user_id === 0),
+          Boolean(m.is_system) ||
+          m.author_user_id == null ||
+          m.author_user_id === 0 ||
+          m.author_user_id === "0",
         reply_to_id:
           typeof m.reply_to_id === "number" && m.reply_to_id > 0
             ? m.reply_to_id
@@ -562,6 +584,9 @@ const ChatHandlerContextProvider = ({
           typeof m.reply_to_body === "string" ? m.reply_to_body : undefined,
         transmission_session_id: msgSession || undefined,
       };
+      if (normalized.is_system) {
+        normalized.author_user_id = null;
+      }
       setRoomAmbienceMessages((prev) => {
         if (prev.some((x) => x.id === normalized.id)) return prev;
         return [...prev, normalized].slice(-200);
@@ -840,6 +865,7 @@ const ChatHandlerContextProvider = ({
         sendRoomAmbience,
         roomAmbienceError,
         clearRoomAmbienceError,
+        setRoomAmbienceError,
       }}
     >
       {children}

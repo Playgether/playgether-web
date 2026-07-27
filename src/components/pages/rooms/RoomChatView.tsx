@@ -328,7 +328,7 @@ export default function RoomChatView({
         );
       case "ambience":
         return (
-          <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-y-auto md:overflow-hidden">
             <RoomAmbiencePanel
               roomSlug={room.slug}
               roomOwnerId={room.owner}

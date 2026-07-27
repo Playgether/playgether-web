@@ -56,6 +56,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type YtVideoData = {
   video_id?: string;
@@ -443,7 +444,7 @@ export default function RoomAmbiencePanel({
   transmissionBanNotice = null,
 }: {
   roomSlug: string;
-  roomOwnerId: number;
+  roomOwnerId: string | number;
   entered: boolean;
   onEnteredChange: (entered: boolean) => void;
   transmissionBanNotice?: string | null;
@@ -455,6 +456,7 @@ export default function RoomAmbiencePanel({
     sendRoomAmbience,
     roomAmbienceError,
     clearRoomAmbienceError,
+    setRoomAmbienceError,
   } = useChatHandlerContext();
 
   const [createUrl, setCreateUrl] = useState("");
@@ -464,6 +466,7 @@ export default function RoomAmbiencePanel({
   const [replyTo, setReplyTo] = useState<RoomAmbienceMessage | null>(null);
   const [localVolume, setLocalVolume] = useState(80);
   const preMuteVolumeRef = useRef(80);
+  const isMobile = useIsMobile();
   const [chatOpen, setChatOpen] = useState(true);
   const [participantsOpen, setParticipantsOpen] = useState(false);
   const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
@@ -553,13 +556,13 @@ export default function RoomAmbiencePanel({
   }, []);
 
   const { can, snapshot, muteNotice } = useRoomPermissions();
-  const selfId = user?.user_id != null ? Number(user.user_id) : null;
+  const selfId = user?.user_id != null ? String(user.user_id) : null;
   const isOwner = snapshot?.is_owner ?? false;
 
   const amHost =
     selfId != null &&
     roomAmbience.active &&
-    roomAmbience.host_user_id === user.user_id;
+    String(roomAmbience.host_user_id) === selfId;
 
   const canCreateWatchparty = can("watchparty.create");
   const canChangeWatchpartyVideo =
@@ -572,10 +575,10 @@ export default function RoomAmbiencePanel({
   const canMuteWatchpartyMembers = can("members.mute");
 
   const canModerateWatchpartyTarget = useCallback(
-    (targetUserId: number) => {
-      if (selfId == null || targetUserId === selfId) return false;
-      if (targetUserId === roomOwnerId) return false;
-      if (targetUserId === roomAmbience.host_user_id) return false;
+    (targetUserId: string | number) => {
+      if (selfId == null || String(targetUserId) === selfId) return false;
+      if (String(targetUserId) === String(roomOwnerId)) return false;
+      if (String(targetUserId) === String(roomAmbience.host_user_id)) return false;
       return canModerateMember(snapshot, roomOwnerId, selfId, targetUserId);
     },
     [selfId, roomOwnerId, roomAmbience.host_user_id, snapshot],
@@ -585,7 +588,7 @@ export default function RoomAmbiencePanel({
     (m: RoomAmbienceMessage) => {
       if (ambienceMessageIsSystem(m)) return {};
       const authorId =
-        typeof m.author_user_id === "number" && m.author_user_id > 0
+        typeof m.author_user_id === "string" && m.author_user_id
           ? m.author_user_id
           : null;
       if (authorId == null) return {};
@@ -652,13 +655,7 @@ export default function RoomAmbiencePanel({
   /**
    * UI binária: “Ao vivo com host” só após drift estável por vários ticks (evita falso
    * positivo logo após seek/buffer). Independente de `syncMode`.
-    roomAmbience.host_user_id === user.user_id;
-
-  const viewerAlignedMaxDriftSec = DRIFT_MAX_ALIGNED_SEC;
-
-  /**
-   * UI binária: “Ao vivo com host” só com drift &lt; 1s e seguindo o host; caso contrário
-   * “Modo independente” (inclui buffer pós-entrada até alinhar).
+   * Caso contrário: “Modo independente” (inclui buffer pós-entrada até alinhar).
    */
   const viewerLiveWithHost =
     !amHost &&
@@ -2022,11 +2019,16 @@ export default function RoomAmbiencePanel({
   const createTransmission = async () => {
     clearRoomAmbienceError();
     const id = extractYoutubeVideoId(createUrl.trim());
-    if (!id) return;
+    if (!id) {
+      setRoomAmbienceError(
+        "Cole um link válido do YouTube para iniciar a transmissão.",
+      );
+      return;
+    }
     setBusy(true);
     try {
       const meta = await fetchYoutubeOEmbedMeta(id);
-      sendRoomAmbience({
+      const sent = sendRoomAmbience({
         action: "create",
         video_id: id,
         title: meta.title,
@@ -2035,6 +2037,7 @@ export default function RoomAmbiencePanel({
         channel_thumbnail: meta.channelThumbnail,
         channel_avatar_url: meta.channelAvatarUrl,
       });
+      if (!sent) return;
       setCreateUrl("");
       onEnteredChange(true);
     } finally {
@@ -2045,7 +2048,12 @@ export default function RoomAmbiencePanel({
   const changeTransmissionVideo = async () => {
     clearRoomAmbienceError();
     const id = extractYoutubeVideoId(changeUrl.trim());
-    if (!id) return;
+    if (!id) {
+      setRoomAmbienceError(
+        "Cole um link válido do YouTube para trocar o vídeo.",
+      );
+      return;
+    }
     setBusy(true);
     try {
       const meta = await fetchYoutubeOEmbedMeta(id);
@@ -2342,49 +2350,56 @@ export default function RoomAmbiencePanel({
   );
 
   const mainRowClass = cn(
-    "flex min-h-0 flex-1 flex-col gap-3 md:flex-row md:items-stretch md:gap-3",
+    "flex min-h-0 flex-col gap-3 md:flex-1 md:flex-row md:items-stretch md:gap-3",
   );
 
   const chatColumnClass = cn(
-    "order-3 flex min-h-0 min-w-0 flex-1 flex-col rounded-xl border border-border/60 bg-card md:max-w-[400px]",
-    (!chatOpen || playerIsFs) && "hidden",
+    "order-3 flex min-h-0 min-w-0 w-full flex-1 flex-col rounded-xl border border-border/60 bg-card",
+    "max-md:min-h-[min(42vh,360px)] max-md:max-h-[min(52vh,440px)]",
+    "md:max-w-[400px]",
   );
+
+  const showParticipantsFloat =
+    (playerIsFs && playerFloatParticipantsOpen) ||
+    (!playerIsFs && participantsOpen && isMobile);
+  /** Overlay só em tela cheia do player; em Pequena/Cinema no mobile o chat fica abaixo. */
+  const showChatFloat = playerIsFs && playerFloatChatOpen;
 
   return (
     <div
       ref={shellRef}
       className={cn(
-        "flex h-full min-h-0 w-full flex-col gap-3 p-3 md:p-4",
+        "flex h-full min-h-0 w-full flex-col gap-3 overflow-y-auto overscroll-contain p-3 md:overflow-hidden md:p-4",
         viewMode === "cinema" && "min-h-[min(92dvh,100%)] flex-1",
         viewMode === "small" && "min-h-0 flex-1",
         viewMode === "fullplayer" && "min-h-0 flex-1",
       )}
     >
       <div className="flex shrink-0 flex-col gap-3 border-b border-border/50 pb-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-red-500/35 bg-red-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-700 dark:text-red-300">
+        <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:justify-between">
+          <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-red-500/35 bg-red-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-700 dark:text-red-300">
             <YoutubeMark className="h-3 w-4 shrink-0 text-[#FF0033]" />
             Transmissão YouTube
           </span>
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:flex-wrap md:items-center md:justify-end">
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="h-8 gap-1.5"
+              className="h-8 w-full gap-1.5 md:w-auto"
               onClick={() => onEnteredChange(false)}
             >
               <ChevronLeft className="h-3.5 w-3.5" />
               Sair da transmissão
             </Button>
             {canChangeWatchpartyVideo || canCloseWatchparty ? (
-              <>
+              <div className="grid w-full grid-cols-2 gap-2 md:contents">
                 {canChangeWatchpartyVideo ? (
                   <Button
                     type="button"
                     variant="secondary"
                     size="sm"
-                    className="h-8"
+                    className="h-8 w-full md:w-auto"
                     onClick={() => {
                       setChangeUrl("");
                       setChangeVideoOpen(true);
@@ -2397,13 +2412,16 @@ export default function RoomAmbiencePanel({
                   <Button
                     variant="destructive"
                     size="sm"
-                    className="h-8"
+                    className={cn(
+                      "h-8 w-full md:w-auto",
+                      !canChangeWatchpartyVideo && "col-span-2",
+                    )}
                     onClick={() => setConfirmCloseOpen(true)}
                   >
                     Encerrar
                   </Button>
                 ) : null}
-              </>
+              </div>
             ) : null}
           </div>
         </div>
@@ -2495,11 +2513,13 @@ export default function RoomAmbiencePanel({
                 ) : null}
               </Button>
             ) : null}
-            {playerIsFs && playerFloatParticipantsOpen ? (
+            {showParticipantsFloat ? (
               <div
                 className={cn(
-                  "pointer-events-auto absolute bottom-[3.35rem] left-2 z-[35] flex max-h-[min(42vh,320px)] w-[min(92vw,280px)] flex-col overflow-hidden rounded-xl border border-white/10 bg-black text-foreground shadow-2xl ring-1 ring-white/5 sm:left-3",
+                  "pointer-events-auto absolute left-2 top-12 z-[35] flex max-h-[min(50vh,360px)] w-[min(92vw,280px)] flex-col overflow-hidden rounded-xl border border-white/10 bg-black text-foreground shadow-2xl ring-1 ring-white/5",
                   "[contain:layout]",
+                  playerIsFs && "md:left-3 md:max-h-[min(42vh,320px)]",
+                  !playerIsFs && "md:hidden",
                 )}
               >
                 <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 bg-black px-2 py-1.5">
@@ -2518,7 +2538,10 @@ export default function RoomAmbiencePanel({
                     size="icon"
                     className="h-8 w-8 shrink-0 text-zinc-100 hover:bg-white/10 hover:text-white"
                     title="Fechar"
-                    onClick={() => setPlayerFloatParticipantsOpen(false)}
+                    onClick={() => {
+                      if (playerIsFs) setPlayerFloatParticipantsOpen(false);
+                      else setParticipantsOpen(false);
+                    }}
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -2558,11 +2581,14 @@ export default function RoomAmbiencePanel({
                 </div>
               </div>
             ) : null}
-            {playerIsFs && playerFloatChatOpen ? (
+            {showChatFloat ? (
               <div
                 className={cn(
-                  "pointer-events-auto absolute bottom-[3.35rem] left-2 right-2 z-[35] flex max-h-[min(42vh,340px)] flex-col overflow-hidden rounded-xl border border-white/10 bg-black text-foreground shadow-2xl ring-1 ring-white/5 sm:left-auto sm:right-3 sm:w-[min(92vw,380px)]",
+                  "pointer-events-auto absolute left-2 right-2 top-12 z-[35] flex max-h-[min(50vh,360px)] flex-col overflow-hidden rounded-xl border border-white/10 bg-black text-foreground shadow-2xl ring-1 ring-white/5",
                   "[contain:layout]",
+                  playerIsFs &&
+                    "md:left-auto md:right-3 md:max-h-[min(42vh,340px)] md:w-[min(92vw,380px)]",
+                  !playerIsFs && "md:hidden",
                 )}
               >
                 <div className="flex shrink-0 items-center justify-between border-b border-white/10 bg-black px-2 py-1.5">
@@ -2578,7 +2604,10 @@ export default function RoomAmbiencePanel({
                     size="icon"
                     className="h-8 w-8 text-zinc-100 hover:bg-white/10 hover:text-white"
                     title="Fechar chat"
-                    onClick={() => setPlayerFloatChatOpen(false)}
+                    onClick={() => {
+                      if (playerIsFs) setPlayerFloatChatOpen(false);
+                      else setChatOpen(false);
+                    }}
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
@@ -2621,46 +2650,48 @@ export default function RoomAmbiencePanel({
               </div>
             ) : null}
           </div>
-          <div className="flex flex-wrap items-center gap-2 border-t border-white/10 bg-black/80 px-2 py-2">
-            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+          <div className="flex flex-col gap-2 border-t border-white/10 bg-black/80 px-2 py-2 md:flex-row md:flex-wrap md:items-center md:gap-2">
+            <div className="flex min-w-0 w-full flex-col gap-2 md:flex-1 md:flex-row md:flex-wrap md:items-center">
               {amHost ? (
                 <>
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-400/60 bg-rose-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-rose-200">
+                  <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-rose-400/60 bg-rose-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-rose-200">
                     <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-rose-400" />
                     Você é o host
                   </span>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="h-8 border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                    onClick={() => hostControl("play")}
-                  >
-                    Play
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="h-8 border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                    onClick={() => hostControl("pause")}
-                  >
-                    Pause
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="h-8 border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                    onClick={() => hostControl("seek", -10)}
-                  >
-                    -10s
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="h-8 border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                    onClick={() => hostControl("seek", 10)}
-                  >
-                    +10s
-                  </Button>
+                  <div className="grid w-full grid-cols-4 gap-1.5 md:flex md:w-auto md:flex-wrap md:gap-2">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="h-8 border-white/20 bg-white/10 px-1.5 text-white hover:bg-white/20 hover:text-white md:px-3"
+                      onClick={() => hostControl("play")}
+                    >
+                      Play
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="h-8 border-white/20 bg-white/10 px-1.5 text-white hover:bg-white/20 hover:text-white md:px-3"
+                      onClick={() => hostControl("pause")}
+                    >
+                      Pause
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="h-8 border-white/20 bg-white/10 px-1.5 text-white hover:bg-white/20 hover:text-white md:px-3"
+                      onClick={() => hostControl("seek", -10)}
+                    >
+                      -10s
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="h-8 border-white/20 bg-white/10 px-1.5 text-white hover:bg-white/20 hover:text-white md:px-3"
+                      onClick={() => hostControl("seek", 10)}
+                    >
+                      +10s
+                    </Button>
+                  </div>
                 </>
               ) : (
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -2701,10 +2732,10 @@ export default function RoomAmbiencePanel({
                 </div>
               )}
             </div>
-            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
-              <div className="flex flex-wrap items-center justify-end gap-1">
+            <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:flex-wrap md:items-center md:justify-end md:gap-3">
+              <div className="flex w-full items-center gap-1 md:w-auto md:flex-wrap md:justify-end">
                 {!amHost ? (
-                  <div className="relative">
+                  <div className="relative shrink-0">
                     <Button
                       ref={settingsTriggerRef}
                       type="button"
@@ -2789,53 +2820,55 @@ export default function RoomAmbiencePanel({
                     ) : null}
                   </div>
                 ) : null}
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className={cn(
-                    "h-8 gap-1 border-white/25 bg-black/40 px-2 text-xs text-white hover:bg-white/15 hover:text-white",
-                    layoutHighlight === "small" &&
-                      "border-primary/60 bg-primary/25 text-white",
-                  )}
-                  onClick={() => setLayoutMode("small")}
-                  title="Pequena"
-                >
-                  <LayoutGrid className="h-3.5 w-3.5" />
-                  Pequena
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className={cn(
-                    "h-8 gap-1 border-white/25 bg-black/40 px-2 text-xs text-white hover:bg-white/15 hover:text-white",
-                    layoutHighlight === "cinema" &&
-                      "border-primary/60 bg-primary/25 text-white",
-                  )}
-                  onClick={enterCinemaLayout}
-                  title="Cinema"
-                >
-                  <Film className="h-3.5 w-3.5" />
-                  Cinema
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className={cn(
-                    "h-8 gap-1 border-white/25 bg-black/40 px-2 text-xs text-white hover:bg-white/15 hover:text-white",
-                    layoutHighlight === "fullplayer" &&
-                      "border-primary/60 bg-primary/25 text-white",
-                  )}
-                  onClick={enterFullPlayerLayout}
-                  title="Tela cheia"
-                >
-                  <Maximize2 className="h-3.5 w-3.5" />
-                  Tela cheia
-                </Button>
+                <div className="grid min-w-0 flex-1 grid-cols-3 gap-1 md:flex md:flex-none md:flex-wrap md:gap-1">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className={cn(
+                      "h-8 gap-1 border-white/25 bg-black/40 px-1.5 text-[11px] text-white hover:bg-white/15 hover:text-white md:px-2 md:text-xs",
+                      layoutHighlight === "small" &&
+                        "border-primary/60 bg-primary/25 text-white",
+                    )}
+                    onClick={() => setLayoutMode("small")}
+                    title="Pequena"
+                  >
+                    <LayoutGrid className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">Pequena</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className={cn(
+                      "h-8 gap-1 border-white/25 bg-black/40 px-1.5 text-[11px] text-white hover:bg-white/15 hover:text-white md:px-2 md:text-xs",
+                      layoutHighlight === "cinema" &&
+                        "border-primary/60 bg-primary/25 text-white",
+                    )}
+                    onClick={enterCinemaLayout}
+                    title="Cinema"
+                  >
+                    <Film className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">Cinema</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className={cn(
+                      "h-8 gap-1 border-white/25 bg-black/40 px-1.5 text-[11px] text-white hover:bg-white/15 hover:text-white md:px-2 md:text-xs",
+                      layoutHighlight === "fullplayer" &&
+                        "border-primary/60 bg-primary/25 text-white",
+                    )}
+                    onClick={enterFullPlayerLayout}
+                    title="Tela cheia"
+                  >
+                    <Maximize2 className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">Tela cheia</span>
+                  </Button>
+                </div>
               </div>
-              <div className="flex min-w-[140px] max-w-[200px] cursor-pointer items-center gap-2 border-l border-white/15 pl-2 sm:min-w-[160px] sm:max-w-none">
+              <div className="flex w-full cursor-pointer items-center gap-2 rounded-md border border-white/10 bg-black/30 px-2 py-1 md:min-w-[160px] md:max-w-[200px] md:rounded-none md:border-0 md:border-l md:border-white/15 md:bg-transparent md:px-0 md:py-0 md:pl-2">
                 <button
                   type="button"
                   onClick={toggleMuteIcon}
@@ -2857,7 +2890,7 @@ export default function RoomAmbiencePanel({
                   max={100}
                   value={localVolume}
                   onChange={(e) => onVolumeRange(Number(e.target.value))}
-                  className="h-1 w-full min-w-[72px] cursor-pointer accent-primary"
+                  className="h-1 w-full min-w-0 flex-1 cursor-pointer accent-primary md:min-w-[72px]"
                   aria-label="Volume neste aparelho"
                 />
               </div>
@@ -2866,7 +2899,7 @@ export default function RoomAmbiencePanel({
         </div>
 
         {participantsOpen && !playerIsFs ? (
-          <div className="order-1 flex min-h-0 w-full shrink-0 flex-col rounded-xl border border-border/60 bg-card/95 shadow-sm md:order-none md:w-[260px]">
+          <div className="order-1 hidden min-h-0 w-full shrink-0 flex-col rounded-xl border border-border/60 bg-card/95 shadow-sm md:flex md:order-none md:w-[260px]">
             <div className="flex items-center justify-between gap-2 border-b border-border/60 px-2 py-2 md:px-3">
               <div className="flex min-w-0 flex-1 items-center gap-1.5">
                 <Button
@@ -2941,7 +2974,7 @@ export default function RoomAmbiencePanel({
           </div>
         ) : null}
 
-        {chatOpen ? (
+        {chatOpen && !playerIsFs ? (
           <div className={chatColumnClass}>
             <div className="shrink-0 border-b border-border/60">
               <div className="flex items-center justify-between gap-2 px-2 py-2 md:px-3">

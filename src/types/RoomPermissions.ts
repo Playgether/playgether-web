@@ -28,7 +28,7 @@ export interface RoomRole {
 
 export interface RoomRoleAssignment {
   id: number;
-  user_id: number;
+  user_id: string | number;
   username: string;
   fullname?: string;
   profile_photo?: string | null;
