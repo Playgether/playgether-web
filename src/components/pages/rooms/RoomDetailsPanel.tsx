@@ -48,7 +48,7 @@ export function RoomInfoPanel({ room }: RoomDetailsPanelProps) {
   ];
 
   return (
-    <div className="h-full space-y-5 overflow-y-auto bg-muted/20 p-4">
+    <div className="space-y-5 bg-muted/20 p-4 md:h-full md:overflow-y-auto">
       <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
         <Info className="h-5 w-5 text-neon-blue" />
         Informações da Sala
@@ -134,6 +134,11 @@ export function RoomRulesPanel({ room }: RoomDetailsPanelProps) {
     setEditingText(description);
   };
 
+  const cancelEdit = () => {
+    setEditingRuleId(null);
+    setEditingText("");
+  };
+
   const saveEdit = () => {
     if (!editingRuleId || !canManage) return;
     const value = editingText.trim();
@@ -172,7 +177,7 @@ export function RoomRulesPanel({ room }: RoomDetailsPanelProps) {
   };
 
   return (
-    <div className="h-full space-y-4 overflow-y-auto bg-muted/20 p-4">
+    <div className="space-y-4 bg-muted/20 p-4 md:h-full md:overflow-y-auto">
       <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
         <ScrollText className="h-5 w-5 text-neon-purple" />
         Regras da Sala
@@ -195,13 +200,13 @@ export function RoomRulesPanel({ room }: RoomDetailsPanelProps) {
           onKeyDown={(event) => event.key === "Enter" && addRule()}
           placeholder="Nova regra..."
           disabled={!canManage || isPending}
-          className="flex-1 rounded-lg border border-border/60 bg-muted/60 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 disabled:opacity-50"
+          className="min-w-0 flex-1 rounded-lg border border-border/60 bg-muted/60 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 disabled:opacity-50"
         />
         <button
           type="button"
           onClick={addRule}
           disabled={!canManage || isPending}
-          className="rounded-lg gradient-primary p-2 text-primary-foreground disabled:opacity-50"
+          className="shrink-0 rounded-lg gradient-primary p-2 text-primary-foreground disabled:opacity-50"
           title="Criar regra"
         >
           <Plus className="h-4 w-4" />
@@ -213,52 +218,68 @@ export function RoomRulesPanel({ room }: RoomDetailsPanelProps) {
           rules.map((rule, index) => (
             <div
               key={rule.id}
-              className="group flex items-start gap-2 rounded-lg border border-border/60 bg-muted/40 p-3"
+              className="group flex min-w-0 items-start gap-2 rounded-lg border border-border/60 bg-muted/40 p-3"
             >
               <span className="mt-0.5 w-5 flex-shrink-0 text-sm font-bold text-neon-grandmaster">
                 {index + 1}.
               </span>
               {editingRuleId === rule.id ? (
-                <div className="flex flex-1 gap-2">
+                <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
                   <input
                     value={editingText}
                     onChange={(event) => setEditingText(event.target.value)}
-                    onKeyDown={(event) => event.key === "Enter" && saveEdit()}
-                    className="flex-1 rounded border border-border/60 bg-muted/60 px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") saveEdit();
+                      if (event.key === "Escape") cancelEdit();
+                    }}
+                    className="min-w-0 w-full flex-1 rounded border border-border/60 bg-muted/60 px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
                   />
-                  <button
-                    type="button"
-                    onClick={saveEdit}
-                    className="rounded px-2 py-1 text-xs font-bold text-neon-green hover:bg-neon-green/10"
-                  >
-                    Salvar
-                  </button>
+                  <div className="flex shrink-0 gap-1">
+                    <button
+                      type="button"
+                      onClick={saveEdit}
+                      disabled={isPending}
+                      className="rounded px-2 py-1 text-xs font-bold text-neon-green hover:bg-neon-green/10 disabled:opacity-50"
+                    >
+                      Salvar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelEdit}
+                      disabled={isPending}
+                      className="rounded px-2 py-1 text-xs font-bold text-muted-foreground hover:bg-muted disabled:opacity-50"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <span className="flex-1 text-sm text-foreground">
-                  {rule.description}
-                </span>
+                <>
+                  <span className="min-w-0 flex-1 break-words text-sm text-foreground">
+                    {rule.description}
+                  </span>
+                  <div className="flex shrink-0 gap-1 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
+                    <button
+                      type="button"
+                      onClick={() => startEdit(rule.id, rule.description)}
+                      disabled={!canManage || isPending}
+                      className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
+                      title="Editar regra"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteRule(rule.id)}
+                      disabled={!canManage || isPending}
+                      className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
+                      title="Excluir regra"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </>
               )}
-              <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                <button
-                  type="button"
-                  onClick={() => startEdit(rule.id, rule.description)}
-                  disabled={!canManage || isPending}
-                  className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
-                  title="Editar regra"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => deleteRule(rule.id)}
-                  disabled={!canManage || isPending}
-                  className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
-                  title="Excluir regra"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
             </div>
           ))
         ) : (

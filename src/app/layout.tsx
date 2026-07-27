@@ -3,6 +3,8 @@ import { AppProvider } from "../context";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "next-themes";
 import { GoogleProvider } from "@/components/providers/GoogleProvider";
+import Script from "next/script";
+import { CHUNK_LOAD_RECOVERY_SCRIPT } from "@/lib/chunkLoadRecoveryScript";
 
 export const metadata = {
   description: "Create by gamers for gamers",
@@ -24,6 +26,11 @@ export default function RootLayout({
           "min-h-screen max-w-[100vw] font-poppins bg-background text-foreground antialiased"
         )}
       >
+        <Script
+          id="chunk-load-recovery"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: CHUNK_LOAD_RECOVERY_SCRIPT }}
+        />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <GoogleProvider>
             <AppProvider>

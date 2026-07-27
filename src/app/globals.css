@@ -969,11 +969,25 @@ All colors MUST be HSL.
 
   /** Altura fixa da área útil — necessário para flex + overflow interno (ex.: chat da sala) */
   .h-layout-main {
+    /* Mobile/tablet: desconta bottom nav + safe area + folga do BaseLayout (pb extra 0.75rem) */
     height: calc(
-      100dvh - var(--layout-header-height) - var(--layout-quick-messages-height)
+      100dvh - var(--layout-header-height) - var(--layout-quick-messages-height) -
+        var(--layout-bottom-nav-height) - env(safe-area-inset-bottom, 0px) - 0.75rem
     );
     max-height: calc(
-      100dvh - var(--layout-header-height) - var(--layout-quick-messages-height)
+      100dvh - var(--layout-header-height) - var(--layout-quick-messages-height) -
+        var(--layout-bottom-nav-height) - env(safe-area-inset-bottom, 0px) - 0.75rem
     );
+  }
+
+  @media (min-width: 1024px) {
+    .h-layout-main {
+      height: calc(
+        100dvh - var(--layout-header-height) - var(--layout-quick-messages-height)
+      );
+      max-height: calc(
+        100dvh - var(--layout-header-height) - var(--layout-quick-messages-height)
+      );
+    }
   }
 }

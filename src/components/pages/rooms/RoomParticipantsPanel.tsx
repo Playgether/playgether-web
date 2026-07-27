@@ -57,8 +57,8 @@ export default function RoomParticipantsPanel({
   }, [presenceFiltered, search]);
 
   return (
-    <aside className="flex h-full w-full flex-col border-r border-border/60 bg-card/95 backdrop-blur-sm md:w-72">
-      <div className="border-b border-border/60 p-3">
+    <aside className="flex h-full min-h-0 w-full flex-col border-r border-border/60 bg-card/95 backdrop-blur-sm md:w-72">
+      <div className="shrink-0 border-b border-border/60 p-3">
         <div className="mb-2 flex items-center justify-between">
           <h2 className="flex items-center gap-1.5 text-sm font-bold text-foreground">
             <Users className="h-4 w-4 text-primary" />
@@ -87,7 +87,7 @@ export default function RoomParticipantsPanel({
         </div>
       </div>
 
-      <div className="flex-1 space-y-0.5 overflow-y-auto p-2">
+      <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto p-2">
         {filteredUsers.length > 0 ? (
           filteredUsers.map((user) => (
             <div
@@ -140,7 +140,7 @@ export default function RoomParticipantsPanel({
         )}
       </div>
 
-      <div className="flex items-center justify-center gap-1.5 border-t border-border/60 p-3 text-center text-xs text-muted-foreground">
+      <div className="flex shrink-0 items-center justify-center gap-1.5 border-t border-border/60 p-3 text-center text-xs text-muted-foreground">
         <span className="status-online inline-block h-2 w-2 rounded-full" />
         {presenceFiltered.length} online
       </div>

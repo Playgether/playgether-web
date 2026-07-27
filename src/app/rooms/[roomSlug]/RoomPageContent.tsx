@@ -56,7 +56,7 @@ export async function RoomPageContent({
     <RoomShell room={room} token={accessToken} initialPermissions={roomPermissions}>
       <BaseLayout>
         <div className="flex h-layout-main min-h-0 min-w-0 flex-col bg-background pl-0 md:pl-20">
-          <div className="mx-auto flex h-full min-h-0 w-full max-w-[88rem] flex-1 flex-col px-4 py-2 md:p-6">
+          <div className="mx-auto flex h-full min-h-0 w-full max-w-[88rem] flex-1 flex-col px-0 py-0 md:p-6">
             <RoomChatView
               room={room}
               messages={messages}

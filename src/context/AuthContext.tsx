@@ -67,9 +67,15 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     router.push("/");
   }, [router]);
 
-  useEffect(() => {
-    let cancelled = false;
-    const fetchData = async () => {
+  const resolveInFlightRef = useRef<Promise<void> | null>(null);
+
+  const resolveSession = useCallback(async () => {
+    if (resolveInFlightRef.current) {
+      await resolveInFlightRef.current;
+      return;
+    }
+
+    const run = (async () => {
       setAuthSessionResolved(false);
       const userLocalStorage =
         typeof window !== "undefined" ? localStorage.getItem("user") : null;
@@ -88,7 +94,6 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           fromJwt = await decodeUser();
         }
       }
-      if (cancelled) return;
 
       // Só considera logado com JWT válido (access ou após refresh).
       // Cache do localStorage sozinho gerava UI “logada” com APIs quebradas no dia seguinte.
@@ -115,13 +120,25 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(null);
         setIsLoggedOut(true);
       }
-      if (!cancelled) setAuthSessionResolved(true);
-    };
-    void fetchData();
-    return () => {
-      cancelled = true;
-    };
-  }, [isLoggedOut, markAccessRefreshed]);
+      setAuthSessionResolved(true);
+    })();
+
+    resolveInFlightRef.current = run.finally(() => {
+      resolveInFlightRef.current = null;
+    });
+    await resolveInFlightRef.current;
+  }, [markAccessRefreshed]);
+
+  // Bootstrap once on mount (overnight return / hard refresh).
+  useEffect(() => {
+    void resolveSession();
+  }, [resolveSession]);
+
+  // Login form sets isLoggedOut(false) before user is hydrated — finish session resolve.
+  useEffect(() => {
+    if (isLoggedOut || user || !authSessionResolved) return;
+    void resolveSession();
+  }, [isLoggedOut, user, authSessionResolved, resolveSession]);
 
   useEffect(() => {
     if (!user) return;
