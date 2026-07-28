@@ -2237,6 +2237,26 @@ export default function RoomAmbiencePanel({
     setLayoutMode("fullplayer");
   };
 
+  const leaveTransmission = () => {
+    if (document.fullscreenElement) {
+      programmaticFsRef.current = true;
+      programmaticModeTargetRef.current = "small";
+      void document
+        .exitFullscreen()
+        .catch(() => {
+          programmaticFsRef.current = false;
+          programmaticModeTargetRef.current = null;
+          setViewMode("small");
+        })
+        .finally(() => {
+          onEnteredChange(false);
+        });
+      return;
+    }
+    if (viewMode !== "small") setViewMode("small");
+    onEnteredChange(false);
+  };
+
   if (!roomAmbience.active) {
     if (!canCreateWatchparty) {
       return (
@@ -2349,8 +2369,10 @@ export default function RoomAmbiencePanel({
     viewMode === "fullplayer" && "md:rounded-xl",
   );
 
+  /** Em viewport baixa, a row mantém altura útil e o shell rola em vez de esmagar o player. */
   const mainRowClass = cn(
-    "flex min-h-0 flex-col gap-3 md:flex-1 md:flex-row md:items-stretch md:gap-3",
+    "flex min-h-0 flex-col gap-3 md:min-h-[min(58dvh,520px)] md:flex-1 md:flex-row md:items-stretch md:gap-3",
+    "[@media(max-height:800px)]:md:min-h-[min(72dvh,640px)]",
   );
 
   const chatColumnClass = cn(
@@ -2369,7 +2391,7 @@ export default function RoomAmbiencePanel({
     <div
       ref={shellRef}
       className={cn(
-        "flex h-full min-h-0 w-full flex-col gap-3 overflow-y-auto overscroll-contain p-3 md:overflow-hidden md:p-4",
+        "flex h-full min-h-0 w-full flex-col gap-3 overflow-y-auto overscroll-contain p-3 md:p-4",
         viewMode === "cinema" && "min-h-[min(92dvh,100%)] flex-1",
         viewMode === "small" && "min-h-0 flex-1",
         viewMode === "fullplayer" && "min-h-0 flex-1",
@@ -2387,7 +2409,7 @@ export default function RoomAmbiencePanel({
               variant="outline"
               size="sm"
               className="h-8 w-full gap-1.5 md:w-auto"
-              onClick={() => onEnteredChange(false)}
+              onClick={leaveTransmission}
             >
               <ChevronLeft className="h-3.5 w-3.5" />
               Sair da transmissão
@@ -2650,19 +2672,20 @@ export default function RoomAmbiencePanel({
               </div>
             ) : null}
           </div>
-          <div className="flex flex-col gap-2 border-t border-white/10 bg-black/80 px-2 py-2 md:flex-row md:flex-wrap md:items-center md:gap-2">
-            <div className="flex min-w-0 w-full flex-col gap-2 md:flex-1 md:flex-row md:flex-wrap md:items-center">
+          {/* lg (1024–1279): 2 linhas limpas — xl+ volta ao layout md */}
+          <div className="flex flex-col gap-2 border-t border-white/10 bg-black/80 px-2 py-2 md:flex-row md:flex-wrap md:items-center md:gap-2 lg:flex-col lg:flex-nowrap lg:items-stretch lg:gap-2 xl:flex-row xl:flex-wrap xl:items-center">
+            <div className="flex min-w-0 w-full flex-col gap-2 md:flex-1 md:flex-row md:flex-wrap md:items-center lg:flex-none lg:flex-row lg:flex-nowrap lg:items-center xl:flex-1 xl:flex-wrap">
               {amHost ? (
                 <>
-                  <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-rose-400/60 bg-rose-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-rose-200">
+                  <span className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border border-rose-400/60 bg-rose-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-rose-200">
                     <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-rose-400" />
                     Você é o host
                   </span>
-                  <div className="grid w-full grid-cols-4 gap-1.5 md:flex md:w-auto md:flex-wrap md:gap-2">
+                  <div className="grid min-w-0 w-full grid-cols-4 gap-1.5 md:flex md:w-auto md:flex-wrap md:gap-2 lg:grid lg:w-auto lg:flex-1 lg:grid-cols-4 lg:gap-1.5 xl:flex xl:flex-none xl:flex-wrap xl:gap-2">
                     <Button
                       size="sm"
                       variant="secondary"
-                      className="h-8 border-white/20 bg-white/10 px-1.5 text-white hover:bg-white/20 hover:text-white md:px-3"
+                      className="h-8 border-white/20 bg-white/10 px-1.5 text-white hover:bg-white/20 hover:text-white md:px-3 lg:px-2 xl:px-3"
                       onClick={() => hostControl("play")}
                     >
                       Play
@@ -2670,7 +2693,7 @@ export default function RoomAmbiencePanel({
                     <Button
                       size="sm"
                       variant="secondary"
-                      className="h-8 border-white/20 bg-white/10 px-1.5 text-white hover:bg-white/20 hover:text-white md:px-3"
+                      className="h-8 border-white/20 bg-white/10 px-1.5 text-white hover:bg-white/20 hover:text-white md:px-3 lg:px-2 xl:px-3"
                       onClick={() => hostControl("pause")}
                     >
                       Pause
@@ -2678,7 +2701,7 @@ export default function RoomAmbiencePanel({
                     <Button
                       size="sm"
                       variant="secondary"
-                      className="h-8 border-white/20 bg-white/10 px-1.5 text-white hover:bg-white/20 hover:text-white md:px-3"
+                      className="h-8 border-white/20 bg-white/10 px-1.5 text-white hover:bg-white/20 hover:text-white md:px-3 lg:px-2 xl:px-3"
                       onClick={() => hostControl("seek", -10)}
                     >
                       -10s
@@ -2686,7 +2709,7 @@ export default function RoomAmbiencePanel({
                     <Button
                       size="sm"
                       variant="secondary"
-                      className="h-8 border-white/20 bg-white/10 px-1.5 text-white hover:bg-white/20 hover:text-white md:px-3"
+                      className="h-8 border-white/20 bg-white/10 px-1.5 text-white hover:bg-white/20 hover:text-white md:px-3 lg:px-2 xl:px-3"
                       onClick={() => hostControl("seek", 10)}
                     >
                       +10s
@@ -2732,8 +2755,8 @@ export default function RoomAmbiencePanel({
                 </div>
               )}
             </div>
-            <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:flex-wrap md:items-center md:justify-end md:gap-3">
-              <div className="flex w-full items-center gap-1 md:w-auto md:flex-wrap md:justify-end">
+            <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:flex-wrap md:items-center md:justify-end md:gap-3 lg:w-full lg:flex-row lg:flex-nowrap lg:items-center lg:justify-between lg:gap-2 xl:w-auto xl:flex-wrap xl:justify-end xl:gap-3">
+              <div className="flex min-w-0 w-full items-center gap-1 md:w-auto md:flex-wrap md:justify-end lg:w-auto lg:min-w-0 lg:flex-1 lg:flex-nowrap xl:flex-none xl:flex-wrap">
                 {!amHost ? (
                   <div className="relative shrink-0">
                     <Button
@@ -2820,13 +2843,13 @@ export default function RoomAmbiencePanel({
                     ) : null}
                   </div>
                 ) : null}
-                <div className="grid min-w-0 flex-1 grid-cols-3 gap-1 md:flex md:flex-none md:flex-wrap md:gap-1">
+                <div className="grid min-w-0 flex-1 grid-cols-3 gap-1 md:flex md:flex-none md:flex-wrap md:gap-1 lg:flex lg:min-w-0 lg:flex-1 lg:flex-nowrap lg:gap-1 xl:flex-none xl:flex-wrap">
                   <Button
                     type="button"
                     size="sm"
                     variant="outline"
                     className={cn(
-                      "h-8 gap-1 border-white/25 bg-black/40 px-1.5 text-[11px] text-white hover:bg-white/15 hover:text-white md:px-2 md:text-xs",
+                      "h-8 min-w-0 gap-1 border-white/25 bg-black/40 px-1.5 text-[11px] text-white hover:bg-white/15 hover:text-white md:px-2 md:text-xs lg:flex-1 lg:px-1.5 xl:flex-none xl:px-2",
                       layoutHighlight === "small" &&
                         "border-primary/60 bg-primary/25 text-white",
                     )}
@@ -2841,7 +2864,7 @@ export default function RoomAmbiencePanel({
                     size="sm"
                     variant="outline"
                     className={cn(
-                      "h-8 gap-1 border-white/25 bg-black/40 px-1.5 text-[11px] text-white hover:bg-white/15 hover:text-white md:px-2 md:text-xs",
+                      "h-8 min-w-0 gap-1 border-white/25 bg-black/40 px-1.5 text-[11px] text-white hover:bg-white/15 hover:text-white md:px-2 md:text-xs lg:flex-1 lg:px-1.5 xl:flex-none xl:px-2",
                       layoutHighlight === "cinema" &&
                         "border-primary/60 bg-primary/25 text-white",
                     )}
@@ -2856,7 +2879,7 @@ export default function RoomAmbiencePanel({
                     size="sm"
                     variant="outline"
                     className={cn(
-                      "h-8 gap-1 border-white/25 bg-black/40 px-1.5 text-[11px] text-white hover:bg-white/15 hover:text-white md:px-2 md:text-xs",
+                      "h-8 min-w-0 gap-1 border-white/25 bg-black/40 px-1.5 text-[11px] text-white hover:bg-white/15 hover:text-white md:px-2 md:text-xs lg:flex-1 lg:px-1.5 xl:flex-none xl:px-2",
                       layoutHighlight === "fullplayer" &&
                         "border-primary/60 bg-primary/25 text-white",
                     )}
@@ -2868,7 +2891,7 @@ export default function RoomAmbiencePanel({
                   </Button>
                 </div>
               </div>
-              <div className="flex w-full cursor-pointer items-center gap-2 rounded-md border border-white/10 bg-black/30 px-2 py-1 md:min-w-[160px] md:max-w-[200px] md:rounded-none md:border-0 md:border-l md:border-white/15 md:bg-transparent md:px-0 md:py-0 md:pl-2">
+              <div className="flex w-full shrink-0 cursor-pointer items-center gap-2 rounded-md border border-white/10 bg-black/30 px-2 py-1 md:min-w-[160px] md:max-w-[200px] md:rounded-none md:border-0 md:border-l md:border-white/15 md:bg-transparent md:px-0 md:py-0 md:pl-2 lg:w-[132px] lg:min-w-[132px] lg:max-w-[132px] xl:w-auto xl:min-w-[160px] xl:max-w-[200px]">
                 <button
                   type="button"
                   onClick={toggleMuteIcon}
@@ -2890,7 +2913,7 @@ export default function RoomAmbiencePanel({
                   max={100}
                   value={localVolume}
                   onChange={(e) => onVolumeRange(Number(e.target.value))}
-                  className="h-1 w-full min-w-0 flex-1 cursor-pointer accent-primary md:min-w-[72px]"
+                  className="h-1 w-full min-w-0 flex-1 cursor-pointer accent-primary md:min-w-[72px] lg:min-w-0 xl:min-w-[72px]"
                   aria-label="Volume neste aparelho"
                 />
               </div>
