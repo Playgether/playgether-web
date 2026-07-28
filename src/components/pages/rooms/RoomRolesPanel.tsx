@@ -465,11 +465,7 @@ export function RoomRolesPanel({ room }: RoomRolesPanelProps) {
                           {canAssignRoles ? (
                             <button
                               type="button"
-                              onClick={() =>
-                                setAssignRoleId(
-                                  assignRoleId === role.id ? null : role.id,
-                                )
-                              }
+                              onClick={() => setAssignRoleId(role.id)}
                               className="rounded-md p-1.5 text-muted-foreground hover:bg-background hover:text-foreground"
                               title="Atribuir"
                             >
@@ -502,61 +498,83 @@ export function RoomRolesPanel({ room }: RoomRolesPanelProps) {
         )}
       </div>
 
-      {assignRole && canAssignRoles ? (
-        <div className="rounded-xl border border-primary/30 bg-card p-4 shadow-sm">
-          <h3 className="mb-3 text-sm font-bold text-foreground">
-            Atribuir: {assignRole.name}
-          </h3>
-          <p className="mb-2 text-[10px] text-muted-foreground">
-            Online e membros que já possuem cargo nesta sala (mesmo offline).
-          </p>
-          <div className="max-h-64 space-y-1.5 overflow-y-auto">
+      <Dialog
+        open={assignRole != null && canAssignRoles}
+        onOpenChange={(open) => !open && setAssignRoleId(null)}
+      >
+        <DialogContent className="max-h-[min(90vh,640px)] max-w-md overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>
+              Atribuir: {assignRole?.name ?? "cargo"}
+            </DialogTitle>
+            <DialogDescription>
+              Online e membros que já possuem cargo nesta sala (mesmo offline).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[min(55vh,420px)] space-y-1.5 overflow-y-auto py-1">
             {assignableUsers.length === 0 ? (
-              <p className="py-4 text-center text-xs text-muted-foreground">
+              <p className="py-8 text-center text-xs text-muted-foreground">
                 Nenhum membro disponível para atribuir.
               </p>
             ) : null}
-            {assignableUsers.map((user) => {
-              const userRoles = assignmentsByUser.get(user.id) ?? [];
-              const hasRole = userRoles.includes(assignRole.id);
-              return (
-                <div
-                  key={user.id}
-                  className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted/50"
-                >
-                  <ProfileAvatar
-                    displayName={user.fullname}
-                    username={user.username}
-                    profilePhoto={user.profile_photo}
-                    sizeClass="h-7 w-7"
-                    ringClass="ring-1 ring-border/60"
-                    fallbackTextClassName="text-[10px]"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <span className="block truncate text-sm">{user.fullname}</span>
-                    {!user.isOnline ? (
-                      <span className="text-[10px] text-muted-foreground">Offline</span>
-                    ) : null}
-                  </div>
-                  <button
-                    type="button"
-                    disabled={isPending}
-                    onClick={() => toggleUserRole(user.id, assignRole.id, hasRole)}
-                    className={cn(
-                      "rounded-full px-2.5 py-1 text-[11px] font-bold",
-                      hasRole
-                        ? "bg-destructive/10 text-destructive"
-                        : "bg-neon-green/10 text-neon-green",
-                    )}
-                  >
-                    {hasRole ? "Remover" : "Atribuir"}
-                  </button>
-                </div>
-              );
-            })}
+            {assignRole
+              ? assignableUsers.map((user) => {
+                  const userRoles = assignmentsByUser.get(user.id) ?? [];
+                  const hasRole = userRoles.includes(assignRole.id);
+                  return (
+                    <div
+                      key={user.id}
+                      className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted/50"
+                    >
+                      <ProfileAvatar
+                        displayName={user.fullname}
+                        username={user.username}
+                        profilePhoto={user.profile_photo}
+                        sizeClass="h-7 w-7"
+                        ringClass="ring-1 ring-border/60"
+                        fallbackTextClassName="text-[10px]"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <span className="block truncate text-sm">
+                          {user.fullname}
+                        </span>
+                        {!user.isOnline ? (
+                          <span className="text-[10px] text-muted-foreground">
+                            Offline
+                          </span>
+                        ) : null}
+                      </div>
+                      <button
+                        type="button"
+                        disabled={isPending}
+                        onClick={() =>
+                          toggleUserRole(user.id, assignRole.id, hasRole)
+                        }
+                        className={cn(
+                          "rounded-full px-2.5 py-1 text-[11px] font-bold",
+                          hasRole
+                            ? "bg-destructive/10 text-destructive"
+                            : "bg-neon-green/10 text-neon-green",
+                        )}
+                      >
+                        {hasRole ? "Remover" : "Atribuir"}
+                      </button>
+                    </div>
+                  );
+                })
+              : null}
           </div>
-        </div>
-      ) : null}
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={() => setAssignRoleId(null)}
+              className="rounded-lg border border-border px-4 py-2 text-sm"
+            >
+              Fechar
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={roleModal != null} onOpenChange={(open) => !open && closeRoleModal()}>
         <DialogContent className="max-h-[min(90vh,720px)] max-w-lg overflow-y-auto">

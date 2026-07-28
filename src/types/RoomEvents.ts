@@ -56,7 +56,7 @@ export interface RoomEvent {
   /** Criação votada pelo usuário atual (fase vote_voting). */
   my_vote_submission_id?: number | null;
   /** IDs dos participantes que já votaram na rodada atual (fase vote_voting). */
-  voting_submitted_user_ids?: number[];
+  voting_submitted_user_ids?: Array<string | number>;
   /** Usuário já respondeu à pergunta atual (quiz eliminatório). */
   my_answered_current_question?: boolean;
   final_scores?: RoomEventFinalScore[];

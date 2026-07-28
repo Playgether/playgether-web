@@ -6,6 +6,16 @@ import {
   deleteChatRoomRule,
   updateChatRoomRule,
 } from "@/actions/chatRoomMutations";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { useRoomPermissions } from "@/context/RoomPermissionsContext";
 import { ChatRoom } from "@/types/ChatRoom";
 import {
@@ -24,6 +34,17 @@ import { useState, useTransition } from "react";
 
 interface RoomDetailsPanelProps {
   room: ChatRoom;
+}
+
+/** Alinhado ao max_length do modelo ChatRule / validação da API. */
+const RULE_MAX_LENGTH = 200;
+/** Truncamento só para exibição no modal de exclusão. */
+const RULE_DELETE_PREVIEW_MAX = 80;
+
+function truncateRulePreview(text: string, max = RULE_DELETE_PREVIEW_MAX): string {
+  const trimmed = text.trim();
+  if (trimmed.length <= max) return trimmed;
+  return `${trimmed.slice(0, max).trimEnd()}…`;
 }
 
 export function RoomInfoPanel({ room }: RoomDetailsPanelProps) {
@@ -110,12 +131,20 @@ export function RoomRulesPanel({ room }: RoomDetailsPanelProps) {
   const [newRule, setNewRule] = useState("");
   const [editingRuleId, setEditingRuleId] = useState<number | null>(null);
   const [editingText, setEditingText] = useState("");
+  const [ruleToDelete, setRuleToDelete] = useState<{
+    id: number;
+    description: string;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const addRule = () => {
     const value = newRule.trim();
     if (!value || !canManage) return;
+    if (value.length > RULE_MAX_LENGTH) {
+      setError(`A regra pode ter no máximo ${RULE_MAX_LENGTH} caracteres.`);
+      return;
+    }
     setError(null);
     startTransition(async () => {
       const res = await createChatRoomRule(room.slug, value);
@@ -143,6 +172,10 @@ export function RoomRulesPanel({ room }: RoomDetailsPanelProps) {
     if (!editingRuleId || !canManage) return;
     const value = editingText.trim();
     if (!value) return;
+    if (value.length > RULE_MAX_LENGTH) {
+      setError(`A regra pode ter no máximo ${RULE_MAX_LENGTH} caracteres.`);
+      return;
+    }
     const id = editingRuleId;
     setError(null);
     startTransition(async () => {
@@ -159,8 +192,9 @@ export function RoomRulesPanel({ room }: RoomDetailsPanelProps) {
     });
   };
 
-  const deleteRule = (ruleId: number) => {
-    if (!canManage) return;
+  const confirmDeleteRule = () => {
+    if (!canManage || !ruleToDelete) return;
+    const ruleId = ruleToDelete.id;
     setError(null);
     startTransition(async () => {
       const res = await deleteChatRoomRule(room.slug, ruleId);
@@ -173,6 +207,7 @@ export function RoomRulesPanel({ room }: RoomDetailsPanelProps) {
         setEditingRuleId(null);
         setEditingText("");
       }
+      setRuleToDelete(null);
     });
   };
 
@@ -193,24 +228,34 @@ export function RoomRulesPanel({ room }: RoomDetailsPanelProps) {
         <p className="text-xs font-medium text-destructive">{error}</p>
       ) : null}
 
-      <div className="flex gap-2">
-        <input
-          value={newRule}
-          onChange={(event) => setNewRule(event.target.value)}
-          onKeyDown={(event) => event.key === "Enter" && addRule()}
-          placeholder="Nova regra..."
-          disabled={!canManage || isPending}
-          className="min-w-0 flex-1 rounded-lg border border-border/60 bg-muted/60 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 disabled:opacity-50"
-        />
-        <button
-          type="button"
-          onClick={addRule}
-          disabled={!canManage || isPending}
-          className="shrink-0 rounded-lg gradient-primary p-2 text-primary-foreground disabled:opacity-50"
-          title="Criar regra"
-        >
-          <Plus className="h-4 w-4" />
-        </button>
+      <div className="space-y-1">
+        <div className="flex gap-2">
+          <input
+            value={newRule}
+            onChange={(event) =>
+              setNewRule(event.target.value.slice(0, RULE_MAX_LENGTH))
+            }
+            onKeyDown={(event) => event.key === "Enter" && addRule()}
+            placeholder="Nova regra..."
+            maxLength={RULE_MAX_LENGTH}
+            disabled={!canManage || isPending}
+            className="min-w-0 flex-1 rounded-lg border border-border/60 bg-muted/60 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 disabled:opacity-50"
+          />
+          <button
+            type="button"
+            onClick={addRule}
+            disabled={!canManage || isPending}
+            className="shrink-0 rounded-lg gradient-primary p-2 text-primary-foreground disabled:opacity-50"
+            title="Criar regra"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        </div>
+        {canManage && newRule.length > 0 ? (
+          <p className="text-right text-[10px] text-muted-foreground">
+            {newRule.length}/{RULE_MAX_LENGTH}
+          </p>
+        ) : null}
       </div>
 
       <div className="space-y-2">
@@ -225,15 +270,25 @@ export function RoomRulesPanel({ room }: RoomDetailsPanelProps) {
               </span>
               {editingRuleId === rule.id ? (
                 <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
-                  <input
-                    value={editingText}
-                    onChange={(event) => setEditingText(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") saveEdit();
-                      if (event.key === "Escape") cancelEdit();
-                    }}
-                    className="min-w-0 w-full flex-1 rounded border border-border/60 bg-muted/60 px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
-                  />
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <input
+                      value={editingText}
+                      onChange={(event) =>
+                        setEditingText(
+                          event.target.value.slice(0, RULE_MAX_LENGTH),
+                        )
+                      }
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") saveEdit();
+                        if (event.key === "Escape") cancelEdit();
+                      }}
+                      maxLength={RULE_MAX_LENGTH}
+                      className="min-w-0 w-full rounded border border-border/60 bg-muted/60 px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
+                    />
+                    <p className="text-right text-[10px] text-muted-foreground">
+                      {editingText.length}/{RULE_MAX_LENGTH}
+                    </p>
+                  </div>
                   <div className="flex shrink-0 gap-1">
                     <button
                       type="button"
@@ -270,7 +325,12 @@ export function RoomRulesPanel({ room }: RoomDetailsPanelProps) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => deleteRule(rule.id)}
+                      onClick={() =>
+                        setRuleToDelete({
+                          id: rule.id,
+                          description: rule.description,
+                        })
+                      }
                       disabled={!canManage || isPending}
                       className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
                       title="Excluir regra"
@@ -288,6 +348,39 @@ export function RoomRulesPanel({ room }: RoomDetailsPanelProps) {
           </p>
         )}
       </div>
+
+      <AlertDialog
+        open={ruleToDelete != null}
+        onOpenChange={(open) => !open && setRuleToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir regra?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {ruleToDelete ? (
+                <>
+                  Tem certeza que deseja excluir a regra{" "}
+                  <span className="font-semibold text-foreground">
+                    &ldquo;{truncateRulePreview(ruleToDelete.description)}&rdquo;
+                  </span>
+                  ? Esta ação não pode ser desfeita.
+                </>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel type="button">Cancelar</AlertDialogCancel>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={isPending}
+              onClick={confirmDeleteRule}
+            >
+              Excluir regra
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
