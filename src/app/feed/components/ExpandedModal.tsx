@@ -366,7 +366,7 @@ export const ExpandedModal = ({ open, onOpenChange, post }: ExpandedModalProps) 
                                   <span className="font-medium text-sm">{comment.user.name}</span>
                                   <span className="text-xs text-muted-foreground">{comment.timestamp}</span>
                                   {comment.user.username === 'you' && (
-                                    <DropdownMenu>
+                                    <DropdownMenu modal={false}>
                                       <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" size="sm" className="p-0 h-auto ml-auto">
                                           <MoreHorizontal className="w-3 h-3" />
@@ -429,7 +429,7 @@ export const ExpandedModal = ({ open, onOpenChange, post }: ExpandedModalProps) 
                                         <span className="font-medium text-sm">{reply.user.name}</span>
                                         <span className="text-xs text-muted-foreground">{reply.timestamp}</span>
                                         {reply.user.username === 'you' && (
-                                          <DropdownMenu>
+                                          <DropdownMenu modal={false}>
                                             <DropdownMenuTrigger asChild>
                                               <Button variant="ghost" size="sm" className="p-0 h-auto ml-auto">
                                                 <MoreHorizontal className="w-3 h-3" />

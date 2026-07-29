@@ -221,8 +221,36 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  /*
+   * Reserva espaço da scrollbar sempre. Evita o salto de layout quando Radix
+   * (Dialog / Dropdown / Sheet) aplica scroll-lock e remove a barra.
+   */
+  html {
+    scrollbar-gutter: stable;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  /*
+   * react-remove-scroll (via Radix) seta overflow:hidden + position:relative +
+   * margin-right no body. Isso:
+   * 1) muda a largura útil da página (empurra layout)
+   * 2) quebra position:sticky das colunas laterais do feed (cards “sobem”)
+   *
+   * Com scrollbar-gutter: stable, a compensação de gap é desnecessária.
+   * Mantemos o scroll lock pelos listeners do RemoveScroll; não forçamos
+   * overflow:hidden no body para o sticky continuar relativo ao viewport.
+   */
+  html body[data-scroll-locked] {
+    --removed-body-scroll-bar-size: 0px !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-top: 0 !important;
+    padding-right: 0 !important;
+    position: static !important;
+    overflow: visible !important;
   }
 }
 

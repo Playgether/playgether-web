@@ -117,7 +117,7 @@ export default function PostActions({
           quantity_comment={post.quantity_comment}
           onClick={handleOpenComments}
         />
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"

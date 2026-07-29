@@ -581,7 +581,7 @@ export const PostModal = ({
   };
 
   const postActionsMenu = (triggerClassName?: string) => (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
@@ -1157,7 +1157,7 @@ export const PostModal = ({
                 <PostPropertiers.Comment
                   quantity_comment={post.quantity_comment}
                 />
-                <DropdownMenu>
+                <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
