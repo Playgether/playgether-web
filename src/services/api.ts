@@ -4,6 +4,7 @@ export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   withCredentials: true,
   headers: { "Content-Type": "application/json" },
+  timeout: 15000,
 });
 
 // Interceptor server-side: em 401 tenta renovar o access token e retenta a chamada uma vez.

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DoorOpen, Users } from "lucide-react";
 import { apiFetch } from "@/services/apiFetch";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
+import { useAuthContext } from "@/context/AuthContext";
 
 type ActiveRoom = {
   id: number;
@@ -17,10 +18,16 @@ type ActiveRoom = {
 };
 
 export function ActiveRoomsCard() {
+  const { authSessionResolved, user } = useAuthContext();
   const [rooms, setRooms] = useState<ActiveRoom[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!authSessionResolved || !user) {
+      if (authSessionResolved && !user) setLoading(false);
+      return;
+    }
+
     let cancelled = false;
 
     async function load() {
@@ -44,7 +51,7 @@ export function ActiveRoomsCard() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [authSessionResolved, user]);
 
   return (
     <Card className="border-border/50 bg-card backdrop-blur-sm transition-all duration-300 hover:border-primary/40 hover:shadow-glow-primary/30">

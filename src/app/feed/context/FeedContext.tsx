@@ -42,7 +42,7 @@ export const FeedProvider = ({
   const [feedMode, setFeedModeState] = useState<FeedMode>("following");
   const userPickedTabRef = useRef(false);
   const initialRedirectDoneRef = useRef(false);
-  const { user } = useAuthContext();
+  const { user, authSessionResolved } = useAuthContext();
   const { profile, fetchProfile } = useProfileContext();
 
   const followingCount = useMemo(() => {
@@ -50,6 +50,8 @@ export const FeedProvider = ({
     return profile.follows.filter((followedId) => followedId !== profile.id)
       .length;
   }, [profile]);
+
+  const hasServerFollowingSeed = response.data.length > 0;
 
   useEffect(() => {
     if (!user?.user_id) return;
@@ -69,14 +71,18 @@ export const FeedProvider = ({
     isFetchingNextPage,
     isPending,
     isFetching,
+    isSuccess,
+    isError,
   } = useInfiniteQuery({
     queryKey: ["feed-posts", feedMode],
     queryFn: ({ pageParam }) => getFeedClient(pageParam, feedMode),
     getNextPageParam: (lastPage) => parseFeedCursor(lastPage?.next_page),
-    enabled: !!user,
+    enabled: !!user && authSessionResolved,
     initialPageParam: null as string | null,
+    // Só usa SSR como seed se veio posts de verdade.
+    // Seed vazio fazia isPending=false e a UI pintava “vazio” durante o refetch do dia seguinte.
     initialData:
-      feedMode === "following"
+      feedMode === "following" && hasServerFollowingSeed
         ? {
             pages: [
               {
@@ -90,7 +96,12 @@ export const FeedProvider = ({
     refetchOnWindowFocus: false,
   });
 
-  const isFeedLoading = isPending && !isFetchingNextPage;
+  // Com seed SSR (posts já na tela), não troca por spinner no refetch.
+  // Sem posts, isFetching precisa contar — senão empty state aparece cedo demais.
+  const isFeedLoading =
+    !authSessionResolved ||
+    !user ||
+    ((isPending || (isFetching && posts.length === 0)) && !isFetchingNextPage);
 
   useEffect(() => {
     if (!data?.pages) return;
@@ -100,14 +111,14 @@ export const FeedProvider = ({
 
   useEffect(() => {
     if (userPickedTabRef.current || initialRedirectDoneRef.current) return;
+    if (!authSessionResolved || !user) return;
     if (profile === undefined) return;
     if (feedMode !== "following") return;
-    if (isPending || isFetching) return;
+    // Só redireciona após um fetch following bem-sucedido — não após seed SSR vazio/erro.
+    if (!isSuccess || isFetching || isError) return;
 
     const followingPosts = data?.pages.flatMap((page) => page.data ?? []) ?? [];
-    const hasFollowingPosts =
-      followingPosts.length > 0 ||
-      (data?.pages.length === 1 && response.data.length > 0);
+    const hasFollowingPosts = followingPosts.length > 0;
 
     if (followingCount === 0 || !hasFollowingPosts) {
       setFeedModeState("explore");
@@ -116,13 +127,15 @@ export const FeedProvider = ({
 
     initialRedirectDoneRef.current = true;
   }, [
+    authSessionResolved,
+    user,
     profile,
     followingCount,
     feedMode,
-    isPending,
+    isSuccess,
     isFetching,
+    isError,
     data,
-    response.data.length,
   ]);
 
   const handlePostCreated = useCallback((newPost: PostProps) => {

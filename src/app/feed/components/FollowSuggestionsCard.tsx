@@ -10,6 +10,7 @@ import { apiFetch } from "@/services/apiFetch";
 import { followProfile } from "@/services/followProfile";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 import { CustomToast } from "@/components/ui/customSonner";
+import { useAuthContext } from "@/context/AuthContext";
 
 type Suggestion = {
   id: number;
@@ -22,6 +23,7 @@ type Suggestion = {
 };
 
 export function FollowSuggestionsCard() {
+  const { authSessionResolved, user } = useAuthContext();
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [followingIds, setFollowingIds] = useState<Set<number>>(new Set());
@@ -48,8 +50,12 @@ export function FollowSuggestionsCard() {
   }, []);
 
   useEffect(() => {
+    if (!authSessionResolved || !user) {
+      if (authSessionResolved && !user) setLoading(false);
+      return;
+    }
     void load();
-  }, [load]);
+  }, [authSessionResolved, user, load]);
 
   const handleFollow = async (profileId: number) => {
     try {
