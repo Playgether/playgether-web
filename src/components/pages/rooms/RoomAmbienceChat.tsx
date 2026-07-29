@@ -131,7 +131,7 @@ export const AmbienceChatLine = memo(function AmbienceChatLine({
         isPinned && !float && "ring-1 ring-primary/40",
         float
           ? "border-white/20 bg-black text-zinc-50 shadow-sm shadow-black/40 ring-1 ring-white/5"
-          : "border-border/40 bg-muted/20 text-foreground",
+          : "border-border/40 bg-muted/50 text-foreground",
       )}
     >
       <ProfileAvatar
@@ -546,7 +546,7 @@ export function AmbienceChatInput({
             "flex items-center gap-2 rounded-lg border px-2 py-1.5 text-xs",
             float
               ? "border-white/15 bg-white/5 text-zinc-300"
-              : "border-border/60 bg-muted/30",
+              : "border-border/60 bg-muted/60",
           )}
         >
           <Reply className="h-3.5 w-3.5 shrink-0 text-primary" />

@@ -47,7 +47,7 @@ function SessionCard({
   return (
     <div
       className={`flex items-center justify-between p-4 rounded-xl transition-colors ${
-        session.is_current ? "bg-primary/10 border border-primary/20" : "bg-muted/20 hover:bg-muted/30"
+        session.is_current ? "bg-primary/10 border border-primary/20" : "bg-muted/50 hover:bg-muted/70"
       }`}
     >
       <div className="flex items-center gap-3 min-w-0">
@@ -96,7 +96,7 @@ function SessionCard({
 
 function SessionSkeleton() {
   return (
-    <div className="flex items-center justify-between p-4 rounded-xl bg-muted/20">
+    <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50">
       <div className="flex items-center gap-3">
         <Skeleton className="w-10 h-10 rounded-xl" />
         <div className="space-y-1.5">

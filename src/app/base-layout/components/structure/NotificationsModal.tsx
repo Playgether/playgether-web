@@ -127,7 +127,7 @@ export const NotificationsModal = ({
                     }}
                     className={`flex items-start gap-3 p-3 rounded-xl transition-all duration-300 cursor-pointer group animate-slide-up
                       ${notification.is_read
-                        ? "bg-muted/20 hover:bg-muted/40"
+                        ? "bg-muted/50 hover:bg-muted/70"
                         : "bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/30 hover:from-primary/15 hover:to-secondary/15"
                       }`}
                     style={{ animationDelay: `${index * 60}ms` }}
@@ -195,7 +195,7 @@ export const NotificationsModal = ({
 function EmptyNotifications() {
   return (
     <div className="flex flex-col items-center justify-center py-14 gap-3 text-center">
-      <div className="p-4 rounded-2xl bg-muted/40">
+      <div className="p-4 rounded-2xl bg-muted/60">
         <Bell className="w-8 h-8 text-muted-foreground/50" />
       </div>
       <p className="text-sm text-muted-foreground">Nenhuma notificação encontrada</p>

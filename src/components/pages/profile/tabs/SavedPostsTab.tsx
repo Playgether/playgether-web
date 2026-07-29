@@ -152,7 +152,7 @@ export function SavedPostsTab({ onPostClick }: SavedPostsTabProps) {
       </div>
 
       {creatingNew && (
-        <div className="flex gap-2 p-3 rounded-xl bg-muted/20 border border-border/40">
+        <div className="flex gap-2 p-3 rounded-xl bg-muted/50 border border-border/40">
           <Input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
@@ -258,7 +258,7 @@ function CollectionCard({
       onClick={onClick}
       className="group w-full text-left rounded-xl overflow-hidden border border-border/40 hover:border-primary/40 transition-all hover:shadow-md"
     >
-      <div className="aspect-square relative bg-muted/30 overflow-hidden">
+      <div className="aspect-square relative bg-muted/60 overflow-hidden">
         {coverMedia ? (
           <CldImage
             src={coverMedia}
@@ -392,7 +392,7 @@ function SavedPostCard({ post, onClick }: { post: PostProps; onClick: () => void
 
   return (
     <div
-      className="flex gap-3 p-3 rounded-xl border border-border/40 hover:border-primary/30 hover:bg-muted/10 cursor-pointer transition-all"
+      className="flex gap-3 p-3 rounded-xl border border-border/40 hover:border-primary/30 hover:bg-muted/40 cursor-pointer transition-all"
       onClick={onClick}
     >
       {firstMedia && (

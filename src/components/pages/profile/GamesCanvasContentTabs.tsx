@@ -570,7 +570,7 @@ export function GamesCanvasContentTabs({
                 embedded
                 onProfileUpdated={onProfileUpdated}
               />
-              <TabsList className="!flex h-auto w-full min-w-0 flex-row gap-0 rounded-none border-0 border-t border-border/50 bg-muted/20 p-0">
+              <TabsList className="!flex h-auto w-full min-w-0 flex-row gap-0 rounded-none border-0 border-t border-border/50 bg-muted/50 p-0">
                 {tabsData.filter((tab) => !tab.ownerOnly || isOwner).map((tab) => (
                   <TabsTrigger
                     key={tab.id}
@@ -589,15 +589,16 @@ export function GamesCanvasContentTabs({
             </div>
 
             {/* Desktop: abas separadas — largura total distribuída entre os itens */}
-            <TabsList className="mb-6 hidden h-auto w-full gap-1 border border-border bg-card p-1 lg:!flex lg:flex-row">
+            <TabsList className="mb-6 hidden h-auto w-full gap-1 overflow-x-auto scrollbar-none border border-border bg-card p-1 lg:!flex lg:flex-row">
               {tabsData.filter((tab) => !tab.ownerOnly || isOwner).map((tab) => (
                 <TabsTrigger
                   key={tab.id}
                   value={tab.id}
-                  className="flex h-auto min-w-0 flex-1 basis-0 flex-col items-center gap-1 p-3 transition-all duration-200 data-[state=active]:bg-gradient-primary data-[state=active]:text-white data-[state=active]:shadow-neon"
+                  title={tab.label}
+                  className="flex h-auto min-w-0 flex-1 basis-0 flex-col items-center gap-0.5 p-2 xl:gap-1 xl:p-2 transition-all duration-200 data-[state=active]:bg-gradient-primary data-[state=active]:text-white data-[state=active]:shadow-neon"
                 >
                   <tab.icon className="h-4 w-4 shrink-0" />
-                  <span className="whitespace-nowrap text-xs">{tab.label}</span>
+                  <span className="hidden whitespace-nowrap text-[10px] xl:inline-block">{tab.label}</span>
                 </TabsTrigger>
               ))}
             </TabsList>

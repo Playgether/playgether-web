@@ -93,7 +93,7 @@ function GameRow({
 }) {
   if (loading) {
     return (
-      <div className="flex items-center justify-between p-4 rounded-xl bg-muted/20">
+      <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50">
         <div className="flex items-center gap-3">
           <Skeleton className="w-10 h-10 rounded-xl" />
           <div className="space-y-1">
@@ -111,7 +111,7 @@ function GameRow({
   const avatar = connected ? (status?.avatar ?? null) : null;
 
   return (
-    <div className="flex items-center justify-between p-4 rounded-xl bg-muted/20 hover:bg-muted/30 transition-colors">
+    <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50 hover:bg-muted/70 transition-colors">
       <div className="flex items-center gap-3">
         <GameIcon icon={game.icon} image={game.image} avatar={avatar} name={game.name} />
         <div>

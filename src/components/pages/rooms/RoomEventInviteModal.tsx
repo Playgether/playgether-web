@@ -88,7 +88,7 @@ export function RoomEventInviteModal({ roomSlug }: { roomSlug: string }) {
             sala.
           </p>
         </DialogHeader>
-        <div className="space-y-2 rounded-xl border border-border/60 bg-muted/30 p-3 text-sm">
+        <div className="space-y-2 rounded-xl border border-border/60 bg-muted/60 p-3 text-sm">
           <p>
             <span className="text-muted-foreground">Nome:</span>{" "}
             <span className="font-medium text-foreground">{invite.title}</span>

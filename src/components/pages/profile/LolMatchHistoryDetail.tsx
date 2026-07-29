@@ -73,7 +73,7 @@ export function LolMatchHistoryDetail({
           </span>
         </div>
 
-        <div className="overflow-x-auto rounded-lg border border-border/60 bg-muted/20">
+        <div className="overflow-x-auto rounded-lg border border-border/60 bg-muted/50">
           <table className="w-full min-w-[760px] text-left text-xs">
             <thead>
               <tr className="border-b border-border/60 bg-muted/40 text-muted-foreground">

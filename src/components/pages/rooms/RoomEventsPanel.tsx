@@ -307,7 +307,7 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
                     return (
                       <li
                         key={u.id}
-                        className="flex items-center justify-between gap-3 rounded-lg border border-border/40 bg-muted/20 px-3 py-2 text-sm"
+                        className="flex items-center justify-between gap-3 rounded-lg border border-border/40 bg-muted/50 px-3 py-2 text-sm"
                       >
                         <span className="truncate font-medium text-foreground">{u.fullname || u.username}</span>
                         <span
@@ -585,7 +585,7 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
             </Button>
           </div>
           ) : (
-            <p className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3 text-center text-sm text-muted-foreground">
+            <p className="rounded-xl border border-border/60 bg-muted/60 px-4 py-3 text-center text-sm text-muted-foreground">
               Você não tem permissão para criar jogos nesta sala.
             </p>
           )

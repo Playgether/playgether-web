@@ -83,7 +83,7 @@ export function FollowSuggestionsCard() {
           visible.slice(0, 5).map((suggestion) => (
             <div
               key={suggestion.id}
-              className="flex items-center gap-3 rounded-xl bg-muted/30 p-3"
+              className="flex items-center gap-3 rounded-xl bg-muted/60 p-3"
             >
               <Link href={`/profile/${suggestion.username}`}>
                 <ProfileAvatar

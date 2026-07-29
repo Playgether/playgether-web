@@ -41,7 +41,7 @@ export function RoleSelection({ game, schema, preferences, onNext, onBack }: Rol
     <div className="min-h-layout-main flex w-full max-w-full items-center justify-center px-4 py-10 sm:px-6">
       <div className="w-full max-w-lg animate-slide-in-up">
         <div className="mb-8 text-center">
-          <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/20 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/50 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
             <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
             Passo 2 · Parceiro
           </span>
@@ -102,7 +102,7 @@ export function RoleSelection({ game, schema, preferences, onNext, onBack }: Rol
                     className={`flex w-full items-center gap-4 px-4 py-3.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40 ${
                       isSelected
                         ? "bg-primary/[0.07]"
-                        : "hover:bg-muted/30 active:bg-muted/40"
+                        : "hover:bg-muted/60 active:bg-muted/40"
                     }`}
                   >
                     <span
@@ -134,7 +134,7 @@ export function RoleSelection({ game, schema, preferences, onNext, onBack }: Rol
           <Button
             variant="outline"
             type="button"
-            className="order-2 h-12 rounded-xl border-border/80 px-8 text-muted-foreground hover:bg-muted/30 hover:text-foreground sm:order-1"
+            className="order-2 h-12 rounded-xl border-border/80 px-8 text-muted-foreground hover:bg-muted/60 hover:text-foreground sm:order-1"
             onClick={onBack}
           >
             Voltar

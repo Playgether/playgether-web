@@ -171,7 +171,7 @@ function RepostCard({
         {/* Original post preview */}
         {post ? (
           <div
-            className="rounded-lg border border-border bg-muted/20 p-4 cursor-pointer hover:bg-muted/30 transition-colors space-y-2"
+            className="rounded-lg border border-border bg-muted/50 p-4 cursor-pointer hover:bg-muted/70 transition-colors space-y-2"
             onClick={() => onPostClick(post.id)}
           >
             <div className="flex items-center gap-2 text-sm">
@@ -207,7 +207,7 @@ function RepostCard({
             </div>
           </div>
         ) : (
-          <div className="rounded-lg border border-border bg-muted/20 p-4 text-sm text-muted-foreground italic">
+          <div className="rounded-lg border border-border bg-muted/50 p-4 text-sm text-muted-foreground italic">
             Post original não disponível.
           </div>
         )}

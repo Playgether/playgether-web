@@ -38,7 +38,7 @@ export default function CenterColumn() {
         <Button
           onClick={() => handleCreatePostModal(true)}
           variant="outline"
-          className="h-11 w-full justify-start gap-2 rounded-full border-border/60 bg-muted/30 px-4 text-sm font-medium text-muted-foreground shadow-none hover:bg-muted/50 hover:text-foreground lg:h-14 lg:gap-3 lg:px-6 lg:text-base"
+          className="h-11 w-full justify-start gap-2 rounded-full border-border/60 bg-muted/60 px-4 text-sm font-medium text-muted-foreground shadow-none hover:bg-muted/80 hover:text-foreground lg:h-14 lg:gap-3 lg:px-6 lg:text-base"
         >
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-primary lg:h-9 lg:w-9">
             <Plus className="h-4 w-4 text-white lg:h-5 lg:w-5" />

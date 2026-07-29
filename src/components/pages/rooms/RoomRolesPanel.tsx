@@ -297,7 +297,7 @@ export function RoomRolesPanel({ room }: RoomRolesPanelProps) {
   }
 
   return (
-    <div className="h-full space-y-5 overflow-y-auto bg-muted/20 p-4">
+    <div className="h-full space-y-5 overflow-y-auto bg-muted/50 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
@@ -388,7 +388,7 @@ export function RoomRolesPanel({ room }: RoomRolesPanelProps) {
                     setDragOverIndex(null);
                   }}
                   className={cn(
-                    "rounded-lg border border-border/50 bg-muted/30 transition-all duration-150",
+                    "rounded-lg border border-border/50 bg-muted/60 transition-all duration-150",
                     isDragging && "scale-[0.98] opacity-40 shadow-lg ring-2 ring-primary/40",
                     isDropTarget &&
                       "border-primary/60 bg-primary/10 shadow-md ring-2 ring-primary ring-offset-2 ring-offset-background",
@@ -752,7 +752,7 @@ function PermissionPicker({
         return (
           <div
             key={cat.id}
-            className="rounded-lg border border-border/40 bg-muted/20"
+            className="rounded-lg border border-border/40 bg-muted/50"
           >
             <button
               type="button"

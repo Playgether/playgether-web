@@ -254,7 +254,7 @@ export function MatchResults({
             </p>
           </div>
 
-          <div className="flex shrink-0 items-center gap-1.5 self-start rounded-full border border-border/50 bg-muted/20 px-2.5 py-1 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
+          <div className="flex shrink-0 items-center gap-1.5 self-start rounded-full border border-border/50 bg-muted/50 px-2.5 py-1 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
             {connected ? (
               <Wifi className="h-3.5 w-3.5 text-neon-green sm:h-4 sm:w-4" />
             ) : (
@@ -572,7 +572,7 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
                       {(prefs.desired_roles as string[]).map((lane) => (
                         <span
                           key={lane}
-                          className="inline-flex shrink-0 items-center gap-0.5 rounded border border-border/50 bg-muted/20 px-1.5 py-0.5"
+                          className="inline-flex shrink-0 items-center gap-0.5 rounded border border-border/50 bg-muted/50 px-1.5 py-0.5"
                         >
                           <LolLaneRoleIcon roleLabel={lane} className="h-3.5 w-3.5" />
                           <span className="whitespace-nowrap text-[11px] font-medium leading-none text-card-foreground">
@@ -592,7 +592,7 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
                         return (
                           <span
                             key={tier}
-                            className="inline-flex shrink-0 items-center gap-1 rounded border border-border/50 bg-muted/20 px-1.5 py-0.5"
+                            className="inline-flex shrink-0 items-center gap-1 rounded border border-border/50 bg-muted/50 px-1.5 py-0.5"
                           >
                             {emblem ? (
                               <LolRankEmblemFrame
@@ -619,7 +619,7 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
                 Conta ranqueada (Riot)
               </p>
               <div className="grid grid-cols-2 items-stretch gap-2 sm:grid-cols-4">
-                <div className="flex min-h-[7.25rem] flex-col rounded-lg border border-border/40 bg-muted/30 p-2.5">
+                <div className="flex min-h-[7.25rem] flex-col rounded-lg border border-border/40 bg-muted/60 p-2.5">
                   <div className="flex flex-1 flex-col items-center justify-center">
                     {typeof gs.tier_emblem_url === "string" && gs.tier_emblem_url.trim() ? (
                       <LolRankEmblemFrame
@@ -644,7 +644,7 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
                     </div>
                   </div>
                 </div>
-                <div className="flex min-h-[7.25rem] flex-col rounded-lg border border-border/40 bg-muted/30 p-2.5">
+                <div className="flex min-h-[7.25rem] flex-col rounded-lg border border-border/40 bg-muted/60 p-2.5">
                   <div className="flex flex-1 flex-col items-center justify-center">
                     <CircleCheck className="h-5 w-5 text-emerald-400" strokeWidth={2.25} />
                   </div>
@@ -655,7 +655,7 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
                     </div>
                   </div>
                 </div>
-                <div className="flex min-h-[7.25rem] flex-col rounded-lg border border-border/40 bg-muted/30 p-2.5">
+                <div className="flex min-h-[7.25rem] flex-col rounded-lg border border-border/40 bg-muted/60 p-2.5">
                   <div className="flex flex-1 flex-col items-center justify-center">
                     <XCircle className="h-5 w-5 text-rose-400" strokeWidth={2.25} />
                   </div>
@@ -666,7 +666,7 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
                     </div>
                   </div>
                 </div>
-                <div className="flex min-h-[7.25rem] flex-col rounded-lg border border-border/40 bg-muted/30 p-2.5">
+                <div className="flex min-h-[7.25rem] flex-col rounded-lg border border-border/40 bg-muted/60 p-2.5">
                   <div className="flex flex-1 flex-col items-center justify-center">
                     <Percent className="h-5 w-5 text-sky-400" strokeWidth={2.25} />
                   </div>
@@ -742,7 +742,7 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
                 Stats CS2
               </p>
               <div className="grid grid-cols-3 gap-2">
-                <div className="rounded-lg bg-muted/30 border border-border/40 p-2.5 text-center">
+                <div className="rounded-lg bg-muted/60 border border-border/40 p-2.5 text-center">
                   <Target className="h-4 w-4 mx-auto mb-1 text-neon-green" />
                   <div className="text-[10px] text-muted-foreground leading-tight">
                     K/D
@@ -751,7 +751,7 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
                     {gs.kd != null ? String(gs.kd) : "Sem estatísticas"}
                   </div>
                 </div>
-                <div className="rounded-lg bg-muted/30 border border-border/40 p-2.5 text-center">
+                <div className="rounded-lg bg-muted/60 border border-border/40 p-2.5 text-center">
                   <Crosshair className="h-4 w-4 mx-auto mb-1 text-sky-400" />
                   <div className="text-[10px] text-muted-foreground leading-tight">
                     HS%
@@ -760,7 +760,7 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
                     {gs.hs_percent != null ? `${gs.hs_percent}%` : "Sem estatísticas"}
                   </div>
                 </div>
-                <div className="rounded-lg bg-muted/30 border border-border/40 p-2.5 text-center">
+                <div className="rounded-lg bg-muted/60 border border-border/40 p-2.5 text-center">
                   <Timer className="h-4 w-4 mx-auto mb-1 text-amber-400" />
                   <div className="text-[10px] text-muted-foreground leading-tight">
                     Tempo no jogo

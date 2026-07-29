@@ -60,7 +60,7 @@ function UserRow({
 }) {
   const avatarSrc = resolveAvatar(user.profile_photo);
   return (
-    <div className="flex items-center justify-between p-3 rounded-xl bg-muted/20 hover:bg-muted/30 transition-colors">
+    <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50 hover:bg-muted/70 transition-colors">
       <div className="flex items-center gap-3 min-w-0">
         <div className="w-9 h-9 rounded-full overflow-hidden bg-muted shrink-0">
           {avatarSrc ? (
@@ -92,7 +92,7 @@ function UserRow({
 
 function UserRowSkeleton() {
   return (
-    <div className="flex items-center justify-between p-3 rounded-xl bg-muted/20">
+    <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50">
       <div className="flex items-center gap-3">
         <Skeleton className="w-9 h-9 rounded-full" />
         <div className="space-y-1">

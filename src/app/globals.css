@@ -60,14 +60,14 @@ All colors MUST be HSL.
     /* UI colors */
     --popover: 0 0% 100%;
     --popover-foreground: 210 40% 8%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 96%;
+    --muted: 214 30% 91%;
+    --muted-foreground: 215 20% 40%;
+    --accent: 214 30% 91%;
     --accent-foreground: 222 47% 11%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214 32% 82%;
-    --input: 214 32% 82%;
+    --border: 214 32% 76%;
+    --input: 214 32% 76%;
     --tertiary-color-variant-light: #e4e8f0;
     --ring: 241 60% 66%;
     --radius: 0.75rem;
@@ -116,7 +116,7 @@ All colors MUST be HSL.
     /* Additional shadows used by gamer-canvas UI (kept additive) */
     --shadow-glow: 0 0 30px hsl(var(--neon-blue) / 0.3);
     --shadow-neon: 0 0 20px hsl(var(--neon-purple) / 0.5);
-    --shadow-card: 0 4px 20px hsl(210 40% 8% / 0.1);
+    --shadow-card: 0 4px 24px hsl(210 30% 15% / 0.12);
 
     /* Quick Messages Priority Effects */
     --priority-low: hsl(214 32% 91%);
@@ -124,7 +124,7 @@ All colors MUST be HSL.
     --priority-high: hsl(var(--neon-purple));
 
     /* Better contrast for light mode */
-    --better-contrast: 210 30% 88%;
+    --better-contrast: 214 30% 86%;
 
     /* Improved video controls */
     --video-control-bg: 0 0% 0% / 0.8;
@@ -481,6 +481,14 @@ All colors MUST be HSL.
 
   .animate-marquee:hover {
     animation-play-state: paused;
+  }
+
+  /* Hide scrollbar while keeping scroll functionality */
+  .scrollbar-none {
+    scrollbar-width: none; /* Firefox */
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none; /* Chrome/Safari/Edge */
   }
 
   /* Improved shadow utilities */

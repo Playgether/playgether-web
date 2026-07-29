@@ -69,7 +69,7 @@ export function RoomInfoPanel({ room }: RoomDetailsPanelProps) {
   ];
 
   return (
-    <div className="space-y-5 bg-muted/20 p-4 md:h-full md:overflow-y-auto">
+    <div className="space-y-5 bg-muted/50 p-4 md:h-full md:overflow-y-auto">
       <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
         <Info className="h-5 w-5 text-neon-blue" />
         Informações da Sala
@@ -212,14 +212,14 @@ export function RoomRulesPanel({ room }: RoomDetailsPanelProps) {
   };
 
   return (
-    <div className="space-y-4 bg-muted/20 p-4 md:h-full md:overflow-y-auto">
+    <div className="space-y-4 bg-muted/50 p-4 md:h-full md:overflow-y-auto">
       <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
         <ScrollText className="h-5 w-5 text-neon-purple" />
         Regras da Sala
       </h2>
 
       {!canManage ? (
-        <p className="rounded-lg border border-border/50 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+        <p className="rounded-lg border border-border/50 bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
           Apenas o criador da sala pode adicionar ou editar regras.
         </p>
       ) : null}

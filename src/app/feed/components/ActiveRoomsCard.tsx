@@ -70,7 +70,7 @@ export function ActiveRoomsCard() {
             <Link
               key={room.id}
               href={`/rooms/${room.slug}`}
-              className="block rounded-xl bg-muted/30 p-3 transition-colors hover:bg-muted/50"
+              className="block rounded-xl bg-muted/60 p-3 transition-colors hover:bg-muted/80"
             >
               <div className="mb-1 flex items-center justify-between gap-2">
                 <h4 className="truncate text-sm font-medium text-foreground">

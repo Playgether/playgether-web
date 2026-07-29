@@ -24,7 +24,7 @@ export default function GamesCanvasProfile({
   };
 
   return (
-    <div className="min-h-layout-main w-full min-w-0 max-w-full bg-background layout-content-offset">
+    <div className="min-h-layout-main min-w-0 max-w-full bg-background layout-content-offset">
       <div className="mx-auto w-full max-w-7xl px-4 py-4 lg:py-4 xl:px-6 xl:py-6">
         <ProfileFeedServerComponentsProvider>
           <ProfilePostsProvider

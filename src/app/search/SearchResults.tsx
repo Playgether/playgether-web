@@ -67,7 +67,7 @@ function UserCard({ user, onClick }: { user: SearchUser; onClick: () => void }) 
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 border-b border-border/30 px-3 py-3 text-left transition-colors last:border-0 hover:bg-muted/40 sm:gap-4 sm:px-4 sm:py-4"
+      className="flex w-full items-center gap-3 border-b border-border/30 px-3 py-3 text-left transition-colors last:border-0 hover:bg-muted/60 sm:gap-4 sm:px-4 sm:py-4"
     >
       <ProfileAvatar
         displayName={user.name}
@@ -93,7 +93,7 @@ function PostCard({ post, onClick }: { post: SearchPost; onClick: () => void }) 
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full gap-2.5 border-b border-border/30 px-3 py-3 text-left transition-colors last:border-0 hover:bg-muted/40 sm:gap-3 sm:px-4 sm:py-4"
+      className="flex w-full gap-2.5 border-b border-border/30 px-3 py-3 text-left transition-colors last:border-0 hover:bg-muted/60 sm:gap-3 sm:px-4 sm:py-4"
     >
       <ProfileAvatar
         displayName={post.name}
@@ -136,7 +136,7 @@ function RoomCard({ room, onClick }: { room: SearchRoom; onClick: () => void }) 
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 border-b border-border/30 px-3 py-3 text-left transition-colors last:border-0 hover:bg-muted/40 sm:gap-4 sm:px-4 sm:py-4"
+      className="flex w-full items-center gap-3 border-b border-border/30 px-3 py-3 text-left transition-colors last:border-0 hover:bg-muted/60 sm:gap-4 sm:px-4 sm:py-4"
     >
       <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted sm:h-12 sm:w-12">
         {src ? (
@@ -165,7 +165,7 @@ function GameCard({ game, onClick }: { game: SearchGame; onClick: () => void }) 
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 border-b border-border/30 px-3 py-3 text-left transition-colors last:border-0 hover:bg-muted/40 sm:gap-4 sm:px-4 sm:py-4"
+      className="flex w-full items-center gap-3 border-b border-border/30 px-3 py-3 text-left transition-colors last:border-0 hover:bg-muted/60 sm:gap-4 sm:px-4 sm:py-4"
     >
       <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted sm:h-12 sm:w-12">
         {src ? (
@@ -365,7 +365,7 @@ export function SearchResults() {
                 "flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2.5 text-xs font-medium whitespace-nowrap transition-colors sm:gap-2 sm:px-5 sm:py-3.5 sm:text-sm",
                 activeTab === tab.id
                   ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                  : "border-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground"
               )}
             >
               {tab.icon}

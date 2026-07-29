@@ -95,11 +95,11 @@ export const ShareModal = ({
             placeholder="Adicione um comentário..."
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="min-h-24 resize-none bg-muted/30 border-border/50 focus:border-primary/50"
+            className="min-h-24 resize-none bg-muted/60 border-border/50 focus:border-primary/50"
           />
 
           {/* Original Post Preview */}
-          <Card className="bg-muted/30 border-border/50">
+          <Card className="bg-muted/60 border-border/50">
             <CardContent className="p-4">
               <div className="flex items-center space-x-3 mb-3">
                 <Avatar className="w-8 h-8">

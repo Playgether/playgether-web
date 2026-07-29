@@ -218,7 +218,7 @@ const InputMessage = forwardRef<
           placeholder="Digite sua mensagem..."
           disabled={disabled}
           rows={1}
-          className="flex-1 resize-none bg-muted/20 border border-border/50 rounded-md px-3 py-2 text-sm placeholder:text-muted-foreground outline-none focus:border-primary/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden"
+          className="flex-1 resize-none bg-muted/50 border border-border/50 rounded-md px-3 py-2 text-sm placeholder:text-muted-foreground outline-none focus:border-primary/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden"
           style={{ minHeight: "36px", maxHeight: "120px" }}
         />
 

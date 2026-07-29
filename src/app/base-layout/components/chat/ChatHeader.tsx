@@ -13,7 +13,7 @@ export default function ChatHeader({
   // Guard: show a lightweight placeholder when no conversation is selected
   if (!selectedConversation) {
     return (
-      <div className="p-4 border-b border-border/50 bg-muted/20">
+      <div className="p-4 border-b border-border/50 bg-muted/50">
         <div className="flex items-center space-x-3">
           <Avatar className="w-10 h-10">
             <AvatarFallback className="bg-gradient-primary text-white">
@@ -43,7 +43,7 @@ export default function ChatHeader({
       .join("") || "?";
 
   return (
-    <div className="border-b border-border/50 bg-muted/20 p-3 sm:p-4">
+    <div className="border-b border-border/50 bg-muted/50 p-3 sm:p-4">
       <div className="flex items-center gap-2 sm:gap-3">
         {onBack && (
           <button

@@ -234,10 +234,10 @@ export function FollowListModal({
 }
 
 const unfollowButtonClass =
-  "shrink-0 h-8 px-3 text-xs border border-border/50 bg-muted/20 text-muted-foreground hover:!border-red-400/50 hover:!bg-red-500/15 hover:!text-red-400 transition-colors duration-200";
+  "shrink-0 h-8 px-3 text-xs border border-border/50 bg-muted/50 text-muted-foreground hover:!border-red-400/50 hover:!bg-red-500/15 hover:!text-red-400 transition-colors duration-200";
 
 const followingButtonClass =
-  "shrink-0 h-8 px-3 text-xs border border-border/50 bg-muted/30 text-foreground hover:!border-red-400/50 hover:!bg-red-500/15 hover:!text-red-400 transition-colors duration-200";
+  "shrink-0 h-8 px-3 text-xs border border-border/50 bg-muted/60 text-foreground hover:!border-red-400/50 hover:!bg-red-500/15 hover:!text-red-400 transition-colors duration-200";
 
 function UserRow({
   user,

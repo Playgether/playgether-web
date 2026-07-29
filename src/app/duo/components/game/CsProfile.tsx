@@ -165,7 +165,7 @@ export function CsProfile({
                     selected
                       ? "border-primary/70 bg-primary/20 text-primary shadow-glow-primary/25"
                       : disabled
-                        ? "cursor-not-allowed border-border/40 bg-muted/20 text-muted-foreground opacity-45"
+                        ? "cursor-not-allowed border-border/40 bg-muted/50 text-muted-foreground opacity-45"
                         : "border-border/70 bg-background/45 text-muted-foreground hover:border-primary/35 hover:text-card-foreground"
                   }`}
                 >
@@ -201,7 +201,7 @@ export function CsProfile({
                     selected
                       ? "border-secondary/80 bg-secondary/25 text-secondary-foreground shadow-md"
                       : disabled
-                        ? "cursor-not-allowed border-border/40 bg-muted/20 text-muted-foreground opacity-45"
+                        ? "cursor-not-allowed border-border/40 bg-muted/50 text-muted-foreground opacity-45"
                         : "border-border/70 bg-background/45 text-muted-foreground hover:border-secondary/40 hover:text-card-foreground"
                   }`}
                 >

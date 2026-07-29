@@ -622,7 +622,7 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
               ))}
             </ol>
           ) : (
-            <p className="rounded-lg border border-border/60 bg-muted/30 px-3 py-3 text-sm text-muted-foreground">
+            <p className="rounded-lg border border-border/60 bg-muted/60 px-3 py-3 text-sm text-muted-foreground">
               Nenhum ponto de evento foi adicionado.
             </p>
           )}
@@ -997,7 +997,7 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
                 </span>
               ) : null}
             </p>
-            <ul className="max-h-40 space-y-1 overflow-y-auto rounded-lg border border-border/40 bg-muted/10 p-1.5">
+            <ul className="max-h-40 space-y-1 overflow-y-auto rounded-lg border border-border/40 bg-muted/40 p-1.5">
               {(activeEvent.participants ?? [])
                 .filter((p) => p.participation_confirmed && !p.left_early)
                 .map((p) => (

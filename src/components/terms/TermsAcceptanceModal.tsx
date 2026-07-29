@@ -98,7 +98,7 @@ export function TermsAcceptanceModal() {
               pendingDocuments.map((doc) => (
                 <label
                   key={doc.id}
-                  className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-border/50 hover:bg-muted/30 transition-colors"
+                  className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-border/50 hover:bg-muted/60 transition-colors"
                 >
                   <input
                     type="checkbox"

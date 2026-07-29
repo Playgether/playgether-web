@@ -396,7 +396,7 @@ export function RoomRankingsPanel({ roomSlug, roomName }: RoomRankingsPanelProps
   ];
 
   return (
-    <div className="h-full space-y-5 overflow-y-auto bg-muted/20 p-4">
+    <div className="h-full space-y-5 overflow-y-auto bg-muted/50 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
           <Trophy className="h-5 w-5 text-neon-gold" />
@@ -598,7 +598,7 @@ export function RoomMusicPanel({ roomName }: RoomMusicPanelProps) {
   const bannerError = localError || roomMusicError;
 
   return (
-    <div className="h-full space-y-5 overflow-y-auto bg-muted/20 p-4">
+    <div className="h-full space-y-5 overflow-y-auto bg-muted/50 p-4">
       <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
         <Music className="h-5 w-5 text-neon-pink" />
         Música - {roomName}
@@ -610,7 +610,7 @@ export function RoomMusicPanel({ roomName }: RoomMusicPanelProps) {
       </p>
 
       {!canQueue && !canPlayback ? (
-        <p className="rounded-lg border border-border/50 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+        <p className="rounded-lg border border-border/50 bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
           Você não tem permissão para gerenciar a música desta sala.
         </p>
       ) : null}
@@ -776,14 +776,14 @@ export function RoomSettingsPanel({ room }: RoomSettingsPanelProps) {
   };
 
   return (
-    <div className="h-full space-y-5 overflow-y-auto bg-muted/20 p-4">
+    <div className="h-full space-y-5 overflow-y-auto bg-muted/50 p-4">
       <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
         <Settings className="h-5 w-5 text-muted-foreground" />
         Configurações da Sala
       </h2>
 
       {!canSettings && !canSlug ? (
-        <p className="rounded-lg border border-border/50 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+        <p className="rounded-lg border border-border/50 bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
           Você não tem permissão para alterar as configurações desta sala.
         </p>
       ) : null}
