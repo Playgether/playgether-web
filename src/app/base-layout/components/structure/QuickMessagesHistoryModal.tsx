@@ -1,6 +1,5 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 import {
   getPriorityConfig,
@@ -28,9 +27,11 @@ export const QuickMessagesHistoryModal = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[min(85dvh,720px)] max-w-4xl flex-col gap-0 overflow-hidden p-4 sm:p-6 bg-background/95 backdrop-blur-xl border border-primary/20">
-        {components.QuickMessagesHistoryModalHeader}
+        <div className="shrink-0">
+          {components.QuickMessagesHistoryModalHeader}
+        </div>
 
-        <ScrollArea className="flex-1 min-h-0 pr-2 sm:pr-4">
+        <div className="mt-3 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 sm:mt-4 sm:pr-2">
           <div className="space-y-3 px-1 py-1.5 sm:space-y-4">
             {historyMessages.map((message) => (
               <div
@@ -88,7 +89,7 @@ export const QuickMessagesHistoryModal = ({
               </div>
             ))}
           </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );

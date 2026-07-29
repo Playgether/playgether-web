@@ -299,7 +299,7 @@ export default function RoomChatMessagesPanel({
                         {message.body}
                       </div>
                       <span
-                        className={`mt-0.5 block text-[10px] text-white/70 ${
+                        className={`mt-0.5 block text-[10px] text-muted-foreground ${
                           isMine ? "text-right" : ""
                         }`}
                       >
