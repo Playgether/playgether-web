@@ -14,6 +14,7 @@ import { MilestonesTab } from "./tabs/MilestonesTab";
 import { GamesLibraryTab } from "./tabs/GamesLibraryTab";
 import { RepostsTab } from "./tabs/RepostsTab";
 import { LikedPostsTab } from "./tabs/LikedPostsTab";
+import { SavedPostsTab } from "./tabs/SavedPostsTab";
 import { AddCommentModal } from "./modals/AddCommentModal";
 import { EditCommentModal } from "./modals/EditCommentModal";
 import { ConfirmationModal } from "./modals/ConfirmationModal";
@@ -76,6 +77,7 @@ export function GamesCanvasContentTabs({
     achievements: "conquistas",
     games: "biblioteca",
     liked: "curtidas",
+    saved: "salvos",
   };
 
   const slugToTabId: Record<string, string> = Object.fromEntries(
@@ -568,8 +570,8 @@ export function GamesCanvasContentTabs({
                 embedded
                 onProfileUpdated={onProfileUpdated}
               />
-              <TabsList className="!flex h-auto w-full min-w-0 flex-row gap-0 rounded-none border-0 border-t border-border/50 bg-muted/20 p-0">
-                {tabsData.map((tab) => (
+              <TabsList className="!flex h-auto w-full min-w-0 flex-row gap-0 rounded-none border-0 border-t border-border/50 bg-muted/50 p-0">
+                {tabsData.filter((tab) => !tab.ownerOnly || isOwner).map((tab) => (
                   <TabsTrigger
                     key={tab.id}
                     value={tab.id}
@@ -587,31 +589,20 @@ export function GamesCanvasContentTabs({
             </div>
 
             {/* Desktop: abas separadas — largura total distribuída entre os itens */}
-            <TabsList className="mb-6 hidden h-auto w-full gap-1 border border-border bg-card p-1 lg:!flex lg:flex-row">
-              {tabsData.map((tab) => (
+            <TabsList className="mb-6 hidden h-auto w-full gap-1 overflow-x-auto scrollbar-none border border-border bg-card p-1 lg:!flex lg:flex-row">
+              {tabsData.filter((tab) => !tab.ownerOnly || isOwner).map((tab) => (
                 <TabsTrigger
                   key={tab.id}
                   value={tab.id}
-                  className="flex h-auto min-w-0 flex-1 basis-0 flex-col items-center gap-1 p-3 transition-all duration-200 data-[state=active]:bg-gradient-primary data-[state=active]:text-white data-[state=active]:shadow-neon"
+                  title={tab.label}
+                  className="flex h-auto min-w-0 flex-1 basis-0 flex-col items-center gap-0.5 p-2 xl:gap-1 xl:p-2 transition-all duration-200 data-[state=active]:bg-gradient-primary data-[state=active]:text-white data-[state=active]:shadow-neon"
                 >
                   <tab.icon className="h-4 w-4 shrink-0" />
-                  <span className="whitespace-nowrap text-xs">{tab.label}</span>
+                  <span className="hidden whitespace-nowrap text-[10px] xl:inline-block">{tab.label}</span>
                 </TabsTrigger>
               ))}
             </TabsList>
           </div>
-          <TabsList className="flex flex-wrap justify-center lg:justify-start gap-1 bg-card border border-border p-1 mb-6 h-auto overflow-visible">
-            {tabsData.filter((tab) => !tab.ownerOnly || isOwner).map((tab) => (
-              <TabsTrigger
-                key={tab.id}
-                value={tab.id}
-                className="flex flex-col items-center gap-1 p-3 min-w-[80px] h-auto data-[state=active]:bg-gradient-primary data-[state=active]:text-white data-[state=active]:shadow-neon transition-all duration-200"
-              >
-                <tab.icon className="h-4 w-4 flex-shrink-0" />
-                <span className="text-xs whitespace-nowrap">{tab.label}</span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
 
           <div className="mt-3 overflow-visible rounded-lg border border-border bg-card shadow-card lg:mt-0">
             <TabsContent value="bio" className="space-y-4 p-4 sm:p-6">
@@ -714,6 +705,12 @@ export function GamesCanvasContentTabs({
             {isOwner && (
               <TabsContent value="liked" className="p-6">
                 <LikedPostsTab onPostClick={(postId) => setSelectedPostId(postId)} />
+              </TabsContent>
+            )}
+
+            {isOwner && (
+              <TabsContent value="saved" className="p-4 sm:p-6">
+                <SavedPostsTab onPostClick={(postId) => setSelectedPostId(postId)} />
               </TabsContent>
             )}
           </div>

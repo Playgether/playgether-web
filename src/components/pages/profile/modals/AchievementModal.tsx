@@ -256,7 +256,7 @@ export function AchievementModal({
                               className={
                                 unlocked
                                   ? "text-white border-0"
-                                  : "border-border text-muted-foreground bg-muted/30"
+                                  : "border-border text-muted-foreground bg-muted/60"
                               }
                               style={
                                 unlocked

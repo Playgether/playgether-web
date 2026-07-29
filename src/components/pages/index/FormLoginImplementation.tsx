@@ -160,7 +160,7 @@ export const FormLoginImplementation = ({
         <label className={`flex items-center gap-3 cursor-pointer px-3 py-2.5 rounded-xl border transition-all duration-200
           ${trustDevice
             ? "border-primary/60 bg-gradient-to-r from-primary/10 to-secondary/10 shadow-[0_0_8px_rgba(var(--primary),0.15)]"
-            : "border-border/40 bg-background/30 hover:border-border hover:bg-muted/20"
+            : "border-border/40 bg-background/30 hover:border-border hover:bg-muted/50"
           }`}>
           <input
             type="checkbox"

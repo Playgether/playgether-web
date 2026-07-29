@@ -491,7 +491,7 @@ export function ConversationsContent({
                   <button
                     key={u.id}
                     onClick={() => handleStartConversation(u.id)}
-                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted/30 text-sm transition-colors"
+                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted/60 text-sm transition-colors"
                   >
                     <span className="font-medium">{u.first_name} {u.last_name}</span>
                     <span className="text-muted-foreground ml-1">@{u.username}</span>
@@ -516,7 +516,7 @@ export function ConversationsContent({
                       key={conv.id}
                       onClick={() => selectConversation(conv)}
                       className={cn(
-                          "group cursor-pointer border-l-2 p-3 transition-colors hover:bg-muted/20 sm:p-4",
+                          "group cursor-pointer border-l-2 p-3 transition-colors hover:bg-muted/50 sm:p-4",
                           selectedConversation?.id === conv.id
                             ? "border-primary bg-primary/10"
                             : "border-transparent"
@@ -584,7 +584,7 @@ export function ConversationsContent({
                     <button
                       key={u.id}
                       onClick={() => handleAddGroupMember(u)}
-                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted/30 text-sm transition-colors"
+                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted/60 text-sm transition-colors"
                     >
                       <span className="font-medium">{u.first_name} {u.last_name}</span>
                       <span className="text-muted-foreground ml-1">@{u.username}</span>
@@ -594,7 +594,7 @@ export function ConversationsContent({
                     <div className="space-y-1">
                       <p className="text-xs text-muted-foreground">Membros selecionados</p>
                       {groupMembers.map((m) => (
-                        <div key={m.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-muted/20 text-sm">
+                        <div key={m.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-muted/50 text-sm">
                           <span>
                             {m.first_name} {m.last_name}
                             <span className="text-muted-foreground ml-1">@{m.username}</span>
@@ -639,7 +639,7 @@ export function ConversationsContent({
                           <div
                             key={conv.id}
                             onClick={() => selectConversation(conv)}
-                            className={`group p-4 cursor-pointer hover:bg-muted/20 transition-colors border-l-2 ${
+                            className={`group p-4 cursor-pointer hover:bg-muted/50 transition-colors border-l-2 ${
                               selectedConversation?.id === conv.id
                                 ? "border-primary bg-primary/10"
                                 : "border-transparent"
@@ -676,7 +676,7 @@ export function ConversationsContent({
                       })}
                       <button
                         onClick={() => setShowCreateGroup(true)}
-                        className="w-full p-4 text-primary text-sm flex items-center gap-2 hover:bg-muted/20 transition-colors"
+                        className="w-full p-4 text-primary text-sm flex items-center gap-2 hover:bg-muted/50 transition-colors"
                       >
                         <Plus className="w-4 h-4" />
                         Criar novo grupo

@@ -1403,7 +1403,7 @@ export const PostModal = ({
                                     }
                                     onKeyDown={(e) => handleKeyDown(e, () => handleReply(comment.id))}
                                     placeholder="Escreva uma resposta..."
-                                    className="min-h-[80px] text-sm bg-muted/20 border-border/50 w-full"
+                                    className="min-h-[80px] text-sm bg-muted/50 border-border/50 w-full"
                                     autoFocus
                                   />
                                   <div className="flex gap-2 justify-end">
@@ -1533,7 +1533,7 @@ export const PostModal = ({
                                       </div>
 
                                       {/* Conteúdo da reply */}
-                                      <div className="bg-muted/30 rounded-lg p-3">
+                                      <div className="bg-muted/60 rounded-lg p-3">
                                         {editingCommentId === reply.id ? (
                                           <Textarea
                                             value={editingContent}
@@ -1679,7 +1679,7 @@ export const PostModal = ({
                     onChange={(e) => setNewComment(e.target.value)}
                     onKeyDown={(e) => handleKeyDown(e, handleComment)}
                     placeholder="Adicione um comentário..."
-                    className="flex-1 bg-muted/20 border-border/50 w-full pr-24 resize-none"
+                    className="flex-1 bg-muted/50 border-border/50 w-full pr-24 resize-none"
                     rows={1}
                   />
                   {newComment.trim() && (

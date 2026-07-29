@@ -40,7 +40,7 @@ export function DeleteCommentModal({
           </div>
 
           {/* Comment Preview */}
-          <Card className="bg-muted/30 border-border/50">
+          <Card className="bg-muted/60 border-border/50">
             <CardContent className="p-4 space-y-3">
               <div className="flex items-center space-x-3">
                 <Avatar className="w-9 h-9">

@@ -367,7 +367,7 @@ export function GamesCanvasUserProfile({
 
           <div
             className={cn(
-              "mt-1.5 flex items-stretch divide-x divide-border/50 border border-border/40 bg-muted/20",
+              "mt-1.5 flex items-stretch divide-x divide-border/50 border border-border/40 bg-muted/50",
               embedded ? "rounded-none" : "rounded-md",
             )}
           >
@@ -807,7 +807,7 @@ export function GamesCanvasUserProfile({
               </div>
             </div>
 
-            <div className="border-t border-border bg-muted/20 px-4 py-3 lg:px-6">
+            <div className="border-t border-border bg-muted/50 px-4 py-3 lg:px-6">
               <div className="flex justify-between text-center">
                 <div className="flex-1">
                   <div className="text-sm font-semibold text-neon-blue">

@@ -104,7 +104,7 @@ export function GameVerification({
         <button
           type="button"
           onClick={onBack}
-          className="group mb-8 inline-flex items-center gap-2 rounded-full border border-transparent px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-border/80 hover:bg-muted/30 hover:text-primary"
+          className="group mb-8 inline-flex items-center gap-2 rounded-full border border-transparent px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-border/80 hover:bg-muted/60 hover:text-primary"
         >
           <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
           Escolher outro jogo

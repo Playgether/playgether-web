@@ -35,7 +35,7 @@ export function SettingsSelectRow({
 }: SettingsSelectRowProps) {
   if (loading) {
     return (
-      <div className="flex items-center justify-between p-4 rounded-xl bg-muted/20">
+      <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50">
         <div className="space-y-1.5">
           <Skeleton className="h-4 w-40" />
           <Skeleton className="h-3 w-56" />
@@ -46,7 +46,7 @@ export function SettingsSelectRow({
   }
 
   return (
-    <div className="flex items-center justify-between p-4 rounded-xl bg-muted/20 hover:bg-muted/30 transition-colors gap-4">
+    <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50 hover:bg-muted/70 transition-colors gap-4">
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-foreground">{label}</p>
         {description && (

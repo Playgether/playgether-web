@@ -158,7 +158,7 @@ export const OnlineFriends = () => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             disabled={showFriendsSkeleton}
-            className="pl-10 bg-muted/50 border-border/50 focus:ring-2 focus:ring-primary/30"
+            className="pl-10 bg-muted/60 border-border/50 focus:ring-2 focus:ring-primary/30"
           />
         </div>
       </CardHeader>
@@ -221,7 +221,7 @@ export const OnlineFriends = () => {
                     if (e.key === "Enter")
                       router.push(`/profile/${friend.username}`);
                   }}
-                  className="flex items-center space-x-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 hover:shadow-improved transition-all duration-200 cursor-pointer group"
+                  className="flex items-center space-x-3 p-3 rounded-xl bg-muted/60 hover:bg-muted/80 transition-all duration-200 cursor-pointer group"
                 >
                   <div className="relative shrink-0">
                     <ProfileAvatar

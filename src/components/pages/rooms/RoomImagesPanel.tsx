@@ -238,14 +238,14 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
   };
 
   return (
-    <div className="h-full space-y-5 overflow-y-auto bg-muted/20 p-4">
+    <div className="h-full space-y-5 overflow-y-auto bg-muted/50 p-4">
       <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
         <ImageIcon className="h-5 w-5 text-muted-foreground" />
         Imagens da sala
       </h2>
 
       {!canManage ? (
-        <p className="rounded-lg border border-border/50 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+        <p className="rounded-lg border border-border/50 bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
           Apenas o criador da sala pode alterar imagens.
         </p>
       ) : null}

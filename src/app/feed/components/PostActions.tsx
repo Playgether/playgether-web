@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PenLine, Repeat2, X } from "lucide-react";
+import { BookmarkButton } from "@/components/ui/BookmarkButton";
 import { cn } from "@/lib/utils";
 import { CustomToast } from "@/components/ui/customSonner";
 import { useRouter } from "next/navigation";
@@ -169,6 +170,7 @@ export default function PostActions({
           </DropdownMenuContent>
         </DropdownMenu>
       </PostPropertiers.Root>
+      <BookmarkButton post={post} />
     </>
   );
 }

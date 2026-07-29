@@ -136,7 +136,7 @@ export function VoteBestVotingOverlay({
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
           {anonymousSubs.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-border/70 bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
+            <p className="rounded-xl border border-dashed border-border/70 bg-muted/50 px-4 py-8 text-center text-sm text-muted-foreground">
               Nenhuma criação nesta rodada.
             </p>
           ) : (
@@ -154,7 +154,7 @@ export function VoteBestVotingOverlay({
                       onClick={() => handleVote(s.id, isOwn)}
                       className={cn(
                         "group relative flex h-full w-full flex-col rounded-2xl border p-4 text-left transition-all",
-                        isOwn && "cursor-not-allowed border-border/50 bg-muted/20 opacity-70",
+                        isOwn && "cursor-not-allowed border-border/50 bg-muted/50 opacity-70",
                         !isOwn &&
                           canVote &&
                           !isOrganizer &&
@@ -196,7 +196,7 @@ export function VoteBestVotingOverlay({
           )}
         </div>
 
-        <div className="border-t border-border/60 bg-muted/10 px-5 py-3">
+        <div className="border-t border-border/60 bg-muted/40 px-5 py-3">
           <Button type="button" variant="secondary" className="w-full" onClick={() => onOpenChange(false)}>
             {votedId || isOrganizer ? "Fechar" : "Minimizar (vote antes do tempo acabar)"}
           </Button>

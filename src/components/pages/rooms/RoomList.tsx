@@ -195,13 +195,13 @@ export default function RoomList({
               placeholder="Buscar por nome ou sumário..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-border bg-muted/30 py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+              className="w-full rounded-lg border border-border bg-muted/60 py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
               aria-label="Buscar salas"
             />
           </div>
 
           <div
-            className="inline-flex shrink-0 self-start rounded-lg border border-border bg-muted/30 p-1 sm:self-auto"
+            className="inline-flex shrink-0 self-start rounded-lg border border-border bg-muted/60 p-1 sm:self-auto"
             role="tablist"
             aria-label="Filtrar salas"
           >

@@ -330,7 +330,7 @@ export default function AccountSettingsPage() {
       >
         {/* Avatar & Banner */}
         <SettingsSection title="Foto & Banner">
-          <div className="relative h-36 rounded-xl overflow-hidden bg-muted/30 flex items-center justify-center border border-border/50">
+          <div className="relative h-36 rounded-xl overflow-hidden bg-muted/60 flex items-center justify-center border border-border/50">
             {bannerSrc ? (
               <img src={bannerSrc} alt="Banner" className="w-full h-full object-cover" />
             ) : (
@@ -356,7 +356,7 @@ export default function AccountSettingsPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/20">
+          <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/50">
             <ProfileAvatar
               displayName={name || user?.username || ""}
               username={user?.username}
@@ -387,7 +387,7 @@ export default function AccountSettingsPage() {
 
         {/* Profile Info */}
         <SettingsSection title="Informações do perfil">
-          <div className="space-y-4 p-4 rounded-xl bg-muted/20">
+          <div className="space-y-4 p-4 rounded-xl bg-muted/50">
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">Nome de exibição</Label>
               <Input
@@ -425,7 +425,7 @@ export default function AccountSettingsPage() {
                   value={me?.username ?? user?.username ?? ""}
                   readOnly
                   disabled
-                  className="bg-muted/30 border-border/30 text-muted-foreground cursor-not-allowed pl-9"
+                  className="bg-muted/50 border-border/40 text-muted-foreground cursor-not-allowed pl-9"
                 />
               </div>
               {!me?.can_change_username && (
@@ -453,7 +453,7 @@ export default function AccountSettingsPage() {
                   value={me?.email_masked ?? ""}
                   readOnly
                   disabled
-                  className="bg-muted/30 border-border/30 text-muted-foreground font-mono cursor-not-allowed pr-8"
+                  className="bg-muted/50 border-border/40 text-muted-foreground font-mono cursor-not-allowed pr-8"
                 />
                 <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
               </div>

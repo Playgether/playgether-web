@@ -250,7 +250,7 @@ export const CreatePostModal = () => {
               placeholder="O que está acontecendo?"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="min-h-32 resize-none border-border/50 bg-muted/30 focus:border-primary/50 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary/50 focus-visible:ring-offset-0"
+              className="min-h-32 resize-none border-border/50 bg-muted/60 focus:border-primary/50 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary/50 focus-visible:ring-offset-0"
             />
 
             {/* Media Preview */}

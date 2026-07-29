@@ -56,7 +56,7 @@ function LaneRolePicker({
                   aria-checked={isSelected}
                   onClick={() => onChange(role)}
                   className={`flex w-full items-center gap-4 px-4 py-3.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40 ${
-                    isSelected ? "bg-primary/[0.07]" : "hover:bg-muted/30 active:bg-muted/40"
+                    isSelected ? "bg-primary/[0.07]" : "hover:bg-muted/60 active:bg-muted/40"
                   }`}
                 >
                   <span

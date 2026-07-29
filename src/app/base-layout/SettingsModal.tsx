@@ -56,7 +56,7 @@ export const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
                       "flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 text-xs font-medium transition-all duration-200",
                       active
                         ? "border-primary bg-primary/10 text-primary"
-                        : "border-border/50 bg-muted/20 text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                        : "border-border/50 bg-muted/50 text-muted-foreground hover:bg-muted/70 hover:text-foreground"
                     )}
                   >
                     <Icon className="w-4 h-4" />

@@ -278,9 +278,7 @@ export const FeedPost = ({ post }) => {
 
             {/* Actions */}
             <div className="pointer-events-auto flex items-center justify-between gap-2 border-t border-border/50 pt-2.5 sm:pt-4">
-              <div className="flex items-center space-x-2 sm:space-x-6">
-                <PostActions post={post} handleShareModal={handleShareModal} />
-              </div>
+              <PostActions post={post} handleShareModal={handleShareModal} />
             </div>
             </div>
           </>

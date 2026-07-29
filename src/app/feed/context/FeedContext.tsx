@@ -160,6 +160,15 @@ export const FeedProvider = ({
     [globalCreatePost],
   );
 
+  const handleSave = useCallback((postId: number, saveId: number | null) => {
+    setPosts((prev) =>
+      prev.map((p) => {
+        if (p.id !== postId) return p;
+        return { ...p, user_already_saved: saveId !== null, user_save_id: saveId };
+      }),
+    );
+  }, []);
+
   const handleRepost = useCallback((postId: number, repostId: number | null) => {
     setPosts((prev) =>
       prev.map((p) => {
@@ -271,6 +280,7 @@ export const FeedProvider = ({
         isFeedLoading,
         handlePostCreated,
         handleRepost,
+        handleSave,
         handlePostUpdate,
         createPostOpen,
         handleCreatePostModal,

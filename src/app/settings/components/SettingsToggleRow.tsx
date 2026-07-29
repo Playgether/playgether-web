@@ -25,7 +25,7 @@ export function SettingsToggleRow({
 }: SettingsToggleRowProps) {
   if (loading) {
     return (
-      <div className="flex items-center justify-between p-4 rounded-xl bg-muted/20">
+      <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50">
         <div className="space-y-1.5">
           <Skeleton className="h-4 w-40" />
           <Skeleton className="h-3 w-64" />
@@ -39,7 +39,7 @@ export function SettingsToggleRow({
     <div
       className={cn(
         "flex items-center justify-between p-4 rounded-xl transition-colors",
-        danger ? "bg-destructive/5 hover:bg-destructive/10" : "bg-muted/20 hover:bg-muted/30"
+        danger ? "bg-destructive/5 hover:bg-destructive/10" : "bg-muted/50 hover:bg-muted/70"
       )}
     >
       <div className="flex-1 min-w-0 mr-4">

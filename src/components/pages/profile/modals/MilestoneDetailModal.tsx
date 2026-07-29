@@ -61,7 +61,7 @@ export function MilestoneDetailModal({
         )}
         {medias.length > 0 ? (
           <div className="relative mt-4">
-            <div className="relative rounded-lg overflow-hidden border border-border bg-muted/30 min-h-[200px] flex items-center justify-center">
+            <div className="relative rounded-lg overflow-hidden border border-border bg-muted/60 min-h-[200px] flex items-center justify-center">
               {!isMediaLoaded && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <LoadingComponent

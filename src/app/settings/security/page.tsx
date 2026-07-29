@@ -235,7 +235,7 @@ export default function SecuritySettingsPage() {
                 </div>
                 <div className="w-full space-y-1">
                   <p className="text-xs text-muted-foreground text-center">Ou copie a chave manualmente:</p>
-                  <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border/40">
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/60 border border-border/40">
                     <code className="flex-1 text-xs font-mono break-all text-foreground">{setup?.secret}</code>
                     <button type="button" onClick={handleCopySecret} className="shrink-0 text-muted-foreground hover:text-foreground transition-colors">
                       {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
@@ -300,7 +300,7 @@ export default function SecuritySettingsPage() {
       <SettingsPageWrapper title="Segurança" description="Gerencie a segurança da sua conta.">
         {/* Change password */}
         <SettingsSection title="Alterar senha" description="Sua senha deve ter pelo menos 8 caracteres.">
-          <div className="space-y-4 p-4 rounded-xl bg-muted/20">
+          <div className="space-y-4 p-4 rounded-xl bg-muted/50">
             <PasswordInput label="Senha atual" value={currentPassword} onChange={setCurrentPassword} />
             <PasswordInput label="Nova senha" value={newPassword} onChange={setNewPassword} />
             <PasswordInput
@@ -327,7 +327,7 @@ export default function SecuritySettingsPage() {
           description="Adicione uma camada extra de segurança. Compatível com Google Authenticator, Microsoft Authenticator e qualquer app TOTP."
         >
           {loadingSetup ? (
-            <div className="flex items-center justify-between p-4 rounded-xl bg-muted/20 animate-pulse">
+            <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50 animate-pulse">
               <div className="flex items-center gap-3">
                 <div className="w-5 h-5 rounded bg-muted" />
                 <div className="space-y-1.5">
@@ -338,7 +338,7 @@ export default function SecuritySettingsPage() {
               <div className="h-8 w-20 rounded-lg bg-muted" />
             </div>
           ) : (
-            <div className="flex items-center justify-between p-4 rounded-xl bg-muted/20">
+            <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50">
               <div className="flex items-center gap-3">
                 {isEnabled
                   ? <ShieldCheck className="w-5 h-5 text-green-500" />

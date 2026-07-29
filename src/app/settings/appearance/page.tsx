@@ -51,7 +51,7 @@ export default function AppearanceSettingsPage() {
                     "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200",
                     active
                       ? "border-primary bg-primary/10 text-primary"
-                      : "border-border/50 bg-muted/20 text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                      : "border-border/50 bg-muted/50 text-muted-foreground hover:bg-muted/70 hover:text-foreground"
                   )}
                 >
                   <Icon className="w-5 h-5" />

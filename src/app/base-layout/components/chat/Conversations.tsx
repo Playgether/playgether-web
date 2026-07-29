@@ -21,7 +21,7 @@ function Conversations({
             <div
               key={conversation.id}
               onClick={() => onSelectConversation(conversation)}
-              className={`p-4 cursor-pointer hover:bg-muted/20 transition-colors border-l-2 ${
+              className={`p-4 cursor-pointer hover:bg-muted/50 transition-colors border-l-2 ${
                 selectedConversation?.id === conversation.id
                   ? "border-primary bg-primary/10"
                   : "border-transparent"

@@ -44,7 +44,7 @@ export const ReplyModal = ({ open, onOpenChange, comment, onSubmitReply }: Reply
         {comment && (
           <div className="space-y-4">
             {/* Original Comment */}
-            <div className="flex items-start space-x-3 p-3 bg-muted/30 rounded-lg">
+            <div className="flex items-start space-x-3 p-3 bg-muted/60 rounded-lg">
               <Avatar className="w-8 h-8">
                 <AvatarImage src={comment.user.avatar} alt={comment.user.name} />
                 <AvatarFallback className="bg-gradient-primary text-white text-xs">
@@ -67,7 +67,7 @@ export const ReplyModal = ({ open, onOpenChange, comment, onSubmitReply }: Reply
                 onChange={(e) => setReplyContent(e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, handleSubmit)}
                 placeholder="Escreva sua resposta..."
-                className="min-h-[100px] bg-muted/20 border-border/50 resize-none"
+                className="min-h-[100px] bg-muted/50 border-border/50 resize-none"
               />
               
               <div className="flex justify-end space-x-2">

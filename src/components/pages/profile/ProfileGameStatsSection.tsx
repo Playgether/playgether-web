@@ -689,7 +689,7 @@ export function ProfileGameStatsSection({
               {(lolStatsResponse?.disclaimers ?? []).map((disclaimer) => (
                 <div
                   key={disclaimer}
-                  className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2"
+                  className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/60 rounded-lg px-3 py-2"
                 >
                   <Info className="h-3.5 w-3.5 shrink-0" />
                   <span>{disclaimer}</span>
@@ -717,7 +717,7 @@ export function ProfileGameStatsSection({
 
       {useRealCs2Stats && (
         <div className="space-y-1.5 w-fit max-w-full">
-          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground bg-muted/60 rounded-lg px-3 py-2">
             <Info className="h-3.5 w-3.5 shrink-0" />
             <span>Estatísticas atualizadas a cada 30 minutos</span>
             {isOwner && onCs2ForceRefresh ? (
@@ -1155,7 +1155,7 @@ function Cs2WeaponChip({ weapon }: { weapon: Cs2WeaponEntry }) {
   const barValue = Math.min(100, weapon.pct);
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/20 px-2.5 py-2">
+    <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/50 px-2.5 py-2">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border/50 bg-background/80 p-1">
         <Cs2WeaponIcon name={weapon.name} />
       </div>
@@ -1540,7 +1540,7 @@ function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
               {stats.mapWinRates.map((m) => (
                 <div
                   key={m.map}
-                  className="flex items-center justify-between p-2 rounded-lg bg-muted/30 border border-border/50"
+                  className="flex items-center justify-between p-2 rounded-lg bg-muted/60 border border-border/50"
                 >
                   <span className="font-medium text-sm inline-flex items-center gap-3 min-w-0">
                     <span className="group relative inline-flex h-12 w-12 shrink-0 overflow-hidden rounded-md border border-border/60">
@@ -1732,7 +1732,7 @@ function FpsOverview({ stats }: { stats: FpsStats }) {
             {stats.mapWinRates.map((m) => (
               <div
                 key={m.map}
-                className="flex items-center justify-between p-2 rounded-lg bg-muted/30 border border-border/50"
+                className="flex items-center justify-between p-2 rounded-lg bg-muted/60 border border-border/50"
               >
                 <span className="font-medium text-sm">{m.map}</span>
                 <span
@@ -1881,7 +1881,7 @@ function LolChampionOverviewRow({
   champion: LolChampionRollupRow;
 }) {
   return (
-    <div className="flex items-center gap-2.5 rounded-lg border border-border/50 bg-muted/20 px-2.5 py-1.5">
+    <div className="flex items-center gap-2.5 rounded-lg border border-border/50 bg-muted/50 px-2.5 py-1.5">
       {champion.championImageUrl ? (
         <img
           src={champion.championImageUrl}
@@ -2071,19 +2071,19 @@ function LolChampionSyncedStatsModalCard({
             ) : null}
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+            <div className="rounded-lg border border-border/50 bg-muted/50 px-3 py-2">
               <p className="text-xs text-muted-foreground">Vitórias</p>
               <p className="text-lg font-semibold tabular-nums">{c.wins}</p>
             </div>
-            <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+            <div className="rounded-lg border border-border/50 bg-muted/50 px-3 py-2">
               <p className="text-xs text-muted-foreground">Derrotas</p>
               <p className="text-lg font-semibold tabular-nums">{losses}</p>
             </div>
-            <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+            <div className="rounded-lg border border-border/50 bg-muted/50 px-3 py-2">
               <p className="text-xs text-muted-foreground">Partidas</p>
               <p className="text-lg font-semibold tabular-nums">{c.games}</p>
             </div>
-            <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+            <div className="rounded-lg border border-border/50 bg-muted/50 px-3 py-2">
               <p className="text-xs text-muted-foreground">Win rate</p>
               <p
                 className={`text-lg font-semibold tabular-nums ${lolWinRateAccentClass(c.winRate)}`}
@@ -2093,19 +2093,19 @@ function LolChampionSyncedStatsModalCard({
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+            <div className="rounded-lg border border-border/50 bg-muted/50 px-3 py-2">
               <p className="text-xs text-muted-foreground">Kills</p>
               <p className="text-lg font-semibold tabular-nums">{kills}</p>
             </div>
-            <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+            <div className="rounded-lg border border-border/50 bg-muted/50 px-3 py-2">
               <p className="text-xs text-muted-foreground">Mortes</p>
               <p className="text-lg font-semibold tabular-nums">{deaths}</p>
             </div>
-            <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+            <div className="rounded-lg border border-border/50 bg-muted/50 px-3 py-2">
               <p className="text-xs text-muted-foreground">Assistências</p>
               <p className="text-lg font-semibold tabular-nums">{assists}</p>
             </div>
-            <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+            <div className="rounded-lg border border-border/50 bg-muted/50 px-3 py-2">
               <p className="text-xs text-muted-foreground">KDA</p>
               <p
                 className={`text-lg font-semibold tabular-nums ${lolRollupKdaRatioToneClass(c.kda)}`}
@@ -2156,23 +2156,23 @@ function LolChampionGeralModalCard({
           {hasSync && s ? (
             <>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+                <div className="rounded-lg border border-border/50 bg-muted/50 px-3 py-2">
                   <p className="text-xs text-muted-foreground">Vitórias</p>
                   <p className="text-lg font-semibold tabular-nums">{s.wins}</p>
                 </div>
-                <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+                <div className="rounded-lg border border-border/50 bg-muted/50 px-3 py-2">
                   <p className="text-xs text-muted-foreground">Derrotas</p>
                   <p className="text-lg font-semibold tabular-nums">
                     {s.losses}
                   </p>
                 </div>
-                <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+                <div className="rounded-lg border border-border/50 bg-muted/50 px-3 py-2">
                   <p className="text-xs text-muted-foreground">Partidas</p>
                   <p className="text-lg font-semibold tabular-nums">
                     {s.games}
                   </p>
                 </div>
-                <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+                <div className="rounded-lg border border-border/50 bg-muted/50 px-3 py-2">
                   <p className="text-xs text-muted-foreground">Win rate</p>
                   <p
                     className={`text-lg font-semibold tabular-nums ${lolWinRateAccentClass(s.winRate)}`}
@@ -2182,25 +2182,25 @@ function LolChampionGeralModalCard({
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+                <div className="rounded-lg border border-border/50 bg-muted/50 px-3 py-2">
                   <p className="text-xs text-muted-foreground">Kills</p>
                   <p className="text-lg font-semibold tabular-nums">
                     {s.kills}
                   </p>
                 </div>
-                <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+                <div className="rounded-lg border border-border/50 bg-muted/50 px-3 py-2">
                   <p className="text-xs text-muted-foreground">Mortes</p>
                   <p className="text-lg font-semibold tabular-nums">
                     {s.deaths}
                   </p>
                 </div>
-                <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+                <div className="rounded-lg border border-border/50 bg-muted/50 px-3 py-2">
                   <p className="text-xs text-muted-foreground">Assistências</p>
                   <p className="text-lg font-semibold tabular-nums">
                     {s.assists}
                   </p>
                 </div>
-                <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+                <div className="rounded-lg border border-border/50 bg-muted/50 px-3 py-2">
                   <p className="text-xs text-muted-foreground">KDA</p>
                   <p
                     className={`text-lg font-semibold tabular-nums ${lolRollupKdaRatioToneClass(s.kda)}`}
@@ -2251,13 +2251,13 @@ function LolChampionMasteryOnlyModalCard({ m }: { m: LolChampionMasteryRow }) {
           className="h-10 w-10"
         />
         <div className="grid w-full min-w-[200px] flex-1 grid-cols-2 gap-3 sm:w-auto sm:max-w-md">
-          <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+          <div className="rounded-lg border border-border/50 bg-muted/50 px-3 py-2">
             <p className="text-xs text-muted-foreground">Nível</p>
             <p className="text-lg font-semibold tabular-nums">
               {m.championLevel}
             </p>
           </div>
-          <div className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+          <div className="rounded-lg border border-border/50 bg-muted/50 px-3 py-2">
             <p className="text-xs text-muted-foreground">Pontos</p>
             <p className="text-lg font-semibold tabular-nums">
               {m.championPoints.toLocaleString()}
@@ -2796,7 +2796,7 @@ function RealLolOverview({
                     <Badge
                       key={role.role}
                       variant="outline"
-                      className="inline-flex max-w-full flex-wrap items-center rounded-full border-border/70 bg-muted/25 py-2 pl-2.5 pr-3 gap-x-2 gap-y-1 text-foreground shadow-none hover:bg-muted/40"
+                      className="inline-flex max-w-full flex-wrap items-center rounded-full border-border/70 bg-muted/50 py-2 pl-2.5 pr-3 gap-x-2 gap-y-1 text-foreground shadow-none hover:bg-muted/40"
                     >
                       {role.roleIconUrl ? (
                         <span className="relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-transparent">
