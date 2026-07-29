@@ -1,19 +1,23 @@
 import { api } from "@/services/api";
 import { getNotificationsProps } from "@/types/getNotificationsProps";
-import { cookies } from "next/headers";
+import { ensureSessionAuth } from "@/actions/refreshToken";
 
 export const getNotifications = async () => {
-  const accessToken = (await cookies()).get("accessToken")?.value;
-  const userId = (await cookies()).get("user_id")?.value;
-  const response = await api
-    .get<getNotificationsProps>(`/api/v1/users/${userId}/notifications/`, {
-      headers: {
-        Authorization: "Bearer " + String(accessToken),
+  const session = await ensureSessionAuth();
+  if (!session) return [];
+
+  try {
+    const response = await api.get<getNotificationsProps>(
+      `/api/v1/users/${session.userId}/notifications/`,
+      {
+        headers: {
+          Authorization: `Bearer ${session.access}`,
+        },
       },
-    })
-    .catch((error) => {
-      console.log(error);
-      return error;
-    });
-  return response.data;
+    );
+    return response.data ?? [];
+  } catch (error) {
+    console.log(error);
+    return [];
+  }
 };

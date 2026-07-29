@@ -56,14 +56,15 @@ function pickGamePhase(rt: Record<string, unknown>, api?: string): string {
 
 function pickNullableClaimedBy(
   rt: Record<string, unknown>,
-  api: number | null | undefined
-): number | null {
+  api: string | number | null | undefined
+): string | null {
   if (rtHas(rt, "button_claimed_by")) {
     const v = rt.button_claimed_by;
-    if (v === null || v === undefined) return null;
-    return Number(v);
+    if (v === null || v === undefined || v === "") return null;
+    return String(v);
   }
-  return api ?? null;
+  if (api === null || api === undefined || api === "") return null;
+  return String(api);
 }
 
 function pickOptionalIso(
@@ -115,11 +116,17 @@ function pickAnswerTimeSec(rt: Record<string, unknown>, api?: number): number {
   return api ?? 60;
 }
 
-function pickUserIdList(rt: Record<string, unknown>, key: string, fallback: number[]): number[] {
+function pickUserIdList(
+  rt: Record<string, unknown>,
+  key: string,
+  fallback: Array<string | number>
+): string[] {
   if (rtHas(rt, key) && Array.isArray(rt[key])) {
-    return (rt[key] as unknown[]).map((x) => Number(x)).filter((n) => Number.isFinite(n));
+    return (rt[key] as unknown[])
+      .map((x) => String(x))
+      .filter((s) => s.length > 0 && s !== "null" && s !== "undefined");
   }
-  return fallback;
+  return fallback.map((x) => String(x)).filter((s) => s.length > 0);
 }
 
 export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
@@ -160,7 +167,7 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
   const processedQuizTimeoutRef = useRef<string | null>(null);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [finalizeDialogOpen, setFinalizeDialogOpen] = useState(false);
-  const [kickConfirm, setKickConfirm] = useState<{ user: number; label: string } | null>(null);
+  const [kickConfirm, setKickConfirm] = useState<{ user: string; label: string } | null>(null);
   const [eventKickNotice, setEventKickNotice] = useState<string | null>(null);
   const [autoFinishMessage, setAutoFinishMessage] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -283,9 +290,9 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
   const myAlreadySubmitted = Boolean(user?.user_id && submittedAuthorIds.includes(user.user_id));
 
   const authorName = useMemo(() => {
-    const m = new Map<number, string>();
-    activeEvent?.participants?.forEach((p) => m.set(p.user, p.username ?? `#${p.user}`));
-    return (uid: number) => m.get(uid) ?? `#${uid}`;
+    const m = new Map<string, string>();
+    activeEvent?.participants?.forEach((p) => m.set(String(p.user), p.username ?? `#${p.user}`));
+    return (uid: string | number) => m.get(String(uid)) ?? `#${uid}`;
   }, [activeEvent?.participants]);
 
   useEffect(() => {
@@ -768,7 +775,7 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
 
   return (
     <>
-    <div className="flex h-full w-full min-h-[min(60dvh,100%)] flex-col gap-3 overflow-x-hidden overflow-y-auto md:max-h-full md:min-h-0 md:overflow-hidden md:flex-row">
+    <div className="flex w-full flex-col gap-3 overflow-x-hidden pb-8 md:h-full md:min-h-0 md:max-h-full md:flex-row md:overflow-hidden md:pb-0">
       {eventKickNotice ? (
         <div
           role="alert"
@@ -777,7 +784,7 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
           {eventKickNotice}
         </div>
       ) : null}
-      <div className="flex min-h-[min(50dvh,100%)] min-w-0 flex-1 flex-col rounded-2xl border border-border/60 bg-card/50 md:min-h-0">
+      <div className="flex min-w-0 flex-1 flex-col rounded-2xl border border-border/60 bg-card/50 md:h-full md:min-h-0">
         <header className="shrink-0 border-b border-border/50 px-4 py-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="min-w-0 flex-1">
@@ -896,7 +903,12 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
           ) : null}
         </header>
 
-        <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3">
+        <div className="flex min-h-[8.5rem] flex-1 flex-col space-y-2 overflow-y-auto px-4 py-3 md:min-h-0">
+          {eventMessages.length === 0 ? (
+            <p className="m-auto px-2 text-center text-xs text-muted-foreground">
+              Mensagens do evento aparecem aqui.
+            </p>
+          ) : null}
           {eventMessages.map((msg) => (
             <div
               key={msg.id}
@@ -932,29 +944,35 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
           <div ref={messagesEndRef} />
         </div>
 
-        <footer className="shrink-0 border-t border-border/50 p-3">
+        <footer className="relative z-10 shrink-0 border-t border-border/60 bg-card/90 p-3 backdrop-blur-md">
           {muteNotice ? (
             <p className="mb-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-center text-xs font-semibold text-amber-800 dark:text-amber-200">
               {muteNotice}
             </p>
           ) : null}
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             <input
               value={chatText}
               onChange={(e) => setChatText(e.target.value)}
               placeholder={chatPlaceholder}
               disabled={chatInputDisabled}
-              className="min-w-0 flex-1 rounded-xl border border-border/70 bg-background px-3 py-2 text-sm"
+              className="min-w-0 flex-1 rounded-full border border-border bg-muted/80 px-4 py-2.5 text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-60"
               onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), onSendChat())}
             />
-            <Button type="button" size="icon" variant="secondary" disabled={chatInputDisabled} onClick={onSendChat}>
+            <button
+              type="button"
+              disabled={chatInputDisabled || !chatText.trim()}
+              onClick={onSendChat}
+              className="rounded-full gradient-primary p-2.5 text-primary-foreground transition-all hover:scale-105 hover:shadow-glow-primary active:scale-95 disabled:opacity-30 disabled:hover:scale-100 disabled:hover:shadow-none"
+              aria-label="Enviar mensagem do evento"
+            >
               <Send className="h-4 w-4" />
-            </Button>
+            </button>
           </div>
         </footer>
       </div>
 
-      <aside className="flex w-full shrink-0 flex-col gap-3 pb-4 md:w-[min(100%,380px)] md:max-w-[380px] md:overflow-y-auto md:pb-0">
+      <aside className="flex w-full shrink-0 flex-col gap-3 pb-6 md:w-[min(100%,380px)] md:max-w-[380px] md:overflow-y-auto md:pb-0">
         {activeEvent.event_type === "button_quiz" || activeEvent.event_type === "vote_best" ? (
           <div className="rounded-2xl border border-border/60 bg-card/80 p-3">
             <p className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase text-muted-foreground">

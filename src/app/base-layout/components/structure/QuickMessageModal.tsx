@@ -19,7 +19,7 @@ export const QuickMessageModal = ({
   if (!message) return null;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-background/95 backdrop-blur-xl border border-primary/20 p-4 sm:p-6">
+      <DialogContent className="z-[60] max-w-2xl bg-background/95 backdrop-blur-xl border border-primary/20 p-4 sm:p-6">
         {components.QuickMessagesModalHeader}
         <div
           className={`rounded-xl bg-gradient-to-r from-primary-start/10 to-primary-end/10 p-4 sm:p-6 ${getPriorityColorQuickMessagesConfig(

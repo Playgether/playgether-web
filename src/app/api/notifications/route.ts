@@ -1,20 +1,20 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { api } from "@/services/api";
+import { ensureSessionAuth } from "@/actions/refreshToken";
 
 export async function GET() {
-  const jar = await cookies();
-  const accessToken = jar.get("accessToken")?.value;
-  const userId = jar.get("user_id")?.value;
-
-  if (!accessToken || !userId) {
+  const session = await ensureSessionAuth();
+  if (!session) {
     return NextResponse.json({ detail: "Não autorizado" }, { status: 401 });
   }
 
   try {
-    const response = await api.get(`/api/v1/users/${userId}/notifications/`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
+    const response = await api.get(
+      `/api/v1/users/${session.userId}/notifications/`,
+      {
+        headers: { Authorization: `Bearer ${session.access}` },
+      },
+    );
     return NextResponse.json(response.data);
   } catch (error: any) {
     const status = error.response?.status ?? 500;
@@ -23,17 +23,14 @@ export async function GET() {
 }
 
 export async function DELETE() {
-  const jar = await cookies();
-  const accessToken = jar.get("accessToken")?.value;
-  const userId = jar.get("user_id")?.value;
-
-  if (!accessToken || !userId) {
+  const session = await ensureSessionAuth();
+  if (!session) {
     return NextResponse.json({ detail: "Não autorizado" }, { status: 401 });
   }
 
   try {
-    await api.delete(`/api/v1/users/${userId}/notifications/clear_all/`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+    await api.delete(`/api/v1/users/${session.userId}/notifications/clear_all/`, {
+      headers: { Authorization: `Bearer ${session.access}` },
     });
     return new NextResponse(null, { status: 204 });
   } catch (error: any) {
@@ -43,18 +40,19 @@ export async function DELETE() {
 }
 
 export async function PATCH() {
-  const jar = await cookies();
-  const accessToken = jar.get("accessToken")?.value;
-  const userId = jar.get("user_id")?.value;
-
-  if (!accessToken || !userId) {
+  const session = await ensureSessionAuth();
+  if (!session) {
     return NextResponse.json({ detail: "Não autorizado" }, { status: 401 });
   }
 
   try {
-    await api.patch(`/api/v1/users/${userId}/notifications/read_all/`, {}, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
+    await api.patch(
+      `/api/v1/users/${session.userId}/notifications/read_all/`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${session.access}` },
+      },
+    );
     return NextResponse.json({ detail: "Todas marcadas como lidas." });
   } catch (error: any) {
     const status = error.response?.status ?? 500;

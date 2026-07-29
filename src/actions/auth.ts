@@ -3,12 +3,11 @@
 import { cookies } from "next/headers";
 import { api } from "@/services/api";
 import jwt_decode from "jwt-decode";
-
-const COOKIE_BASE = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "lax" as const,
-};
+import {
+  AUTH_COOKIE_BASE,
+  REFRESH_TOKEN_MAX_AGE_SEC,
+  accessTokenMaxAgeSec,
+} from "@/lib/authCookies";
 
 export async function loginAction(formData: FormData) {
   const user = {
@@ -34,13 +33,22 @@ export async function loginAction(formData: FormData) {
       response.data.access
     );
 
-    const accessMaxAge = decodedAccessToken.exp
-      ? Math.max(Math.floor(decodedAccessToken.exp - Date.now() / 1000), 1)
-      : 3600;
+    if (decodedAccessToken.user_id == null) {
+      return { error: "Erro ao autenticar" };
+    }
 
-    cookiesInstance.set("accessToken", response.data.access, { ...COOKIE_BASE, maxAge: accessMaxAge });
-    cookiesInstance.set("refreshToken", response.data.refresh, { ...COOKIE_BASE, maxAge: 60 * 60 * 24 * 30 });
-    cookiesInstance.set("user_id", String(decodedAccessToken.user_id), COOKIE_BASE);
+    cookiesInstance.set("accessToken", response.data.access, {
+      ...AUTH_COOKIE_BASE,
+      maxAge: accessTokenMaxAgeSec(decodedAccessToken.exp),
+    });
+    cookiesInstance.set("refreshToken", response.data.refresh, {
+      ...AUTH_COOKIE_BASE,
+      maxAge: REFRESH_TOKEN_MAX_AGE_SEC,
+    });
+    cookiesInstance.set("user_id", String(decodedAccessToken.user_id), {
+      ...AUTH_COOKIE_BASE,
+      maxAge: REFRESH_TOKEN_MAX_AGE_SEC,
+    });
 
     return { error: null };
   } catch (error: any) {
@@ -65,14 +73,24 @@ export async function completeTwoFALogin(
 
     const { access, refresh } = response.data as { access: string; refresh: string };
     const decoded = jwt_decode<{ user_id: string | number; exp?: number }>(access);
-    const accessMaxAge = decoded.exp
-      ? Math.max(Math.floor(decoded.exp - Date.now() / 1000), 1)
-      : 3600;
+
+    if (decoded.user_id == null) {
+      return { error: "Erro ao autenticar" };
+    }
 
     const cookiesInstance = await cookies();
-    cookiesInstance.set("accessToken", access, { ...COOKIE_BASE, maxAge: accessMaxAge });
-    cookiesInstance.set("refreshToken", refresh, { ...COOKIE_BASE, maxAge: 60 * 60 * 24 * 30 });
-    cookiesInstance.set("user_id", String(decoded.user_id), COOKIE_BASE);
+    cookiesInstance.set("accessToken", access, {
+      ...AUTH_COOKIE_BASE,
+      maxAge: accessTokenMaxAgeSec(decoded.exp),
+    });
+    cookiesInstance.set("refreshToken", refresh, {
+      ...AUTH_COOKIE_BASE,
+      maxAge: REFRESH_TOKEN_MAX_AGE_SEC,
+    });
+    cookiesInstance.set("user_id", String(decoded.user_id), {
+      ...AUTH_COOKIE_BASE,
+      maxAge: REFRESH_TOKEN_MAX_AGE_SEC,
+    });
 
     if (trustDevice) {
       const setCookieHeader = response.headers?.["set-cookie"];
@@ -81,8 +99,8 @@ export async function completeTwoFALogin(
         const match = (c as string).match(/trusted_device=([^;]+)/);
         if (match) {
           cookiesInstance.set("trusted_device", match[1], {
-            ...COOKIE_BASE,
-            maxAge: 30 * 24 * 60 * 60,
+            ...AUTH_COOKIE_BASE,
+            maxAge: REFRESH_TOKEN_MAX_AGE_SEC,
           });
           break;
         }

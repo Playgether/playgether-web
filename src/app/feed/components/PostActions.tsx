@@ -1,7 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import React, { useState } from "react";
-import { useFeedServerContext } from "../context/FeedServerContext";
 import { useFeedContext } from "../context/FeedContext";
 import { PostProps } from "../types/PostProps";
 import { LikeContentType } from "@/components/content_types/LikeContentType";
@@ -16,6 +15,7 @@ import { PenLine, Repeat2, X } from "lucide-react";
 import { BookmarkButton } from "@/components/ui/BookmarkButton";
 import { cn } from "@/lib/utils";
 import { CustomToast } from "@/components/ui/customSonner";
+import { useRouter } from "next/navigation";
 
 function formatCount(n: number) {
   if (n >= 1000000) {
@@ -36,11 +36,17 @@ export default function PostActions({
   post: PostProps;
   handleShareModal: () => void;
 }) {
-  const { Feed } = useFeedServerContext();
   const { handleLike, handleRepost } = useFeedContext();
+  const router = useRouter();
   const [isReposting, setIsReposting] = useState(false);
 
   const onClickLike = () => handleLike(post.id);
+
+  const handleOpenComments = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    router.push(`/feed/${post.id}?focus=comments`);
+  };
 
   const handleQuickRepost = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -107,7 +113,10 @@ export default function PostActions({
           onAddLike={onClickLike}
           onDeleteLike={onClickLike}
         />
-        <PostPropertiers.Comment quantity_comment={post.quantity_comment} />
+        <PostPropertiers.Comment
+          quantity_comment={post.quantity_comment}
+          onClick={handleOpenComments}
+        />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

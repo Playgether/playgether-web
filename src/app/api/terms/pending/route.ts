@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { api } from "@/services/api";
-import { cookies } from "next/headers";
+import { ensureAccessTokenCookie } from "@/actions/refreshToken";
 
 /**
  * GET /api/terms/pending
@@ -8,11 +8,11 @@ import { cookies } from "next/headers";
  * Requer autenticação.
  */
 export async function GET() {
-  const accessToken = (await cookies()).get("accessToken")?.value;
+  const accessToken = await ensureAccessTokenCookie();
   if (!accessToken) {
     return NextResponse.json(
       { detail: "Authentication required." },
-      { status: 401 }
+      { status: 401 },
     );
   }
 

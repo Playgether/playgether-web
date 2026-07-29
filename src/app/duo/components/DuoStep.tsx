@@ -258,7 +258,7 @@ export default function DuoSteps({ initialStep }: { initialStep: string }) {
           <p className="text-sm text-muted-foreground">Verificando sua fila…</p>
         </div>
       ) : null}
-      <div className="ml-20">{renderStep()}</div>
+      <div className="lg:ml-20">{renderStep()}</div>
     </div>
   );
 }

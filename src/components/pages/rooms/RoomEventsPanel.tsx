@@ -364,19 +364,33 @@ export default function RoomEventsPanel({ room }: { room: ChatRoom }) {
         ) : null}
 
         {showDuplicateRoomBanner ? (
-          <div
-            role="status"
-            className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-left text-sm text-foreground shadow-sm"
-          >
-            <p className="font-semibold text-amber-900 dark:text-amber-200">Já existe um evento nesta sala</p>
-            <p className="mt-1 text-muted-foreground">
-              Só pode ocorrer <strong className="text-foreground">um evento por vez</strong>.{" "}
-              {activeEvent!.status === "running"
-                ? "Há um jogo em andamento — use o convite ou a tela do evento se você participa."
-                : "Há recrutamento em curso — aceite o convite ou aguarde o início."}{" "}
-              Outro organizador não pode criar um segundo evento até este ser encerrado ou cancelado.
-            </p>
-          </div>
+          canCreateGames ? (
+            <div
+              role="status"
+              className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-left text-sm text-foreground shadow-sm"
+            >
+              <p className="font-semibold text-amber-900 dark:text-amber-200">Já existe um evento nesta sala</p>
+              <p className="mt-1 text-muted-foreground">
+                Só pode ocorrer <strong className="text-foreground">um evento por vez</strong>.{" "}
+                {activeEvent!.status === "running"
+                  ? "Há um jogo em andamento — use o convite ou a tela do evento se você participa."
+                  : "Há recrutamento em curso — aceite o convite ou aguarde o início."}{" "}
+                Outro organizador não pode criar um segundo evento até este ser encerrado ou cancelado.
+              </p>
+            </div>
+          ) : (
+            <div
+              role="status"
+              className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-center text-sm text-foreground shadow-sm"
+            >
+              <p className="font-semibold text-foreground">
+                Jogo em andamento: {activeEvent!.title}
+                {activeEvent!.event_type
+                  ? ` · ${TYPE_LABEL[(activeEvent!.event_type as RoomEventType)] ?? activeEvent!.event_type}`
+                  : ""}
+              </p>
+            </div>
+          )
         ) : null}
 
         {activeEvent?.status === "recruiting" ? (

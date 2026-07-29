@@ -22,7 +22,11 @@ export function RoomEventInviteModal({ roomSlug }: { roomSlug: string }) {
   const [isPending, startTransition] = useTransition();
 
   const invite = roomEventInvite?.room_slug === roomSlug ? roomEventInvite : null;
-  const forGuest = Boolean(invite && user?.user_id && invite.organizer_user_id !== user.user_id);
+  const forGuest = Boolean(
+    invite &&
+      user?.user_id &&
+      String(invite.organizer_user_id) !== String(user.user_id)
+  );
 
   useEffect(() => {
     setOpen(Boolean(invite && forGuest));

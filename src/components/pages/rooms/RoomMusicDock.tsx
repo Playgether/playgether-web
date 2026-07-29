@@ -460,7 +460,7 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
 
   return (
     <div className="shrink-0 border-t border-border/60 bg-card/95 shadow-[0_-4px_24px_rgba(0,0,0,0.08)] backdrop-blur-md">
-      <div className="relative flex min-h-[52px] flex-wrap items-center gap-x-2 gap-y-2 px-2 py-1.5">
+      <div className="relative flex min-h-[52px] flex-col gap-1.5 px-2 py-1.5 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-2">
         {!expanded ? (
           <button
             type="button"
@@ -471,10 +471,10 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
           />
         ) : null}
 
-        <div className="relative z-30 flex w-full min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-2 pointer-events-none">
+        <div className="relative z-30 flex w-full min-w-0 flex-1 flex-col gap-1.5 pointer-events-none md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-2">
 
           {/* Thumbnail + track info */}
-          <div className="relative flex min-w-0 flex-1 items-center gap-2.5">
+          <div className="relative flex min-w-0 w-full flex-1 items-center gap-2 md:w-auto md:gap-2.5">
             <a
               href={openUrl}
               target="_blank"
@@ -488,22 +488,30 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
               <img
                 src={youtubeThumbUrl(localCurrent)}
                 alt=""
-                className="pointer-events-none h-11 w-[62px] rounded-md border border-border/50 object-cover"
+                className="pointer-events-none h-9 w-12 rounded-md border border-border/50 object-cover md:h-11 md:w-[62px]"
               />
+              {!expanded ? (
+                <span
+                  className="absolute -bottom-0.5 -right-0.5 flex rounded bg-card/95 p-0.5 shadow-sm ring-1 ring-border/60 md:hidden"
+                  aria-hidden
+                >
+                  <ProviderMark provider={activeProvider} className="h-2.5 w-3.5" />
+                </span>
+              ) : null}
             </a>
 
-            <div className="relative flex min-w-0 flex-1 items-center gap-2">
+            <div className="relative flex min-w-0 flex-1 items-center gap-1.5 md:gap-2">
               <div className="min-w-0 flex-1 pointer-events-none">
-                <p className="truncate text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <p className="hidden truncate text-[10px] font-semibold uppercase tracking-wide text-muted-foreground md:block">
                   🎧 Agora tocando
                 </p>
                 <p className="truncate text-xs font-medium text-foreground">{title}</p>
-                {localCurrent.artist && (
+                {localCurrent.artist ? (
                   <p className="truncate text-[10px] text-muted-foreground/80">
                     {localCurrent.artist}
                   </p>
-                )}
-                <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] font-medium text-muted-foreground/90">
+                ) : null}
+                <p className="mt-0.5 hidden flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] font-medium text-muted-foreground/90 md:flex">
                   <ProviderMark provider={activeProvider} className="h-3 w-4 shrink-0" />
                   <a
                     href={openUrl}
@@ -516,7 +524,7 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
                     {trackOpenLabel(activeProvider)}
                   </a>
                 </p>
-                {!isYouTube && <EmbedOnlyNotice provider={activeProvider} />}
+                {!isYouTube ? <EmbedOnlyNotice provider={activeProvider} /> : null}
               </div>
 
               {expanded ? (
@@ -538,13 +546,13 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
             </div>
           </div>
 
-          {/* Player surface */}
+          {/* Player surface — fora do fluxo no mobile recolhido (áudio continua); layout desktop intacto */}
           <div
             className={cn(
               "relative z-[38] shrink-0 overflow-hidden rounded-md border border-border/60 bg-black shadow-inner transition-all duration-200",
               expanded
-                ? "order-last h-[min(42vw,220px)] w-full max-w-[360px] sm:h-[200px] pointer-events-auto"
-                : "h-[68px] w-[120px] pointer-events-none",
+                ? "order-none h-[min(36vw,160px)] w-full pointer-events-auto md:order-last md:h-[200px] md:max-w-[360px]"
+                : "pointer-events-none max-md:absolute max-md:left-0 max-md:top-0 max-md:h-px max-md:w-px max-md:overflow-hidden max-md:border-0 max-md:opacity-0 md:relative md:h-[68px] md:w-[120px] md:opacity-100",
               !expanded && "[&_iframe]:pointer-events-none",
               expanded && blockIframePointer && "[&_iframe]:pointer-events-none",
             )}
@@ -559,53 +567,74 @@ export function RoomMusicDock({ mountSuffix }: RoomMusicDockProps) {
             />
           </div>
 
-          {/* Transport controls */}
-          <div className="relative z-[42] flex shrink-0 items-center gap-0.5 pointer-events-auto">
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); goPrev(); }}
-              onPointerDown={(e) => e.stopPropagation()}
-              disabled={localIndex <= 0}
-              className="rounded-md p-2 text-muted-foreground hover:bg-muted disabled:opacity-30"
-              title="Faixa anterior (sala)"
-            >
-              <SkipBack className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); togglePlay(); }}
-              onPointerDown={(e) => e.stopPropagation()}
-              className="rounded-full gradient-primary p-2 text-primary-foreground shadow-sm disabled:opacity-40"
-              title={localPaused ? "Tocar" : "Pausar"}
-            >
-              {localPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
-            </button>
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); goNext(); }}
-              onPointerDown={(e) => e.stopPropagation()}
-              disabled={localIndex >= roomMusic.queue.length - 1}
-              className="rounded-md p-2 text-muted-foreground hover:bg-muted disabled:opacity-30"
-              title="Próxima faixa (sala)"
-            >
-              <SkipForward className="h-4 w-4" />
-            </button>
+          {/* Transport + volume — segunda linha no mobile; no desktop volta ao fluxo horizontal */}
+          <div className="relative z-[42] flex w-full min-w-0 items-center gap-2 pointer-events-auto md:contents">
+            <div className="relative z-[42] flex shrink-0 items-center gap-0.5 pointer-events-auto">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); goPrev(); }}
+                onPointerDown={(e) => e.stopPropagation()}
+                disabled={localIndex <= 0}
+                className="rounded-md p-1.5 text-muted-foreground hover:bg-muted disabled:opacity-30 md:p-2"
+                title="Faixa anterior (sala)"
+              >
+                <SkipBack className="h-3.5 w-3.5 md:h-4 md:w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); togglePlay(); }}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="rounded-full gradient-primary p-1.5 text-primary-foreground shadow-sm disabled:opacity-40 md:p-2"
+                title={localPaused ? "Tocar" : "Pausar"}
+              >
+                {localPaused ? (
+                  <Play className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                ) : (
+                  <Pause className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); goNext(); }}
+                onPointerDown={(e) => e.stopPropagation()}
+                disabled={localIndex >= roomMusic.queue.length - 1}
+                className="rounded-md p-1.5 text-muted-foreground hover:bg-muted disabled:opacity-30 md:p-2"
+                title="Próxima faixa (sala)"
+              >
+                <SkipForward className="h-3.5 w-3.5 md:h-4 md:w-4" />
+              </button>
+            </div>
+
+            <div className="relative z-[42] flex min-w-0 flex-1 items-center gap-1 pointer-events-auto md:max-w-[140px] md:flex-none">
+              <Volume2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={localVolume}
+                onChange={(e) => onVolumeInput(Number(e.target.value))}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="h-1 w-full cursor-pointer accent-primary"
+                aria-label="Volume neste aparelho"
+              />
+            </div>
           </div>
 
-          {/* Volume */}
-          <div className="relative z-[42] flex min-w-[100px] flex-1 items-center gap-1 pointer-events-auto sm:max-w-[140px] sm:flex-none">
-            <Volume2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <input
-              type="range"
-              min={0}
-              max={100}
-              value={localVolume}
-              onChange={(e) => onVolumeInput(Number(e.target.value))}
-              onPointerDown={(e) => e.stopPropagation()}
-              className="h-1 w-full cursor-pointer accent-primary"
-              aria-label="Volume neste aparelho"
-            />
-          </div>
+          {expanded ? (
+            <p className="relative z-[42] flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground/90 pointer-events-auto md:hidden">
+              <ProviderMark provider={activeProvider} className="h-3 w-4 shrink-0" />
+              <a
+                href={openUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary underline-offset-2 hover:underline"
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+              >
+                {trackOpenLabel(activeProvider)}
+              </a>
+            </p>
+          ) : null}
         </div>
       </div>
     </div>

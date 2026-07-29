@@ -84,7 +84,7 @@ function ResultRow({
             e.stopPropagation();
             onRemove();
           }}
-          className="shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-muted transition-all"
+          className="shrink-0 rounded p-1 opacity-100 transition-all hover:bg-muted sm:opacity-0 sm:group-hover:opacity-100"
         >
           <X className="w-3 h-3 text-muted-foreground" />
         </span>
@@ -95,7 +95,11 @@ function ResultRow({
 
 // ─── main component ──────────────────────────────────────────────────────────
 
-export function GlobalSearchDropdown() {
+export function GlobalSearchDropdown({
+  onOpenChange,
+}: {
+  onOpenChange?: (open: boolean) => void;
+} = {}) {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -108,6 +112,14 @@ export function GlobalSearchDropdown() {
   const [popularGames, setPopularGames] = useState<GameDetails[]>([]);
 
   const debouncedQuery = useDebounce(query.trim(), 300);
+
+  const setOpenState = useCallback(
+    (next: boolean) => {
+      setOpen(next);
+      onOpenChange?.(next);
+    },
+    [onOpenChange]
+  );
 
   // Load recent searches and popular games when dropdown opens
   useEffect(() => {
@@ -142,34 +154,34 @@ export function GlobalSearchDropdown() {
   useEffect(() => {
     function onPointerDown(e: PointerEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
+        setOpenState(false);
       }
     }
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, []);
+  }, [setOpenState]);
 
   // Close on ESC
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
-        setOpen(false);
+        setOpenState(false);
         inputRef.current?.blur();
       }
     }
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [setOpenState]);
 
   const navigate = useCallback(
     (href: string, searchTerm?: string) => {
       if (searchTerm) addRecentSearch(searchTerm);
-      setOpen(false);
+      setOpenState(false);
       setQuery("");
       setResults(null);
       router.push(href);
     },
-    [router]
+    [router, setOpenState]
   );
 
   const handleRecentClick = (term: string) => {
@@ -207,12 +219,12 @@ export function GlobalSearchDropdown() {
           ref={inputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => setOpen(true)}
+          onFocus={() => setOpenState(true)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && query.trim().length >= 2) {
               e.preventDefault();
               addRecentSearch(query.trim());
-              setOpen(false);
+              setOpenState(false);
               setQuery("");
               setResults(null);
               router.push(`/search?q=${encodeURIComponent(query.trim())}`);
@@ -238,9 +250,9 @@ export function GlobalSearchDropdown() {
         )}
       </div>
 
-      {/* Dropdown */}
+      {/* Dropdown — fixed full-bleed below header on mobile; anchored to input from lg up */}
       {open && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-2 flex max-h-[min(60dvh,480px)] flex-col overflow-hidden rounded-xl border border-border/50 bg-background shadow-xl sm:max-h-[480px]">
+        <div className="fixed inset-x-3 top-14 z-50 mt-2 flex max-h-[min(60dvh,480px)] w-auto flex-col overflow-hidden rounded-xl border border-border/50 bg-background shadow-xl sm:inset-x-4 lg:absolute lg:inset-x-0 lg:top-full lg:mt-2 lg:max-h-[480px]">
           <div className="overflow-y-auto flex-1">
 
             {/* ── Loading ── */}
@@ -255,9 +267,9 @@ export function GlobalSearchDropdown() {
             {!loading && isSearching && results && (
               <>
                 {!hasResults && (
-                  <div className="flex flex-col items-center justify-center py-10 gap-2 text-muted-foreground">
-                    <Search className="w-8 h-8 opacity-30" />
-                    <p className="text-sm">
+                  <div className="flex flex-col items-center justify-center gap-2 px-4 py-10 text-muted-foreground">
+                    <Search className="h-8 w-8 opacity-30" />
+                    <p className="text-center text-sm">
                       Nenhum resultado encontrado para &ldquo;{debouncedQuery}&rdquo;
                     </p>
                   </div>
@@ -362,14 +374,14 @@ export function GlobalSearchDropdown() {
                 {/* Recent searches */}
                 {recentSearches.length > 0 && (
                   <>
-                    <div className="flex items-center justify-between px-4 pt-3 pb-1">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    <div className="flex items-center justify-between gap-2 px-4 pt-3 pb-1">
+                      <p className="min-w-0 truncate text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         Pesquisas recentes
                       </p>
                       <button
                         type="button"
                         onClick={handleClearRecent}
-                        className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        className="shrink-0 text-xs text-muted-foreground transition-colors hover:text-foreground"
                       >
                         Limpar
                       </button>
@@ -407,9 +419,9 @@ export function GlobalSearchDropdown() {
                 )}
 
                 {recentSearches.length === 0 && popularGames.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-10 gap-2 text-muted-foreground">
-                    <Search className="w-8 h-8 opacity-30" />
-                    <p className="text-sm">
+                  <div className="flex flex-col items-center justify-center gap-2 px-4 py-10 text-muted-foreground">
+                    <Search className="h-8 w-8 opacity-30" />
+                    <p className="text-center text-sm">
                       Digite para pesquisar usuários, jogos, salas e posts
                     </p>
                   </div>

@@ -1,12 +1,12 @@
 "use client";
 import { PostModal } from "@/app/feed/components/PostModal";
 import { useFeedContext } from "@/app/feed/context/FeedContext";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { apiFetch } from "@/services/apiFetch";
 import type { PostProps } from "@/app/feed/types/PostProps";
 import React from "react";
 
-function ClientPostModal({ postId }: { postId?: number }) {
+function ClientPostModalInner({ postId }: { postId?: number }) {
   const { getPostById, injectPost } = useFeedContext();
   const postIdNum = Number(postId);
   const [ready, setReady] = useState(false);
@@ -44,6 +44,14 @@ function ClientPostModal({ postId }: { postId?: number }) {
   if (!ready || !postInContext) return null;
 
   return <PostModal postId={postInContext.id} />;
+}
+
+function ClientPostModal({ postId }: { postId?: number }) {
+  return (
+    <Suspense fallback={null}>
+      <ClientPostModalInner postId={postId} />
+    </Suspense>
+  );
 }
 
 export default ClientPostModal;

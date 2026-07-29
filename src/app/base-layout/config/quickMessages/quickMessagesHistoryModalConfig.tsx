@@ -20,7 +20,7 @@ export const quickMessagesHistoryModalPriorityConfig: Record<
 > = {
   high: {
     icon: <AlertCircle className="w-4 h-4" />,
-    color: "order-red-500/50 bg-red-500/10",
+    color: "border-red-500/50 bg-red-500/10",
     badge: (
       <Badge variant="outline" className="border-red-500/50 text-red-500">
         Alta Prioridade

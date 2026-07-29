@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { ensureAccessTokenCookie } from "@/actions/refreshToken";
 
 /**
  * Returns the access token for WebSocket authentication.
@@ -7,7 +7,7 @@ import { cookies } from "next/headers";
  * This avoids passing the JWT from server components to client components as a prop.
  */
 export async function GET() {
-  const accessToken = (await cookies()).get("accessToken")?.value;
+  const accessToken = await ensureAccessTokenCookie();
 
   if (!accessToken) {
     return NextResponse.json({ token: null }, { status: 401 });

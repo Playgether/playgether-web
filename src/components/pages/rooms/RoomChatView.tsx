@@ -292,13 +292,13 @@ export default function RoomChatView({
         );
       case "info":
         return (
-          <div className="min-h-0 flex-1 overflow-hidden">
+          <div className="min-h-0 flex-1 overflow-y-auto md:overflow-hidden">
             <RoomInfoPanel room={room} />
           </div>
         );
       case "rules":
         return (
-          <div className="min-h-0 flex-1 overflow-hidden">
+          <div className="min-h-0 flex-1 overflow-y-auto md:overflow-hidden">
             <RoomRulesPanel room={room} />
           </div>
         );
@@ -328,7 +328,7 @@ export default function RoomChatView({
         );
       case "ambience":
         return (
-          <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain">
             <RoomAmbiencePanel
               roomSlug={room.slug}
               roomOwnerId={room.owner}
@@ -373,7 +373,7 @@ export default function RoomChatView({
     return (
       <>
         <RoomEventInviteModal roomSlug={room.slug} />
-        <section className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/50 bg-background">
+        <section className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden rounded-none border-y border-border/50 bg-background md:rounded-2xl md:border">
           <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-card/80 px-3 py-2 backdrop-blur-sm">
             <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase tracking-wider text-primary">
@@ -397,8 +397,8 @@ export default function RoomChatView({
               <LogOut className="h-4 w-4" />
             </button>
           </header>
-          <div className="relative flex min-h-[min(70dvh,100%)] flex-1 flex-col overflow-hidden overflow-x-hidden p-2 md:min-h-0 md:p-3">
-            <div className="min-h-0 flex-1 overflow-y-auto md:overflow-hidden">
+          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden overflow-x-hidden p-2 md:p-3">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain md:overflow-hidden">
               <RoomEventLiveSession room={room} />
             </div>
             <RoomMusicDock mountSuffix={room.slug} />
@@ -411,7 +411,7 @@ export default function RoomChatView({
   return (
     <>
       <RoomEventInviteModal roomSlug={room.slug} />
-      <section className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/50 bg-background">
+      <section className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden rounded-none border-y border-border/50 bg-background md:rounded-2xl md:border">
         <RoomTransientBanner
           message={gameAccessNotice}
           className="shrink-0 rounded-none border-x-0 border-t-0"
@@ -597,7 +597,7 @@ export default function RoomChatView({
                   onClick={() => setShowSidebar(false)}
                   aria-label="Fechar participantes"
                 />
-                <div className="fixed bottom-0 left-0 top-0 z-40 md:hidden">
+                <div className="fixed left-0 z-40 w-full md:hidden top-[var(--layout-header-height)] bottom-[calc(var(--layout-quick-messages-height)+var(--layout-bottom-nav-height)+env(safe-area-inset-bottom,0px))]">
                   <RoomParticipantsPanel
                     room={room}
                     onClose={() => setShowSidebar(false)}

@@ -62,6 +62,7 @@ export async function apiFetch(
       data: body,
       withCredentials,
       maxRedirects: 0,
+      timeout: 30000,
       validateStatus: () => true,
       responseType: "text",
     });

@@ -362,7 +362,6 @@ export function GamesCanvasUserProfile({
           <div className="mt-1 pl-11">
             <HighlightedAchievementBadges
               achievements={profile?.highlighted_achievements}
-              compact
             />
           </div>
 
@@ -501,7 +500,6 @@ export function GamesCanvasUserProfile({
               <div className="mt-1">
                 <HighlightedAchievementBadges
                   achievements={profile?.highlighted_achievements}
-                  compact
                 />
               </div>
             </div>

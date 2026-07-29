@@ -163,87 +163,58 @@ export const FeedPost = ({ post }) => {
                   fallbackTextClassName="text-sm"
                 />
               </div>
-              <div className="relative min-w-0 flex-1">
-                <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1">
-                  {/* Desktop — nome + tags na mesma célula */}
-                  <div className="hidden min-w-0 lg:block">
-                    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                      <div className="inline-flex min-w-0 max-w-full shrink-0 items-center gap-2">
-                        <h3
-                          className="pointer-events-auto inline-block w-fit max-w-full min-w-0 font-semibold text-foreground"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            router.push(`/profile/${post.username}`);
-                          }}
-                        >
-                          {post.name}
-                        </h3>
-                        {post.verified && (
-                          <span className="inline-flex shrink-0">
-                            {components.VerifiedProfile}
-                          </span>
-                        )}
-                      </div>
-                      <HighlightedAchievementBadges
-                        achievements={post.highlighted_achievements}
-                        className="pointer-events-auto relative z-10 min-w-0"
-                      />
+              <div className="relative flex min-w-0 flex-1 items-start gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                    <div className="inline-flex min-w-0 max-w-full items-center gap-1.5 sm:gap-2">
+                      <h3
+                        className="pointer-events-auto inline-block w-fit max-w-full min-w-0 font-semibold leading-tight text-foreground"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          router.push(`/profile/${post.username}`);
+                        }}
+                      >
+                        {post.name}
+                      </h3>
+                      {post.verified && (
+                        <span className="inline-flex shrink-0">
+                          {components.VerifiedProfile}
+                        </span>
+                      )}
                     </div>
+                    <HighlightedAchievementBadges
+                      achievements={post.highlighted_achievements}
+                      className="pointer-events-auto relative z-10 max-w-full"
+                    />
                   </div>
-
-                  {/* Mobile — nome na linha de cima */}
-                  <div className="flex min-w-0 items-center gap-1.5 sm:gap-2 lg:hidden">
-                    <h3
-                      className="pointer-events-auto min-w-0 truncate font-semibold text-foreground"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        router.push(`/profile/${post.username}`);
-                      }}
-                    >
-                      {post.name}
-                    </h3>
-                    {post.verified && (
-                      <span className="inline-flex shrink-0">
-                        {components.VerifiedProfile}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="pointer-events-auto col-start-2 row-start-1 flex shrink-0 items-center gap-1 self-start sm:gap-2">
-                    <FeedPostFollowButton post={post} />
-                    <DropdownMenu>
-                      <div className="pointer-events-auto">
-                        {components.MoreOptions}
-                        <DropdownMenuContent
-                          align="end"
-                          className="bg-background/95 backdrop-blur-xl border border-border/50"
-                        >
-                          {post.is_own || post.isOwn ? (
-                            <ContextMenuOwn
-                              handleContextAction={handleContextAction}
-                              commentsDisabled={post.comments_disabled}
-                            />
-                          ) : (
-                            <ContextMenuNotMine
-                              handleContextAction={handleContextAction}
-                            />
-                          )}
-                        </DropdownMenuContent>
-                      </div>
-                    </DropdownMenu>
-                  </div>
-
-                  <HighlightedAchievementBadges
-                    achievements={post.highlighted_achievements}
-                    className="pointer-events-auto relative z-20 col-span-2 row-start-2 lg:hidden"
-                    compact
-                  />
-
-                  <p className="pointer-events-none col-span-2 row-start-3 truncate text-sm text-muted-foreground lg:row-start-2">
+                  <p className="pointer-events-none mt-0.5 truncate text-sm leading-tight text-muted-foreground">
                     @{post.username} • <DateAndHour date={post.timestamp} />
                   </p>
+                </div>
+
+                <div className="pointer-events-auto flex shrink-0 items-center gap-1 sm:gap-2">
+                  <FeedPostFollowButton post={post} />
+                  <DropdownMenu>
+                    <div className="pointer-events-auto">
+                      {components.MoreOptions}
+                      <DropdownMenuContent
+                        align="end"
+                        className="bg-background/95 backdrop-blur-xl border border-border/50"
+                      >
+                        {post.is_own || post.isOwn ? (
+                          <ContextMenuOwn
+                            handleContextAction={handleContextAction}
+                            commentsDisabled={post.comments_disabled}
+                          />
+                        ) : (
+                          <ContextMenuNotMine
+                            handleContextAction={handleContextAction}
+                          />
+                        )}
+                      </DropdownMenuContent>
+                    </div>
+                  </DropdownMenu>
                 </div>
               </div>
             </div>

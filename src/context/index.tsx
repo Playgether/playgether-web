@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from "react";
 import { AuthProvider } from "./AuthContext"
 import { UserPreferencesProvider } from "./UserPreferencesContext"
 import { PresenceProvider } from "./PresenceContext";
@@ -12,8 +13,19 @@ import { TermsAcceptanceModal } from "@/components/terms/TermsAcceptanceModal";
 import { AxiosTermsInterceptor } from "@/components/terms/AxiosTermsInterceptor";
 
 export const AppProvider = ({ children } : { children: React.ReactNode }) => {
-
-    const queryClient = new QueryClient();
+    // Stable across re-renders (ThemeProvider hydrate, etc.) — recreating
+    // QueryClient wiped in-flight feed/widget queries and left spinners stuck.
+    const [queryClient] = useState(
+      () =>
+        new QueryClient({
+          defaultOptions: {
+            queries: {
+              refetchOnWindowFocus: false,
+              retry: 1,
+            },
+          },
+        }),
+    );
 
     return (
     <AuthProvider>

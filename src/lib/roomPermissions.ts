@@ -88,12 +88,13 @@ export function canManageRoomSettings(
 
 export function getMemberMaxPosition(
   snapshot: RoomPermissionsSnapshot | null | undefined,
-  userId: number,
+  userId: string | number,
 ): number {
   if (!snapshot) return 0;
+  const uid = String(userId);
   let max = 0;
   for (const a of snapshot.assignments) {
-    if (a.user_id === userId) {
+    if (String(a.user_id) === uid) {
       max = Math.max(max, a.role.position);
     }
   }
@@ -103,14 +104,15 @@ export function getMemberMaxPosition(
 /** Pode moderar o alvo (hierarquia; dono da sala não pode ser alvo). */
 export function canModerateMember(
   snapshot: RoomPermissionsSnapshot | null | undefined,
-  roomOwnerId: number,
-  actorId: number | null,
-  targetId: number | null | undefined,
+  roomOwnerId: string | number,
+  actorId: string | number | null,
+  targetId: string | number | null | undefined,
 ): boolean {
-  if (!snapshot || actorId == null || targetId == null || actorId === targetId) {
+  if (!snapshot || actorId == null || targetId == null) {
     return false;
   }
-  if (targetId === roomOwnerId) return false;
+  if (String(actorId) === String(targetId)) return false;
+  if (String(targetId) === String(roomOwnerId)) return false;
   if (snapshot.is_owner) return true;
   return snapshot.max_position > getMemberMaxPosition(snapshot, targetId);
 }

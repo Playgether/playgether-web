@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { api } from "@/services/api";
+import { ensureAccessTokenCookie } from "@/actions/refreshToken";
 
 export async function GET() {
-  const accessToken = (await cookies()).get("accessToken")?.value;
+  const accessToken = await ensureAccessTokenCookie();
 
   if (!accessToken) {
     return NextResponse.json({ detail: "Não autorizado" }, { status: 401 });

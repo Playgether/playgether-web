@@ -72,13 +72,13 @@ export const useQuickMessagesUI = (
     [handleMessageShown]
   );
 
-  // ✅ Handler para clique no histórico
+  // ✅ Handler para clique no histórico (mantém o histórico aberto)
   const handleHistoryMessageClick = useCallback((message: QuickMessage) => {
-    setUIState({
-      historyOpen: false,
+    setUIState((prev) => ({
+      ...prev,
       messageModalOpen: true,
       selectedMessage: message,
-    });
+    }));
   }, []);
 
   // Atualiza histórico quando mensagens ativas mudam

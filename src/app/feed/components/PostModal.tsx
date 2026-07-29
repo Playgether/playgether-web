@@ -11,7 +11,7 @@ import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import VideoComponent from "@/components/layouts/VideoComponent/VideoComponent";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCommentsContext } from "@/context/CommentsContext";
 import { Virtuoso } from "react-virtuoso";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
@@ -43,13 +43,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  Maximize2,
   MoreHorizontal,
   PenLine,
   Repeat2,
   X as XIcon,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { CustomToast } from "@/components/ui/customSonner";
+import {
+  MOBILE_COMMENTS_HANDLE_HEIGHT,
+  useMobileCommentsSheet,
+} from "./useMobileCommentsSheet";
 
 export const PostModal = ({
   postId,
@@ -62,9 +72,33 @@ export const PostModal = ({
 }) => {
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [isCurrentMediaLoaded, setIsCurrentMediaLoaded] = useState(false);
+  const [mediaFullscreenOpen, setMediaFullscreenOpen] = useState(false);
   const [openReplies, setOpenReplies] = useState<Set<number>>(new Set());
   const [loadingReplies, setLoadingReplies] = useState<Set<number>>(new Set());
-  const [showFullText, setShowFullText] = useState(true);
+  const [showFullText, setShowFullText] = useState(false);
+  const [overlayTextExpanded, setOverlayTextExpanded] = useState(false);
+  const searchParams = useSearchParams();
+  const [mobileCommentsExpanded, setMobileCommentsExpanded] = useState(
+    () => searchParams.get("focus") === "comments",
+  );
+  const {
+    isLgDesktop,
+    containerRef: commentsSheetContainerRef,
+    sheetY,
+    sheetMaxY,
+    captionOpacity,
+    captionY,
+    textHeroOpacity,
+    dragControls,
+    onDragStart,
+    onDrag,
+    onDragEnd,
+    onHandleClick,
+  } = useMobileCommentsSheet(
+    mobileCommentsExpanded,
+    setMobileCommentsExpanded,
+    postId,
+  );
   const [newComment, setNewComment] = useState("");
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [deleteCommentModalOpen, setDeleteCommentModalOpen] = useState(false);
@@ -124,6 +158,11 @@ export const PostModal = ({
   const queryClient = useQueryClient();
 
   const post = getPostById(postId);
+
+  useEffect(() => {
+    setMobileCommentsExpanded(searchParams.get("focus") === "comments");
+    setOverlayTextExpanded(false);
+  }, [searchParams, postId]);
 
   if (!post) return null;
 
@@ -268,7 +307,9 @@ export const PostModal = ({
     setCurrentMediaIndex(0);
     setIsCurrentMediaLoaded(false);
     setCommentsDisabled(post?.comments_disabled ?? false);
-  }, [postId]);
+    const postHasMedia = Boolean(post?.medias?.length);
+    setShowFullText(!postHasMedia);
+  }, [postId, post?.comments_disabled, post?.medias?.length]);
 
   useEffect(() => {
     setIsCurrentMediaLoaded(false);
@@ -368,6 +409,9 @@ export const PostModal = ({
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const hasMedia = post && post.medias && post.medias.length > 0;
+
+  const postShellClassName =
+    "bg-card border border-border/50 backdrop-blur-sm shadow-card rounded-2xl overflow-hidden";
 
   const isRepliesOpen = (id: number) => openReplies.has(id);
   const isRepliesLoading = (id: number) => loadingReplies.has(id);
@@ -536,13 +580,16 @@ export const PostModal = ({
     }
   };
 
-  const postActionsMenu = (
+  const postActionsMenu = (triggerClassName?: string) => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9 shrink-0 rounded-none hover:rounded-none focus-visible:rounded-none text-muted-foreground hover:text-foreground"
+          className={cn(
+            "h-9 w-9 shrink-0 rounded-none hover:rounded-none focus-visible:rounded-none text-muted-foreground hover:text-foreground",
+            triggerClassName,
+          )}
         >
           <MoreHorizontal className="h-5 w-5" />
         </Button>
@@ -560,16 +607,248 @@ export const PostModal = ({
     </DropdownMenu>
   );
 
+  const mobileCaptionBlock = (
+    <div className="pointer-events-auto">
+      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+        <p className="text-sm font-semibold leading-tight text-white drop-shadow-sm">
+          {post.name}
+        </p>
+        <HighlightedAchievementBadges
+          achievements={post.highlighted_achievements}
+          className="min-w-0 max-w-full"
+          compact
+          adaptive={false}
+        />
+      </div>
+      {post.comment ? (
+        <button
+          type="button"
+          onClick={() => setOverlayTextExpanded((v) => !v)}
+          className="mt-3 w-full text-left"
+        >
+          <p
+            className={cn(
+              "whitespace-pre-wrap text-sm leading-relaxed text-white/95 drop-shadow-sm",
+              !overlayTextExpanded && "line-clamp-3",
+            )}
+          >
+            {post.comment}
+          </p>
+          {post.comment.length > 100 ? (
+            <span className="mt-0.5 text-xs font-medium text-white/70">
+              {overlayTextExpanded ? "ver menos" : "ver mais"}
+            </span>
+          ) : null}
+        </button>
+      ) : null}
+      <div className="mt-3 text-white [&_button]:text-white/90 [&_button:hover]:text-white">
+        <PostPropertiers.Root className="">
+          <PostPropertiers.Like
+            quantitylikesNumber={post.quantity_likes}
+            clicked={post.user_already_like}
+            object_id={post.id}
+            content_type={LikeContentType.post}
+            onAddLike={onClickLike}
+            onDeleteLike={onClickLike}
+          />
+          <PostPropertiers.Comment
+            quantity_comment={post.quantity_comment}
+          />
+        </PostPropertiers.Root>
+      </div>
+    </div>
+  );
+
   const postBodyContent = (
-    <div className={cn("flex min-h-0 w-full flex-col sm:flex-row", hasMedia && "h-full")}>
+    <div
+      ref={commentsSheetContainerRef}
+      className={cn(
+        "relative flex h-full min-h-0 w-full flex-col",
+        "lg:flex-row",
+      )}
+    >
+          {!fullPage && !hasMedia ? (
+            <div className="absolute top-0 right-0 z-40 hidden items-center lg:flex">
+              {postActionsMenu()}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => (onClose ? onClose() : router.back())}
+                className="h-9 w-9 shrink-0 rounded-none hover:rounded-none focus-visible:rounded-none text-muted-foreground hover:text-foreground"
+              >
+                <XIcon className="h-5 w-5" />
+              </Button>
+            </div>
+          ) : null}
+
+          {/* Mobile: hero da legenda (posts sem mídia) */}
+          {!hasMedia ? (
+            <div
+              className={cn(
+                "relative min-h-0 flex-1 flex-col overflow-hidden lg:hidden",
+                "flex",
+              )}
+            >
+              <div className="absolute inset-0 bg-gradient-to-b from-primary/20 via-background to-background" />
+              <div className="absolute -left-1/4 top-0 h-2/3 w-3/4 rounded-full bg-primary/10 blur-3xl" />
+              <div className="absolute -right-1/4 bottom-1/4 h-1/2 w-2/3 rounded-full bg-secondary/10 blur-3xl" />
+              {!fullPage ? (
+                <div
+                  className={cn(
+                    "absolute top-0 right-0 z-40 flex items-center",
+                    mobileCommentsExpanded && "hidden",
+                  )}
+                >
+                  {postActionsMenu()}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => (onClose ? onClose() : router.back())}
+                    className="h-9 w-9 rounded-none text-muted-foreground hover:text-foreground"
+                  >
+                    <XIcon className="h-5 w-5" />
+                  </Button>
+                </div>
+              ) : null}
+              <motion.div
+                className="relative z-10 flex min-h-0 flex-1 flex-col justify-center px-3 pb-3 pt-12"
+                style={{ opacity: textHeroOpacity }}
+              >
+                {/* Hug content quando curto; scroll com padding quando longo */}
+                <div className="mx-auto max-h-full w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-border/50 bg-card/70 shadow-lg backdrop-blur-md">
+                  <div className="p-5">
+                    <div className="flex items-center gap-2.5">
+                      <ProfileAvatar
+                        displayName={post.name}
+                        username={post.username}
+                        profilePhoto={post.profile_photo}
+                        sizeClass="h-11 w-11"
+                        ringClass="ring-2 ring-primary/30"
+                        fallbackTextClassName="text-xs"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                          <p className="truncate text-sm font-semibold leading-tight">
+                            {post.name}
+                          </p>
+                          <HighlightedAchievementBadges
+                            achievements={post.highlighted_achievements}
+                            className="min-w-0 max-w-full"
+                            compact
+                          />
+                        </div>
+                        <p className="mt-0.5 truncate text-xs leading-tight text-muted-foreground">
+                          @{post.username}
+                        </p>
+                      </div>
+                    </div>
+                    {post.comment ? (
+                      <p className="mt-4 whitespace-pre-wrap text-[15px] leading-relaxed text-foreground">
+                        {post.comment}
+                      </p>
+                    ) : (
+                      <p className="mt-4 text-sm text-muted-foreground">
+                        Sem legenda
+                      </p>
+                    )}
+                    <div className="mt-4 border-t border-border/40 pt-3">
+                      <PostPropertiers.Root className="">
+                        <PostPropertiers.Like
+                          quantitylikesNumber={post.quantity_likes}
+                          clicked={post.user_already_like}
+                          object_id={post.id}
+                          content_type={LikeContentType.post}
+                          onAddLike={onClickLike}
+                          onDeleteLike={onClickLike}
+                        />
+                        <PostPropertiers.Comment
+                          quantity_comment={post.quantity_comment}
+                        />
+                        <span className="text-xs text-muted-foreground">
+                          <DateAndHour date={post.timestamp} />
+                        </span>
+                      </PostPropertiers.Root>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+              <div
+                className="shrink-0"
+                style={{ height: MOBILE_COMMENTS_HANDLE_HEIGHT }}
+                aria-hidden
+              />
+            </div>
+          ) : null}
+
           {/* Media Section */}
           {hasMedia && (
             <div
-              className={`${
-                hasMedia ? "sm:w-[55%] 2xl:w-[65%] w-full" : "w-full"
-              } bg-black/50 flex items-center justify-center relative h-full`}
+              className={cn(
+                "relative flex w-full",
+                // Mobile: mídia + legenda no topo (sem stage esticado); desktop: coluna cheia
+                "min-h-0 flex-1 flex-col justify-start bg-card lg:h-full lg:flex-none lg:items-center lg:justify-center lg:bg-black/50",
+                // Modal: proporção atual. Full page (URL): mídia um pouco menor pra dar espaço aos comentários
+                fullPage
+                  ? "lg:w-[52%] 2xl:w-[55%]"
+                  : "lg:w-1/2 2xl:w-4/6",
+              )}
             >
-              <div className="relative w-full h-full flex items-center justify-center min-h-[200px]">
+              {/* Fechar + menu no mobile quando a mídia está em destaque */}
+              {!fullPage ? (
+                <div
+                  className={cn(
+                    "absolute top-0 right-0 z-40 flex items-center lg:hidden",
+                    mobileCommentsExpanded && "hidden",
+                  )}
+                >
+                  {postActionsMenu(
+                    "text-white hover:bg-black/40 hover:text-white",
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => (onClose ? onClose() : router.back())}
+                    className="h-9 w-9 rounded-none text-white hover:bg-black/40 hover:text-white"
+                  >
+                    <XIcon className="h-5 w-5" />
+                  </Button>
+                </div>
+              ) : null}
+              {/* Mobile: stage 4:5 com max-height + contain (sem crop); desktop: preenche a coluna */}
+              <div
+                role={
+                  post.medias[currentMediaIndex].media_type === "image"
+                    ? "button"
+                    : undefined
+                }
+                tabIndex={
+                  post.medias[currentMediaIndex].media_type === "image"
+                    ? 0
+                    : undefined
+                }
+                onClick={() => {
+                  if (post.medias[currentMediaIndex].media_type === "image") {
+                    setMediaFullscreenOpen(true);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (
+                    post.medias[currentMediaIndex].media_type === "image" &&
+                    (e.key === "Enter" || e.key === " ")
+                  ) {
+                    e.preventDefault();
+                    setMediaFullscreenOpen(true);
+                  }
+                }}
+                className={cn(
+                  "relative flex w-full items-center justify-center overflow-hidden bg-black",
+                  // Mobile: cabe na viewport deixando espaço pra legenda + handle; pode encolher se faltar altura
+                  "max-lg:mx-auto max-lg:aspect-[4/5] max-lg:max-h-[min(52dvh,100%)] max-lg:min-h-0 max-lg:shrink max-lg:cursor-zoom-in",
+                  "lg:min-h-0 lg:flex-1 lg:cursor-default",
+                  post.medias[currentMediaIndex].media_type === "image" &&
+                    "lg:cursor-zoom-in",
+                )}
+              >
                 {!isCurrentMediaLoaded && (
                   <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
                     <LoadingComponent
@@ -583,135 +862,282 @@ export const PostModal = ({
                     media_id={post.medias[currentMediaIndex].media_file || ""}
                     alt="Post media"
                     objectFit="contain"
-                    className={`w-full transition-opacity duration-300 ${
-                      isCurrentMediaLoaded ? "opacity-100" : "opacity-0"
-                    }`}
+                    objectPosition="center"
+                    className={cn(
+                      "w-full transition-opacity duration-300",
+                      isCurrentMediaLoaded ? "opacity-100" : "opacity-0",
+                    )}
                     onLoad={() => setIsCurrentMediaLoaded(true)}
                   />
                 ) : (
                   <VideoComponent
                     media_id={post.medias[currentMediaIndex].media_file || ""}
-                    className={`max-h-full max-w-full h-full w-full object-cover transition-opacity duration-300 ${
-                      isCurrentMediaLoaded ? "opacity-100" : "opacity-0"
-                    }`}
+                    className={cn(
+                      "max-h-full max-w-full transition-opacity duration-300",
+                      isCurrentMediaLoaded ? "opacity-100" : "opacity-0",
+                      "h-full w-full object-contain",
+                    )}
                     onLoadedData={() => setIsCurrentMediaLoaded(true)}
+                    onClick={(e) => e.stopPropagation()}
                   />
+                )}
+
+                {!overlayTextExpanded ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute bottom-3 right-3 z-20 h-9 w-9 rounded-full bg-black/55 text-white hover:bg-black/75 hover:text-white"
+                    aria-label="Ver mídia em tela cheia"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMediaFullscreenOpen(true);
+                    }}
+                  >
+                    <Maximize2 className="h-4 w-4" />
+                  </Button>
+                ) : null}
+
+                {/* Media Navigation — centralizado no stage da mídia (mobile + desktop) */}
+                {!overlayTextExpanded && post?.medias && post.medias.length > 1 && (
+                  <>
+                    {currentMediaIndex > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute left-2 top-1/2 z-20 h-9 w-9 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 hover:text-white lg:left-4"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          prevMedia();
+                        }}
+                      >
+                        {icons.ChevronLeft}
+                      </Button>
+                    )}
+                    {currentMediaIndex < post.medias.length - 1 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-2 top-1/2 z-20 h-9 w-9 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 hover:text-white lg:right-4"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          nextMedia();
+                        }}
+                      >
+                        {icons.ChevronRight}
+                      </Button>
+                    )}
+                    <div className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 space-x-2 lg:bottom-4">
+                      {post.medias.map((_, index) => (
+                        <div
+                          key={index}
+                          className={`h-2 w-2 rounded-full ${
+                            index === currentMediaIndex
+                              ? "bg-white"
+                              : "bg-white/50"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
 
-              {/* Media Navigation */}
-              {post?.medias && post.medias.length > 1 && (
-                <>
-                  {currentMediaIndex > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white"
-                      onClick={prevMedia}
-                    >
-                      {icons.ChevronLeft}
-                    </Button>
+              {/* Legenda mobile: cola na mídia | overlay com fade (expandido) */}
+              <motion.div
+                className={cn(
+                  "w-full lg:hidden",
+                  overlayTextExpanded
+                    ? "pointer-events-none absolute inset-0 z-30 flex flex-col bg-gradient-to-t from-black via-black/90 to-black/50 px-4 pb-14 pt-16"
+                    : "relative z-10 shrink-0 bg-card px-4 pb-5 pt-4",
+                  mobileCommentsExpanded &&
+                    !overlayTextExpanded &&
+                    "pointer-events-none",
+                )}
+                style={
+                  overlayTextExpanded
+                    ? undefined
+                    : { opacity: captionOpacity, y: captionY }
+                }
+              >
+                <div
+                  className={cn(
+                    "pointer-events-auto",
+                    overlayTextExpanded &&
+                      "min-h-0 flex-1 overflow-y-auto overscroll-contain",
                   )}
-                  {currentMediaIndex < post.medias.length - 1 && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white"
-                      onClick={nextMedia}
-                    >
-                      {icons.ChevronRight}
-                    </Button>
-                  )}
+                >
+                  {mobileCaptionBlock}
+                </div>
+              </motion.div>
 
-                  {/* Media indicators */}
-                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                    {post.medias.map((_, index) => (
-                      <div
-                        key={index}
-                        className={`w-2 h-2 rounded-full ${
-                          index === currentMediaIndex
-                            ? "bg-white"
-                            : "bg-white/50"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
+              {/* Empurra a barra de comentários para o fundo no mobile */}
+              <div className="min-h-0 flex-1 bg-card lg:hidden" aria-hidden />
+              {/* Espaço do handle do sheet no mobile */}
+              <div
+                className="shrink-0 lg:hidden"
+                style={{ height: MOBILE_COMMENTS_HANDLE_HEIGHT }}
+                aria-hidden
+              />
             </div>
           )}
 
-          {/* Content Section */}
-          <div className={cn("flex flex-col", hasMedia ? "overflow-auto flex-1" : "w-full")}>
-            {/* Post Header */}
-            <div className="sticky top-0 z-20 border-b border-border/50 bg-card">
+          <motion.div
+            className={cn(
+              "flex min-h-0 flex-col bg-card",
+              isLgDesktop
+                ? hasMedia
+                  ? cn(
+                      "relative min-h-0 flex-1 overflow-hidden",
+                      // Modal: proporção atual. Full page: coluna de comentários mais larga
+                      fullPage
+                        ? "w-[48%] 2xl:w-[45%]"
+                        : "w-1/2 2xl:w-2/6",
+                    )
+                  : // Full page texto: flex real (evita estourar com `contents`). Modal: inalterado
+                    fullPage
+                    ? "relative flex min-h-0 w-full min-w-0 flex-1 flex-row overflow-hidden"
+                    : "contents"
+                : "absolute inset-0 z-30 overflow-hidden",
+            )}
+            style={isLgDesktop ? undefined : { y: sheetY }}
+            drag={isLgDesktop ? false : "y"}
+            dragControls={dragControls}
+            dragListener={false}
+            dragConstraints={
+              isLgDesktop ? undefined : { top: 0, bottom: sheetMaxY }
+            }
+            dragElastic={0.06}
+            onDragStart={onDragStart}
+            onDrag={onDrag}
+            onDragEnd={onDragEnd}
+          >
+            {/* Handle mobile: seta sobe/desce comentários */}
+            <button
+              type="button"
+              onPointerDown={(e) => {
+                if (isLgDesktop) return;
+                dragControls.start(e);
+              }}
+              onClick={onHandleClick}
+              className="flex w-full shrink-0 touch-none items-center justify-center gap-1 border-b border-border/50 py-2 text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground lg:hidden"
+              style={{ height: MOBILE_COMMENTS_HANDLE_HEIGHT }}
+              aria-label={
+                mobileCommentsExpanded
+                  ? hasMedia
+                    ? "Recolher comentários"
+                    : "Voltar à legenda"
+                  : "Expandir comentários"
+              }
+            >
+              {mobileCommentsExpanded ? (
+                <ChevronDown className="h-5 w-5" />
+              ) : (
+                <ChevronUp className="h-5 w-5" />
+              )}
+              <span className="text-xs font-medium">
+                {mobileCommentsExpanded
+                  ? hasMedia
+                    ? "Mídia"
+                    : "Legenda"
+                  : "Comentários"}
+              </span>
+            </button>
+
+            {/* Detalhes do post — só no desktop (mobile usa overlay/hero) */}
+            <div
+              className={cn(
+                "relative z-20 hidden shrink-0 border-b border-border/50 bg-card lg:block",
+                hasMedia
+                  ? cn(
+                      "overflow-y-auto",
+                      // Texto expandido: ocupa mais da coluna; recolhido: fica compacto
+                      showFullText ? "max-h-[75%]" : "max-h-[45%]",
+                    )
+                  : cn(
+                      "lg:w-1/2 lg:overflow-y-auto lg:border-r lg:border-border/50",
+                      fullPage && "min-h-0 min-w-0 lg:max-h-full",
+                    ),
+              )}
+            >
               <div className="absolute top-0 right-0 z-30 flex items-center">
-                {postActionsMenu}
+                <div className={cn(!hasMedia && "lg:hidden")}>{postActionsMenu()}</div>
                 {!fullPage ? (
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => (onClose ? onClose() : router.back())}
-                    className="h-9 w-9 shrink-0 rounded-none hover:rounded-none focus-visible:rounded-none text-muted-foreground hover:text-foreground"
+                    className={cn(
+                      "h-9 w-9 shrink-0 rounded-none hover:rounded-none focus-visible:rounded-none text-muted-foreground hover:text-foreground",
+                      !hasMedia && "lg:hidden",
+                    )}
                   >
                     <XIcon className="h-5 w-5" />
                   </Button>
                 ) : null}
               </div>
-              <div className="p-6 pb-2">
-              <div className={cn("mb-2", !fullPage ? "pr-20" : "pr-11")}>
+              <div className="p-4 pb-2 lg:p-6">
+              <div className={cn("mb-2", !fullPage ? "pr-16 lg:pr-20" : "pr-11")}>
                 <div className="flex items-center space-x-3 min-w-0">
                   <ProfileAvatar
                     displayName={post.name}
                     username={post.username}
                     profilePhoto={post.profile_photo}
-                    sizeClass="h-12 w-12"
+                    sizeClass="h-10 w-10 lg:h-12 lg:w-12"
                     ringClass="ring-2 ring-primary/30"
                     fallbackTextClassName="text-sm"
                   />
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1 overflow-hidden">
                     <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                      <div className="inline-flex min-w-0 max-w-full shrink-0 items-center gap-2">
-                        <h3 className="w-fit max-w-full shrink-0 text-lg font-bold">
+                      <div className="inline-flex min-w-0 max-w-full items-center gap-2">
+                        <h3 className="truncate text-base font-bold leading-tight lg:text-lg">
                           {post.name}
                         </h3>
                         {post.verified && texts.verified}
                       </div>
                       <HighlightedAchievementBadges
                         achievements={post.highlighted_achievements}
-                        className="min-w-0"
+                        className="min-w-0 max-w-full"
                       />
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="mt-0.5 text-sm leading-tight text-muted-foreground">
                       @{post.username}
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Post Text Toggle */}
+              {/* Texto do post — no mobile fica no overlay/hero; no PC permanece aqui */}
               {post.comment && (
                 <div className="mb-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowFullText((s) => !s)}
-                    className="text-primary hover:text-primary/80 px-3 py-1.5 rounded-md hover:bg-primary/10 -ml-2 mb-2"
-                  >
-                    {showFullText ? (
-                      <>
-                        {icons.EyeOff}
-                        Esconder texto
-                      </>
-                    ) : (
-                      <>
-                        {icons.Eye}
-                        Ver texto completo
-                      </>
-                    )}
-                  </Button>
-                  {showFullText && (
-                    <p className="text-foreground leading-relaxed whitespace-pre-wrap">
+                  {hasMedia ? (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowFullText((s) => !s)}
+                        className="text-primary hover:text-primary/80 px-3 py-1.5 rounded-md hover:bg-primary/10 -ml-2 mb-2"
+                      >
+                        {showFullText ? (
+                          <>
+                            {icons.EyeOff}
+                            Esconder texto
+                          </>
+                        ) : (
+                          <>
+                            {icons.Eye}
+                            Ver texto completo
+                          </>
+                        )}
+                      </Button>
+                      {showFullText ? (
+                        <p className="text-foreground leading-relaxed whitespace-pre-wrap">
+                          {post.comment}
+                        </p>
+                      ) : null}
+                    </>
+                  ) : (
+                    <p className="px-3 text-foreground leading-relaxed whitespace-pre-wrap">
                       {post.comment}
                     </p>
                   )}
@@ -785,21 +1211,42 @@ export const PostModal = ({
             </div>
 
             {/* Comments Section */}
-            <div className={cn("flex flex-col relative", hasMedia && "flex-1")}>
-              {texts.comments}
+            <div
+              className={cn(
+                "relative flex min-h-0 flex-col overflow-hidden bg-card",
+                hasMedia
+                  ? "min-h-0 flex-1"
+                  : cn(
+                      "min-h-0 flex-1 lg:w-1/2 lg:min-h-0 lg:overflow-hidden",
+                      // Modal: h-auto. Full page: preenche a coluna sem estourar
+                      fullPage ? "lg:h-full" : "lg:h-auto",
+                    ),
+              )}
+            >
+              {hasMedia ? (
+                <div className="hidden shrink-0 border-b border-border/50 px-4 pb-3 pt-3 lg:block">
+                  <h4 className="text-sm font-semibold">Comentários</h4>
+                </div>
+              ) : (
+                <div className="hidden lg:block">{texts.comments}</div>
+              )}
 
+              <div className="min-h-0 flex-1 overflow-hidden max-lg:pt-4 lg:pt-2">
               {comments.data.length > 0 ? (
                 <Virtuoso
-                  style={hasMedia ? { flex: 1, minHeight: 0 } : { height: "14rem" }}
+                  style={{ height: "100%" }}
                   increaseViewportBy={200}
                   data={comments.data}
                   endReached={loadMore}
                   components={{
                     Scroller: ScrollArea,
+                    Header: () => (
+                      <div className="h-2 lg:h-3" aria-hidden />
+                    ),
                   }}
                   overscan={3}
                   itemContent={(index, comment) => (
-                    <div className="px-4 flex-1 flex flex-col" key={comment.id}>
+                    <div className="flex flex-1 flex-col px-4" key={comment.id}>
                       <div className="space-y-4 pb-4">
                         <div key={comment.id} className="space-y-2">
                           <div className="flex items-start space-x-3 pl-1">
@@ -817,32 +1264,30 @@ export const PostModal = ({
                             {/* Container principal do comentário */}
                             <div className="flex-1 min-w-0">
                               {/* Cabeçalho do comentário com nome, data e ações */}
-                              <div className="flex items-center justify-between mb-1 gap-2">
-                                <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                                  <div className="inline-flex min-w-0 max-w-full shrink-0 items-center gap-x-2 gap-y-1">
+                              <div className="flex items-start justify-between gap-2 mb-1">
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                                     <span className="shrink-0 text-sm font-medium">
                                       {comment.created_by_user_name}
                                     </span>
                                     <HighlightedAchievementBadges
-                                      achievements={
-                                        comment.highlighted_achievements
-                                      }
-                                      className="max-w-full min-w-0"
+                                      achievements={comment.highlighted_achievements}
+                                      className="max-w-full"
                                     />
+                                    <span className="shrink-0 text-xs text-muted-foreground">
+                                      <DateAndHour date={comment.timestamp} />
+                                    </span>
+                                    {comment.is_pinned && (
+                                      <span className="shrink-0 text-xs text-primary font-medium flex items-center gap-1">
+                                        📌 Fixado
+                                      </span>
+                                    )}
+                                    {comment.is_hidden && post.username === user?.username && (
+                                      <span className="shrink-0 text-xs text-muted-foreground font-medium flex items-center gap-1">
+                                        👁 Oculto
+                                      </span>
+                                    )}
                                   </div>
-                                  <span className="shrink-0 text-xs text-muted-foreground">
-                                    <DateAndHour date={comment.timestamp} />
-                                  </span>
-                                  {comment.is_pinned && (
-                                    <span className="shrink-0 text-xs text-primary font-medium flex items-center gap-1">
-                                      📌 Fixado
-                                    </span>
-                                  )}
-                                  {comment.is_hidden && post.username === user?.username && (
-                                    <span className="shrink-0 text-xs text-muted-foreground font-medium flex items-center gap-1">
-                                      👁 Oculto
-                                    </span>
-                                  )}
                                 </div>
 
                                 {/* 3-dot menu para comentário raiz */}
@@ -1051,9 +1496,9 @@ export const PostModal = ({
 
                                     <div className="flex-1 min-w-0">
                                       {/* Cabeçalho da reply com nome, data e ações */}
-                                      <div className="flex items-center justify-between mb-1 gap-2">
-                                        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                                          <div className="inline-flex min-w-0 max-w-full shrink-0 items-center gap-x-2 gap-y-1">
+                                      <div className="flex items-start justify-between gap-2 mb-1">
+                                        <div className="min-w-0 flex-1">
+                                          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                                             <span className="shrink-0 text-xs font-medium">
                                               {reply.created_by_user_name}
                                             </span>
@@ -1061,14 +1506,14 @@ export const PostModal = ({
                                               achievements={
                                                 reply.highlighted_achievements
                                               }
-                                              className="max-w-full min-w-0"
+                                              className="max-w-full"
                                             />
+                                            <span className="shrink-0 text-xs text-muted-foreground">
+                                              <DateAndHour
+                                                date={reply.timestamp}
+                                              />
+                                            </span>
                                           </div>
-                                          <span className="shrink-0 text-xs text-muted-foreground">
-                                            <DateAndHour
-                                              date={reply.timestamp}
-                                            />
-                                          </span>
                                         </div>
 
                                         {/* 3-dot menu para reply */}
@@ -1200,23 +1645,24 @@ export const PostModal = ({
                   )}
                 />
               ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-center space-y-4 p-4">
+                <div className="flex h-full min-h-[8rem] flex-col items-center justify-center p-4 text-center">
                   {buttons.comment}
                 </div>
               )}
 
               {isFetchingNextPage && (
-                <div className="w-full p-2 bg-opacity-40 text-white text-center z-10">
+                <div className="w-full bg-opacity-40 p-2 text-center text-white z-10">
                   <LoadingComponent
                     text="Carregando novos comentários"
                     showText={true}
                   />
                 </div>
               )}
+              </div>
 
               {/* Comment Input */}
               {commentsDisabled ? (
-                <div className="p-4 border-t border-border/50 text-center text-sm text-muted-foreground">
+                <div className="shrink-0 border-t border-border/50 p-4 text-center text-sm text-muted-foreground">
                   Comentários desativados pelo autor.
                 </div>
               ) : (
@@ -1225,7 +1671,7 @@ export const PostModal = ({
                   e.preventDefault();
                   handleComment();
                 }}
-                className="p-4 border-t border-border/50 sticky bg-card bottom-0 w-full"
+                className="sticky bottom-0 w-full shrink-0 border-t border-border/50 bg-card p-3 lg:p-4"
               >
                 <div className="relative">
                   <Textarea
@@ -1259,7 +1705,7 @@ export const PostModal = ({
               </form>
               )}
             </div>
-          </div>
+          </motion.div>
         </div>
 
   );
@@ -1294,20 +1740,146 @@ export const PostModal = ({
         confirmAction={confirmPostContextAction}
         setAlertOpen={setContextAlertOpen}
       />
+
+      {hasMedia ? (
+        <Dialog
+          open={mediaFullscreenOpen}
+          onOpenChange={setMediaFullscreenOpen}
+        >
+          <DialogContent
+            hideCloseButton
+            className={cn(
+              "!fixed !inset-0 !left-0 !top-0 z-[100] flex h-dvh w-screen !max-w-none !translate-x-0 !translate-y-0 flex-col gap-0 rounded-none border-0 bg-black p-0 shadow-none",
+              "data-[state=open]:zoom-in-100 data-[state=closed]:zoom-out-100",
+            )}
+          >
+            <VisuallyHidden>
+              <DialogTitle>Mídia em tela cheia</DialogTitle>
+            </VisuallyHidden>
+            <div className="absolute top-0 right-0 z-20 flex items-center gap-1 p-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-full text-white hover:bg-white/15 hover:text-white"
+                aria-label="Fechar tela cheia"
+                onClick={() => setMediaFullscreenOpen(false)}
+              >
+                <XIcon className="h-5 w-5" />
+              </Button>
+            </div>
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label="Fechar tela cheia"
+              className="relative flex min-h-0 flex-1 cursor-zoom-out items-center justify-center p-2 sm:p-4 [&_img]:cursor-zoom-out [&_span]:cursor-zoom-out"
+              onClick={() => setMediaFullscreenOpen(false)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setMediaFullscreenOpen(false);
+                }
+              }}
+            >
+              {post.medias[currentMediaIndex].media_type === "image" ? (
+                <ImageComponent
+                  media_id={post.medias[currentMediaIndex].media_file || ""}
+                  alt="Post media fullscreen"
+                  objectFit="contain"
+                  objectPosition="center"
+                  className="h-full w-full cursor-zoom-out"
+                />
+              ) : (
+                <VideoComponent
+                  media_id={post.medias[currentMediaIndex].media_file || ""}
+                  className="max-h-full max-w-full object-contain"
+                  controls
+                  autoPlay
+                  onClick={(e) => e.stopPropagation()}
+                />
+              )}
+
+              {post.medias.length > 1 ? (
+                <>
+                  {currentMediaIndex > 0 ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute left-2 top-1/2 z-20 h-10 w-10 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 hover:text-white sm:left-4"
+                      aria-label="Mídia anterior"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        prevMedia();
+                      }}
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </Button>
+                  ) : null}
+                  {currentMediaIndex < post.medias.length - 1 ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 top-1/2 z-20 h-10 w-10 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 hover:text-white sm:right-4"
+                      aria-label="Próxima mídia"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        nextMedia();
+                      }}
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </Button>
+                  ) : null}
+                  <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 space-x-2">
+                    {post.medias.map((_, index) => (
+                      <div
+                        key={index}
+                        className={cn(
+                          "h-2 w-2 rounded-full",
+                          index === currentMediaIndex
+                            ? "bg-white"
+                            : "bg-white/50",
+                        )}
+                      />
+                    ))}
+                  </div>
+                </>
+              ) : null}
+            </div>
+          </DialogContent>
+        </Dialog>
+      ) : null}
     </>
   );
 
   if (fullPage) {
     return (
-      <div className="ml-0 md:ml-20">
-        <div className="mx-auto max-w-5xl px-4 pt-4 pb-10">
+      <div className="ml-0 min-w-0 lg:ml-20">
+        <div
+          className={cn(
+            "mx-auto w-full min-w-0 px-3 pt-3 pb-10 sm:px-4 sm:pt-4",
+            hasMedia ? "max-w-5xl" : "max-w-4xl",
+          )}
+        >
           <div
-            className="bg-card border border-border/50 backdrop-blur-sm shadow-card rounded-2xl overflow-hidden"
-            style={hasMedia ? { height: "calc(100vh - var(--layout-header-height) - 2rem)" } : undefined}
+            className={cn(
+              postShellClassName,
+              "w-full min-w-0 overflow-hidden",
+              // Desconta header + global messages (altura dinâmica) + folga
+              // Mídia: deixa ~uma faixa do "Mais posts" visível no viewport
+              // Texto: um pouco mais alto que o card compacto anterior
+              hasMedia
+                ? "h-[calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-8.5rem)] max-h-[calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-8.5rem)]"
+                : "h-[min(36rem,calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-2rem))] max-h-[calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-2rem)]",
+            )}
           >
             {postBodyContent}
           </div>
-          <PostPageRecommendations currentPostId={postId} authorUsername={post.username} />
+          <PostPageRecommendations
+            currentPostId={postId}
+            authorUsername={post.username}
+          />
         </div>
         {sharables}
       </div>
@@ -1318,7 +1890,20 @@ export const PostModal = ({
     <Dialog defaultOpen onOpenChange={handleOpenChange}>
       <DialogContent
         hideCloseButton
-        className="max-w-[70vw] w-full h-[95vh] p-0 bg-background/95 backdrop-blur-xl border border-primary/20 overflow-hidden"
+        className={cn(
+          postShellClassName,
+          "gap-0 p-0 !max-w-none flex flex-col",
+          "w-[calc(100%-0.5rem)] sm:w-[calc(100%-2rem)]",
+          // Mobile: encaixa entre header e bottom nav + global messages (não cobre o chrome)
+          "max-lg:top-[calc(var(--layout-header-height)+0.35rem)] max-lg:translate-y-0",
+          "max-lg:h-[calc(100dvh-var(--layout-header-height)-var(--layout-bottom-nav-height)-var(--layout-quick-messages-height)-env(safe-area-inset-bottom,0px)-0.7rem)]",
+          // Desktop: modal centrado (comportamento atual)
+          "lg:top-[50%] lg:translate-y-[-50%]",
+          hasMedia
+            ? "lg:h-[calc(100dvh-var(--layout-header-height)-2rem)] lg:!w-[70vw] lg:!max-w-[min(70vw,1400px)]"
+            : "lg:h-[calc(100vh-var(--layout-header-height)-2rem)] lg:!max-w-5xl",
+        )}
+        style={undefined}
         aria-describedby={undefined}
       >
         <VisuallyHidden>

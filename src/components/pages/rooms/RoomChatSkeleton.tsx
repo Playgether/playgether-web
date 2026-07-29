@@ -7,8 +7,8 @@ export default function RoomChatSkeleton() {
   return (
     <BaseLayout>
       <div className="flex h-layout-main min-h-0 min-w-0 flex-col bg-background pl-0 md:pl-20">
-        <div className="mx-auto flex h-full min-h-0 w-full max-w-[88rem] flex-1 flex-col px-4 py-2 md:p-6">
-          <section className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/50 bg-background">
+        <div className="mx-auto flex h-full min-h-0 w-full max-w-[88rem] flex-1 flex-col px-0 py-0 md:p-6">
+          <section className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden rounded-none border-y border-border/50 bg-background md:rounded-2xl md:border">
             <nav className="shrink-0 border-b border-border bg-card/80 px-2 py-1.5">
               <div className="flex items-center justify-between gap-2">
                 <Skeleton className="h-5 w-36 max-w-[40%]" />

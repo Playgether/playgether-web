@@ -55,18 +55,23 @@ export const CreatePostModal = () => {
   };
 
   const handleUploadSuccess = async (result: any) => {
+    const info = result?.info;
+    if (!info || typeof info !== "object" || !info.public_id) {
+      return;
+    }
+
     setUploadedFiles((prevFiles) => [
       ...prevFiles,
       {
-        url: result.info.secure_url,
-        media_file: result.info.public_id,
-        media_type: result.info.resource_type,
-        width: result.info.width,
-        height: result.info.height,
-        bytes_file: result.info.bytes,
-        file_format: result.info.format,
-        created_at: result.info.created_at,
-        media_folder: result.info.asset_folder,
+        url: info.secure_url,
+        media_file: info.public_id,
+        media_type: info.resource_type,
+        width: info.width,
+        height: info.height,
+        bytes_file: info.bytes,
+        file_format: info.format,
+        created_at: info.created_at,
+        media_folder: info.asset_folder,
       },
     ]);
   };
@@ -101,10 +106,11 @@ export const CreatePostModal = () => {
     setIsSubmitting(true);
 
     try {
+      const validMedias = uploadedFiles.filter((m) => Boolean(m.media_file));
       const response = await createPost({
-        comment: content,
-        has_post_media: uploadedFiles.length > 0,
-        medias: uploadedFiles,
+        comment: content.trim(),
+        has_post_media: validMedias.length > 0,
+        medias: validMedias,
       });
 
       if (response.status === 201) {
@@ -120,11 +126,20 @@ export const CreatePostModal = () => {
         setUploadedFiles([]);
         handleCreatePostModal(false);
       } else {
-        throw new Error("Failed to create post");
+        const apiError =
+          typeof response.error === "string"
+            ? response.error
+            : response.error?.detail ||
+              response.error?.comment?.[0] ||
+              CustomToastErrorMessages.postErrorMessage;
+        throw new Error(
+          typeof apiError === "string" ? apiError : JSON.stringify(apiError)
+        );
       }
     } catch (error) {
       if (uploadedFiles.length > 0) {
         for (const media of uploadedFiles) {
+          if (!media.media_file) continue;
           await deletePostFile(
             media.media_file,
             media.media_folder,
@@ -135,7 +150,10 @@ export const CreatePostModal = () => {
       }
 
       CustomToast.error(CustomToastErrorMessages.defaultTitle, {
-        description: CustomToastErrorMessages.postErrorMessage,
+        description:
+          error instanceof Error
+            ? error.message
+            : CustomToastErrorMessages.postErrorMessage,
         duration: CustomToastProps.defaultDuration,
       });
     } finally {

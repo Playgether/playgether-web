@@ -78,6 +78,18 @@ const nextConfig = {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
     NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL,
   },
+
+  // Cold `next dev` on Windows can take 10–30s to compile layout/feed chunks;
+  // the default webpack chunk timeout surfaces as ChunkLoadError and a half-hydrated UI.
+  webpack: (config, { dev }) => {
+    if (dev) {
+      config.output = {
+        ...config.output,
+        chunkLoadTimeout: 300000,
+      };
+    }
+    return config;
+  },
 };
 
 module.exports = nextConfig;

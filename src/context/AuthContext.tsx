@@ -67,13 +67,25 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     router.push("/");
   }, [router]);
 
-  useEffect(() => {
-    let cancelled = false;
-    const fetchData = async () => {
+  const resolveInFlightRef = useRef<Promise<void> | null>(null);
+
+  const resolveSession = useCallback(async () => {
+    if (resolveInFlightRef.current) {
+      await resolveInFlightRef.current;
+      return;
+    }
+
+    const run = (async () => {
       setAuthSessionResolved(false);
       const userLocalStorage =
         typeof window !== "undefined" ? localStorage.getItem("user") : null;
-      const cachedUser = userLocalStorage ? JSON.parse(userLocalStorage) : null;
+      let cachedUser: UserProps | null = null;
+      try {
+        cachedUser = userLocalStorage ? JSON.parse(userLocalStorage) : null;
+      } catch {
+        cachedUser = null;
+      }
+
       let fromJwt = await decodeUser();
       if (!fromJwt) {
         const renewed = await refreshTokenServer();
@@ -82,39 +94,51 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           fromJwt = await decodeUser();
         }
       }
-      if (cancelled) return;
-      if (cachedUser !== null) {
-        const merged: UserProps = {
-          ...cachedUser,
-          user_id: fromJwt?.user_id ?? cachedUser.user_id,
-          username: fromJwt?.username ?? cachedUser.username,
-          first_name: fromJwt?.first_name ?? cachedUser.first_name,
-          last_name: fromJwt?.last_name ?? cachedUser.last_name,
-        };
+
+      // Só considera logado com JWT válido (access ou após refresh).
+      // Cache do localStorage sozinho gerava UI “logada” com APIs quebradas no dia seguinte.
+      if (fromJwt) {
+        const merged: UserProps = cachedUser
+          ? {
+              ...cachedUser,
+              user_id: fromJwt.user_id ?? cachedUser.user_id,
+              username: fromJwt.username ?? cachedUser.username,
+              first_name: fromJwt.first_name ?? cachedUser.first_name,
+              last_name: fromJwt.last_name ?? cachedUser.last_name,
+            }
+          : fromJwt;
         setUser(merged);
         setIsLoggedOut(false);
         if (typeof window !== "undefined") {
           localStorage.setItem("user", JSON.stringify(merged));
         }
         markAccessRefreshed();
-      } else if (fromJwt) {
-        if (typeof window !== "undefined") {
-          localStorage.setItem("user", JSON.stringify(fromJwt));
-        }
-        setUser(fromJwt);
-        setIsLoggedOut(false);
-        markAccessRefreshed();
       } else {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("user");
+        }
         setUser(null);
         setIsLoggedOut(true);
       }
-      if (!cancelled) setAuthSessionResolved(true);
-    };
-    void fetchData();
-    return () => {
-      cancelled = true;
-    };
-  }, [isLoggedOut, markAccessRefreshed]);
+      setAuthSessionResolved(true);
+    })();
+
+    resolveInFlightRef.current = run.finally(() => {
+      resolveInFlightRef.current = null;
+    });
+    await resolveInFlightRef.current;
+  }, [markAccessRefreshed]);
+
+  // Bootstrap once on mount (overnight return / hard refresh).
+  useEffect(() => {
+    void resolveSession();
+  }, [resolveSession]);
+
+  // Login form sets isLoggedOut(false) before user is hydrated — finish session resolve.
+  useEffect(() => {
+    if (isLoggedOut || user || !authSessionResolved) return;
+    void resolveSession();
+  }, [isLoggedOut, user, authSessionResolved, resolveSession]);
 
   useEffect(() => {
     if (!user) return;
