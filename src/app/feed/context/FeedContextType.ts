@@ -14,6 +14,7 @@ export interface FeedContextType {
   createPostOpen: boolean;
   handlePostCreated: (newPost: PostProps) => void;
   handleRepost: (postId: number, repostId: number | null) => void;
+  handleSave: (postId: number, saveId: number | null) => void;
   handlePostUpdate: (updatedPost: PostProps | null, postId: number) => void;
   handleCreatePostModal: (argument: boolean) => void;
   getPostById: (postId: number) => PostProps | undefined;

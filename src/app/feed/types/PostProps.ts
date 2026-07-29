@@ -28,6 +28,8 @@ export interface PostProps {
   comments_disabled?: boolean;
   highlighted_achievements?: HighlightedAchievementPublic[];
   user_repost_id?: number | null;
+  user_already_saved?: boolean;
+  user_save_id?: number | null;
   isRepost?: boolean;
   repost_id?: number;
   repost_comment?: string | null;

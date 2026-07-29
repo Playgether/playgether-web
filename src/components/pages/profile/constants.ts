@@ -1,4 +1,5 @@
 import {
+  Bookmark,
   FileText,
   Gamepad2,
   Heart,
@@ -20,6 +21,7 @@ export const tabsData = [
   { id: "achievements", label: "Conquistas", icon: Trophy, ownerOnly: false },
   { id: "games", label: "Biblioteca", icon: Gamepad2, ownerOnly: false },
   { id: "liked", label: "Curtidas", icon: Heart, ownerOnly: true },
+  { id: "saved", label: "Salvos", icon: Bookmark, ownerOnly: true },
 ];
 
 export const initialMilestones = [

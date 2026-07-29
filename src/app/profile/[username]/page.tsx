@@ -34,10 +34,13 @@ export default async function Profile({ params }) {
     "bio",
     "midias",
     "textos",
+    "reposts",
     "estatisticas",
     "marcos",
     "conquistas",
     "biblioteca",
+    "curtidas",
+    "salvos",
   ]);
 
   const normalizedParam = String(username)
