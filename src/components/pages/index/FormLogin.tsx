@@ -8,9 +8,10 @@ import { loginUserProps } from "../../../services/loginUser";
 
 interface FormLoginProps {
   onClickAqui: () => void;
+  redirectTo?: string;
 }
 
-const FormLogin = ({ onClickAqui }: FormLoginProps) => {
+const FormLogin = ({ onClickAqui, redirectTo }: FormLoginProps) => {
   // const { login, wrongPassword } = ();
   const LoginUserSchema = LoginFormSchema();
   const { register, handleSubmit, errors } = UseFormState(LoginUserSchema);
@@ -27,6 +28,7 @@ const FormLogin = ({ onClickAqui }: FormLoginProps) => {
       errors={errors}
       Submiting={Submiting}
       onClickAqui={onClickAqui}
+      redirectTo={redirectTo}
     />
   );
 };

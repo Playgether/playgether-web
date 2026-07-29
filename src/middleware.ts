@@ -2,19 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 
 const PUBLIC_ROUTES = ["/", "/about", "/forgot-password", "/reset-password"];
 
+/** Shared post deep-links: /feed/123 (digits only). */
+function isPublicPostRoute(pathname: string) {
+  return /^\/feed\/\d+$/.test(pathname);
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const hasRefreshToken = !!request.cookies.get("refreshToken")?.value;
 
-  const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+  const isStaticPublicRoute = PUBLIC_ROUTES.includes(pathname);
+  const isPublicRoute = isStaticPublicRoute || isPublicPostRoute(pathname);
 
   // Retorno OAuth Steam: renova JWT no cliente antes de abrir o perfil.
   if (pathname === "/auth/steam/return") {
     return NextResponse.next();
   }
 
-  if (isPublicRoute && hasRefreshToken) {
+  // Logged-in users on marketing/auth pages go to feed — keep /feed/[id] reachable.
+  if (isStaticPublicRoute && hasRefreshToken) {
     return NextResponse.redirect(new URL("/feed", request.url));
   }
 

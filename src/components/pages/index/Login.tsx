@@ -4,9 +4,11 @@ import FormLogin from "./FormLogin";
 interface LoginProps {
   onClickX: () => void;
   onClickAqui: () => void;
+  /** After successful login, navigate here instead of /feed (shared post links). */
+  redirectTo?: string;
 }
 
-const Login = ({ onClickX, onClickAqui }: LoginProps) => {
+const Login = ({ onClickX, onClickAqui, redirectTo }: LoginProps) => {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center px-4 animate-fade-up">
       <div
@@ -37,7 +39,7 @@ const Login = ({ onClickX, onClickAqui }: LoginProps) => {
         </div>
 
         <div className="p-8 space-y-5">
-          <FormLogin onClickAqui={onClickAqui} />
+          <FormLogin onClickAqui={onClickAqui} redirectTo={redirectTo} />
         </div>
       </div>
     </div>

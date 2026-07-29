@@ -33,9 +33,9 @@ export async function GET(request: NextRequest) {
     if (timestampEnd) params.timestamp_end = timestampEnd;
 
     const response = await api.get("/api/v1/posts/", {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
+      ...(accessToken
+        ? { headers: { Authorization: `Bearer ${accessToken}` } }
+        : {}),
       params,
     });
 

@@ -16,6 +16,8 @@ export interface PropertiersLikeProps
   object_id: number;
   onAddLike?: () => void;
   onDeleteLike?: () => void;
+  /** When set (e.g. guest), click opens auth instead of liking. */
+  onAuthRequired?: () => void;
 }
 
 const PropertiersLike = ({
@@ -26,6 +28,7 @@ const PropertiersLike = ({
   object_id,
   onAddLike,
   onDeleteLike,
+  onAuthRequired,
   ...rest
 }: PropertiersLikeProps) => {
   const onClickLike = async () => {
@@ -77,6 +80,11 @@ const PropertiersLike = ({
     // prevenir navegação em links pai e evitar propagação
     e.preventDefault();
     e.stopPropagation();
+
+    if (onAuthRequired) {
+      onAuthRequired();
+      return;
+    }
 
     if (clicked) onClickDeleteLike();
     else onClickLike();

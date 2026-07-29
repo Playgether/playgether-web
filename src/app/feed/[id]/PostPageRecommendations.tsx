@@ -11,6 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface PostPageRecommendationsProps {
   currentPostId: number;
   authorUsername: string;
+  /** Guests only see author posts — not personalized "Posts para você". */
+  isGuest?: boolean;
 }
 
 async function fetchAuthorPosts(username: string, hasMedia: boolean) {
@@ -26,6 +28,7 @@ async function fetchAuthorPosts(username: string, hasMedia: boolean) {
 export function PostPageRecommendations({
   currentPostId,
   authorUsername,
+  isGuest = false,
 }: PostPageRecommendationsProps) {
   const [authorPosts, setAuthorPosts] = useState<PostProps[]>([]);
   const [feedPosts, setFeedPosts] = useState<PostProps[]>([]);
@@ -34,10 +37,27 @@ export function PostPageRecommendations({
   useEffect(() => {
     const load = async () => {
       try {
+        const authorPromises = [
+          fetchAuthorPosts(authorUsername, true),
+          fetchAuthorPosts(authorUsername, false),
+        ] as const;
+
+        if (isGuest) {
+          const [authorWithMedia, authorWithoutMedia] =
+            await Promise.all(authorPromises);
+
+          const authorById = new Map<number, PostProps>();
+          for (const post of [...authorWithMedia, ...authorWithoutMedia]) {
+            if (post.id !== currentPostId) authorById.set(post.id, post);
+          }
+          setAuthorPosts(Array.from(authorById.values()).slice(0, 6));
+          setFeedPosts([]);
+          return;
+        }
+
         const [authorWithMedia, authorWithoutMedia, feedRes] =
           await Promise.all([
-            fetchAuthorPosts(authorUsername, true),
-            fetchAuthorPosts(authorUsername, false),
+            ...authorPromises,
             fetch("/api/feed", { credentials: "include" }),
           ]);
 
@@ -67,7 +87,7 @@ export function PostPageRecommendations({
       }
     };
     load();
-  }, [currentPostId, authorUsername]);
+  }, [currentPostId, authorUsername, isGuest]);
 
   if (loading) {
     return (

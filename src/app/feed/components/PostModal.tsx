@@ -65,10 +65,15 @@ export const PostModal = ({
   postId,
   onClose,
   fullPage = false,
+  onRequireAuth,
+  isGuest = false,
 }: {
   postId: number;
   onClose?: () => void;
   fullPage?: boolean;
+  /** Guest shared-link: open login instead of mutating. */
+  onRequireAuth?: () => void;
+  isGuest?: boolean;
 }) => {
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [isCurrentMediaLoaded, setIsCurrentMediaLoaded] = useState(false);
@@ -134,6 +139,14 @@ export const PostModal = ({
     handlePostUpdate,
   } = useFeedContext();
   const { user } = useAuthContext();
+
+  const requireAuthOr = (action: () => void) => {
+    if (isGuest) {
+      onRequireAuth?.();
+      return;
+    }
+    action();
+  };
   const {
     comments,
     hasNextPage,
@@ -246,10 +259,18 @@ export const PostModal = ({
   };
 
   const handleShareModal = (action?: boolean) => {
+    if (isGuest) {
+      onRequireAuth?.();
+      return;
+    }
     action ? setShareModalOpen(action) : setShareModalOpen((prev) => !prev);
   };
 
   const handleQuickRepost = async () => {
+    if (isGuest) {
+      onRequireAuth?.();
+      return;
+    }
     if (!post || isReposting) return;
     setIsReposting(true);
     try {
@@ -274,6 +295,10 @@ export const PostModal = ({
   };
 
   const handleUndoRepost = async () => {
+    if (isGuest) {
+      onRequireAuth?.();
+      return;
+    }
     if (!post?.user_repost_id || isReposting) return;
     setIsReposting(true);
     try {
@@ -294,13 +319,17 @@ export const PostModal = ({
   };
 
   const onClickLikeComment = (commentId: number) => {
-    handleLikeAny(commentId);
-    queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+    requireAuthOr(() => {
+      handleLikeAny(commentId);
+      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+    });
   };
 
   const onClickLikeReply = (replyId: number, parentId: number) => {
-    handleLikeAny(replyId, parentId);
-    queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+    requireAuthOr(() => {
+      handleLikeAny(replyId, parentId);
+      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+    });
   };
 
   useEffect(() => {
@@ -359,6 +388,10 @@ export const PostModal = ({
   };
 
   const handleReply = async (commentId: number) => {
+    if (isGuest) {
+      onRequireAuth?.();
+      return;
+    }
     if (!replyContent.trim() || !post) return;
     setIsSubmittingReply(true);
 
@@ -387,7 +420,7 @@ export const PostModal = ({
   };
 
   const onClickLike = () => {
-    handleLike(postId);
+    requireAuthOr(() => handleLike(postId));
   };
 
   const nextMedia = () => {
@@ -448,6 +481,10 @@ export const PostModal = ({
   };
 
   const handleComment = async () => {
+    if (isGuest) {
+      onRequireAuth?.();
+      return;
+    }
     if (!newComment.trim() || !post) return;
     setIsSubmittingComment(true);
     const newCommentData = {
@@ -580,7 +617,25 @@ export const PostModal = ({
     }
   };
 
-  const postActionsMenu = (triggerClassName?: string) => (
+  const postActionsMenu = (triggerClassName?: string) => {
+    if (isGuest) {
+      return (
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn(
+            "h-9 w-9 shrink-0 rounded-none hover:rounded-none focus-visible:rounded-none text-muted-foreground hover:text-foreground",
+            triggerClassName,
+          )}
+          onClick={() => onRequireAuth?.()}
+          aria-label="Entrar para mais opções"
+        >
+          <MoreHorizontal className="h-5 w-5" />
+        </Button>
+      );
+    }
+
+    return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button
@@ -605,7 +660,8 @@ export const PostModal = ({
         )}
       </DropdownMenuContent>
     </DropdownMenu>
-  );
+    );
+  };
 
   const mobileCaptionBlock = (
     <div className="pointer-events-auto">
@@ -650,6 +706,7 @@ export const PostModal = ({
             content_type={LikeContentType.post}
             onAddLike={onClickLike}
             onDeleteLike={onClickLike}
+            onAuthRequired={isGuest ? onRequireAuth : undefined}
           />
           <PostPropertiers.Comment
             quantity_comment={post.quantity_comment}
@@ -760,6 +817,7 @@ export const PostModal = ({
                           content_type={LikeContentType.post}
                           onAddLike={onClickLike}
                           onDeleteLike={onClickLike}
+                          onAuthRequired={isGuest ? onRequireAuth : undefined}
                         />
                         <PostPropertiers.Comment
                           quantity_comment={post.quantity_comment}
@@ -1153,6 +1211,7 @@ export const PostModal = ({
                   content_type={LikeContentType.post}
                   onAddLike={onClickLike}
                   onDeleteLike={onClickLike}
+                  onAuthRequired={isGuest ? onRequireAuth : undefined}
                 />
                 <PostPropertiers.Comment
                   quantity_comment={post.quantity_comment}
@@ -1166,11 +1225,20 @@ export const PostModal = ({
                         "text-muted-foreground hover:text-primary p-2",
                         post.user_repost_id && "text-primary"
                       )}
+                      onClick={
+                        isGuest
+                          ? (e) => {
+                              e.preventDefault();
+                              onRequireAuth?.();
+                            }
+                          : undefined
+                      }
                     >
                       <Repeat2 className="w-5 h-5 mr-2" />
                       {post.quantity_reposts}
                     </Button>
                   </DropdownMenuTrigger>
+                  {!isGuest ? (
                   <DropdownMenuContent
                     align="end"
                     className="bg-background/95 backdrop-blur-xl border border-border/50"
@@ -1202,6 +1270,7 @@ export const PostModal = ({
                       </>
                     )}
                   </DropdownMenuContent>
+                  ) : null}
                 </DropdownMenu>
                 <span className="text-sm text-muted-foreground">
                   <DateAndHour date={post.timestamp} />
@@ -1373,13 +1442,18 @@ export const PostModal = ({
                                     onDeleteLike={() =>
                                       onClickLikeComment(comment.id)
                                     }
+                                    onAuthRequired={
+                                      isGuest ? onRequireAuth : undefined
+                                    }
                                   />
                                 </PostPropertiers.Root>
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={() =>
-                                    setReplyingToCommentId(comment.id)
+                                    requireAuthOr(() =>
+                                      setReplyingToCommentId(comment.id),
+                                    )
                                   }
                                   className="text-muted-foreground hover:text-primary"
                                 >
@@ -1609,6 +1683,9 @@ export const PostModal = ({
                                               comment.id,
                                             )
                                           }
+                                          onAuthRequired={
+                                            isGuest ? onRequireAuth : undefined
+                                          }
                                         />
                                       </div>
                                     </div>
@@ -1664,6 +1741,17 @@ export const PostModal = ({
               {commentsDisabled ? (
                 <div className="shrink-0 border-t border-border/50 p-4 text-center text-sm text-muted-foreground">
                   Comentários desativados pelo autor.
+                </div>
+              ) : isGuest ? (
+                <div className="sticky bottom-0 w-full shrink-0 border-t border-border/50 bg-card p-3 lg:p-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full justify-start text-muted-foreground"
+                    onClick={() => onRequireAuth?.()}
+                  >
+                    Entre para comentar...
+                  </Button>
                 </div>
               ) : (
               <form
@@ -1855,7 +1943,7 @@ export const PostModal = ({
 
   if (fullPage) {
     return (
-      <div className="ml-0 min-w-0 lg:ml-20">
+      <div className={cn("min-w-0", !isGuest && "ml-0 lg:ml-20")}>
         <div
           className={cn(
             "mx-auto w-full min-w-0 px-3 pt-3 pb-10 sm:px-4 sm:pt-4",
@@ -1866,12 +1954,14 @@ export const PostModal = ({
             className={cn(
               postShellClassName,
               "w-full min-w-0 overflow-hidden",
-              // Desconta header + global messages (altura dinâmica) + folga
-              // Mídia: deixa ~uma faixa do "Mais posts" visível no viewport
-              // Texto: um pouco mais alto que o card compacto anterior
-              hasMedia
-                ? "h-[calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-8.5rem)] max-h-[calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-8.5rem)]"
-                : "h-[min(36rem,calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-2rem))] max-h-[calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-2rem)]",
+              // Guest: no quick-messages chrome — reserve only guest header.
+              isGuest
+                ? hasMedia
+                  ? "h-[calc(100dvh-var(--layout-header-height)-8.5rem)] max-h-[calc(100dvh-var(--layout-header-height)-8.5rem)]"
+                  : "h-[min(36rem,calc(100dvh-var(--layout-header-height)-2rem))] max-h-[calc(100dvh-var(--layout-header-height)-2rem)]"
+                : hasMedia
+                  ? "h-[calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-8.5rem)] max-h-[calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-8.5rem)]"
+                  : "h-[min(36rem,calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-2rem))] max-h-[calc(100dvh-var(--layout-header-height)-var(--layout-quick-messages-height)-2rem)]",
             )}
           >
             {postBodyContent}
@@ -1879,6 +1969,7 @@ export const PostModal = ({
           <PostPageRecommendations
             currentPostId={postId}
             authorUsername={post.username}
+            isGuest={isGuest}
           />
         </div>
         {sharables}

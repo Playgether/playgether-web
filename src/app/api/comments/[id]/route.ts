@@ -14,9 +14,9 @@ export async function GET(
 
   try {
     const response = await api.get(`/api/v1/posts/${id}/comments/`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
+      ...(accessToken
+        ? { headers: { Authorization: `Bearer ${accessToken}` } }
+        : {}),
       params: { cursor },
     });
 

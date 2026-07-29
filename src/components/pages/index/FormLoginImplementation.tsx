@@ -30,12 +30,19 @@ interface FormLoginImplementationProps {
   errors: FieldErrors<any>;
   Submiting: any;
   onClickAqui: () => void;
+  redirectTo?: string;
+}
+
+function safeInternalRedirect(path?: string) {
+  if (!path || !path.startsWith("/") || path.startsWith("//")) return "/feed";
+  return path;
 }
 
 export const FormLoginImplementation = ({
   register,
   errors,
   onClickAqui,
+  redirectTo,
 }: FormLoginImplementationProps) => {
   const router = useRouter();
   const [unauthorized, setUnauthorized] = useState(false);
@@ -103,7 +110,7 @@ export const FormLoginImplementation = ({
       );
     }
     setIsLoggedOut(false);
-    router.push("/feed");
+    router.push(safeInternalRedirect(redirectTo));
   };
 
   const handleComplete2FA = async () => {
@@ -120,7 +127,7 @@ export const FormLoginImplementation = ({
         await unlockE2EKeys(pendingPasswordRef.current);
       }
       setIsLoggedOut(false);
-      router.push("/feed");
+      router.push(safeInternalRedirect(redirectTo));
     } finally {
       setCompleting2FA(false);
     }
@@ -258,6 +265,7 @@ export const FormLoginImplementation = ({
       <GoogleAuthButton
         label="Continuar com Google"
         onError={(msg) => CustomToast.error(msg)}
+        redirectTo={redirectTo}
       />
 
       <NoHaveAccount onClickAqui={onClickAqui} />

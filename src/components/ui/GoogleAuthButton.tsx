@@ -7,6 +7,13 @@ import { Loader2 } from "lucide-react";
 interface GoogleAuthButtonProps {
   label?: string;
   onError?: (msg: string) => void;
+  /** After Google auth, navigate here instead of /feed. */
+  redirectTo?: string;
+}
+
+function safeInternalRedirect(path?: string) {
+  if (!path || !path.startsWith("/") || path.startsWith("//")) return "/feed";
+  return path;
 }
 
 function GoogleIcon() {
@@ -35,6 +42,7 @@ function GoogleIcon() {
 export function GoogleAuthButton({
   label = "Continuar com Google",
   onError,
+  redirectTo,
 }: GoogleAuthButtonProps) {
   const [loading, setLoading] = useState(false);
   const submittingRef = useRef(false);
@@ -60,7 +68,7 @@ export function GoogleAuthButton({
         }
 
         // Hard navigation so all client contexts reinitialize with the new cookies
-        window.location.href = "/feed";
+        window.location.href = safeInternalRedirect(redirectTo);
       } catch {
         onError?.("Erro de conexão. Tente novamente.");
       } finally {

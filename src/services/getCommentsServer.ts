@@ -1,20 +1,18 @@
-import { cookies } from "next/headers";
 import { PostCommentsApiReturn } from "./getComments";
 import { api } from "./api";
+import { optionalAuthHeaders } from "@/lib/optionalAuthHeaders";
 
 export const getCommentsServer = async (
   postId: number | string | undefined,
   pageParam: string | null = null,
   type: "posts" | "comments" | "profiles" | "reposts" = "posts",
 ) => {
-  const accessToken = (await cookies()).get("accessToken")?.value;
   try {
+    const headers = await optionalAuthHeaders();
     const response = await api.get<PostCommentsApiReturn>(
       `/api/v1/${type}/${postId}/comments/`,
       {
-        headers: {
-          Authorization: "Bearer " + String(accessToken),
-        },
+        ...(headers ? { headers } : {}),
         params: {
           cursor: pageParam,
         },
