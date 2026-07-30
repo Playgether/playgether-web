@@ -11,7 +11,7 @@ export async function getWsTicket(): Promise<string | null> {
   const accessToken = await ensureAccessTokenCookie();
   if (!accessToken) return null;
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+  const apiUrl = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
 
   try {
     const res = await fetch(`${apiUrl}/api/v1/ws/ticket/`, {

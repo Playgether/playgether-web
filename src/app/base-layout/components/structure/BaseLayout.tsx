@@ -36,6 +36,7 @@ export default function BaseLayout({
         <div className="hidden lg:block">
           <ConversationsWidget />
         </div>
+
       </div>
     </BaseLayoutProvider>
   );

@@ -11,7 +11,8 @@ import { useRouter } from "next/navigation";
 import { useDMUnread } from "@/context/DMUnreadContext";
 import { GlobalSearchDropdown } from "./GlobalSearchDropdown";
 import { FriendsModal } from "../friends/FriendsModal";
-import { Users } from "lucide-react";
+import { Users, MessageSquarePlus } from "lucide-react";
+import { FeedbackDialog } from "../feedback/FeedbackDialog";
 
 export const TopNavigation = () => {
   const { logout } = useAuthContext();
@@ -22,6 +23,7 @@ export const TopNavigation = () => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [friendsOpen, setFriendsOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const { BaseLayout } = useBaseLayoutServerContext();
   const router = useRouter();
@@ -105,6 +107,18 @@ export const TopNavigation = () => {
           )}
         </Button>
 
+        {/* Feedback — visível só no mobile (desktop usa sidebar) */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setFeedbackOpen(true)}
+          className={`${actionBtn} lg:hidden`}
+          aria-label="Enviar feedback"
+          title="Enviar feedback"
+        >
+          <MessageSquarePlus className="h-5 w-5" />
+        </Button>
+
         <Button
           variant="ghost"
           size="icon"
@@ -134,6 +148,7 @@ export const TopNavigation = () => {
       />
       <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
       <FriendsModal open={friendsOpen} onOpenChange={setFriendsOpen} />
+      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </header>
   );
 };
