@@ -151,17 +151,17 @@ function wsBaseUrl(): string {
 }
 
 const ChatHandlerContextProvider = ({
-  token,
+  ticket,
   chatroom,
   children,
 }: {
-  token: string;
+  ticket: string;
   chatroom: string;
   children: React.ReactNode;
 }) => {
   const encodedChatroom = encodeURIComponent(chatroom);
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
-    `${wsBaseUrl()}/ws/chatroom/${encodedChatroom}?token=${token}`,
+    `${wsBaseUrl()}/ws/chatroom/${encodedChatroom}?ticket=${ticket}`,
     {
       share: false,
       shouldReconnect: () => false,

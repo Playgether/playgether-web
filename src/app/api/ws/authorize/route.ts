@@ -1,35 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
-import { ensureAccessTokenCookie } from "@/actions/refreshToken";
+import { NextResponse } from "next/server";
+import { getWsTicket } from "@/actions/getWsTicket";
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
-    const token = await ensureAccessTokenCookie();
+    const ticket = await getWsTicket();
 
-    if (!token) {
+    if (!ticket) {
       return NextResponse.json(
-        {
-          authorized: false,
-          error: "Token não encontrado",
-        },
+        { authorized: false, error: "Não autorizado" },
         { status: 401 },
       );
     }
 
-    const tokenParts = token.split(".");
-    if (tokenParts.length !== 3) {
-      return NextResponse.json(
-        { authorized: false, error: "Formato de token inválido" },
-        { status: 401 },
-      );
-    }
-
-    return NextResponse.json({
-      authorized: true,
-      message: "Autorizado com sucesso",
-      token,
-    });
-  } catch (error) {
-    console.error("Erro na autorização WebSocket:", error);
+    return NextResponse.json({ authorized: true, ticket });
+  } catch {
     return NextResponse.json(
       { authorized: false, error: "Erro interno do servidor" },
       { status: 500 },

@@ -59,10 +59,10 @@ export function useRoomEventSocket(eventId: number | null) {
     let cancelled = false;
 
     fetch("/api/notifications-ws-token", { credentials: "include" })
-      .then((res) => (res.ok ? res.json() : { token: null }))
-      .then((data: { token?: string | null }) => {
-        if (cancelled || !data?.token) return;
-        const wsUrl = `${wsBaseUrl().replace(/\/$/, "")}/ws/room-events/${eventId}/?token=${encodeURIComponent(data.token)}`;
+      .then((res) => (res.ok ? res.json() : { ticket: null }))
+      .then((data: { ticket?: string | null }) => {
+        if (cancelled || !data?.ticket) return;
+        const wsUrl = `${wsBaseUrl().replace(/\/$/, "")}/ws/room-events/${eventId}/?ticket=${encodeURIComponent(data.ticket)}`;
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 

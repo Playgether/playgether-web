@@ -17,10 +17,10 @@ function NotificationBody({ notificationsParent }: { notificationsParent: any[] 
   useEffect(() => {
     let cancelled = false;
     fetch("/api/notifications-ws-token", { credentials: "include" })
-      .then((res) => (res.ok ? res.json() : { token: null }))
+      .then((res) => (res.ok ? res.json() : { ticket: null }))
       .then((data) => {
-        if (!cancelled && data?.token) {
-          setWsUrl(`${WS_URL}/ws/notifications/?token=${data.token}`);
+        if (!cancelled && data?.ticket) {
+          setWsUrl(`${WS_URL}/ws/notifications/?ticket=${data.ticket}`);
         }
       })
       .catch(() => {});

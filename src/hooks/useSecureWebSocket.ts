@@ -27,7 +27,7 @@ export const useSecureWebSocket = (options: UseSecureWebSocketOptions) => {
   } = options;
 
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const [wsToken, setWsToken] = useState<string | null>(null);
+  const [wsTicket, setWsTicket] = useState<string | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [wsBaseUrl, setWsBaseUrl] = useState<string | null>(null);
   const reconnectCountRef = useRef(0);
@@ -50,7 +50,7 @@ export const useSecureWebSocket = (options: UseSecureWebSocketOptions) => {
     return null;
   }, []);
 
-  // 2. ✅ Função de autorização (retorna token para passar na URL do WS)
+  // 2. ✅ Troca o access token por um ticket opaco de uso único (TTL 120s)
   const checkAuthorization = useCallback(async (): Promise<boolean> => {
     try {
       const response = await fetch("/api/ws/authorize", {
@@ -60,7 +60,7 @@ export const useSecureWebSocket = (options: UseSecureWebSocketOptions) => {
       if (response.ok) {
         const data = await response.json();
         setIsAuthorized(data.authorized);
-        setWsToken(data.token ?? null);
+        setWsTicket(data.ticket ?? null);
 
         if (!data.authorized) {
           setConnectionError(data.error || "Não autorizado");
@@ -71,16 +71,16 @@ export const useSecureWebSocket = (options: UseSecureWebSocketOptions) => {
         setConnectionError("Erro na autorização");
         return false;
       }
-    } catch (error) {
+    } catch {
       setConnectionError("Erro ao verificar autorização");
       return false;
     }
   }, []);
 
-  // 3. ✅ URL completa do WebSocket (com token na query para autenticação)
+  // 3. ✅ URL completa do WebSocket (ticket opaco — JWT não vai na URL)
   const fullWsUrl =
-    wsBaseUrl && isAuthorized && wsToken && url
-      ? `${wsBaseUrl}${url}${url.includes("?") ? "&" : "?"}token=${encodeURIComponent(wsToken)}`
+    wsBaseUrl && isAuthorized && wsTicket && url
+      ? `${wsBaseUrl}${url}${url.includes("?") ? "&" : "?"}ticket=${encodeURIComponent(wsTicket)}`
       : null;
 
   // 4. ✅ Hook useWebSocket

@@ -139,10 +139,10 @@ export function useDuoSocket({
     }
 
     fetch("/api/notifications-ws-token", { credentials: "include" })
-      .then((res) => (res.ok ? res.json() : { token: null }))
-      .then((data: { token?: string | null }) => {
+      .then((res) => (res.ok ? res.json() : { ticket: null }))
+      .then((data: { ticket?: string | null }) => {
         if (cancelled) return;
-        if (!data?.token) {
+        if (!data?.ticket) {
           setState((s) => ({
             ...s,
             error: "Faça login para usar o Duo Finder.",
@@ -152,7 +152,7 @@ export function useDuoSocket({
         }
 
         const base = wsBaseUrl().replace(/\/$/, "");
-        const wsUrl = `${base}/ws/duo/${encodeURIComponent(gameSlug)}/?token=${encodeURIComponent(data.token)}`;
+        const wsUrl = `${base}/ws/duo/${encodeURIComponent(gameSlug)}/?ticket=${encodeURIComponent(data.ticket)}`;
 
         ws = new WebSocket(wsUrl);
         wsRef.current = ws;
