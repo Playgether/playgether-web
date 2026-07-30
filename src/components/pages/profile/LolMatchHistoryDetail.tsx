@@ -385,7 +385,7 @@ export function LolMatchHistoryDetail({
           <TeamPanel
             title="Equipe azul"
             win={blueWin}
-            accentTitleClass="text-sky-200"
+            accentTitleClass="text-sky-700 dark:text-sky-200"
             panelClass="border-sky-600/70 bg-sky-950/45"
             objectives={blue?.objectives}
             kills={detail.summary.blueKills}
@@ -396,7 +396,7 @@ export function LolMatchHistoryDetail({
           <TeamPanel
             title="Equipe vermelha"
             win={redWin}
-            accentTitleClass="text-red-200"
+            accentTitleClass="text-red-700 dark:text-red-200"
             panelClass="border-red-600/70 bg-red-950/45"
             objectives={red?.objectives}
             kills={detail.summary.redKills}
@@ -477,7 +477,7 @@ function TeamPanel({
         {title}
       </div>
       <div
-        className={`mt-1 text-sm font-bold ${win ? "text-emerald-400" : "text-rose-500"}`}
+        className={`mt-1 text-sm font-bold ${win ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-500"}`}
       >
         {win ? "Vitória" : "Derrota"}
       </div>

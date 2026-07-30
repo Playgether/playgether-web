@@ -362,6 +362,7 @@ export function GamesCanvasUserProfile({
           <div className="mt-1 pl-11">
             <HighlightedAchievementBadges
               achievements={profile?.highlighted_achievements}
+              iconOnly
             />
           </div>
 
