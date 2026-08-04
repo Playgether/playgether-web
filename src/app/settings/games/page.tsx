@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle2, XCircle, ExternalLink } from "lucide-react";
+import { CheckCircle2, XCircle, ExternalLink, ShieldCheck } from "lucide-react";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import { SettingsPageWrapper, SettingsSection } from "../components/SettingsPageWrapper";
 import { apiFetch } from "@/services/apiFetch";
@@ -11,6 +12,15 @@ import { getGames, type GameDetails } from "@/services/getGames";
 import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
 import { useAuthContext } from "@/context/AuthContext";
 import { disconnectSteam } from "@/services/disconnectSteam";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { RiotDisclaimer } from "@/components/riot/RiotDisclaimer";
 
 interface PlatformStatus {
   connected: boolean;
@@ -29,7 +39,9 @@ function resolveMediaUrl(value: string | null | undefined): string {
   return getCloudinaryUrl(value);
 }
 
-function classifyGame(game: GameDetails): "steam" | "riot" | null {
+type PlatformKind = "steam" | "lol" | "valorant" | null;
+
+function classifyGame(game: GameDetails): PlatformKind {
   const slug = (game.platform_slug ?? "").toLowerCase();
   const acronym = (game.acronym ?? "").toLowerCase();
   const name = (game.name ?? "").toLowerCase();
@@ -37,9 +49,8 @@ function classifyGame(game: GameDetails): "steam" | "riot" | null {
   if (slug === "steam" || acronym === "csgo" || acronym === "cs2" || name.includes("counter")) {
     return "steam";
   }
-  if (slug === "riot" || acronym === "lol" || name.includes("league") || name.includes("valorant")) {
-    return "riot";
-  }
+  if (acronym === "valorant" || name.includes("valorant")) return "valorant";
+  if (slug === "riot" || acronym === "lol" || name.includes("league")) return "lol";
   return null;
 }
 
@@ -85,7 +96,7 @@ function GameRow({
   onDisconnect,
 }: {
   game: GameDetails;
-  platform: "steam" | "riot" | null;
+  platform: PlatformKind;
   status: PlatformStatus | null;
   loading: boolean;
   onConnect?: () => void;
@@ -106,8 +117,9 @@ function GameRow({
     );
   }
 
-  const comingSoon = !platform;
-  const connected = status?.connected ?? false;
+  const comingSoon = !platform || platform === "valorant";
+  const connected = platform === "steam" && (status?.connected ?? false);
+  const isLol = platform === "lol";
   const avatar = connected ? (status?.avatar ?? null) : null;
 
   return (
@@ -117,8 +129,15 @@ function GameRow({
         <div>
           <p className="text-sm font-medium text-foreground">{game.name}</p>
           <div className="flex items-center gap-1 mt-0.5">
-            {comingSoon ? (
+            {platform === "valorant" ? (
+              <span className="text-xs font-medium text-amber-500">Em breve · VALORANT</span>
+            ) : comingSoon ? (
               <span className="text-xs text-muted-foreground">Em breve</span>
+            ) : isLol ? (
+              <span className="inline-flex items-center gap-1 text-xs text-primary">
+                <ShieldCheck className="h-3 w-3" />
+                Conexão segura via Riot Sign On
+              </span>
             ) : connected ? (
               <span className="inline-flex items-center gap-1 text-xs text-green-500">
                 <CheckCircle2 className="w-3 h-3" />
@@ -170,6 +189,7 @@ export default function GamesSettingsPage() {
   const [connections, setConnections] = useState<ConnectionsStatus>({ platforms: {} });
   const [games, setGames] = useState<GameDetails[]>([]);
   const [loading, setLoading] = useState(true);
+  const [riotModalOpen, setRiotModalOpen] = useState(false);
 
   useEffect(() => {
     if (!user?.user_id) return;
@@ -219,7 +239,8 @@ export default function GamesSettingsPage() {
               ))
             : games.map((game) => {
                 const platform = classifyGame(game);
-                const status = platform ? (connections.platforms[platform] ?? null) : null;
+                const statusKey = platform === "lol" ? "riot" : platform;
+                const status = statusKey ? (connections.platforms[statusKey] ?? null) : null;
 
                 return (
                   <GameRow
@@ -228,13 +249,57 @@ export default function GamesSettingsPage() {
                     platform={platform}
                     status={status}
                     loading={false}
-                    onConnect={platform === "steam" ? handleConnectSteam : undefined}
-                    onDisconnect={platform ? () => handleDisconnect(platform) : undefined}
+                    onConnect={
+                      platform === "steam"
+                        ? handleConnectSteam
+                        : platform === "lol"
+                          ? () => setRiotModalOpen(true)
+                          : undefined
+                    }
+                    onDisconnect={
+                      platform === "steam" ? () => handleDisconnect("steam") : undefined
+                    }
                   />
                 );
               })}
         </SettingsSection>
       </SettingsPageWrapper>
+      <Dialog open={riotModalOpen} onOpenChange={setRiotModalOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Conexão segura com League of Legends</DialogTitle>
+            <DialogDescription>
+              A conexão será feita exclusivamente pelo Riot Sign On (RSO), sem solicitar
+              Riot ID, nick ou tag manualmente.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 text-sm text-muted-foreground">
+            <div className="rounded-xl border border-primary/25 bg-primary/5 p-4">
+              <p className="font-medium text-foreground">Disponível após aprovação</p>
+              <p className="mt-1">
+                O fluxo RSO será habilitado quando a Production Key da Playgether for
+                aprovada. Até lá, esta ação não inicia nem simula OAuth.
+              </p>
+            </div>
+            <p>
+              Quando o RSO estiver disponível, usaremos os dados Riot autorizados para
+              identificar a conta e sincronizar estatísticas. Consulte nossa{" "}
+              <Link className="font-medium text-primary hover:underline" href="/privacy">
+                Política de Privacidade
+              </Link>
+              .
+            </p>
+            <RiotDisclaimer />
+          </div>
+
+          <DialogFooter>
+            <Button type="button" onClick={() => setRiotModalOpen(false)}>
+              Entendi
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

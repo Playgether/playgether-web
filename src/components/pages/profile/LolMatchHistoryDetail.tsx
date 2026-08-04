@@ -125,10 +125,9 @@ export function LolMatchHistoryDetail({
                   p.laneLabel && p.laneLabel !== "UNKNOWN"
                     ? p.laneLabel
                     : "";
+                const participantKey = `${p.riotId}-${p.teamId}-${p.championId}-${idx}`;
                 return (
-                  <React.Fragment
-                    key={p.puuid || `${p.riotId}-${p.championId}`}
-                  >
+                  <React.Fragment key={participantKey}>
                     {firstRedIndex > 0 && idx === firstRedIndex ? (
                       <tr className="border-y border-border/70 bg-red-950/50 text-muted-foreground">
                         <th className="px-2 py-2 w-[220px] text-left font-medium">
@@ -210,9 +209,7 @@ export function LolMatchHistoryDetail({
                           <div className="-mt-0.5 flex min-w-0 flex-col gap-0.5">
                             <span
                               className={`block truncate text-left font-medium text-[11px] ${
-                                p.puuid &&
-                                detail.viewerPuuid &&
-                                p.puuid === detail.viewerPuuid
+                                p.isViewer
                                   ? "text-amber-400"
                                   : "text-foreground"
                               }`}
@@ -334,7 +331,7 @@ export function LolMatchHistoryDetail({
                         <div className="mb-1 flex flex-wrap gap-0.5">
                           {p.runes?.map((r) => (
                             <WithTooltip
-                              key={`${p.puuid}-r-build-${r.id}`}
+                              key={`${participantKey}-r-build-${r.id}`}
                               text={spellTooltip(
                                 r.name || `Runa ${r.id}`,
                                 r.description,
@@ -352,7 +349,7 @@ export function LolMatchHistoryDetail({
                           {p.items.map((id, idx) =>
                             itemIconUrl(cdn, id) ? (
                               <WithTooltip
-                                key={`${p.puuid}-it-${idx}`}
+                                key={`${participantKey}-it-${idx}`}
                                 text={spellTooltip(
                                   p.itemsDetailed?.[idx]?.name || `Item ${id}`,
                                   p.itemsDetailed?.[idx]?.description,
@@ -366,7 +363,7 @@ export function LolMatchHistoryDetail({
                               </WithTooltip>
                             ) : (
                               <div
-                                key={`${p.puuid}-it-${idx}`}
+                                key={`${participantKey}-it-${idx}`}
                                 className="h-6 w-6 rounded-sm border-2 border-dashed border-zinc-400 bg-zinc-900/80"
                               />
                             ),

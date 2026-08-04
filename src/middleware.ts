@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_ROUTES = ["/", "/about", "/forgot-password", "/reset-password"];
+const PUBLIC_ROUTES = [
+  "/",
+  "/about",
+  "/forgot-password",
+  "/reset-password",
+  "/terms",
+  "/privacy",
+];
+const AUTH_ENTRY_ROUTES = ["/", "/about", "/forgot-password", "/reset-password"];
 
 /** Shared post deep-links: /feed/123 (digits only). */
 function isPublicPostRoute(pathname: string) {
@@ -20,8 +28,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Logged-in users on marketing/auth pages go to feed — keep /feed/[id] reachable.
-  if (isStaticPublicRoute && hasRefreshToken) {
+  // Logged-in users on marketing/auth pages go to feed. Legal pages stay permanent.
+  if (AUTH_ENTRY_ROUTES.includes(pathname) && hasRefreshToken) {
     return NextResponse.redirect(new URL("/feed", request.url));
   }
 
