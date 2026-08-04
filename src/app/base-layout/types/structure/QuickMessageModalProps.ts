@@ -4,6 +4,7 @@ export interface QuickMessageModalProps {
   message?: {
     id: string;
     user: {
+      id?: string;
       name: string;
       username?: string;
       avatar: string;

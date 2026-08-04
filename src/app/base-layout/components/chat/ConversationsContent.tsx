@@ -29,6 +29,8 @@ import type { ConversationInterface } from "../../types/chat/ConversationInterfa
 import type { MessageInterface } from "../../types/chat/MessageInterface";
 import { resolvePlaygetherMediaUrl } from "@/lib/resolvePlaygetherMediaUrl";
 import { cn } from "@/lib/utils";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
+import type { MegaphoneReplyDraft } from "@/context/ConversationsWidgetContext";
 
 
 interface ConversationsContentProps {
@@ -36,6 +38,8 @@ interface ConversationsContentProps {
   chatHeight?: string;
   autoOpenId?: string;
   forceSelectId?: string;
+  forceDraft?: string;
+  forceMegaphoneReply?: MegaphoneReplyDraft;
 }
 
 function toConversationInterface(
@@ -81,6 +85,8 @@ export function ConversationsContent({
   chatHeight = "flex-1",
   autoOpenId,
   forceSelectId,
+  forceDraft,
+  forceMegaphoneReply,
 }: ConversationsContentProps) {
   const { user } = useAuthContext();
   const { isReady, encryptForUser, decrypt } = useE2ECrypto();
@@ -94,6 +100,7 @@ export function ConversationsContent({
   const [messages, setMessages] = useState<MessageInterface[]>([]);
   const [rawMessages, setRawMessages] = useState<DMMessage[]>([]);
   const [messageInput, setMessageInput] = useState("");
+  const [megaphoneReply, setMegaphoneReply] = useState<MegaphoneReplyDraft | null>(null);
   const [sending, setSending] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
 
@@ -161,6 +168,7 @@ export function ConversationsContent({
       setSelectedConversation(conv);
       setMessages([]);
       setRawMessages([]);
+      setMegaphoneReply(null);
       seenIdsRef.current.clear();
 
       setLoadingMessages(true);
@@ -225,14 +233,19 @@ export function ConversationsContent({
   useEffect(() => {
     if (!forceSelectId || forceSelectId === prevForceSelectRef.current) return;
     prevForceSelectRef.current = forceSelectId;
-    loadConversations().then((convs) => {
+    void loadConversations().then(async (convs) => {
       const target = convs.find((c) => c.id === forceSelectId);
-      if (target) {
-        selectConversation(target);
-        setTimeout(() => inputRef.current?.focus(), 150);
+      if (!target) return;
+      await selectConversation(target);
+      if (forceMegaphoneReply) {
+        setMegaphoneReply(forceMegaphoneReply);
+        setMessageInput("");
+      } else if (forceDraft) {
+        setMessageInput(forceDraft);
       }
+      setTimeout(() => inputRef.current?.focus(), 150);
     });
-  }, [forceSelectId, loadConversations, selectConversation]);
+  }, [forceSelectId, forceDraft, forceMegaphoneReply, loadConversations, selectConversation]);
 
   // ── WebSocket: receive new messages ──────────────────────────────────────
 
@@ -308,14 +321,19 @@ export function ConversationsContent({
   // ── Send message ──────────────────────────────────────────────────────────
 
   const handleSend = useCallback(async () => {
-    const text = messageInput.trim();
-    if (!text || !selectedConversation || sending) return;
+    const typed = messageInput.trim();
+    if (!typed || !selectedConversation || sending) return;
+
+    const text = megaphoneReply
+      ? `Respondendo ao alto-falante de @${megaphoneReply.authorUsername}:\n“${megaphoneReply.quote}”\n\n${typed}`
+      : typed;
 
     if (selectedConversation.type === "group") {
       setSending(true);
       try {
         sendGroupMessage(text);
         setMessageInput("");
+        setMegaphoneReply(null);
       } finally {
         setSending(false);
       }
@@ -337,10 +355,20 @@ export function ConversationsContent({
         iv: encrypted.iv,
       });
       setMessageInput("");
+      setMegaphoneReply(null);
     } finally {
       setSending(false);
     }
-  }, [messageInput, selectedConversation, isReady, sending, encryptForUser, sendEncryptedMessage, sendGroupMessage]);
+  }, [
+    messageInput,
+    megaphoneReply,
+    selectedConversation,
+    isReady,
+    sending,
+    encryptForUser,
+    sendEncryptedMessage,
+    sendGroupMessage,
+  ]);
 
   // ── Private conversation search ───────────────────────────────────────────
 
@@ -523,6 +551,12 @@ export function ConversationsContent({
                         )}
                     >
                       <div className="flex items-center space-x-3">
+                        <ProfileAvatar
+                          displayName={item.name}
+                          profilePhoto={item.avatar || null}
+                          sizeClass="h-9 w-9"
+                          fallbackTextClassName="text-xs"
+                        />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm truncate">{item.name}</p>
                           <p className="text-xs text-muted-foreground truncate">{item.lastMessage}</p>
@@ -717,6 +751,8 @@ export function ConversationsContent({
               messageInput={messageInput}
               onSend={handleSend}
               disabled={isSendDisabled}
+              megaphoneReply={megaphoneReply}
+              onDismissMegaphoneReply={() => setMegaphoneReply(null)}
             />
           </>
         ) : (

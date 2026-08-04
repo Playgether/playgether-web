@@ -5,26 +5,42 @@ import { usePathname } from "next/navigation";
 import { MessageSquare, X } from "lucide-react";
 import { ConversationsContent } from "./ConversationsContent";
 import { useDMUnread } from "@/context/DMUnreadContext";
-import { useConversationsWidget } from "@/context/ConversationsWidgetContext";
+import {
+  useConversationsWidget,
+  type MegaphoneReplyDraft,
+} from "@/context/ConversationsWidgetContext";
 
 export function ConversationsWidget() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [forceSelectId, setForceSelectId] = useState<string | undefined>(undefined);
+  const [forceSelectId, setForceSelectId] = useState<string | undefined>(
+    undefined
+  );
+  const [forceDraft, setForceDraft] = useState<string | undefined>(undefined);
+  const [forceMegaphoneReply, setForceMegaphoneReply] = useState<
+    MegaphoneReplyDraft | undefined
+  >(undefined);
   const { unreadCount } = useDMUnread();
-  const { pendingConvId, clearPending } = useConversationsWidget();
+  const {
+    pendingConvId,
+    pendingDraft,
+    pendingMegaphoneReply,
+    clearPending,
+  } = useConversationsWidget();
 
   useEffect(() => {
     if (!pendingConvId) return;
     setOpen(true);
     setForceSelectId(pendingConvId);
+    setForceDraft(pendingDraft ?? undefined);
+    setForceMegaphoneReply(pendingMegaphoneReply ?? undefined);
     clearPending();
-  }, [pendingConvId, clearPending]);
+  }, [pendingConvId, pendingDraft, pendingMegaphoneReply, clearPending]);
 
   if (pathname === "/conversations") return null;
 
   return (
-    <div className="fixed bottom-[calc(var(--layout-quick-messages-height)+0.75rem)] right-3 z-50 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6">
+    <div className="fixed bottom-[calc(var(--layout-quick-messages-height)+0.75rem)] right-3 z-[70] flex flex-col items-end gap-3 sm:bottom-6 sm:right-6">
       {open && (
         <div className="flex h-[min(70dvh,480px)] w-[min(calc(100vw-1.5rem),720px)] flex-col overflow-hidden rounded-2xl border border-primary/20 bg-background/95 shadow-2xl backdrop-blur-xl sm:h-[480px] sm:w-[min(calc(100vw-3rem),560px)] lg:w-[720px]">
           <div className="flex h-12 shrink-0 items-center justify-between border-b border-border/50 px-4">
@@ -43,6 +59,8 @@ export function ConversationsWidget() {
               listHeight="calc(100% - 120px)"
               chatHeight="flex-1"
               forceSelectId={forceSelectId}
+              forceDraft={forceDraft}
+              forceMegaphoneReply={forceMegaphoneReply}
             />
           </div>
         </div>

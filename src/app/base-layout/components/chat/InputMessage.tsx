@@ -1,10 +1,14 @@
-import { Send, Smile } from "lucide-react";
+"use client";
+
+import { Send, Smile, Megaphone, X } from "lucide-react";
 import React, { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CHAT_EMOJI_CATEGORIES, searchChatEmojis } from "@/lib/chatEmojis";
 import { cn } from "@/lib/utils";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
+import type { MegaphoneReplyDraft } from "@/context/ConversationsWidgetContext";
 
 // ── Emoji Picker ─────────────────────────────────────────────────────────────
 
@@ -100,6 +104,47 @@ function DMEmojiPicker({ onPick }: { onPick: (emoji: string) => void }) {
   );
 }
 
+function MegaphoneReplyBanner({
+  reply,
+  onDismiss,
+}: {
+  reply: MegaphoneReplyDraft;
+  onDismiss: () => void;
+}) {
+  return (
+    <div className="mb-2 flex items-start gap-2 rounded-lg border border-primary/20 bg-primary/5 px-2.5 py-2">
+      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-secondary">
+        <Megaphone className="h-3.5 w-3.5 text-white" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="mb-0.5 flex items-center gap-2">
+          <ProfileAvatar
+            displayName={reply.authorName}
+            username={reply.authorUsername}
+            profilePhoto={reply.authorAvatar}
+            sizeClass="h-5 w-5"
+            fallbackTextClassName="text-[9px]"
+          />
+          <p className="truncate text-xs font-medium text-foreground">
+            Respondendo ao alto-falante de @{reply.authorUsername}
+          </p>
+        </div>
+        <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+          “{reply.quote}”
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={onDismiss}
+        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+        aria-label="Cancelar resposta"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
 // ── InputMessage ──────────────────────────────────────────────────────────────
 
 const InputMessage = forwardRef<
@@ -109,8 +154,20 @@ const InputMessage = forwardRef<
     onInput: (value: string) => void;
     onSend?: () => void;
     disabled?: boolean;
+    megaphoneReply?: MegaphoneReplyDraft | null;
+    onDismissMegaphoneReply?: () => void;
   }
->(function InputMessage({ messageInput, onInput, onSend, disabled }, ref) {
+>(function InputMessage(
+  {
+    messageInput,
+    onInput,
+    onSend,
+    disabled,
+    megaphoneReply,
+    onDismissMegaphoneReply,
+  },
+  ref
+) {
   const internalRef = useRef<HTMLTextAreaElement>(null);
   const textSelectionRef = useRef({ start: 0, end: 0 });
   const [emojiOpen, setEmojiOpen] = useState(false);
@@ -178,7 +235,13 @@ const InputMessage = forwardRef<
   };
 
   return (
-    <div className="p-4 border-t border-border/50">
+    <div className="border-t border-border/50 p-3 sm:p-4">
+      {megaphoneReply ? (
+        <MegaphoneReplyBanner
+          reply={megaphoneReply}
+          onDismiss={() => onDismissMegaphoneReply?.()}
+        />
+      ) : null}
       <div className="flex items-end space-x-2">
         <Popover open={emojiOpen} onOpenChange={setEmojiOpen} modal={false}>
           <PopoverTrigger asChild>
@@ -186,7 +249,7 @@ const InputMessage = forwardRef<
               type="button"
               variant="outline"
               size="icon"
-              className="shrink-0 mb-0.5"
+              className="mb-0.5 shrink-0"
               title="Emojis"
               aria-label="Abrir emojis"
               disabled={disabled}
@@ -215,20 +278,24 @@ const InputMessage = forwardRef<
           onClick={syncSelection}
           onKeyUp={syncSelection}
           onFocus={syncSelection}
-          placeholder="Digite sua mensagem..."
+          placeholder={
+            megaphoneReply
+              ? "Escreva sua resposta..."
+              : "Digite sua mensagem..."
+          }
           disabled={disabled}
           rows={1}
-          className="flex-1 resize-none bg-muted/50 border border-border/50 rounded-md px-3 py-2 text-sm placeholder:text-muted-foreground outline-none focus:border-primary/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden"
+          className="flex-1 resize-none overflow-y-auto rounded-md border border-border/50 bg-muted/50 px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/50 disabled:cursor-not-allowed disabled:opacity-50 scrollbar-none [&::-webkit-scrollbar]:hidden"
           style={{ minHeight: "36px", maxHeight: "120px" }}
         />
 
         <Button
           size="icon"
-          className="bg-gradient-primary hover:shadow-glow-primary/30 shrink-0 mb-0.5"
+          className="mb-0.5 shrink-0 bg-gradient-primary hover:shadow-glow-primary/30"
           onClick={handleSend}
           disabled={disabled || !messageInput.trim()}
         >
-          <Send className="w-4 h-4" />
+          <Send className="h-4 w-4" />
         </Button>
       </div>
     </div>

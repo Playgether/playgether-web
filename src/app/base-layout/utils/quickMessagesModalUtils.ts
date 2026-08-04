@@ -6,5 +6,5 @@ import {
 export const getPriorityColorQuickMessagesConfig = (
   priority: PriorityLevel
 ) => {
-  return quickMessagesHistoryModalPriorityConfig[priority];
+  return quickMessagesHistoryModalPriorityConfig[priority].color;
 };
