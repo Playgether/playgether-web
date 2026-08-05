@@ -8,6 +8,7 @@ import {
   Plus,
   DoorOpen,
   MessageSquarePlus,
+  Clapperboard,
 } from "lucide-react";
 import Image from "next/image";
 import { profilePhotoToAvatarSrc } from "@/components/profile/ProfileAvatar";
@@ -24,6 +25,7 @@ import { FeedbackDialog } from "../feedback/FeedbackDialog";
 
 const sidebarItems: GamerSideBarItensInterface[] = [
   { icon: <Home className="w-6 h-6" />, label: "Início", href: "/feed" },
+  { icon: <Clapperboard className="w-6 h-6" />, label: "Cuts", href: "/cuts" },
   { icon: <Swords className="w-6 h-6" />, label: "Duo", href: "/duo" },
   { icon: <DoorOpen className="w-6 h-6" />, label: "Salas", href: "/rooms" },
   {

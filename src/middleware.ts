@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 const PUBLIC_ROUTES = ["/", "/about", "/forgot-password", "/reset-password"];
 
-/** Shared post deep-links: /feed/123 (digits only). */
+/** Shared post/cut deep-links and embeds: /feed/123, /cuts/123, /cuts/123/embed. */
 function isPublicPostRoute(pathname: string) {
-  return /^\/feed\/\d+$/.test(pathname);
+  return /^\/(feed|cuts)\/\d+(\/embed)?$/.test(pathname);
 }
 
 export function middleware(request: NextRequest) {

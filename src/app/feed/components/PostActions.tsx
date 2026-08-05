@@ -36,7 +36,7 @@ export default function PostActions({
   post: PostProps;
   handleShareModal: () => void;
 }) {
-  const { handleLike, handleRepost } = useFeedContext();
+  const { handleLike, handleRepost, handleSave } = useFeedContext();
   const router = useRouter();
   const [isReposting, setIsReposting] = useState(false);
 
@@ -170,7 +170,11 @@ export default function PostActions({
           </DropdownMenuContent>
         </DropdownMenu>
       </PostPropertiers.Root>
-      <BookmarkButton post={post} />
+      <BookmarkButton
+        item={post}
+        contentType="post"
+        onSavedChange={(saved, saveId) => handleSave(post.id, saveId)}
+      />
     </>
   );
 }

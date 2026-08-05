@@ -28,6 +28,7 @@ import {
 import type { ConversationInterface } from "../../types/chat/ConversationInterface";
 import type { MessageInterface } from "../../types/chat/MessageInterface";
 import { resolvePlaygetherMediaUrl } from "@/lib/resolvePlaygetherMediaUrl";
+import { decodeSharedContent, sharedContentPreviewText } from "@/lib/sharedContent";
 import { cn } from "@/lib/utils";
 
 
@@ -149,7 +150,11 @@ export function ConversationsContent({
         msg.encrypted_key_sender
       );
       if (plain) {
-        setDecryptedPreviews((prev) => ({ ...prev, [conv.id]: plain }));
+        const shared = decodeSharedContent(plain);
+        setDecryptedPreviews((prev) => ({
+          ...prev,
+          [conv.id]: shared ? sharedContentPreviewText(shared) : plain,
+        }));
       }
     });
   }, [conversations, isReady, decrypt, user, decryptedPreviews]);
@@ -188,10 +193,12 @@ export function ConversationsContent({
           content = plain ?? "🔒 Não foi possível decifrar";
         }
 
+        const shared = decodeSharedContent(content);
         decrypted.push({
           id: msg.id,
           sender: msg.sender_username,
-          content,
+          content: shared ? sharedContentPreviewText(shared) : content,
+          sharedContent: shared ?? undefined,
           timestamp: new Date(msg.timestamp).toLocaleTimeString("pt-BR", {
             hour: "2-digit",
             minute: "2-digit",
@@ -257,10 +264,12 @@ export function ConversationsContent({
         content = plain ?? "🔒 Não foi possível decifrar";
       }
 
+      const shared = decodeSharedContent(content);
       const ui: MessageInterface = {
         id: msg.id,
         sender: msg.sender_username,
-        content,
+        content: shared ? sharedContentPreviewText(shared) : content,
+        sharedContent: shared ?? undefined,
         timestamp: new Date(msg.timestamp).toLocaleTimeString("pt-BR", {
           hour: "2-digit",
           minute: "2-digit",
@@ -279,10 +288,10 @@ export function ConversationsContent({
       );
       if (msg.body) {
         // no decrypted preview needed for group messages
-      } else if (content) {
+      } else if (ui.content) {
         setDecryptedPreviews((prev) => ({
           ...prev,
-          [msg.conversation_id ?? ""]: content,
+          [msg.conversation_id ?? ""]: ui.content,
         }));
       }
     },
