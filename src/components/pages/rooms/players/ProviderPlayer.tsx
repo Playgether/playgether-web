@@ -149,7 +149,7 @@ export function ProviderPlayer({
   return (
     <div className={cn("relative h-full w-full", className)}>
       <div
-        ref={youtubeMount}
+        ref={youtubeMount as React.RefObject<HTMLDivElement>}
         className={cn(
           "relative z-0 h-full w-full",
           blockPointer && "pointer-events-none",

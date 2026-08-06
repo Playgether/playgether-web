@@ -562,7 +562,7 @@ export function ConversationsContent({
                       <div className="flex items-center space-x-3">
                         <ProfileAvatar
                           displayName={item.name}
-                          profilePhoto={item.avatar || null}
+                          profilePhoto={typeof item.avatar === "string" ? item.avatar || null : null}
                           sizeClass="h-9 w-9"
                           fallbackTextClassName="text-xs"
                         />

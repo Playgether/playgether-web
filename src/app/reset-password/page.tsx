@@ -51,7 +51,7 @@ function PasswordStrengthBar({ password }: { password: string }) {
 function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get("token") ?? "";
+  const token = searchParams?.get("token") ?? "";
 
   const [stage, setStage] = useState<Stage>("validating");
   const [password, setPassword] = useState("");

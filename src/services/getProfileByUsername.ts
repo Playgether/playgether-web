@@ -5,7 +5,7 @@ import type { HighlightedAchievementPublic } from "@/types/highlightedAchievemen
 export interface getProfileByUsernameProps {
   id: number;
   /** ID do User Django (enviado pela API para isOwner confiável) */
-  user_id?: number;
+  user_id?: string;
   bio: string;
   profile_photo: string;
   profile_banner?: string;
@@ -16,8 +16,8 @@ export interface getProfileByUsernameProps {
   verified: boolean;
   quantity_comment: number;
   quantity_likes: number;
-  follows: [];
-  followed_by: [];
+  follows: number[];
+  followed_by: number[];
   name: string;
   username: string;
   quantity_posts: number;

@@ -95,13 +95,13 @@ export function RoomRolesPanel({ room }: RoomRolesPanelProps) {
 
   const assignableUsers = useMemo(() => {
     type AssignableUser = {
-      id: number;
+      id: string | number;
       username: string;
       fullname: string;
       profile_photo: string;
       isOnline: boolean;
     };
-    const map = new Map<number, AssignableUser>();
+    const map = new Map<string | number, AssignableUser>();
     for (const u of onlineUsers) {
       if (u.id === room.owner) continue;
       map.set(u.id, {
@@ -129,7 +129,7 @@ export function RoomRolesPanel({ room }: RoomRolesPanelProps) {
   }, [onlineUsers, assignments, room.owner]);
 
   const assignmentsByUser = useMemo(() => {
-    const map = new Map<number, number[]>();
+    const map = new Map<string | number, number[]>();
     for (const a of assignments) {
       const list = map.get(a.user_id) ?? [];
       list.push(a.role.id);
@@ -257,7 +257,7 @@ export function RoomRolesPanel({ room }: RoomRolesPanelProps) {
     });
   };
 
-  const toggleUserRole = (userId: number, roleId: number, hasRole: boolean) => {
+  const toggleUserRole = (userId: string, roleId: number, hasRole: boolean) => {
     if (!canAssignRoles) return;
     setError(null);
     startTransition(async () => {
@@ -548,7 +548,7 @@ export function RoomRolesPanel({ room }: RoomRolesPanelProps) {
                         type="button"
                         disabled={isPending}
                         onClick={() =>
-                          toggleUserRole(user.id, assignRole.id, hasRole)
+                          toggleUserRole(String(user.id), assignRole.id, hasRole)
                         }
                         className={cn(
                           "rounded-full px-2.5 py-1 text-[11px] font-bold",

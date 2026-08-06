@@ -35,7 +35,7 @@ export function SettingsSidebar() {
         Configurações
       </p>
       {navItems.map((item) => {
-        const active = pathname === item.href || pathname.startsWith(item.href + "/");
+        const active = pathname === item.href || (pathname?.startsWith(item.href + "/") ?? false);
         return (
           <Link
             key={item.href}
@@ -72,7 +72,7 @@ export function SettingsMobileNav() {
     >
       <div className="flex gap-1 overflow-x-auto px-3 py-2.5 scrollbar-hide">
         {navItems.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(item.href + "/");
+          const active = pathname === item.href || (pathname?.startsWith(item.href + "/") ?? false);
           return (
             <Link
               key={item.href}

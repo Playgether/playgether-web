@@ -125,7 +125,7 @@ export default function RoomParticipantsPanel({
               canModerateMember(snapshot, room.owner, selfId, user.id) ? (
                 <RoomMemberModerationMenu
                   roomSlug={room.slug}
-                  userId={user.id}
+                  userId={String(user.id)}
                   memberName={user.fullname}
                   canKick={canKick}
                   canMute={canMute}

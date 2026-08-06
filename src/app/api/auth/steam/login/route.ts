@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { api } from "@/services/api";
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
+  const { searchParams, origin: baseUrl } = new URL(request.url);
   const next = searchParams.get("next");
   const accessToken = (await cookies()).get("accessToken")?.value;
   if (!accessToken) {

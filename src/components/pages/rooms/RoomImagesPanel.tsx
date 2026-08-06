@@ -56,7 +56,10 @@ interface RoomImagesPanelProps {
   onAmbientImagesUpdated?: (next: Record<string, string>) => void;
 }
 
-export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
+export default function RoomImagesPanel({
+  room,
+  onAmbientImagesUpdated,
+}: RoomImagesPanelProps) {
   const [ambientBackgrounds, setAmbientBackgrounds] = useState<
     Record<AmbientKey, string>
   >(() => ambientFromRoom(room));

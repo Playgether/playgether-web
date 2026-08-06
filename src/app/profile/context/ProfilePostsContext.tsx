@@ -343,6 +343,14 @@ export function ProfilePostsProvider({
     }));
   }, [updatePostInLists]);
 
+  const handleSave = useCallback((postId: number, saveId: number | null) => {
+    updatePostInLists(postId, (p) => ({
+      ...p,
+      user_already_saved: saveId !== null,
+      user_save_id: saveId,
+    }));
+  }, [updatePostInLists]);
+
   const posts = [...mediaPosts, ...textPosts];
 
   const feedContextValue: FeedContextType = {
@@ -357,6 +365,7 @@ export function ProfilePostsProvider({
     handleCreatePostModal: () => {},
     getPostById,
     handleLike,
+    handleSave,
     fetchNextPage: async () => ({} as any),
     hasNextPage: false,
     isFetchingNextPage: false,

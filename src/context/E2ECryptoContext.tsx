@@ -68,7 +68,7 @@ interface E2ECryptoContextValue {
     encryptedKey: string,
     iv: string,
     isSender: boolean,
-    encryptedKeySender: string
+    encryptedKeySender: string | undefined
   ) => Promise<string | null>;
   clear: () => void;
 }
@@ -202,11 +202,12 @@ export function E2ECryptoProvider({ children }: { children: React.ReactNode }) {
       encryptedKeyRecipient: string,
       iv: string,
       isSender: boolean,
-      encryptedKeySender: string
+      encryptedKeySender: string | undefined
     ): Promise<string | null> => {
       if (!privateKeyRef.current) return null;
+      const keyToUse = isSender ? encryptedKeySender : encryptedKeyRecipient;
+      if (!keyToUse) return null;
       try {
-        const keyToUse = isSender ? encryptedKeySender : encryptedKeyRecipient;
         return await decryptMessage(encryptedBody, keyToUse, iv, privateKeyRef.current);
       } catch {
         return null;

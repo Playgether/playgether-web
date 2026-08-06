@@ -94,10 +94,9 @@ export function FollowListModal({
         const ownProfile =
           isOwnProfileProp ?? latestProfile?.id === profileId;
 
+        const rawFollows = latestProfile?.follows;
         const followSet = new Set(
-          (Array.isArray(latestProfile?.follows) ? latestProfile.follows : []).map(
-            (id) => Number(id),
-          ),
+          (Array.isArray(rawFollows) ? rawFollows : []).map((id) => Number(id)),
         );
 
         const state: Record<number, boolean> = {};

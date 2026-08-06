@@ -20,7 +20,7 @@ function normalizeAmbienceMessage(raw: Record<string, unknown>): RoomAmbienceMes
   const body = typeof raw.body === "string" ? raw.body : "";
   if (!id || !body) return null;
   const author_user_id =
-    typeof raw.author_user_id === "number" ? raw.author_user_id : 0;
+    typeof raw.author_user_id === "string" ? raw.author_user_id : null;
   const reply_to_id =
     typeof raw.reply_to_id === "number" && raw.reply_to_id > 0
       ? raw.reply_to_id
@@ -39,7 +39,7 @@ function normalizeAmbienceMessage(raw: Record<string, unknown>): RoomAmbienceMes
         : typeof raw.created_at === "string"
           ? Date.parse(raw.created_at)
           : 0,
-    is_system: Boolean(raw.is_system) || author_user_id === 0,
+    is_system: Boolean(raw.is_system) || author_user_id === null,
     reply_to_id,
     reply_to_username:
       typeof raw.reply_to_username === "string" ? raw.reply_to_username : undefined,

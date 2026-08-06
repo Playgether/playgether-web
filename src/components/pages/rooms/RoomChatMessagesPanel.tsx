@@ -286,7 +286,7 @@ export default function RoomChatMessagesPanel({
                           <RoomMessageActionsMenu
                             roomSlug={room.slug}
                             messageId={message.id}
-                            authorId={authorId}
+                            authorId={authorId != null ? String(authorId) : null}
                             authorName={message.author_name}
                             canDelete={
                               canDeleteMessages && (isMine || canModerateAuthor)

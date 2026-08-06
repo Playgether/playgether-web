@@ -57,7 +57,10 @@ export function RoomModerationSanctionsPanel({ roomSlug }: { roomSlug: string })
 
   if (!canKick && !canMute) return null;
 
-  const handleRevoke = (userId: number, sanctionType: string) => {
+  const handleRevoke = (
+    userId: string,
+    sanctionType: "mute" | "ban" | "ambience_ban",
+  ) => {
     startTransition(async () => {
       const res = await revokeRoomSanction(roomSlug, userId, sanctionType);
       if (!res.ok) {

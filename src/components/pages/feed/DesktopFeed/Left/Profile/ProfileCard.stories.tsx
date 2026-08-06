@@ -12,6 +12,7 @@ const ProfileContextMock = ({ children }) => {
     bio: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
     profile_photo:
       "https://media.gettyimages.com/id/1282821098/pt/foto/happy-young-man-in-the-city.jpg?s=612x612&w=gi&k=20&c=FJ7jeagRFTj4jlvAc0rR8E4sJzGOHCQDVy0mjHk9rX4=",
+    profile_banner: null,
     verified: false,
     matches_played: 0,
     hours_played: 0,
@@ -43,7 +44,7 @@ const UserContextMock = ({ children }) => {
   const mockUser: UserProps = {
     first_name: "Henry",
     last_name: "Johnson",
-    user_id: 1,
+    user_id: "1",
     username: "henry_johnson",
   };
 

@@ -19,7 +19,7 @@ export default function GamerSidbarConversationsButtons({
   const isActive = item.href
     ? item.href === "/feed"
       ? pathname === "/feed"
-      : pathname.startsWith(item.href)
+      : (pathname?.startsWith(item.href) ?? false)
     : false;
 
   const handleClick = () => {
