@@ -20,7 +20,7 @@ export type SavableContentType = "post" | "cut";
 interface BookmarkButtonProps {
   item: { id: number; user_already_saved?: boolean };
   contentType?: SavableContentType;
-  /** "lg" = h-7 w-7, para conviver lado a lado com ícones de ação (curtir, comentar...). */
+  /** "lg" = h-6 w-6, para conviver lado a lado com ícones de ação (curtir, comentar...). */
   size?: "sm" | "md" | "lg";
   onSavedChange?: (saved: boolean, saveId: number | null) => void;
   /** Sobrescreve a cor/estilo do gatilho (ex: ícone branco sobre vídeo escuro). */
@@ -171,9 +171,9 @@ export function BookmarkButton({ item, contentType = "post", size = "sm", onSave
     }
   }, [newName, isCreating, item.id, contentType, isSaved, onSavedChange]);
 
-  const iconSize = size === "sm" ? "h-4 w-4" : size === "md" ? "h-5 w-5" : "h-7 w-7";
+  const iconSize = size === "sm" ? "h-4 w-4" : size === "md" ? "h-5 w-5" : "h-6 w-6";
   const btnClass = cn(
-    "p-1.5 text-muted-foreground hover:text-primary sm:p-2",
+    "inline-flex items-center justify-center rounded-md p-1.5 text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 sm:p-2",
     isSaved && "text-primary",
     triggerClassName,
   );
@@ -181,9 +181,9 @@ export function BookmarkButton({ item, contentType = "post", size = "sm", onSave
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
+        {/* Botão puro (não usa <Button>) para o tamanho do ícone não ser forçado pelo [&_svg]:size-4 do design system */}
+        <button
+          type="button"
           onClick={(e) => {
             // If not yet open, a plain click saves quickly; long hover opens popover
             if (!open) handleQuickSave(e);
@@ -203,7 +203,7 @@ export function BookmarkButton({ item, contentType = "post", size = "sm", onSave
               ? <BookmarkCheck className={iconSize} />
               : <Bookmark className={iconSize} />
           }
-        </Button>
+        </button>
       </PopoverTrigger>
 
       <PopoverContent

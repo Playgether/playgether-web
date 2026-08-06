@@ -75,7 +75,7 @@ export function CutOptionsMenu({ cut, onShare }: CutOptionsMenuProps) {
       <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
           <button type="button" aria-label="Mais opções" className="flex flex-col items-center gap-1">
-            <MoreHorizontal className="h-7 w-7 text-white" />
+            <MoreHorizontal className="h-6 w-6 text-white" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56 border-border/50 bg-background/95 backdrop-blur-xl">

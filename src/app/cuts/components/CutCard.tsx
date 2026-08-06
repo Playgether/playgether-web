@@ -341,9 +341,9 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
 
           {/* Actions — overlay no mobile/tablet, ficam na coluna ao lado no desktop */}
           <div className="absolute bottom-6 right-3 z-20 flex flex-col items-center gap-5 lg:hidden">
-            <ActionBtn onClick={handleLikeClick} label={liked ? "Descurtir" : "Curtir"} count={likesCount} icon={<Heart className={cn("h-7 w-7 transition-transform active:scale-125", liked ? "fill-red-500 text-red-500" : "text-white")} />} />
-            <ActionBtn onClick={() => onOpenComments(cut)} label="Comentários" count={cut.comments_count} icon={<MessageCircle className={cn("h-7 w-7", commentsActive ? "fill-white/20 text-primary" : "text-white")} />} />
-            <ActionBtn onClick={() => setShareOpen(true)} label="Compartilhar" icon={<Send className="h-7 w-7 text-white" />} />
+            <ActionBtn onClick={handleLikeClick} label={liked ? "Descurtir" : "Curtir"} count={likesCount} icon={<Heart className={cn("h-6 w-6 transition-transform active:scale-125", liked ? "fill-red-500 text-red-500" : "text-white")} />} />
+            <ActionBtn onClick={() => onOpenComments(cut)} label="Comentários" count={cut.comments_count} icon={<MessageCircle className={cn("h-6 w-6", commentsActive ? "fill-white/20 text-primary" : "text-white")} />} />
+            <ActionBtn onClick={() => setShareOpen(true)} label="Compartilhar" icon={<Send className="h-6 w-6 text-white" />} />
             <BookmarkButton
               item={cut}
               contentType="cut"
@@ -410,9 +410,9 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
 
         {/* Actions — coluna ao lado do vídeo, só desktop */}
         <div className="hidden h-full shrink-0 flex-col items-center justify-center gap-6 lg:flex">
-          <ActionBtn onClick={handleLikeClick} label={liked ? "Descurtir" : "Curtir"} count={likesCount} icon={<Heart className={cn("h-7 w-7 transition-transform active:scale-125", liked ? "fill-red-500 text-red-500" : "text-white")} />} />
-          <ActionBtn onClick={() => onOpenComments(cut)} label="Comentários" count={cut.comments_count} icon={<MessageCircle className={cn("h-7 w-7", commentsActive ? "fill-white/20 text-primary" : "text-white")} />} />
-          <ActionBtn onClick={() => setShareOpen(true)} label="Compartilhar" icon={<Send className="h-7 w-7 text-white" />} />
+          <ActionBtn onClick={handleLikeClick} label={liked ? "Descurtir" : "Curtir"} count={likesCount} icon={<Heart className={cn("h-6 w-6 transition-transform active:scale-125", liked ? "fill-red-500 text-red-500" : "text-white")} />} />
+          <ActionBtn onClick={() => onOpenComments(cut)} label="Comentários" count={cut.comments_count} icon={<MessageCircle className={cn("h-6 w-6", commentsActive ? "fill-white/20 text-primary" : "text-white")} />} />
+          <ActionBtn onClick={() => setShareOpen(true)} label="Compartilhar" icon={<Send className="h-6 w-6 text-white" />} />
           <BookmarkButton
             item={cut}
             contentType="cut"
