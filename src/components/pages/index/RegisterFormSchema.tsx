@@ -30,7 +30,7 @@ export const RegisterFormSchema = (requiredDocumentIds: number[] = []) => {
         }).refine((value) => {
   
           const numberRegex = /[0-9]/;
-          const letterRegex = /^[a-zA-Z]+$/;
+          const letterRegex = /^[\p{L}]+$/u;
           return (
             numberRegex.test(value) == false &&
             letterRegex.test(value)
@@ -38,7 +38,7 @@ export const RegisterFormSchema = (requiredDocumentIds: number[] = []) => {
           }, {
           message: 'Este campo aceita apenas letras',
         }),
-  
+
         last_name: z.string()
         .min(1, "O sobrenome não pode estar vazio")
         .max(150, 'O sobrenome pode ter no máximo 150 caracteres').transform(last_name => {
@@ -46,7 +46,7 @@ export const RegisterFormSchema = (requiredDocumentIds: number[] = []) => {
         }).refine((value) => {
   
           const numberRegex = /[0-9]/;
-          const letterRegex = /^[a-zA-Z]+$/;
+          const letterRegex = /^[\p{L}]+$/u;
           return (
             numberRegex.test(value) == false &&
             letterRegex.test(value)
@@ -54,7 +54,7 @@ export const RegisterFormSchema = (requiredDocumentIds: number[] = []) => {
           }, {
           message: 'Este campo aceita apenas letras',
         }),
-  
+
         username: z.string()
         .nonempty('O username é obrigatório').min(2, 'O nome de usuário precisa ter no mínimo 2 caracteres').max(150, 'o nome de usuário deve ter no máximo 150 caracteres').refine((value) => {
 
