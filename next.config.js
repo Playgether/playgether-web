@@ -41,7 +41,14 @@ const nextConfig = {
         protocol: "https",
         hostname: "*.vercel.app",
       },
-
+      {
+        protocol: "https",
+        hostname: "playgether.com",
+      },
+      {
+        protocol: "https",
+        hostname: "www.playgether.com",
+      },
       // local dev
       {
         protocol: "http",
