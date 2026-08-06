@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createCut } from "@/actions/getCuts";
 import { Cut } from "@/types/Cut";
 
-const MAX_DURATION = 60;
+const MAX_DURATION = 240;
 const MAX_CHARS = 2200;
 
 interface UploadedVideo {
@@ -124,7 +124,7 @@ export function CreateCutDialog({ open, onOpenChange, onCreated }: CreateCutDial
               options={{
                 sources: ["local"],
                 maxFiles: 1,
-                maxVideoFileSize: 100_000_000,
+                maxVideoFileSize: 400_000_000,
                 clientAllowedFormats: ["mp4", "mov", "webm"],
                 language: "pt-br",
                 showCompletedButton: true,
@@ -148,7 +148,7 @@ export function CreateCutDialog({ open, onOpenChange, onCreated }: CreateCutDial
                   <Upload className="h-8 w-8 text-muted-foreground" />
                   <div className="text-center">
                     <p className="text-sm font-medium">Clique para enviar seu vídeo</p>
-                    <p className="mt-1 text-xs text-muted-foreground">MP4, MOV ou WebM · Máx. 60s · 200 MB</p>
+                    <p className="mt-1 text-xs text-muted-foreground">MP4, MOV ou WebM · Máx. 4min · 400 MB</p>
                   </div>
                 </button>
               )}
