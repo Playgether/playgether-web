@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Megaphone } from "lucide-react";
 import { MessageInterface } from "../../types/chat/MessageInterface";
 import { SharedCutCard } from "./SharedCutCard";
+import { SharedCutModal } from "./SharedCutModal";
 import { cn } from "@/lib/utils";
 
 const MEGAPHONE_REPLY_RE =
@@ -98,76 +99,54 @@ export default function ChatMessages({
         aria-live="polite"
         aria-atomic="false"
       >
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.isOwn ? "justify-end" : "justify-start"}`}
-          >
-            {message.sharedContent ? (
-              <div className="max-w-[70%]">
-                <SharedCutCard
-                  content={message.sharedContent}
-                  onClick={() => setOpenCutId(message.sharedContent!.id)}
-                />
-                <span className="mt-1 block text-xs opacity-70">
-                  {message.timestamp}
-                </span>
-              </div>
-            ) : (
-              <div
-                className={`max-w-[70%] p-3 rounded-lg ${
-                  message.isOwn ? "bg-gradient-primary text-white" : "bg-muted"
-                }`}
-              >
-                <p className="text-sm">{message.content}</p>
-                <span className="text-xs opacity-70 mt-1 block">
-                  {message.timestamp}
-                </span>
-              </div>
-            )}
-          </div>
-        ))}
+        {messages.map((message) => {
+          const megaphoneReply = message.sharedContent
+            ? null
+            : parseMegaphoneReply(message.content);
+
+          return (
+            <div
+              key={message.id}
+              className={`flex ${message.isOwn ? "justify-end" : "justify-start"}`}
+            >
+              {message.sharedContent ? (
+                <div className="max-w-[70%]">
+                  <SharedCutCard
+                    content={message.sharedContent}
+                    onClick={() => setOpenCutId(message.sharedContent!.id)}
+                  />
+                  <span className="mt-1 block text-xs opacity-70">
+                    {message.timestamp}
+                  </span>
+                </div>
+              ) : (
+                <div
+                  className={`max-w-[70%] rounded-lg p-3 ${
+                    message.isOwn ? "bg-gradient-primary text-white" : "bg-muted"
+                  }`}
+                >
+                  {megaphoneReply ? (
+                    <MegaphoneReplyBubble
+                      parsed={megaphoneReply}
+                      isOwn={message.isOwn}
+                      timestamp={message.timestamp}
+                    />
+                  ) : (
+                    <>
+                      <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+                      <span className="mt-1 block text-xs opacity-70">
+                        {message.timestamp}
+                      </span>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <SharedCutModal cutId={openCutId} onOpenChange={(open) => !open && setOpenCutId(null)} />
     </>
-    <div
-      className="space-y-4"
-      role="log"
-      aria-live="polite"
-      aria-atomic="false"
-    >
-      {messages.map((message) => {
-        const megaphoneReply = parseMegaphoneReply(message.content);
-
-        return (
-          <div
-            key={message.id}
-            className={`flex ${message.isOwn ? "justify-end" : "justify-start"}`}
-          >
-            <div
-              className={`max-w-[70%] rounded-lg p-3 ${
-                message.isOwn ? "bg-gradient-primary text-white" : "bg-muted"
-              }`}
-            >
-              {megaphoneReply ? (
-                <MegaphoneReplyBubble
-                  parsed={megaphoneReply}
-                  isOwn={message.isOwn}
-                  timestamp={message.timestamp}
-                />
-              ) : (
-                <>
-                  <p className="whitespace-pre-wrap text-sm">{message.content}</p>
-                  <span className="mt-1 block text-xs opacity-70">
-                    {message.timestamp}
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-        );
-      })}
-    </div>
   );
 }
