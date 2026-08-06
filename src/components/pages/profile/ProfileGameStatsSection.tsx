@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
+import { RiotDisclaimer } from "@/components/riot/RiotDisclaimer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -577,6 +578,8 @@ export function ProfileGameStatsSection({
           </div>
         </div>
       </div>
+
+      {selectedGame === "lol" ? <RiotDisclaimer /> : null}
 
       {/* Filters row - hide for CS2 (no seasons in Steam API) */}
       {!useRealCs2Stats && !useRealLolStats && selectedGame !== "csgo" && (
@@ -2983,11 +2986,7 @@ function mapLolMatchesToUi(
     };
 
     const viewerParticipant =
-      match.matchDetail?.participants.find(
-        (participant) =>
-          Boolean(match.matchDetail?.viewerPuuid) &&
-          participant.puuid === match.matchDetail?.viewerPuuid,
-      ) ?? null;
+      match.matchDetail?.participants.find((participant) => participant.isViewer) ?? null;
     const blueParticipants =
       match.matchDetail?.participants
         .filter((participant) => participant.teamId === 100)

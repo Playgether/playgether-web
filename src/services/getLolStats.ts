@@ -22,7 +22,7 @@ export type LolItemDetail = {
 };
 
 export type LolMatchDetailParticipant = {
-  puuid: string;
+  isViewer: boolean;
   riotId: string;
   gameName: string;
   tagLine: string;
@@ -85,7 +85,6 @@ export type LolMatchDetail = {
   gameVersion: string;
   durationSeconds: number;
   gameCreation: string;
-  viewerPuuid: string | null | undefined;
   viewerResult?: "win" | "loss" | null;
   /** Riot: participant.gameEndedInEarlySurrender (remake / early end). */
   isRemake?: boolean;
@@ -153,7 +152,6 @@ export type LolStatsResponse = {
     gameName: string;
     tagLine: string;
     riotId: string;
-    puuid?: string | null;
     profileIcon?: number | null;
     summonerLevel?: number | null;
     platformRegion?: string | null;

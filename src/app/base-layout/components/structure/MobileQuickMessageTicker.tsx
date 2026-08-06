@@ -11,6 +11,7 @@ type MobileQuickMessageTickerProps = {
   messageTimer: number;
   isFadingOut: boolean;
   onOpenHistory: () => void;
+  onOpenMessage?: () => void;
 };
 
 export function MobileQuickMessageTicker({
@@ -18,62 +19,72 @@ export function MobileQuickMessageTicker({
   messageTimer,
   isFadingOut,
   onOpenHistory,
+  onOpenMessage,
 }: MobileQuickMessageTickerProps) {
   if (!message) return null;
 
   return (
-    <button
-      type="button"
-      onClick={onOpenHistory}
+    <div
       className={`relative flex w-full items-center gap-2 overflow-hidden px-3 py-2 lg:hidden ${getPriorityClass(
         message.priority
       )}`}
     >
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-secondary">
+      <button
+        type="button"
+        onClick={onOpenHistory}
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-secondary"
+        aria-label="Histórico do alto-falante"
+      >
         <Megaphone className="h-3.5 w-3.5 text-white" />
-      </div>
+      </button>
 
-      <AnimatePresence mode="wait" initial={false}>
-        {!isFadingOut && (
-          <motion.div
-            key={message.id}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.25 }}
-            className="flex min-w-0 flex-1 items-center gap-2"
-          >
-            <ProfileAvatar
-              displayName={message.user.name}
-              username={message.user.username}
-              profilePhoto={
-                typeof message.user.avatar === "string"
-                  ? message.user.avatar
-                  : message.user.avatar.src
-              }
-              sizeClass="h-6 w-6"
-              ringClass="ring-1 ring-primary/30"
-              className="shrink-0"
-            />
-            <div className="min-w-0 flex-1 text-left">
-              <p
-                className={`truncate text-xs font-medium ${getPriorityColor(
-                  message.priority
-                )}`}
-              >
-                {message.user.name}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">
-                {message.message}
-              </p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <button
+        type="button"
+        onClick={onOpenMessage || onOpenHistory}
+        className="flex min-w-0 flex-1 items-center gap-2 text-left"
+      >
+        <AnimatePresence mode="wait" initial={false}>
+          {!isFadingOut && (
+            <motion.div
+              key={message.id}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.25 }}
+              className="flex min-w-0 flex-1 items-center gap-2"
+            >
+              <ProfileAvatar
+                displayName={message.user.name}
+                username={message.user.username}
+                profilePhoto={
+                  typeof message.user.avatar === "string"
+                    ? message.user.avatar
+                    : message.user.avatar.src
+                }
+                sizeClass="h-6 w-6"
+                ringClass="ring-1 ring-primary/30"
+                className="shrink-0"
+              />
+              <div className="min-w-0 flex-1 text-left">
+                <p
+                  className={`truncate text-xs font-medium ${getPriorityColor(
+                    message.priority
+                  )}`}
+                >
+                  {message.user.name}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {message.message}
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </button>
 
       <span className="shrink-0 rounded-full bg-muted/60 px-1.5 py-0.5 text-[10px] tabular-nums text-muted-foreground">
         {messageTimer}s
       </span>
-    </button>
+    </div>
   );
 }

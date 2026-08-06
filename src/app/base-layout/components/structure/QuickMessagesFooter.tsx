@@ -1,10 +1,11 @@
 "use client";
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { Megaphone } from "lucide-react";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { AnimatePresence, motion } from "framer-motion";
 import { QuickMessagesHistoryModal } from "./QuickMessagesHistoryModal";
 import { QuickMessageModal } from "./QuickMessageModal";
+import { CreateGlobalMessageModal } from "./CreateGlobalMessageModal";
 import {
   calculateAnimationDuration,
   getPriorityClass,
@@ -12,10 +13,13 @@ import {
   needsAnimation,
 } from "../../utils/quickMessagesUtils";
 import { useQuickMessagesUI } from "../../hooks/useQuickMessagesUI";
-import { quickMessages } from "../../mocks/mockQuickMessages";
 import { useBaseLayoutServerContext } from "../../context/BaseLayoutServerContext";
 import { MobileQuickMessageTicker } from "./MobileQuickMessageTicker";
 import { useIsLgDesktop } from "@/hooks/use-lg-desktop";
+import { startConversation } from "@/services/directMessages";
+import { useConversationsWidget } from "@/context/ConversationsWidgetContext";
+import { CustomToast } from "@/components/ui/customSonner";
+import { useAuthContext } from "@/context/AuthContext";
 
 const footerPositionClass =
   "fixed bottom-[var(--layout-bottom-nav-height)] left-0 right-0 z-40 border-t border-border/50 bg-background/95 backdrop-blur-xl lg:bottom-0 lg:left-20";
@@ -28,6 +32,11 @@ function QuickMessagesModals({
   selectedMessage,
   setSelectedMessage,
   historyMessages,
+  historyLoading,
+  composeOpen,
+  setComposeOpen,
+  onCreated,
+  onReply,
 }: {
   historyOpen: boolean;
   setHistoryOpen: (v: boolean) => void;
@@ -36,6 +45,11 @@ function QuickMessagesModals({
   selectedMessage: ReturnType<typeof useQuickMessagesUI>["selectedMessage"];
   setSelectedMessage: ReturnType<typeof useQuickMessagesUI>["setSelectedMessage"];
   historyMessages: ReturnType<typeof useQuickMessagesUI>["historyMessages"];
+  historyLoading: boolean;
+  composeOpen: boolean;
+  setComposeOpen: (v: boolean) => void;
+  onCreated: ReturnType<typeof useQuickMessagesUI>["handleCreated"];
+  onReply: () => void;
 }) {
   const normalizedMessage = selectedMessage
     ? {
@@ -59,12 +73,23 @@ function QuickMessagesModals({
           setSelectedMessage(message);
           setMessageModalOpen(true);
         }}
+        onCreate={() => {
+          setHistoryOpen(false);
+          setComposeOpen(true);
+        }}
         historyMessages={historyMessages}
+        loading={historyLoading}
       />
       <QuickMessageModal
         open={messageModalOpen}
         onOpenChange={setMessageModalOpen}
         message={normalizedMessage}
+        onReply={onReply}
+      />
+      <CreateGlobalMessageModal
+        open={composeOpen}
+        onOpenChange={setComposeOpen}
+        onCreated={onCreated}
       />
     </>
   );
@@ -72,6 +97,9 @@ function QuickMessagesModals({
 
 export const QuickMessagesFooter = () => {
   const isLgDesktop = useIsLgDesktop();
+  const { user } = useAuthContext();
+  const { openWithConversation } = useConversationsWidget();
+  const [replying, setReplying] = useState(false);
   const {
     activeMessages,
     fadingOutMessages,
@@ -85,7 +113,11 @@ export const QuickMessagesFooter = () => {
     messageTimers,
     setSelectedMessage,
     historyMessages,
-  } = useQuickMessagesUI(quickMessages, isLgDesktop ? 3 : 1);
+    historyLoading,
+    composeOpen,
+    setComposeOpen,
+    handleCreated,
+  } = useQuickMessagesUI(isLgDesktop ? 3 : 1);
   const { BaseLayout } = useBaseLayoutServerContext();
   const components = BaseLayout.ServerQuickMessagesFooter.components;
   const footerShellRef = useRef<HTMLDivElement | null>(null);
@@ -97,6 +129,41 @@ export const QuickMessagesFooter = () => {
   const mobileFading = mobileMessage
     ? fadingOutMessages.has(mobileMessage.id)
     : false;
+
+  const handleReply = async () => {
+    if (!selectedMessage?.user.id || replying) return;
+    if (user?.user_id && String(user.user_id) === String(selectedMessage.user.id)) {
+      CustomToast.info("Essa mensagem é sua.");
+      return;
+    }
+    setReplying(true);
+    try {
+      const conv = await startConversation(String(selectedMessage.user.id));
+      if (!conv) {
+        CustomToast.error("Não foi possível abrir a conversa.");
+        return;
+      }
+      const quote = selectedMessage.fullContent || selectedMessage.message;
+      const author =
+        selectedMessage.user.username || selectedMessage.user.name;
+      const avatar =
+        typeof selectedMessage.user.avatar === "string"
+          ? selectedMessage.user.avatar
+          : selectedMessage.user.avatar.src;
+      openWithConversation(conv.id, {
+        megaphoneReply: {
+          authorUsername: author,
+          authorName: selectedMessage.user.name,
+          quote,
+          authorAvatar: avatar,
+        },
+      });
+      setMessageModalOpen(false);
+      setHistoryOpen(false);
+    } finally {
+      setReplying(false);
+    }
+  };
 
   useLayoutEffect(() => {
     const el = footerShellRef.current;
@@ -114,9 +181,28 @@ export const QuickMessagesFooter = () => {
     ro.observe(el);
     return () => {
       ro.disconnect();
-      document.documentElement.style.removeProperty("--layout-quick-messages-height");
+      document.documentElement.style.removeProperty(
+        "--layout-quick-messages-height"
+      );
     };
   }, [activeMessages.length]);
+
+  const modals = (
+    <QuickMessagesModals
+      historyOpen={historyOpen}
+      setHistoryOpen={setHistoryOpen}
+      messageModalOpen={messageModalOpen}
+      setMessageModalOpen={setMessageModalOpen}
+      selectedMessage={selectedMessage}
+      setSelectedMessage={setSelectedMessage}
+      historyMessages={historyMessages}
+      historyLoading={historyLoading}
+      composeOpen={composeOpen}
+      setComposeOpen={setComposeOpen}
+      onCreated={handleCreated}
+      onReply={handleReply}
+    />
+  );
 
   if (activeMessages.length === 0) {
     return (
@@ -128,39 +214,37 @@ export const QuickMessagesFooter = () => {
         transition={{ duration: 0.3 }}
         className={footerPositionClass}
       >
-        {/* Mobile — faixa compacta */}
-        <button
-          type="button"
-          onClick={() => setHistoryOpen(true)}
-          className="flex w-full items-center gap-2 px-3 py-2.5 lg:hidden"
-        >
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-secondary">
-            <Megaphone className="h-3.5 w-3.5 text-white" />
-          </div>
-          <span className="truncate text-xs text-muted-foreground">
-            Alto-falante · sem mensagens ativas
-          </span>
-        </button>
+        <div className="flex w-full items-center gap-2 px-3 py-2.5 lg:hidden">
+          <button
+            type="button"
+            onClick={() => setHistoryOpen(true)}
+            className="relative flex min-w-0 flex-1 items-center gap-2"
+          >
+            <div className="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-secondary">
+              <Megaphone className="h-3.5 w-3.5 text-white" />
+            </div>
+            <span className="relative z-10 shrink-0 text-xs font-bold">
+              Alto-falante
+            </span>
+            <span className="pointer-events-none absolute inset-x-0 text-center text-xs text-muted-foreground">
+              Não há mensagens no momento
+            </span>
+          </button>
+        </div>
 
-        {/* Desktop */}
-        <div
-          className="hidden cursor-pointer items-center p-4 lg:flex"
-          onClick={() => setHistoryOpen(true)}
-        >
-          <div className="mx-auto flex w-full max-w-7xl items-center">
-            {components.NoMessagesQuickMessages}
+        <div className="hidden items-center p-4 lg:flex">
+          <div className="relative mx-auto flex w-full max-w-7xl items-center">
+            <button
+              type="button"
+              className="relative flex w-full cursor-pointer items-center"
+              onClick={() => setHistoryOpen(true)}
+            >
+              {components.NoMessagesQuickMessages}
+            </button>
           </div>
         </div>
 
-        <QuickMessagesModals
-          historyOpen={historyOpen}
-          setHistoryOpen={setHistoryOpen}
-          messageModalOpen={messageModalOpen}
-          setMessageModalOpen={setMessageModalOpen}
-          selectedMessage={selectedMessage}
-          setSelectedMessage={setSelectedMessage}
-          historyMessages={historyMessages}
-        />
+        {modals}
       </motion.div>
     );
   }
@@ -174,23 +258,25 @@ export const QuickMessagesFooter = () => {
       transition={{ duration: 0.3 }}
       className={footerPositionClass}
     >
-      {/* Mobile — uma mensagem por vez, timer completo */}
       <MobileQuickMessageTicker
         message={mobileMessage}
         messageTimer={mobileTimer}
         isFadingOut={mobileFading}
         onOpenHistory={() => setHistoryOpen(true)}
+        onOpenMessage={() => {
+          if (mobileMessage) handleMessageClick(mobileMessage);
+        }}
       />
 
-      {/* Desktop — layout original */}
       <div className="hidden lg:block">
         <div className="mx-auto flex max-w-7xl items-center justify-center p-4">
-          <div
-            className="flex cursor-pointer items-center space-x-2"
+          <button
+            type="button"
+            className="flex cursor-pointer items-center gap-2"
             onClick={() => setHistoryOpen(true)}
           >
             {components.QuickMessagesFooterTitle}
-          </div>
+          </button>
 
           <div className="grid w-full grid-cols-1 gap-5 overflow-hidden pl-4 pr-4 md:grid-cols-3">
             <AnimatePresence mode="popLayout">
@@ -286,15 +372,7 @@ export const QuickMessagesFooter = () => {
         </div>
       </div>
 
-      <QuickMessagesModals
-        historyOpen={historyOpen}
-        setHistoryOpen={setHistoryOpen}
-        messageModalOpen={messageModalOpen}
-        setMessageModalOpen={setMessageModalOpen}
-        selectedMessage={selectedMessage}
-        setSelectedMessage={setSelectedMessage}
-        historyMessages={historyMessages}
-      />
+      {modals}
     </motion.div>
   );
 };

@@ -1,52 +1,127 @@
-// hooks/useQuickMessagesUI.ts - VERSÃO OTIMIZADA
 "use client";
+
 import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import { QuickMessage } from "../types/structure/QuickMessage";
-import { useQuickMessages } from "./useQuickMessages";
 import {
   needsAnimation,
   calculateAnimationDuration,
 } from "../utils/quickMessagesUtils";
+import { useLiveGlobalMessages } from "./useLiveGlobalMessages";
+import {
+  getGlobalMessagesHistory,
+  type GlobalMessagesSnapshot,
+} from "@/services/globalMessages";
+import { mapGlobalMessageToQuickMessage } from "../utils/mapGlobalMessage";
 
 interface UIState {
   historyOpen: boolean;
   messageModalOpen: boolean;
+  composeOpen: boolean;
   selectedMessage: QuickMessage | null;
 }
 
 const HISTORY_LIMIT = 50;
 
-export const useQuickMessagesUI = (
-  quickMessages: QuickMessage[],
-  maxConcurrent = 3
-) => {
-  const { activeMessages, messageTimers, allMessagesShown, fadingOutMessages } =
-    useQuickMessages(quickMessages, { maxConcurrent });
+function formatHistoryTimestamp(iso: string): string {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return iso;
+  }
+}
 
-  // ✅ Estado consolidado da UI
+export const useQuickMessagesUI = (maxConcurrent = 3) => {
+  const {
+    activeMessages,
+    messageTimers,
+    fadingOutMessages,
+    historySeed,
+    applyIncoming,
+  } = useLiveGlobalMessages(maxConcurrent);
+
   const [uiState, setUIState] = useState<UIState>({
     historyOpen: false,
     messageModalOpen: false,
+    composeOpen: false,
     selectedMessage: null,
   });
 
-  // Histórico das ultimas mensagens mostradas
   const [historyMessages, setHistoryMessages] = useState<QuickMessage[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
-  // Referências para os elementos das mensagens
   const messageRefs = useRef<{ [key: string]: HTMLParagraphElement | null }>(
     {}
   );
 
-  // Atualiza histórico sempre que uma mensagem é exibida
-  const handleMessageShown = useCallback((message: QuickMessage) => {
+  const mergeHistory = useCallback((incoming: QuickMessage[]) => {
     setHistoryMessages((prev) => {
-      if (prev.find((m) => m.id === message.id)) return prev;
-      return [message, ...prev].slice(0, HISTORY_LIMIT);
+      const map = new Map<string, QuickMessage>();
+      [...incoming, ...prev].forEach((m) => {
+        map.set(m.id, {
+          ...m,
+          timestamp: formatHistoryTimestamp(m.timestamp),
+        });
+      });
+      return Array.from(map.values()).slice(0, HISTORY_LIMIT);
     });
   }, []);
 
-  // ✅ Callbacks memoizados para evitar re-renders
+  useEffect(() => {
+    if (historySeed.length) mergeHistory(historySeed);
+  }, [historySeed, mergeHistory]);
+
+  useEffect(() => {
+    const activeIds = new Set(activeMessages.map((msg) => msg.id));
+
+    setHistoryMessages((prev) => {
+      const map = new Map<string, QuickMessage>();
+      prev.forEach((m) => map.set(m.id, m));
+
+      activeMessages.forEach((msg) => {
+        map.set(msg.id, {
+          ...msg,
+          status: "active",
+          timeRemaining: `${messageTimers[msg.id] ?? 0}s`,
+          timestamp: formatHistoryTimestamp(msg.timestamp),
+        });
+      });
+
+      for (const [id, message] of map) {
+        if (message.status === "active" && !activeIds.has(id)) {
+          map.set(id, {
+            ...message,
+            status: "expired",
+            timeRemaining: "0s",
+          });
+        }
+      }
+
+      return Array.from(map.values()).slice(0, HISTORY_LIMIT);
+    });
+  }, [activeMessages, messageTimers]);
+
+  const loadServerHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    try {
+      const page = await getGlobalMessagesHistory();
+      mergeHistory(page.results.map(mapGlobalMessageToQuickMessage));
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [mergeHistory]);
+
+  useEffect(() => {
+    if (uiState.historyOpen) {
+      void loadServerHistory();
+    }
+  }, [uiState.historyOpen, loadServerHistory]);
+
   const setHistoryOpen = useCallback((open: boolean) => {
     setUIState((prev) => ({ ...prev, historyOpen: open }));
   }, []);
@@ -55,24 +130,25 @@ export const useQuickMessagesUI = (
     setUIState((prev) => ({ ...prev, messageModalOpen: open }));
   }, []);
 
+  const setComposeOpen = useCallback((open: boolean) => {
+    setUIState((prev) => ({ ...prev, composeOpen: open }));
+  }, []);
+
   const setSelectedMessage = useCallback((message: QuickMessage | null) => {
     setUIState((prev) => ({ ...prev, selectedMessage: message }));
   }, []);
 
-  // ✅ Handler otimizado para clique em mensagem
-  const handleMessageClick = useCallback(
-    (message: QuickMessage) => {
-      setUIState((prev) => ({
-        ...prev,
-        selectedMessage: message,
-        messageModalOpen: true,
-      }));
-      handleMessageShown(message);
-    },
-    [handleMessageShown]
-  );
+  const handleMessageClick = useCallback((message: QuickMessage) => {
+    setUIState((prev) => ({
+      ...prev,
+      selectedMessage: {
+        ...message,
+        timeRemaining: `${message.timeRemaining}`,
+      },
+      messageModalOpen: true,
+    }));
+  }, []);
 
-  // ✅ Handler para clique no histórico (mantém o histórico aberto)
   const handleHistoryMessageClick = useCallback((message: QuickMessage) => {
     setUIState((prev) => ({
       ...prev,
@@ -81,18 +157,24 @@ export const useQuickMessagesUI = (
     }));
   }, []);
 
-  // Atualiza histórico quando mensagens ativas mudam
-  useEffect(() => {
-    activeMessages.forEach((msg) => {
-      handleMessageShown(msg);
-    });
-  }, [activeMessages, handleMessageShown]);
+  const handleCreated = useCallback(
+    (snapshot: GlobalMessagesSnapshot) => {
+      applyIncoming(snapshot);
+    },
+    [applyIncoming]
+  );
 
-  // ✅ Dados de animação memoizados para melhor performance
+  const selectedWithLiveTimer = useMemo(() => {
+    const selected = uiState.selectedMessage;
+    if (!selected) return null;
+    const timer = messageTimers[selected.id];
+    if (timer == null) return selected;
+    return { ...selected, timeRemaining: `${timer}s` };
+  }, [uiState.selectedMessage, messageTimers]);
+
   const animationData = useMemo(() => {
     const data: Record<string, { shouldAnimate: boolean; duration: number }> =
       {};
-
     activeMessages.forEach((message) => {
       const el = messageRefs.current[message.id];
       data[message.id] = {
@@ -100,11 +182,9 @@ export const useQuickMessagesUI = (
         duration: calculateAnimationDuration(el),
       };
     });
-
     return data;
-  }, [activeMessages]); // Recalcular apenas quando mensagens mudarem
+  }, [activeMessages]);
 
-  // ✅ Função para obter dados de animação sem re-calcular
   const getAnimationData = useCallback(
     (messageId: string) => {
       return animationData[messageId] || { shouldAnimate: false, duration: 0 };
@@ -112,48 +192,44 @@ export const useQuickMessagesUI = (
     [animationData]
   );
 
-  // ✅ Retorno memoizado
   return useMemo(
     () => ({
-      // Estado das mensagens
       activeMessages,
       messageTimers,
-      allMessagesShown,
       fadingOutMessages,
-
-      // Estado da UI
       historyOpen: uiState.historyOpen,
       messageModalOpen: uiState.messageModalOpen,
-      selectedMessage: uiState.selectedMessage,
-
-      // Refs e funções
+      composeOpen: uiState.composeOpen,
+      selectedMessage: selectedWithLiveTimer,
       messageRefs,
-
-      // Histórico dinâmico
       historyMessages,
-
-      // Handlers otimizados
+      historyLoading,
       setHistoryOpen,
       setMessageModalOpen,
+      setComposeOpen,
       setSelectedMessage,
       handleMessageClick,
       handleHistoryMessageClick,
-
-      // Dados de animação otimizados
+      handleCreated,
       getAnimationData,
     }),
     [
       activeMessages,
       messageTimers,
-      allMessagesShown,
       fadingOutMessages,
-      uiState,
-      setHistoryOpen,
+      uiState.historyOpen,
+      uiState.messageModalOpen,
+      uiState.composeOpen,
+      selectedWithLiveTimer,
       historyMessages,
+      historyLoading,
+      setHistoryOpen,
       setMessageModalOpen,
+      setComposeOpen,
       setSelectedMessage,
       handleMessageClick,
       handleHistoryMessageClick,
+      handleCreated,
       getAnimationData,
     ]
   );
