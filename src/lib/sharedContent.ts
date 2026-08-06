@@ -6,8 +6,10 @@ export interface SharedCutContent {
   username: string;
   name: string;
   caption: string;
-  thumbnail: string;
+  /** public_id do vídeo no Cloudinary — a thumbnail é derivada dele (frame automático). */
+  videoFile: string;
   duration: number | null;
+  profilePhoto: string | null;
 }
 
 export function encodeSharedCut(cut: {
@@ -15,8 +17,9 @@ export function encodeSharedCut(cut: {
   username: string;
   name: string;
   caption: string;
-  thumbnail: string;
+  video_file: string;
   duration: number | null;
+  profile_photo: string | null;
 }): string {
   const payload: SharedCutContent = {
     type: "cut",
@@ -24,8 +27,9 @@ export function encodeSharedCut(cut: {
     username: cut.username,
     name: cut.name,
     caption: cut.caption,
-    thumbnail: cut.thumbnail,
+    videoFile: cut.video_file,
     duration: cut.duration ?? null,
+    profilePhoto: cut.profile_photo ?? null,
   };
   return SHARE_MARKER + JSON.stringify(payload);
 }

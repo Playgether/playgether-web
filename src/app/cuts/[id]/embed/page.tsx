@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { getCutById } from "@/actions/getCuts";
-import { getCloudinaryVideoUrl } from "@/app/utils/getCloudinaryVideo";
+import { getCloudinaryVideoUrl, getCloudinaryVideoThumbnail } from "@/app/utils/getCloudinaryVideo";
 import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
 
 export default async function CutEmbedPage({
@@ -21,6 +21,7 @@ export default async function CutEmbedPage({
       <div className="relative flex-1">
         <video
           src={getCloudinaryVideoUrl(cut.video_file)}
+          poster={getCloudinaryVideoThumbnail(cut.video_file)}
           className="h-full w-full object-contain"
           controls
           loop

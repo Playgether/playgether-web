@@ -15,7 +15,8 @@ import {
 } from "@/app/utils/roomAmbientMedia";
 import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useRoomPermissions } from "@/context/RoomPermissionsContext";
 import { ChatRoom } from "@/types/ChatRoom";
 import { CldUploadWidget } from "next-cloudinary";
@@ -499,6 +500,9 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
         }}
       >
         <DialogContent className="max-w-3xl p-2">
+          <VisuallyHidden>
+            <DialogTitle>{expandedImage?.label ?? "Mídia da sala"}</DialogTitle>
+          </VisuallyHidden>
           {expandedImage ? (
             <div className="flex min-h-[200px] flex-col items-center justify-center gap-2">
               {expandedImage.isVideo ? (

@@ -5,7 +5,7 @@ import { X, Send, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { Cut } from "@/types/Cut";
 import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
-import { Drawer, DrawerContent } from "@/components/ui/drawer";
+import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 
 interface CutComment {
   id: number;
@@ -61,9 +61,15 @@ export function CutCommentsPanel({ cut, isAuthenticated, onClose, variant }: Cut
   const body = (
     <>
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-        <span className="text-sm font-semibold text-white">
-          Comentários · {cut.comments_count}
-        </span>
+        {variant === "sheet" ? (
+          <DrawerTitle className="text-sm font-semibold text-white">
+            Comentários · {cut.comments_count}
+          </DrawerTitle>
+        ) : (
+          <span className="text-sm font-semibold text-white">
+            Comentários · {cut.comments_count}
+          </span>
+        )}
         <button type="button" onClick={onClose} aria-label="Fechar">
           <X className="h-5 w-5 text-white/70 hover:text-white" />
         </button>

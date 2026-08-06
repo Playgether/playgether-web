@@ -1,6 +1,7 @@
 import { Play } from "lucide-react";
 import Image from "next/image";
 import type { SharedCutContent } from "@/lib/sharedContent";
+import { getCloudinaryVideoThumbnail } from "@/app/utils/getCloudinaryVideo";
 import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
 
 function formatDuration(seconds: number | null): string | null {
@@ -17,7 +18,8 @@ export function SharedCutCard({
   content: SharedCutContent;
   onClick: () => void;
 }) {
-  const thumbSrc = content.thumbnail ? getCloudinaryUrl(content.thumbnail) : null;
+  const thumbSrc = content.videoFile ? getCloudinaryVideoThumbnail(content.videoFile) : null;
+  const avatarSrc = content.profilePhoto ? getCloudinaryUrl(content.profilePhoto) : null;
   const duration = formatDuration(content.duration);
 
   return (
@@ -43,11 +45,22 @@ export function SharedCutCard({
           </span>
         )}
       </div>
-      <div className="p-2">
-        <p className="truncate text-xs font-semibold text-foreground">@{content.username}</p>
-        {content.caption && (
-          <p className="line-clamp-1 text-xs text-muted-foreground">{content.caption}</p>
-        )}
+      <div className="flex items-start gap-1.5 p-2">
+        <span className="mt-0.5 flex h-4 w-4 shrink-0 overflow-hidden rounded-full bg-white/10">
+          {avatarSrc ? (
+            <Image src={avatarSrc} alt="" width={16} height={16} className="h-full w-full object-cover" />
+          ) : (
+            <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-purple-600 to-blue-500 text-[8px] font-bold text-white">
+              {content.username[0]?.toUpperCase()}
+            </span>
+          )}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xs font-semibold text-foreground">@{content.username}</p>
+          {content.caption && (
+            <p className="line-clamp-1 text-xs text-muted-foreground">{content.caption}</p>
+          )}
+        </div>
       </div>
     </button>
   );

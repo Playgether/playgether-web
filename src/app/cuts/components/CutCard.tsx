@@ -16,7 +16,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Cut } from "@/types/Cut";
-import { getCloudinaryVideoUrl } from "@/app/utils/getCloudinaryVideo";
+import { getCloudinaryVideoUrl, getCloudinaryVideoThumbnail } from "@/app/utils/getCloudinaryVideo";
 import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
 import { CutOptionsMenu } from "./CutOptionsMenu";
 import { CutShareDialog } from "./CutShareDialog";
@@ -33,6 +33,15 @@ function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+const VOLUME_STORAGE_KEY = "pgther:cut-volume";
+
+function getStoredVolume(): number {
+  if (typeof window === "undefined") return 1;
+  const raw = window.localStorage.getItem(VOLUME_STORAGE_KEY);
+  const parsed = raw !== null ? Number(raw) : NaN;
+  return Number.isFinite(parsed) && parsed >= 0 && parsed <= 1 ? parsed : 1;
 }
 
 interface CutCardProps {
@@ -175,6 +184,14 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
 
   // ── Volume ──────────────────────────────────────────────────────────────
   useEffect(() => {
+    setVolume(getStoredVolume());
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(VOLUME_STORAGE_KEY, String(volume));
+  }, [volume]);
+
+  useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
     video.volume = volume;
@@ -230,7 +247,7 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
   }, []);
 
   const avatarSrc = cut.profile_photo ? getCloudinaryUrl(cut.profile_photo) : null;
-  const thumbSrc = cut.thumbnail ? getCloudinaryUrl(cut.thumbnail) : null;
+  const thumbSrc = cut.video_file ? getCloudinaryVideoThumbnail(cut.video_file) : null;
   const VolumeIcon = muted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
 
   return (
@@ -286,19 +303,23 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
           </AnimatePresence>
 
           {/* Gradient bottom overlay */}
-          <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-black/80 to-transparent" />
+          <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black/85 to-transparent" />
 
-          {/* Volume — pílula que expande no hover, colada no vídeo */}
+          {/* Volume — controle do player, ancorado no canto superior direito do vídeo */}
           <div
-            className="absolute right-3 top-3 z-20 flex items-center gap-1.5 rounded-full bg-black/50 py-1.5 pl-1.5 pr-1.5 backdrop-blur-sm"
+            className={cn(
+              "absolute right-4 top-4 z-20 flex items-center gap-1.5 rounded-full border border-white/10 bg-black/55 py-1.5 pl-1.5 pr-1.5 shadow-lg backdrop-blur-md transition-[padding]",
+              showVolumeSlider && "pr-3",
+            )}
             onMouseEnter={() => setShowVolumeSlider(true)}
             onMouseLeave={() => setShowVolumeSlider(false)}
+            onClick={() => setShowVolumeSlider((v) => !v)}
           >
             <button
               type="button"
               aria-label={muted ? "Ativar som" : "Silenciar"}
-              onClick={toggleMute}
-              className="flex h-5 w-5 shrink-0 items-center justify-center text-white"
+              onClick={(e) => { e.stopPropagation(); toggleMute(); }}
+              className="flex h-6 w-6 shrink-0 items-center justify-center text-white"
             >
               <VolumeIcon className="h-4 w-4" />
             </button>
@@ -309,77 +330,81 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
               step={0.05}
               value={muted ? 0 : volume}
               onChange={handleVolumeChange}
+              onClick={(e) => e.stopPropagation()}
               aria-label="Volume"
               className={cn(
-                "h-1 cursor-pointer appearance-none rounded-full bg-white/30 accent-white transition-all duration-200",
+                "h-1 cursor-pointer appearance-none rounded-full bg-white/30 accent-white transition-all duration-300 ease-out",
                 showVolumeSlider ? "w-16 opacity-100" : "w-0 opacity-0",
               )}
             />
           </div>
 
-          {/* Barra de progresso — seek por clique/arraste, hover mostra tempo (desktop) */}
-          <div
-            ref={barRef}
-            onPointerDown={handleBarPointerDown}
-            onPointerMove={handleBarPointerMove}
-            onPointerUp={handleBarPointerUp}
-            onPointerLeave={() => setHoverRatio(null)}
-            className="group absolute bottom-[3.25rem] left-3 right-3 z-20 flex h-4 cursor-pointer items-center lg:right-4"
-          >
-            <div className="relative h-1 w-full rounded-full bg-white/25">
-              <div
-                className="absolute inset-y-0 left-0 rounded-full bg-white"
-                style={{ width: `${progressPct}%` }}
-              />
-              {hoverRatio !== null && (
-                <div
-                  className="absolute -top-7 -translate-x-1/2 rounded bg-black/80 px-1.5 py-0.5 text-[10px] text-white"
-                  style={{ left: `${hoverRatio * 100}%` }}
-                >
-                  {formatTime(hoverRatio * duration)}
-                </div>
-              )}
-              <div
-                className="absolute top-1/2 h-2.5 w-2.5 -translate-y-1/2 -translate-x-1/2 rounded-full bg-white opacity-0 transition-opacity group-hover:opacity-100"
-                style={{ left: `${progressPct}%` }}
-              />
-            </div>
-          </div>
-
           {/* Actions — overlay no mobile/tablet, ficam na coluna ao lado no desktop */}
-          <div className="absolute bottom-4 right-3 flex flex-col items-center gap-5 lg:hidden">
+          <div className="absolute bottom-6 right-3 z-20 flex flex-col items-center gap-5 lg:hidden">
             <ActionBtn onClick={handleLikeClick} label={liked ? "Descurtir" : "Curtir"} count={likesCount} icon={<Heart className={cn("h-7 w-7 transition-transform active:scale-125", liked ? "fill-red-500 text-red-500" : "text-white")} />} />
             <ActionBtn onClick={() => onOpenComments(cut)} label="Comentários" count={cut.comments_count} icon={<MessageCircle className={cn("h-7 w-7", commentsActive ? "fill-white/20 text-primary" : "text-white")} />} />
             <ActionBtn onClick={() => setShareOpen(true)} label="Compartilhar" icon={<Send className="h-7 w-7 text-white" />} />
             <BookmarkButton
               item={cut}
               contentType="cut"
-              size="md"
-              triggerClassName="h-7 w-7 p-0 text-white hover:text-white hover:bg-transparent active:scale-125 transition-transform"
+              size="lg"
+              triggerClassName="h-auto w-auto p-0 text-white hover:text-white hover:bg-transparent active:scale-125 transition-transform"
             />
             <CutOptionsMenu cut={cut} onShare={() => setShareOpen(true)} />
           </div>
 
-          {/* User info + caption — bottom left */}
-          <div className="absolute bottom-4 left-3 right-16 lg:right-4">
-            <Link
-              href={`/profile/${cut.username}`}
-              className="mb-1.5 flex items-center gap-2"
+          {/* Rodapé: barra de progresso SEMPRE acima do bloco de info — nunca sobrepõe avatar/nome/descrição */}
+          <div className="absolute inset-x-3 bottom-3 z-20 flex flex-col gap-2.5 lg:right-4">
+            {/* Barra de progresso — seek por clique/arraste, hover mostra tempo (desktop) */}
+            <div
+              ref={barRef}
+              onPointerDown={handleBarPointerDown}
+              onPointerMove={handleBarPointerMove}
+              onPointerUp={handleBarPointerUp}
+              onPointerLeave={() => setHoverRatio(null)}
+              className="group relative flex h-4 w-full shrink-0 cursor-pointer items-center pr-14 lg:pr-0"
             >
-              <span className="flex h-8 w-8 shrink-0 overflow-hidden rounded-full ring-2 ring-white/70">
-                {avatarSrc ? (
-                  <Image src={avatarSrc} alt={cut.username} width={32} height={32} className="h-full w-full object-cover" />
-                ) : (
-                  <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-purple-600 to-blue-500 text-sm font-bold text-white">
-                    {cut.username[0].toUpperCase()}
-                  </span>
+              <div className="relative h-1 w-full rounded-full bg-white/25">
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full bg-white"
+                  style={{ width: `${progressPct}%` }}
+                />
+                {hoverRatio !== null && (
+                  <div
+                    className="absolute -top-7 -translate-x-1/2 rounded bg-black/80 px-1.5 py-0.5 text-[10px] text-white"
+                    style={{ left: `${hoverRatio * 100}%` }}
+                  >
+                    {formatTime(hoverRatio * duration)}
+                  </div>
                 )}
-              </span>
-              <span className="text-sm font-bold text-white drop-shadow">@{cut.username}</span>
-            </Link>
-            {cut.caption && (
-              <p className="line-clamp-2 text-sm text-white/90 drop-shadow">{cut.caption}</p>
-            )}
+                <div
+                  className="absolute top-1/2 h-2.5 w-2.5 -translate-y-1/2 -translate-x-1/2 rounded-full bg-white opacity-0 transition-opacity group-hover:opacity-100"
+                  style={{ left: `${progressPct}%` }}
+                />
+              </div>
+            </div>
+
+            {/* User info + caption */}
+            <div className="pr-14 lg:pr-0">
+              <Link
+                href={`/profile/${cut.username}`}
+                className="mb-1.5 flex items-center gap-2"
+              >
+                <span className="flex h-8 w-8 shrink-0 overflow-hidden rounded-full ring-2 ring-white/70">
+                  {avatarSrc ? (
+                    <Image src={avatarSrc} alt={cut.username} width={32} height={32} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-purple-600 to-blue-500 text-sm font-bold text-white">
+                      {cut.username[0].toUpperCase()}
+                    </span>
+                  )}
+                </span>
+                <span className="text-sm font-bold text-white drop-shadow">@{cut.username}</span>
+              </Link>
+              {cut.caption && (
+                <p className="line-clamp-2 text-sm text-white/90 drop-shadow">{cut.caption}</p>
+              )}
+            </div>
           </div>
         </div>
 
@@ -391,8 +416,8 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
           <BookmarkButton
             item={cut}
             contentType="cut"
-            size="md"
-            triggerClassName="h-7 w-7 p-0 text-white hover:text-white hover:bg-transparent active:scale-125 transition-transform"
+            size="lg"
+            triggerClassName="h-auto w-auto p-0 text-white hover:text-white hover:bg-transparent active:scale-125 transition-transform"
           />
           <CutOptionsMenu cut={cut} onShare={() => setShareOpen(true)} />
         </div>

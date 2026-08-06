@@ -20,7 +20,8 @@ export type SavableContentType = "post" | "cut";
 interface BookmarkButtonProps {
   item: { id: number; user_already_saved?: boolean };
   contentType?: SavableContentType;
-  size?: "sm" | "md";
+  /** "lg" = h-7 w-7, para conviver lado a lado com ícones de ação (curtir, comentar...). */
+  size?: "sm" | "md" | "lg";
   onSavedChange?: (saved: boolean, saveId: number | null) => void;
   /** Sobrescreve a cor/estilo do gatilho (ex: ícone branco sobre vídeo escuro). */
   triggerClassName?: string;
@@ -170,7 +171,7 @@ export function BookmarkButton({ item, contentType = "post", size = "sm", onSave
     }
   }, [newName, isCreating, item.id, contentType, isSaved, onSavedChange]);
 
-  const iconSize = size === "sm" ? "h-4 w-4" : "h-5 w-5";
+  const iconSize = size === "sm" ? "h-4 w-4" : size === "md" ? "h-5 w-5" : "h-7 w-7";
   const btnClass = cn(
     "p-1.5 text-muted-foreground hover:text-primary sm:p-2",
     isSaved && "text-primary",
