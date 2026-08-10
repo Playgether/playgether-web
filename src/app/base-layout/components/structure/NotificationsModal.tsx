@@ -9,10 +9,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { X, CheckCheck, Trash2, Bell } from "lucide-react";
+import { X, CheckCheck, Trash2, Bell, Swords } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { notificationConfig } from "../../config/notifications/NotificationConfig";
 import { useBaseLayoutServerContext } from "../../context/BaseLayoutServerContext";
-import { useNotificationContext } from "@/context/NotificationsContext";
+import {
+  useNotificationContext,
+  type NotificationItem,
+} from "@/context/NotificationsContext";
 import { useNotifications } from "@/app/feed/hooks/useNotificationsWebSocket";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 import { formatDistanceToNow } from "date-fns";
@@ -34,10 +38,18 @@ function timeAgo(timestamp: string) {
   }
 }
 
+function isDuoNotification(notification: NotificationItem) {
+  return (
+    notification.notification_type === "duo" ||
+    notification.actors[0]?.username === "duo"
+  );
+}
+
 export const NotificationsModal = ({
   open,
   onOpenChange,
 }: NotificationsModalProps) => {
+  const router = useRouter();
   const { BaseLayout } = useBaseLayoutServerContext();
   const components = BaseLayout.ServerNotificationsModal.components;
   const icons = BaseLayout.ServerNotificationsModal.icons;
@@ -57,6 +69,14 @@ export const NotificationsModal = ({
     onNewNotification: () => void refetch(),
     onNotificationRemoved: () => void refetch(),
   });
+
+  const handleNotificationClick = (notification: NotificationItem) => {
+    if (!notification.is_read) void markAsRead(notification.id);
+    const href = notification.action_url;
+    if (!href) return;
+    onOpenChange(false);
+    router.push(href);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -108,24 +128,28 @@ export const NotificationsModal = ({
               <EmptyNotifications />
             ) : (
               notifications.map((notification, index) => {
-                const actor = notification.actors[0];
+                const isDuo = isDuoNotification(notification);
+                const actor = isDuo ? null : notification.actors[0];
+                const typeKey = isDuo ? "duo" : notification.notification_type;
                 const typeIcon =
-                  notificationConfig[notification.notification_type]?.icon ??
+                  notificationConfig[typeKey]?.icon ??
                   notificationConfig["default"].icon;
+                const clickable = Boolean(notification.action_url);
 
                 return (
                   <div
                     key={notification.id}
-                    role="button"
+                    role={clickable ? "link" : "button"}
                     tabIndex={0}
-                    onClick={() => {
-                      if (!notification.is_read) void markAsRead(notification.id);
-                    }}
+                    onClick={() => handleNotificationClick(notification)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && !notification.is_read)
-                        void markAsRead(notification.id);
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleNotificationClick(notification);
+                      }
                     }}
-                    className={`flex items-start gap-3 p-3 rounded-xl transition-all duration-300 cursor-pointer group animate-slide-up
+                    className={`flex items-start gap-3 p-3 rounded-xl transition-all duration-300 group animate-slide-up
+                      ${clickable ? "cursor-pointer" : "cursor-default"}
                       ${notification.is_read
                         ? "bg-muted/50 hover:bg-muted/70"
                         : "bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/30 hover:from-primary/15 hover:to-secondary/15"
@@ -134,7 +158,11 @@ export const NotificationsModal = ({
                   >
                     {/* Avatar + type icon */}
                     <div className="relative shrink-0">
-                      {actor ? (
+                      {isDuo ? (
+                        <div className="w-10 h-10 rounded-full ring-2 ring-primary/30 bg-gradient-primary flex items-center justify-center">
+                          <Swords className="w-5 h-5 text-white" />
+                        </div>
+                      ) : actor ? (
                         <Avatar className="w-10 h-10 ring-2 ring-primary/30">
                           <AvatarImage src={actor.profile_photo ?? undefined} alt={actor.name} />
                           <AvatarFallback className="bg-gradient-primary text-white text-sm">
@@ -152,11 +180,13 @@ export const NotificationsModal = ({
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-foreground leading-snug">
-                        {actor && (
+                        {isDuo ? (
+                          <span className="font-semibold text-primary">Duo </span>
+                        ) : actor ? (
                           <span className="font-semibold text-primary">
                             {actor.name}{" "}
                           </span>
-                        )}
+                        ) : null}
                         {notification.message}
                       </p>
                       <span className="text-xs text-muted-foreground mt-0.5 block">

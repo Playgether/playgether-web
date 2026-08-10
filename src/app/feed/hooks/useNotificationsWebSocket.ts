@@ -35,6 +35,7 @@ export const useNotifications = (options?: UseNotificationsOptions) => {
           timestamp: new Date(message.timestamp),
           content_type: message.content_type as number,
           notification_type: message.notification_type as string,
+          action_url: (message.action_url as string | null | undefined) ?? null,
           id: message.id as string,
         };
 

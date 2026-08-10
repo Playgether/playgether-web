@@ -1,19 +1,28 @@
 "use client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bell, X } from "lucide-react";
+import { Bell, Swords, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
+import { useRouter } from "next/navigation";
 import { useNotifications } from "../hooks/useNotificationsWebSocket";
 import { useFeedProfileCardHeight } from "../hooks/useFeedProfileCardHeight";
 import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
 import { NotificationProps } from "../types/NotificationProps";
 import { cn } from "@/lib/utils";
 
+function isDuoNotification(notification: NotificationProps) {
+  return (
+    notification.notification_type === "duo" ||
+    notification.actors[0]?.username === "duo"
+  );
+}
+
 export const NotificationsCard = ({
   notificationsList,
 }: {
   notificationsList: NotificationProps[];
 }) => {
+  const router = useRouter();
   const { notifications } = useNotifications({
     onNewNotification: (notification) => {
       console.log("Nova notificação:", notification);
@@ -66,56 +75,91 @@ export const NotificationsCard = ({
               </p>
             </div>
           ) : (
-            notifications.map((notification, index) => (
-              <div
-                key={notification.id}
-                className={cn(
-                  "p-3 rounded-xl bg-better-contrast hover:bg-muted/50 hover:shadow-improved transition-all duration-200 cursor-pointer group animate-slide-up",
-                  index === 0 && "mt-2",
-                )}
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className="flex w-full min-w-0 flex-col gap-2">
-                  {/* User Avatars */}
-                  <div className="flex w-full min-w-0 justify-between gap-2">
-                    <div className="flex shrink-0 -space-x-2">
-                      {notification.actors.map((actor, userIndex) => (
-                        <ProfileAvatar
-                          key={`${actor.username}-${userIndex}`}
-                          displayName={actor.name}
-                          username={actor.username}
-                          profilePhoto={actor.profile_photo ?? null}
-                          sizeClass="h-8 w-8"
-                          className="border border-background ring-1 ring-background"
-                          fallbackTextClassName="text-xs"
-                        />
-                      ))}
+            notifications.map((notification, index) => {
+              const isDuo = isDuoNotification(notification);
+              const clickable = Boolean(notification.action_url);
+
+              return (
+                <div
+                  key={notification.id}
+                  role={clickable ? "link" : undefined}
+                  tabIndex={clickable ? 0 : undefined}
+                  onClick={() => {
+                    if (notification.action_url) {
+                      router.push(notification.action_url);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (
+                      clickable &&
+                      (e.key === "Enter" || e.key === " ") &&
+                      notification.action_url
+                    ) {
+                      e.preventDefault();
+                      router.push(notification.action_url);
+                    }
+                  }}
+                  className={cn(
+                    "p-3 rounded-xl bg-better-contrast hover:bg-muted/50 hover:shadow-improved transition-all duration-200 group animate-slide-up",
+                    clickable ? "cursor-pointer" : "cursor-default",
+                    index === 0 && "mt-2",
+                  )}
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <div className="flex w-full min-w-0 flex-col gap-2">
+                    <div className="flex w-full min-w-0 justify-between gap-2">
+                      <div className="flex shrink-0 -space-x-2">
+                        {isDuo ? (
+                          <div className="h-8 w-8 rounded-full bg-gradient-primary flex items-center justify-center border border-background ring-1 ring-background">
+                            <Swords className="h-4 w-4 text-white" />
+                          </div>
+                        ) : (
+                          notification.actors.map((actor, userIndex) => (
+                            <ProfileAvatar
+                              key={`${actor.username}-${userIndex}`}
+                              displayName={actor.name}
+                              username={actor.username}
+                              profilePhoto={actor.profile_photo ?? null}
+                              sizeClass="h-8 w-8"
+                              className="border border-background ring-1 ring-background"
+                              fallbackTextClassName="text-xs"
+                            />
+                          ))
+                        )}
+                      </div>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+                        <DateAndHour date={notification.timestamp} />
+                      </span>
                     </div>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
-                      <DateAndHour date={notification.timestamp} />
-                    </span>
-                  </div>
-                  <div className="min-w-0 w-full">
                     <div className="min-w-0 w-full">
-                      <p className="text-sm text-foreground leading-relaxed break-words">
-                        {notification.message.includes(":")
-                          ? notification.message.split(":")[0].trim()
-                          : notification.message}
-                      </p>
-                      {notification.message.includes(":") ? (
-                        <p className="mt-1 min-w-0 truncate text-xs text-muted-foreground">
-                          {notification.message
-                            .split(":")
-                            .slice(1)
-                            .join(":")
-                            .trim()}
+                      <div className="min-w-0 w-full">
+                        <p className="text-sm text-foreground leading-relaxed break-words">
+                          {isDuo ? (
+                            <>
+                              <span className="font-semibold text-primary">Duo </span>
+                              {notification.message}
+                            </>
+                          ) : notification.message.includes(":") ? (
+                            notification.message.split(":")[0].trim()
+                          ) : (
+                            notification.message
+                          )}
                         </p>
-                      ) : null}
+                        {!isDuo && notification.message.includes(":") ? (
+                          <p className="mt-1 min-w-0 truncate text-xs text-muted-foreground">
+                            {notification.message
+                              .split(":")
+                              .slice(1)
+                              .join(":")
+                              .trim()}
+                          </p>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </>
       </CardContent>

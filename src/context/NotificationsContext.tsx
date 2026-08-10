@@ -12,6 +12,7 @@ export interface NotificationItem {
   notification_type: string;
   object_id: number;
   content_type: number;
+  action_url?: string | null;
   actors: { name: string; username: string; profile_photo: string | null }[];
 }
 

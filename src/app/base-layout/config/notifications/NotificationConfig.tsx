@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, UserPlus, Trophy, Bell } from "lucide-react";
+import { Heart, MessageCircle, UserPlus, Trophy, Bell, Swords } from "lucide-react";
 
 export interface NotificationConfig {
   icon: JSX.Element;
@@ -15,6 +15,9 @@ export const notificationConfig: Record<string, NotificationConfig> = {
   },
   achievement: {
     icon: <Trophy className="w-4 h-4 text-secondary-start" />,
+  },
+  duo: {
+    icon: <Swords className="w-4 h-4 text-primary" />,
   },
   default: {
     icon: <Bell className="w-4 h-4" />,

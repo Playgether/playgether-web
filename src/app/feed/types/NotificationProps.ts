@@ -11,6 +11,7 @@ export interface NotificationProps {
   timestamp: Date;
   content_type: number;
   notification_type: string;
+  action_url?: string | null;
   id?: string;
   read?: boolean;
 }
