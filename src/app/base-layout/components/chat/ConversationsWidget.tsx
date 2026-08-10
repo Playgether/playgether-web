@@ -72,11 +72,12 @@ export function ConversationsWidget() {
         aria-label="Abrir conversas"
       >
         <MessageSquare className="h-5 w-5 text-white sm:h-6 sm:w-6" />
-        {unreadCount > 0 && (
+        {/* Badge some enquanto o modal está aberto */}
+        {!open && unreadCount > 0 ? (
           <span className="absolute -top-1 -right-1 flex h-4 w-4 animate-glow-pulse items-center justify-center rounded-full bg-gradient-secondary text-[10px] font-bold text-white sm:h-5 sm:w-5 sm:text-xs">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
-        )}
+        ) : null}
       </button>
     </div>
   );

@@ -31,6 +31,10 @@ export interface DMConversation {
   participants: DMParticipant[] | null;
   last_message: DMMessage | null;
   unread_count: number;
+  is_muted?: boolean;
+  has_left?: boolean;
+  /** False when messaging is restricted (e.g. privacy / block). */
+  can_message?: boolean;
   updated_at: string;
 }
 
@@ -115,9 +119,21 @@ export async function deleteConversation(conversationId: string): Promise<boolea
   }
 }
 
-export async function leaveGroup(conversationId: string): Promise<boolean> {
+export async function leaveGroup(conversationId: string): Promise<DMConversation | null> {
   try {
     const res = await apiFetch(`/api/dm/conversations/${conversationId}/leave`, { method: "POST" });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function muteConversation(conversationId: string, muted: boolean): Promise<boolean> {
+  try {
+    const res = await apiFetch(`/api/dm/conversations/${conversationId}/mute`, {
+      method: muted ? "POST" : "DELETE",
+    });
     return res.ok;
   } catch {
     return false;

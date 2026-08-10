@@ -18,7 +18,10 @@ export function DMUnreadProvider({ children }: { children: React.ReactNode }) {
   const refresh = useCallback(async () => {
     try {
       const convs = await getConversations();
-      const total = convs.reduce((sum, c) => sum + (c.unread_count ?? 0), 0);
+      const total = convs.reduce(
+        (sum, c) => sum + (c.is_muted ? 0 : (c.unread_count ?? 0)),
+        0
+      );
       setUnreadCount(total);
     } catch {
       // silently ignore
