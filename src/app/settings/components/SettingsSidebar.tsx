@@ -30,7 +30,7 @@ export function SettingsSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col gap-1">
+    <aside className="flex w-full flex-col gap-1">
       <p className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         Configurações
       </p>
@@ -68,7 +68,7 @@ export function SettingsMobileNav() {
   return (
     <nav
       aria-label="Seções de configurações"
-      className="sticky top-[var(--layout-header-height)] z-10 border-b border-border/40 bg-background/95 backdrop-blur-xl md:hidden"
+      className="sticky top-0 z-10 border-b border-border/40 bg-background/95 backdrop-blur-xl md:hidden"
     >
       <div className="flex gap-1 overflow-x-auto px-3 py-2.5 scrollbar-hide">
         {navItems.map((item) => {
