@@ -6,10 +6,7 @@ import {} from "../../../../../../context/AuthContext";
 import { useCommentFormSchema } from "../../../../../layouts/Forms/CommentFormSchema";
 import { UseFormState } from "../../../../../layouts/ConstFormStateLayout";
 import { useCommentsContext } from "../../../../../../context/CommentsContext";
-import {
-  commentPatchProps,
-  patchComment,
-} from "../../../../../../services/patchComment";
+import { updateCommentAction } from "@/actions/updateComment";
 import { SubmitingForm } from "../../../../../layouts/SubmitingFormLayout";
 import TextAreaLayout from "../../../../../layouts/TextAreaLayout/TextAreaLayout";
 import { ErrosInput } from "../../../../../layouts/ErrosInputLayout/ErrorsInputLayout";
@@ -39,13 +36,18 @@ export const ExpandedComments = ({
     setIsEditing(value);
   };
 
-  const Submiting = async (data: commentPatchProps) => {
-    const updatedData = { ...data, edited: true };
+  const Submiting = async (data: { comment: string }) => {
     const response = await SubmitingForm(() =>
-      patchComment(updatedData, "" as any, answer.id),
+      updateCommentAction({
+        comment: data.comment,
+        comment_id: answer.id,
+        content_type: answer.content_type,
+        object_id: answer.object_id,
+      }),
     );
-    editComment(response.data);
-    editAnswerComment(comment_id, answer.id, response.data);
+    if (!response) return;
+    editComment(response);
+    editAnswerComment(comment_id, answer.id, response);
     setIsEditing(false);
   };
   return (

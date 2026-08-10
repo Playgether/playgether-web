@@ -5,12 +5,9 @@ import EditComment from "../EditComment/EditComment";
 import TextAreaLayout from "../../../../../layouts/TextAreaLayout/TextAreaLayout";
 import { ErrosInput } from "../../../../../layouts/ErrosInputLayout/ErrorsInputLayout";
 import DefaultButton from "../../../../../elements/DefaultButton/DefaultButton";
-import { SubmitingForm } from "../../../../../layouts/SubmitingFormLayout";
-import { patchComment } from "../../../../../../services/patchComment";
-import {} from "../../../../../../context/AuthContext";
+import { updateCommentAction } from "@/actions/updateComment";
 import { useCommentFormSchema } from "../../../../../layouts/Forms/CommentFormSchema";
 import { UseFormState } from "../../../../../layouts/ConstFormStateLayout";
-import { commentPatchProps } from "../../../../../../services/patchComment";
 import { AnswerComment } from "../AnswerComment/AnswerComment";
 import { PostsCommentsProps } from "../../../../../../services/getComments";
 import { useCommentsContext } from "../../../../../../context/CommentsContext";
@@ -37,14 +34,14 @@ export const Comments = ({ item, post_id }: CommentsProps) => {
     setIsEditing(value);
   };
 
-  const Submiting = async (data: commentPatchProps) => {
-    // const updatedData = { ...data, edited: true };
-
-    // const response = await SubmitingForm(() =>
-    //   patchComment(updatedData, authTokens, item.id)
-    // );
-    // editComment(response.data);
-
+  const Submiting = async (data: { comment: string }) => {
+    const response = await updateCommentAction({
+      comment: data.comment,
+      comment_id: item.id,
+      content_type: item.content_type,
+      object_id: item.object_id,
+    });
+    editComment(response);
     setIsEditing(false);
   };
 

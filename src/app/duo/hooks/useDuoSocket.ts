@@ -8,12 +8,10 @@ import type {
   WsMessage,
   WsQueueStatus,
 } from "../types/duo";
-
-function wsBaseUrl(): string {
-  if (process.env.NEXT_PUBLIC_WS_URL) return process.env.NEXT_PUBLIC_WS_URL;
-  if (typeof window !== "undefined") return `ws://${window.location.host}`;
-  return "ws://localhost:3000";
-}
+import {
+  buildAuthenticatedWebSocketUrl,
+  requestWebSocketTicket,
+} from "@/lib/websocketAuth";
 
 interface UseDuoSocketOptions {
   gameSlug: string;
@@ -138,21 +136,11 @@ export function useDuoSocket({
       }
     }
 
-    fetch("/api/notifications-ws-token", { credentials: "include" })
-      .then((res) => (res.ok ? res.json() : { token: null }))
-      .then((data: { token?: string | null }) => {
+    const socketPath = `/ws/duo/${encodeURIComponent(gameSlug)}/`;
+    requestWebSocketTicket(socketPath)
+      .then(({ ticket }) => {
         if (cancelled) return;
-        if (!data?.token) {
-          setState((s) => ({
-            ...s,
-            error: "Faça login para usar o Duo Finder.",
-            connected: false,
-          }));
-          return;
-        }
-
-        const base = wsBaseUrl().replace(/\/$/, "");
-        const wsUrl = `${base}/ws/duo/${encodeURIComponent(gameSlug)}/?token=${encodeURIComponent(data.token)}`;
+        const wsUrl = buildAuthenticatedWebSocketUrl(socketPath, ticket);
 
         ws = new WebSocket(wsUrl);
         wsRef.current = ws;

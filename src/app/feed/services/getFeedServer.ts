@@ -1,5 +1,5 @@
 import { api } from "@/services/api";
-import { ensureAccessTokenCookie } from "@/actions/refreshToken";
+import { ensureAccessTokenCookie } from "@/lib/server/authTokens";
 
 export async function getFeedServer(pageParam: string | null = null) {
   const accessToken = await ensureAccessTokenCookie();

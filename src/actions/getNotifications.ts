@@ -2,7 +2,7 @@
 
 import { api } from "@/services/api";
 import { getNotificationsProps } from "@/types/getNotificationsProps";
-import { ensureSessionAuth } from "@/actions/refreshToken";
+import { ensureSessionAuth } from "@/lib/server/authTokens";
 
 export const getNotifications = async () => {
   const session = await ensureSessionAuth();

@@ -24,6 +24,10 @@ import type {
 import { fetchAmbienceChatHistory } from "@/actions/ambienceChatActions";
 import { useRouter } from "next/navigation";
 import { useRoomPermissions } from "@/context/RoomPermissionsContext";
+import {
+  buildAuthenticatedWebSocketUrl,
+  requestWebSocketTicket,
+} from "@/lib/websocketAuth";
 
 function mergeAmbienceMessages(
   older: RoomAmbienceMessage[],
@@ -141,27 +145,37 @@ const ChatHandlerContext = createContext<ChatHandlerContextProps>(
   {} as ChatHandlerContextProps,
 );
 
-function wsBaseUrl(): string {
-  if (process.env.NEXT_PUBLIC_WS_URL) return process.env.NEXT_PUBLIC_WS_URL;
-  if (typeof window !== "undefined") {
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    return `${protocol}//${window.location.hostname}:8000`;
-  }
-  return "ws://localhost:8000";
-}
-
 const ChatHandlerContextProvider = ({
-  token,
   chatroom,
   children,
 }: {
-  token: string;
   chatroom: string;
   children: React.ReactNode;
 }) => {
   const encodedChatroom = encodeURIComponent(chatroom);
+  const socketPath = `/ws/chatroom/${encodedChatroom}`;
+  const [socketUrl, setSocketUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    requestWebSocketTicket(socketPath)
+      .then(({ ticket }) => {
+        if (!cancelled) {
+          setSocketUrl(buildAuthenticatedWebSocketUrl(socketPath, ticket));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setSocketUrl(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [socketPath]);
+
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
-    `${wsBaseUrl()}/ws/chatroom/${encodedChatroom}?token=${token}`,
+    socketUrl,
     {
       share: false,
       shouldReconnect: () => false,

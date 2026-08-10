@@ -1,7 +1,7 @@
 import BaseLayout from "@/app/base-layout/components/structure/BaseLayout";
 import { Metadata } from "next";
 import NotFoundPages from "@/components/elements/NotFound/NotFoundPages";
-import { ensureAccessTokenCookie } from "@/actions/refreshToken";
+import { ensureAccessTokenCookie } from "@/lib/server/authTokens";
 import { getProfileByUsername } from "@/services/getProfileByUsername";
 import GamesCanvasProfile from "@/components/pages/profile/GamesCanvasProfile";
 import { getCommentsServer } from "@/services/getCommentsServer";

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ensureAccessTokenCookie } from "@/actions/refreshToken";
+import { ensureAccessTokenCookie } from "@/lib/server/authTokens";
+import { api } from "@/services/api";
 
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const token = await ensureAccessTokenCookie();
+    const accessToken = await ensureAccessTokenCookie();
 
-    if (!token) {
+    if (!accessToken) {
       return NextResponse.json(
         {
           authorized: false,
@@ -15,24 +16,33 @@ export async function GET(_request: NextRequest) {
       );
     }
 
-    const tokenParts = token.split(".");
-    if (tokenParts.length !== 3) {
+    const path = request.nextUrl.searchParams.get("path");
+    if (!path?.startsWith("/ws/")) {
       return NextResponse.json(
-        { authorized: false, error: "Formato de token inválido" },
-        { status: 401 },
+        { authorized: false, error: "Caminho de WebSocket inválido" },
+        { status: 400 },
       );
     }
 
+    const response = await api.post(
+      "/api/ws-ticket/",
+      { path },
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    );
+
     return NextResponse.json({
       authorized: true,
-      message: "Autorizado com sucesso",
-      token,
+      ticket: response.data.ticket,
+      expires_in: response.data.expires_in,
+    }, {
+      headers: { "Cache-Control": "no-store" },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erro na autorização WebSocket:", error);
+    const status = error?.response?.status ?? 500;
     return NextResponse.json(
       { authorized: false, error: "Erro interno do servidor" },
-      { status: 500 },
+      { status },
     );
   }
 }

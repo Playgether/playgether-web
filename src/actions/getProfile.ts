@@ -2,7 +2,7 @@
 
 import { api } from "@/services/api";
 import { ProfileProps } from "@/types/ProfileProps";
-import { ensureSessionAuth } from "@/actions/refreshToken";
+import { ensureSessionAuth } from "@/lib/server/authTokens";
 
 /**
  * Retorna só o JSON do perfil (serializável).

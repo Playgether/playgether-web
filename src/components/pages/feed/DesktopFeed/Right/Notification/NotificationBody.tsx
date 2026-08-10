@@ -5,36 +5,25 @@ import NotificationDate from "./NotificationDate";
 import NotificationText from "./NotificationText";
 import { NotificationWrapper } from "./NotificationWrapper";
 import EmptyData from "@/components/elements/EmptyDataComponent/EmptyData";
-import useWebSocket from "react-use-websocket";
-
-const WS_URL =
-  process.env.NEXT_PUBLIC_WS_URL || "ws://192.168.18.8:8000";
+import { useSecureWebSocket } from "@/hooks/useSecureWebSocket";
 
 function NotificationBody({ notificationsParent }: { notificationsParent: any[] }) {
   const [notifications, setNotifications] = useState(notificationsParent);
-  const [wsUrl, setWsUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/notifications-ws-token", { credentials: "include" })
-      .then((res) => (res.ok ? res.json() : { token: null }))
-      .then((data) => {
-        if (!cancelled && data?.token) {
-          setWsUrl(`${WS_URL}/ws/notifications/?token=${data.token}`);
-        }
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const { lastJsonMessage } = useWebSocket(wsUrl ?? "ws://localhost", {
-    share: false,
-    shouldReconnect: () => !!wsUrl,
+  const { lastMessage } = useSecureWebSocket({
+    url: "/ws/notifications/",
+    shouldReconnect: () => true,
   });
 
   useEffect(() => {
+    if (!lastMessage) return;
+
+    let lastJsonMessage: unknown;
+    try {
+      lastJsonMessage = JSON.parse(lastMessage.data);
+    } catch {
+      return;
+    }
+
     if (
       lastJsonMessage &&
       typeof lastJsonMessage === "object" &&
@@ -100,7 +89,7 @@ function NotificationBody({ notificationsParent }: { notificationsParent: any[] 
         return updatedNotifications;
       });
     }
-  }, [lastJsonMessage]);
+  }, [lastMessage]);
 
   return (
     <>

@@ -5,7 +5,7 @@ import { getProfileByUsername } from "@/services/getProfileByUsername";
 import GamesCanvasProfile from "@/components/pages/profile/GamesCanvasProfile";
 import { getCommentsServer } from "@/services/getCommentsServer";
 import { notFound } from "next/navigation";
-import { ensureAccessTokenCookie } from "@/actions/refreshToken";
+import { ensureAccessTokenCookie } from "@/lib/server/authTokens";
 import { decodeAccessToken } from "@/lib/decodeAccessToken";
 export const metadata: Metadata = {
   title: "Playgether - Profile",

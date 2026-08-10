@@ -9,19 +9,17 @@ import { RoomBannedGuard } from "./RoomBannedGuard";
 
 export function RoomShell({
   room,
-  token,
   initialPermissions,
   children,
 }: {
   room: ChatRoom;
-  token: string;
   initialPermissions?: RoomPermissionsSnapshot | null;
   children: React.ReactNode;
 }) {
   return (
     <RoomPermissionsProvider room={room} initialSnapshot={initialPermissions}>
       <RoomBannedGuard roomSlug={room.slug} />
-      <ChatHandlerContextProvider chatroom={room.slug || room.group_name} token={token}>
+      <ChatHandlerContextProvider chatroom={room.slug || room.group_name}>
         <RoomEventSessionProvider room={room}>{children}</RoomEventSessionProvider>
       </ChatHandlerContextProvider>
     </RoomPermissionsProvider>

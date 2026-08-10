@@ -1,6 +1,10 @@
 "use client";
 
 import { fetchRoomEventMessages } from "@/actions/roomEventsActions";
+import {
+  buildAuthenticatedWebSocketUrl,
+  requestWebSocketTicket,
+} from "@/lib/websocketAuth";
 import type { RoomEventMessage } from "@/types/RoomEvents";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -10,15 +14,6 @@ export type RoomEventPresenceViewer = {
   is_active_player: boolean;
   is_eliminated: boolean;
 };
-
-function wsBaseUrl(): string {
-  if (process.env.NEXT_PUBLIC_WS_URL) return process.env.NEXT_PUBLIC_WS_URL;
-  if (typeof window !== "undefined") {
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    return `${protocol}//${window.location.hostname}:8000`;
-  }
-  return "ws://localhost:8000";
-}
 
 export function useRoomEventSocket(eventId: number | null) {
   const wsRef = useRef<WebSocket | null>(null);
@@ -57,12 +52,12 @@ export function useRoomEventSocket(eventId: number | null) {
   useEffect(() => {
     if (!eventId) return;
     let cancelled = false;
+    const socketPath = `/ws/room-events/${eventId}/`;
 
-    fetch("/api/notifications-ws-token", { credentials: "include" })
-      .then((res) => (res.ok ? res.json() : { token: null }))
-      .then((data: { token?: string | null }) => {
-        if (cancelled || !data?.token) return;
-        const wsUrl = `${wsBaseUrl().replace(/\/$/, "")}/ws/room-events/${eventId}/?token=${encodeURIComponent(data.token)}`;
+    requestWebSocketTicket(socketPath)
+      .then(({ ticket }) => {
+        if (cancelled) return;
+        const wsUrl = buildAuthenticatedWebSocketUrl(socketPath, ticket);
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 

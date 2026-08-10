@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { api } from "@/services/api";
-import { ensureAccessTokenCookie } from "@/actions/refreshToken";
+import { ensureAccessTokenCookie } from "@/lib/server/authTokens";
 
 /**
  * GET /api/terms/pending

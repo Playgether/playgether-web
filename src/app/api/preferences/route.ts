@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { api } from "@/services/api";
-import { ensureAccessTokenCookie } from "@/actions/refreshToken";
+import { ensureAccessTokenCookie } from "@/lib/server/authTokens";
 
 export async function GET() {
   const accessToken = await ensureAccessTokenCookie();
