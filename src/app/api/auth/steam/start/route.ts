@@ -26,7 +26,10 @@ export async function POST(request: Request) {
     "/api/auth/steam/prepare/",
     { next: nextPath },
     {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "X-Playgether-Browser-UA": request.headers.get("user-agent") ?? "",
+      },
       validateStatus: () => true,
     }
   );
