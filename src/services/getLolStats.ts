@@ -348,6 +348,13 @@ export type LolStatsResponse = {
     message?: string | null;
     lastSyncedAt?: string | null;
   };
+  force_refresh?: {
+    cooldown_seconds: number;
+    next_allowed_at?: string | null;
+    remaining_seconds: number;
+    allowed: boolean;
+    blocked_by_cooldown: boolean;
+  };
   staticAssets?: {
     version: string;
     cdnBase: string;

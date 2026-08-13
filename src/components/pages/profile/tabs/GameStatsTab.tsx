@@ -27,6 +27,7 @@ import {
   type LolStatsResponse,
   type LolTimeScope,
 } from "@/services/getLolStats";
+import { syncLolStats } from "@/services/syncLolStats";
 
 function resolveMediaUrl(value: string | null | undefined): string {
   if (!value) return "";
@@ -77,6 +78,7 @@ export function GameStatsTab({
   const [steamStatusLoading, setSteamStatusLoading] = useState(false);
   const [lolStats, setLolStats] = useState<LolStatsResponse | null>(null);
   const [lolStatsLoading, setLolStatsLoading] = useState(false);
+  const [lolForceRefreshLoading, setLolForceRefreshLoading] = useState(false);
   const [lolTimeScope, setLolTimeScope] = useState<LolTimeScope>("platform");
   const [lolQueueScope, setLolQueueScope] = useState<LolQueueScope>("ranked_solo");
   const [lolSeasonId, setLolSeasonId] = useState<string | null>(null);
@@ -162,6 +164,53 @@ export function GameStatsTab({
       setCs2StatsLoading(false);
     }
   }, [profile?.id, cs2Stats?.force_refresh?.remaining_seconds]);
+
+  const handleLolForceRefresh = useCallback(async () => {
+    if (!profile?.id) return;
+    const remaining = Number(lolStats?.force_refresh?.remaining_seconds ?? 0);
+    if (remaining > 0) return;
+    const profileId = profile.id;
+    const cacheKeyPrefix = `${profileId}:`;
+    setLolForceRefreshLoading(true);
+    try {
+      const syncResult = await syncLolStats(profileId);
+      if (!syncResult.synced && syncResult.reason === "force_cooldown_active") {
+        setLolStats((prev) =>
+          prev
+            ? {
+                ...prev,
+                force_refresh: syncResult.force_refresh ?? prev.force_refresh,
+              }
+            : prev
+        );
+        return;
+      }
+      for (const key of [...lolStatsCache.keys()]) {
+        if (key.startsWith(cacheKeyPrefix)) lolStatsCache.delete(key);
+      }
+      for (const key of [...lolStatsPromises.keys()]) {
+        if (key.startsWith(cacheKeyPrefix)) lolStatsPromises.delete(key);
+      }
+      const data = await getLolStats(profileId, {
+        timeScope: lolTimeScope,
+        queueScope: lolQueueScope,
+        seasonId: lolSeasonId,
+      });
+      const cacheKey = `${profileId}:${lolTimeScope}:${lolQueueScope}:${lolSeasonId ?? ""}`;
+      lolStatsCache.set(cacheKey, { data, fetchedAt: Date.now() });
+      setLolStats(data);
+    } catch {
+      // keep current stats on failure
+    } finally {
+      setLolForceRefreshLoading(false);
+    }
+  }, [
+    profile?.id,
+    lolStats?.force_refresh?.remaining_seconds,
+    lolTimeScope,
+    lolQueueScope,
+    lolSeasonId,
+  ]);
 
   useEffect(() => {
     if (!profile?.id || selectedGame !== "csgo") {
@@ -459,6 +508,8 @@ export function GameStatsTab({
                 isOwner={isOwner}
                 onCs2ForceRefresh={handleCs2ForceRefresh}
                 cs2ForceRefreshLoading={cs2StatsLoading}
+                onLolForceRefresh={handleLolForceRefresh}
+                lolForceRefreshLoading={lolForceRefreshLoading}
                 lolStats={lolStats}
                 lolTimeScope={lolTimeScope}
                 lolQueueScope={lolQueueScope}

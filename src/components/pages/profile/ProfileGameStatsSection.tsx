@@ -343,6 +343,8 @@ interface ProfileGameStatsSectionProps {
   isOwner?: boolean;
   onCs2ForceRefresh?: () => void | Promise<void>;
   cs2ForceRefreshLoading?: boolean;
+  onLolForceRefresh?: () => void | Promise<void>;
+  lolForceRefreshLoading?: boolean;
 }
 
 export function ProfileGameStatsSection({
@@ -360,6 +362,8 @@ export function ProfileGameStatsSection({
   isOwner = false,
   onCs2ForceRefresh,
   cs2ForceRefreshLoading = false,
+  onLolForceRefresh,
+  lolForceRefreshLoading = false,
 }: ProfileGameStatsSectionProps) {
   const [statsTab, setStatsTab] = useState("overview");
   const [season, setSeason] = useState("s1");
@@ -408,8 +412,21 @@ export function ProfileGameStatsSection({
   const cs2ForceButtonDisabled =
     cs2ForceRefreshLoading || cs2ForceBlockedByCooldown;
   const cs2ForceCooldownTitle = cs2ForceBlockedByCooldown
-    ? `Atualização disponível em ${Math.ceil(cs2ForceRemainingSeconds / 60)} min. Evite spam de refresh na Steam API.`
-    : "Atualiza imediatamente as estatísticas puxando da Steam.";
+    ? `Forçar atualização disponível em ${Math.ceil(cs2ForceRemainingSeconds / 60)} min.`
+    : "Atualiza imediatamente as estatísticas puxando da Steam (cooldown de 5 min).";
+  const lolForceRemainingSeconds = Math.max(
+    0,
+    Number(lolStatsResponse?.force_refresh?.remaining_seconds ?? 0),
+  );
+  const lolForceBlockedByCooldown =
+    selectedGame === "lol" &&
+    Boolean(lolStatsResponse?.available) &&
+    lolForceRemainingSeconds > 0;
+  const lolForceButtonDisabled =
+    lolForceRefreshLoading || lolForceBlockedByCooldown;
+  const lolForceCooldownTitle = lolForceBlockedByCooldown
+    ? `Forçar atualização disponível em ${Math.ceil(lolForceRemainingSeconds / 60)} min.`
+    : "Atualiza imediatamente as estatísticas puxando da Riot (cooldown de 5 min).";
   const cs2SyncedLabel = formatSyncedAt(cs2Stats?.last_updated);
   const lolSyncedLabel = formatSyncedAt(
     lolStatsResponse?.syncStatus?.lastSyncedAt ??
@@ -712,17 +729,47 @@ export function ProfileGameStatsSection({
         </div>
       )}
 
-      {selectedGame === "lol" && hasLolRiotIdentity && lolSyncedLabel ? (
-        <p className="text-[11px] text-muted-foreground">
-          Última sincronização: {lolSyncedLabel}
-        </p>
+      {selectedGame === "lol" && hasLolRiotIdentity ? (
+        <div className="space-y-1.5 w-fit max-w-full">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground bg-muted/60 rounded-lg px-3 py-2">
+            <Info className="h-3.5 w-3.5 shrink-0" />
+            <span>
+              Atualização automática a cada 30 min · forçar a cada 5 min
+            </span>
+            {isOwner && onLolForceRefresh ? (
+              <div title={lolForceCooldownTitle}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 border-border shrink-0"
+                  disabled={lolForceButtonDisabled}
+                  onClick={() => void onLolForceRefresh()}
+                >
+                  {lolForceRefreshLoading
+                    ? "Atualizando…"
+                    : lolForceBlockedByCooldown
+                      ? `Disponível em ${Math.ceil(lolForceRemainingSeconds / 60)} min`
+                      : "Atualizar da Riot"}
+                </Button>
+              </div>
+            ) : null}
+          </div>
+          {lolSyncedLabel ? (
+            <p className="text-[11px] text-muted-foreground">
+              Última sincronização: {lolSyncedLabel}
+            </p>
+          ) : null}
+        </div>
       ) : null}
 
       {useRealCs2Stats && (
         <div className="space-y-1.5 w-fit max-w-full">
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground bg-muted/60 rounded-lg px-3 py-2">
             <Info className="h-3.5 w-3.5 shrink-0" />
-            <span>Estatísticas atualizadas a cada 30 minutos</span>
+            <span>
+              Atualização automática a cada 30 min · forçar a cada 5 min
+            </span>
             {isOwner && onCs2ForceRefresh ? (
               <div title={cs2ForceCooldownTitle}>
                 <Button
