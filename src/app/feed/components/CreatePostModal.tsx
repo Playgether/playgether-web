@@ -23,6 +23,12 @@ import {
 } from "@/error/custom-toaster/enum";
 import { deletePostFile } from "@/services/cloudinary_requests/deletePostFile";
 import { createPost, PostMediaProps } from "@/actions/createPost";
+import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
+import {
+  BYTES_5_MB,
+  BYTES_50_MB,
+  CLOUDINARY_IMAGE_AND_VIDEO_FORMATS,
+} from "@/app/utils/cloudinaryUploadConfig";
 
 export const CreatePostModal = () => {
   const [content, setContent] = useState("");
@@ -31,7 +37,6 @@ export const CreatePostModal = () => {
   const [widgetKey, setWidgetKey] = useState(0);
   const [isWidgetOpen, setIsWidgetOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-
   const createPostContext = useCreatePostContext();
   const { user } = useAuthContext();
   const { profile } = useProfileContext();
@@ -83,6 +88,19 @@ export const CreatePostModal = () => {
       duration: CustomToastProps.defaultDuration,
     });
     setWidgetKey((prevCount) => prevCount + 1);
+
+    // Evita mídia órfã no Cloudinary se o lote falhar no meio
+    setUploadedFiles((prev) => {
+      for (const media of prev) {
+        if (!media.media_file) continue;
+        deletePostFile(
+          media.media_file,
+          media.media_folder,
+          media.media_type,
+        ).catch((err) => console.error("Erro ao deletar mídia:", err));
+      }
+      return [];
+    });
   };
 
   const removeMedia = (index: number) => {
@@ -295,8 +313,6 @@ export const CreatePostModal = () => {
                   signatureEndpoint="/api/signed-posts"
                   options={{
                     sources: ["local"],
-                    maxImageWidth: 8000,
-                    maxImageHeight: 8000,
                     maxFiles: 5 - uploadedFiles.length,
                     tags: [
                       user?.username || "user",
@@ -304,9 +320,13 @@ export const CreatePostModal = () => {
                       "post",
                       "user",
                     ],
-                    detection: "unidet",
-                    maxImageFileSize: 5000000,
-                    maxVideoFileSize: 50000000,
+                    uploadPreset: PresetsCloudinary.posts,
+                    resourceType: "auto",
+                    clientAllowedFormats: [
+                      ...CLOUDINARY_IMAGE_AND_VIDEO_FORMATS,
+                    ],
+                    maxImageFileSize: BYTES_5_MB,
+                    maxVideoFileSize: BYTES_50_MB,
                     language: "pt-br",
                     showCompletedButton: true,
                     multiple: true,

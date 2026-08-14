@@ -45,7 +45,7 @@ export default function GamesCanvasProfile({
               </div>
 
               <div className="order-2 hidden min-w-0 lg:order-1 lg:col-span-1 lg:block">
-                <div className="lg:sticky lg:top-6">
+                <div className="lg:sticky lg:top-[calc(var(--layout-header-height)+1.5rem)]">
                   <GamesCanvasUserProfile
                     profile={profile}
                     variant="full"

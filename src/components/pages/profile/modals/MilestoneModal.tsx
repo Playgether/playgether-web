@@ -244,7 +244,6 @@ export function MilestoneModal({
                     signatureEndpoint="/api/signed-milestones"
                     uploadPreset={PresetsCloudinary.profile_milestones}
                     options={{
-                      detection: "unidet",
                       sources: ["local"],
                       maxFiles: 3 - uploadedFiles.length,
                       multiple: true,

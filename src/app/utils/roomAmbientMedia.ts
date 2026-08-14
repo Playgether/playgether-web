@@ -1,16 +1,22 @@
 import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
 import { getCloudinaryVideoUrl } from "@/app/utils/getCloudinaryVideo";
+import {
+  AMBIENT_VIDEO_MAX_DURATION_SEC,
+  AMBIENT_VIDEO_MAX_LONG_SIDE,
+  AMBIENT_VIDEO_MAX_SHORT_SIDE,
+} from "@/app/utils/cloudinaryUploadConfig";
+
+export {
+  AMBIENT_VIDEO_MAX_DURATION_SEC,
+  AMBIENT_VIDEO_MAX_LONG_SIDE,
+  AMBIENT_VIDEO_MAX_SHORT_SIDE,
+};
 
 const VIDEO_MARKER = "video:";
 
 export type ParsedAmbientMedia =
   | { kind: "image"; publicId: string }
   | { kind: "video"; publicId: string };
-
-/** Limite alinhado à UI / Cloudinary (pré-validação no cliente). */
-export const AMBIENT_VIDEO_MAX_DURATION_SEC = 180;
-export const AMBIENT_VIDEO_MAX_LONG_SIDE = 1920;
-export const AMBIENT_VIDEO_MAX_SHORT_SIDE = 1080;
 
 export function parseAmbientMediaValue(
   raw: string | null | undefined,
@@ -29,7 +35,7 @@ export function resolveAmbientAbsoluteUrl(parsed: ParsedAmbientMedia): string {
   if (parsed.kind === "video") {
     return getCloudinaryVideoUrl(parsed.publicId, AMBIENT_VIDEO_MAX_LONG_SIDE);
   }
-  return getCloudinaryUrl(parsed.publicId);
+  return getCloudinaryUrl(parsed.publicId, AMBIENT_VIDEO_MAX_LONG_SIDE);
 }
 
 export function cloudinaryResourceForAmbientDelete(stored: string): {

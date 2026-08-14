@@ -3,6 +3,10 @@
 import { createChatRoom } from "@/actions/createChatRoom";
 import type { RoomCardData } from "./RoomCard";
 import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
+import {
+  BYTES_8_MB,
+  CLOUDINARY_IMAGE_FORMATS,
+} from "@/app/utils/cloudinaryUploadConfig";
 import { deleteCloudinaryImage } from "@/services/cloudinary_requests/deletePostFile";
 import { Button } from "@/components/ui/button";
 import {
@@ -282,6 +286,8 @@ export default function CreateRoomModal({ open, onOpenChange, onRoomCreated }: P
                   multiple: false,
                   maxFiles: 1,
                   resourceType: "image",
+                  clientAllowedFormats: [...CLOUDINARY_IMAGE_FORMATS],
+                  maxImageFileSize: BYTES_8_MB,
                   language: "pt-br",
                   styles: { zIndex: 200000 },
                 }}

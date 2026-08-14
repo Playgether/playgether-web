@@ -8,6 +8,11 @@ import { useRouter } from "next/navigation";
 import ProfileImagePost from "../../Middle/PostsComponents/ProfileImagePost/ProfileImagePost";
 import { CldUploadWidget } from "next-cloudinary";
 import { IoCreateOutline } from "react-icons/io5";
+import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
+import {
+  BYTES_8_MB,
+  CLOUDINARY_IMAGE_FORMATS,
+} from "@/app/utils/cloudinaryUploadConfig";
 
 /** Este componente é o wrapper principal do card de profile na página feed. Seu intuito é ser o wrapper de todo o card e seus componentes filhos. */
 const ProfileCard = ({ children }: { children: React.ReactNode }) => {
@@ -31,10 +36,14 @@ const ProfileCard = ({ children }: { children: React.ReactNode }) => {
       <CldUploadWidget
         signatureEndpoint="/api/signed-profile"
         options={{
-          uploadPreset: "profile-images",
+          uploadPreset: PresetsCloudinary.profile_image,
           multiple: false,
           tags: [`${user?.username}`, "profile", "image", "user"],
           singleUploadAutoClose: false,
+          clientAllowedFormats: [...CLOUDINARY_IMAGE_FORMATS],
+          maxImageFileSize: BYTES_8_MB,
+          resourceType: "image",
+          language: "pt-br",
         }}
       >
         {({ open }) => {

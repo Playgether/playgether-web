@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CldImage } from "next-cloudinary";
+import { useProfilePostsContext } from "@/app/profile/context/ProfilePostsContext";
 
 interface Collection {
   id: number;
@@ -295,6 +296,7 @@ function PostListView({
   onPostClick: (postId: number) => void;
   onDeleteCollection?: () => void;
 }) {
+  const { injectPost } = useProfilePostsContext();
   const [posts, setPosts] = useState<PostProps[]>([]);
   const [nextPage, setNextPage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -324,6 +326,11 @@ function PostListView({
     } finally {
       setIsLoadingMore(false);
     }
+  };
+
+  const handlePostClick = (post: PostProps) => {
+    injectPost(post);
+    onPostClick(post.id);
   };
 
   return (
@@ -362,7 +369,7 @@ function PostListView({
       ) : (
         <div className="space-y-3">
           {posts.map((post) => (
-            <SavedPostCard key={post.id} post={post} onClick={() => onPostClick(post.id)} />
+            <SavedPostCard key={post.id} post={post} onClick={() => handlePostClick(post)} />
           ))}
         </div>
       )}

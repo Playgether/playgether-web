@@ -60,6 +60,7 @@ import {
   MOBILE_COMMENTS_HANDLE_HEIGHT,
   useMobileCommentsSheet,
 } from "./useMobileCommentsSheet";
+import { PostMediaLightbox } from "./PostMediaLightbox";
 
 export const PostModal = ({
   postId,
@@ -176,6 +177,31 @@ export const PostModal = ({
     setMobileCommentsExpanded(searchParams.get("focus") === "comments");
     setOverlayTextExpanded(false);
   }, [searchParams, postId]);
+
+  useEffect(() => {
+    setCurrentMediaIndex(0);
+    setIsCurrentMediaLoaded(false);
+    setCommentsDisabled(post?.comments_disabled ?? false);
+    const postHasMedia = Boolean(post?.medias?.length);
+    setShowFullText(!postHasMedia);
+  }, [postId, post?.comments_disabled, post?.medias?.length]);
+
+  useEffect(() => {
+    setIsCurrentMediaLoaded(false);
+  }, [currentMediaIndex]);
+
+  useEffect(() => {
+    queryClient.invalidateQueries({
+      queryKey: ["comments", postId],
+      refetchType: "inactive",
+    });
+  }, [postId, queryClient]);
+
+  const loadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   if (!post) return null;
 
@@ -332,25 +358,6 @@ export const PostModal = ({
     });
   };
 
-  useEffect(() => {
-    setCurrentMediaIndex(0);
-    setIsCurrentMediaLoaded(false);
-    setCommentsDisabled(post?.comments_disabled ?? false);
-    const postHasMedia = Boolean(post?.medias?.length);
-    setShowFullText(!postHasMedia);
-  }, [postId, post?.comments_disabled, post?.medias?.length]);
-
-  useEffect(() => {
-    setIsCurrentMediaLoaded(false);
-  }, [currentMediaIndex]);
-
-  useEffect(() => {
-    queryClient.invalidateQueries({
-      queryKey: ["comments", postId],
-      refetchType: "inactive",
-    });
-  }, [postId, queryClient]);
-
   const handleEditComment = (comment: any) => {
     setEditingCommentId(comment.id);
     setEditingContent(comment.comment);
@@ -434,12 +441,6 @@ export const PostModal = ({
       setCurrentMediaIndex(currentMediaIndex - 1);
     }
   };
-
-  const loadMore = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const hasMedia = post && post.medias && post.medias.length > 0;
 
@@ -901,10 +902,10 @@ export const PostModal = ({
                 className={cn(
                   "relative flex w-full items-center justify-center overflow-hidden bg-black",
                   // Mobile: cabe na viewport deixando espaço pra legenda + handle; pode encolher se faltar altura
-                  "max-lg:mx-auto max-lg:aspect-[4/5] max-lg:max-h-[min(52dvh,100%)] max-lg:min-h-0 max-lg:shrink max-lg:cursor-zoom-in",
+                  "max-lg:mx-auto max-lg:aspect-[4/5] max-lg:max-h-[min(52dvh,100%)] max-lg:min-h-0 max-lg:shrink",
                   "lg:min-h-0 lg:flex-1 lg:cursor-default",
                   post.medias[currentMediaIndex].media_type === "image" &&
-                    "lg:cursor-zoom-in",
+                    "cursor-zoom-in max-lg:cursor-zoom-in lg:cursor-zoom-in",
                 )}
               >
                 {!isCurrentMediaLoaded && (
@@ -919,6 +920,7 @@ export const PostModal = ({
                   <ImageComponent
                     media_id={post.medias[currentMediaIndex].media_file || ""}
                     alt="Post media"
+                    delivery="master"
                     objectFit="contain"
                     objectPosition="center"
                     className={cn(
@@ -930,6 +932,8 @@ export const PostModal = ({
                 ) : (
                   <VideoComponent
                     media_id={post.medias[currentMediaIndex].media_file || ""}
+                    delivery="master"
+                    allowFullscreen={false}
                     className={cn(
                       "max-h-full max-w-full transition-opacity duration-300",
                       isCurrentMediaLoaded ? "opacity-100" : "opacity-0",
@@ -945,7 +949,7 @@ export const PostModal = ({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="absolute bottom-3 right-3 z-20 h-9 w-9 rounded-full bg-black/55 text-white hover:bg-black/75 hover:text-white"
+                    className="absolute right-3 top-3 z-20 h-9 w-9 rounded-full bg-black/55 text-white hover:bg-black/75 hover:text-white"
                     aria-label="Ver mídia em tela cheia"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1830,113 +1834,12 @@ export const PostModal = ({
       />
 
       {hasMedia ? (
-        <Dialog
+        <PostMediaLightbox
+          medias={post.medias}
+          initialIndex={currentMediaIndex}
           open={mediaFullscreenOpen}
           onOpenChange={setMediaFullscreenOpen}
-        >
-          <DialogContent
-            hideCloseButton
-            className={cn(
-              "!fixed !inset-0 !left-0 !top-0 z-[100] flex h-dvh w-screen !max-w-none !translate-x-0 !translate-y-0 flex-col gap-0 rounded-none border-0 bg-black p-0 shadow-none",
-              "data-[state=open]:zoom-in-100 data-[state=closed]:zoom-out-100",
-            )}
-          >
-            <VisuallyHidden>
-              <DialogTitle>Mídia em tela cheia</DialogTitle>
-            </VisuallyHidden>
-            <div className="absolute top-0 right-0 z-20 flex items-center gap-1 p-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 rounded-full text-white hover:bg-white/15 hover:text-white"
-                aria-label="Fechar tela cheia"
-                onClick={() => setMediaFullscreenOpen(false)}
-              >
-                <XIcon className="h-5 w-5" />
-              </Button>
-            </div>
-            <div
-              role="button"
-              tabIndex={0}
-              aria-label="Fechar tela cheia"
-              className="relative flex min-h-0 flex-1 cursor-zoom-out items-center justify-center p-2 sm:p-4 [&_img]:cursor-zoom-out [&_span]:cursor-zoom-out"
-              onClick={() => setMediaFullscreenOpen(false)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  setMediaFullscreenOpen(false);
-                }
-              }}
-            >
-              {post.medias[currentMediaIndex].media_type === "image" ? (
-                <ImageComponent
-                  media_id={post.medias[currentMediaIndex].media_file || ""}
-                  alt="Post media fullscreen"
-                  objectFit="contain"
-                  objectPosition="center"
-                  className="h-full w-full cursor-zoom-out"
-                />
-              ) : (
-                <VideoComponent
-                  media_id={post.medias[currentMediaIndex].media_file || ""}
-                  className="max-h-full max-w-full object-contain"
-                  controls
-                  autoPlay
-                  onClick={(e) => e.stopPropagation()}
-                />
-              )}
-
-              {post.medias.length > 1 ? (
-                <>
-                  {currentMediaIndex > 0 ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute left-2 top-1/2 z-20 h-10 w-10 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 hover:text-white sm:left-4"
-                      aria-label="Mídia anterior"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        prevMedia();
-                      }}
-                    >
-                      <ChevronLeft className="h-5 w-5" />
-                    </Button>
-                  ) : null}
-                  {currentMediaIndex < post.medias.length - 1 ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-2 top-1/2 z-20 h-10 w-10 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 hover:text-white sm:right-4"
-                      aria-label="Próxima mídia"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        nextMedia();
-                      }}
-                    >
-                      <ChevronRight className="h-5 w-5" />
-                    </Button>
-                  ) : null}
-                  <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 space-x-2">
-                    {post.medias.map((_, index) => (
-                      <div
-                        key={index}
-                        className={cn(
-                          "h-2 w-2 rounded-full",
-                          index === currentMediaIndex
-                            ? "bg-white"
-                            : "bg-white/50",
-                        )}
-                      />
-                    ))}
-                  </div>
-                </>
-              ) : null}
-            </div>
-          </DialogContent>
-        </Dialog>
+        />
       ) : null}
     </>
   );

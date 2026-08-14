@@ -12,7 +12,7 @@ export function profilePhotoToAvatarSrc(
   const s = profilePhoto?.trim();
   if (!s) return undefined;
   if (s.startsWith("http") || s.startsWith("/")) return s;
-  return getCloudinaryUrl(s);
+  return getCloudinaryUrl(s, 256);
 }
 
 export type ProfileAvatarProps = {

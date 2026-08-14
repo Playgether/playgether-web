@@ -1,6 +1,6 @@
 "use client";
 import { Card, CardContent } from "@/components/ui/card";
-import { useCallback, useState } from "react";
+import { type MouseEvent, useCallback, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -24,11 +24,17 @@ import { useRouter } from "next/navigation";
 import { useFeedContext } from "../context/FeedContext";
 import { CustomToast } from "@/components/ui/customSonner";
 import { FeedPostFollowButton } from "./FeedPostFollowButton";
+import { Button } from "@/components/ui/button";
+import { Maximize2 } from "lucide-react";
+import { PostMediaLightbox } from "./PostMediaLightbox";
 
 export const FeedPost = ({ post }) => {
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertAction, setAlertAction] = useState<string>("");
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [mediaLightboxOpen, setMediaLightboxOpen] = useState(false);
+  const [mediaLightboxIndex, setMediaLightboxIndex] = useState(0);
+  const videoTimesRef = useRef<Record<number, number>>({});
   const { Feed } = useFeedServerContext();
   const components = Feed.ServerFeedPost.components;
   const router = useRouter();
@@ -130,6 +136,16 @@ export const FeedPost = ({ post }) => {
 
   const handlePostClick = () => {
     router.push(`/feed/${post?.id}`);
+  };
+
+  const openMediaLightbox = (
+    event: MouseEvent<HTMLButtonElement>,
+    index: number,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setMediaLightboxIndex(index);
+    setMediaLightboxOpen(true);
   };
 
   return (
@@ -250,8 +266,14 @@ export const FeedPost = ({ post }) => {
                       <div className="relative video-container">
                         <VideoComponent
                           media_id={item.media_file}
+                          allowFullscreen={false}
                           className="h-40 w-full object-cover sm:h-48 lg:h-64"
                           preload="metadata"
+                          onClick={(event) => event.stopPropagation()}
+                          onTimeUpdate={(event) => {
+                            videoTimesRef.current[index] =
+                              event.currentTarget.currentTime;
+                          }}
                           style={{
                             background:
                               "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)",
@@ -261,6 +283,16 @@ export const FeedPost = ({ post }) => {
                         />
                       </div>
                     )}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 top-2 z-20 h-9 w-9 rounded-full bg-black/55 text-white opacity-90 hover:bg-black/75 hover:text-white sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+                      aria-label="Ver mídia em tela cheia"
+                      onClick={(event) => openMediaLightbox(event, index)}
+                    >
+                      <Maximize2 className="h-4 w-4" />
+                    </Button>
                     {post.medias.length > 2 && index === 1 && (
                       <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/70">
                         <div className="text-center">
@@ -296,6 +328,15 @@ export const FeedPost = ({ post }) => {
         confirmAction={confirmAction}
         setAlertOpen={setAlertOpen}
       />
+      {post?.medias?.length ? (
+        <PostMediaLightbox
+          medias={post.medias}
+          initialIndex={mediaLightboxIndex}
+          initialVideoTime={videoTimesRef.current[mediaLightboxIndex] ?? 0}
+          open={mediaLightboxOpen}
+          onOpenChange={setMediaLightboxOpen}
+        />
+      ) : null}
     </Card>
   );
 };

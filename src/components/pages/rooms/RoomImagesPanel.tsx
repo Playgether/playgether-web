@@ -14,6 +14,14 @@ import {
   storedValueFromUploadResult,
 } from "@/app/utils/roomAmbientMedia";
 import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
+import {
+  BYTES_10_MB,
+  BYTES_100_MB,
+  BYTES_8_MB,
+  CLOUDINARY_IMAGE_AND_VIDEO_FORMATS,
+  CLOUDINARY_IMAGE_FORMATS,
+  createDualPresetUploadHandlers,
+} from "@/app/utils/cloudinaryUploadConfig";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useRoomPermissions } from "@/context/RoomPermissionsContext";
@@ -29,7 +37,7 @@ import {
   Sunrise,
   Trash2,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const PERIODS = [
   { key: "morning" as const, label: "Manhã", Icon: Sunrise },
@@ -74,6 +82,64 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
 
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  const ambientUploadHandlers = useMemo(
+    () =>
+      createDualPresetUploadHandlers({
+        signatureEndpoint: "/api/signed-room-ambiance",
+        imagePreset: PresetsCloudinary.rooms_ambiance,
+        videoPreset: PresetsCloudinary.rooms_ambiance_videos,
+        validatePreBatch: (done, data) => {
+          const file = data?.files?.[0] as File | undefined;
+          if (!file) {
+            done();
+            return;
+          }
+          if (!file.type?.startsWith("video/")) {
+            setError(null);
+            done();
+            return;
+          }
+          const objectUrl = URL.createObjectURL(file);
+          const video = document.createElement("video");
+          video.preload = "metadata";
+          video.onloadedmetadata = () => {
+            URL.revokeObjectURL(objectUrl);
+            const w = video.videoWidth;
+            const h = video.videoHeight;
+            const long = Math.max(w, h);
+            const short = Math.min(w, h);
+            if (
+              !Number.isFinite(video.duration) ||
+              video.duration > AMBIENT_VIDEO_MAX_DURATION_SEC + 0.25
+            ) {
+              setError("Vídeo: duração máxima de 3 minutos.");
+              done({ cancel: true });
+              return;
+            }
+            if (
+              long > AMBIENT_VIDEO_MAX_LONG_SIDE ||
+              short > AMBIENT_VIDEO_MAX_SHORT_SIDE
+            ) {
+              setError(
+                "Vídeo: resolução máxima Full HD (1920×1080, qualquer orientação).",
+              );
+              done({ cancel: true });
+              return;
+            }
+            setError(null);
+            done();
+          };
+          video.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            setError("Não foi possível ler o vídeo. Tente outro arquivo.");
+            done({ cancel: true });
+          };
+          video.src = objectUrl;
+        },
+      }),
+    [],
+  );
 
   /** Evita onSuccess duplicado do widget Cloudinary (mesmo upload). */
   const lastAmbientDedupe = useRef<string | null>(null);
@@ -279,6 +345,8 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
                     multiple: false,
                     maxFiles: 1,
                     resourceType: "image",
+                    clientAllowedFormats: [...CLOUDINARY_IMAGE_FORMATS],
+                    maxImageFileSize: BYTES_8_MB,
                     language: "pt-br",
                     styles: { zIndex: 200000 },
                   }}
@@ -382,61 +450,16 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
                           multiple: false,
                           maxFiles: 1,
                           resourceType: "auto",
-                          clientAllowedFormats: ["image", "video"],
-                          maxVideoFileSize: 100 * 1024 * 1024,
+                          clientAllowedFormats: [
+                            ...CLOUDINARY_IMAGE_AND_VIDEO_FORMATS,
+                          ],
+                          maxImageFileSize: BYTES_10_MB,
+                          maxVideoFileSize: BYTES_100_MB,
                           language: "pt-br",
                           styles: { zIndex: 200000 },
-                          preBatch: (cb, data) => {
-                            const file = data?.files?.[0] as File | undefined;
-                            if (!file) {
-                              cb();
-                              return;
-                            }
-                            if (!file.type?.startsWith("video/")) {
-                              setError(null);
-                              cb();
-                              return;
-                            }
-                            const objectUrl = URL.createObjectURL(file);
-                            const video = document.createElement("video");
-                            video.preload = "metadata";
-                            video.onloadedmetadata = () => {
-                              URL.revokeObjectURL(objectUrl);
-                              const w = video.videoWidth;
-                              const h = video.videoHeight;
-                              const long = Math.max(w, h);
-                              const short = Math.min(w, h);
-                              if (
-                                !Number.isFinite(video.duration) ||
-                                video.duration >
-                                  AMBIENT_VIDEO_MAX_DURATION_SEC + 0.25
-                              ) {
-                                setError("Vídeo: duração máxima de 3 minutos.");
-                                cb({ cancel: true });
-                                return;
-                              }
-                              if (
-                                long > AMBIENT_VIDEO_MAX_LONG_SIDE ||
-                                short > AMBIENT_VIDEO_MAX_SHORT_SIDE
-                              ) {
-                                setError(
-                                  "Vídeo: resolução máxima Full HD (1920×1080, qualquer orientação).",
-                                );
-                                cb({ cancel: true });
-                                return;
-                              }
-                              setError(null);
-                              cb();
-                            };
-                            video.onerror = () => {
-                              URL.revokeObjectURL(objectUrl);
-                              setError(
-                                "Não foi possível ler o vídeo. Tente outro arquivo.",
-                              );
-                              cb({ cancel: true });
-                            };
-                            video.src = objectUrl;
-                          },
+                          preBatch: ambientUploadHandlers.preBatch,
+                          prepareUploadParams:
+                            ambientUploadHandlers.prepareUploadParams,
                         }}
                         onSuccess={(result: unknown) =>
                           void handleAmbientUploadSuccess(

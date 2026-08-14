@@ -359,9 +359,10 @@ export function GamesCanvasUserProfile({
               </div>
             </div>
           </div>
-          <div className="mt-1 pl-11">
+          <div className="mt-1 min-w-0 pl-11">
             <HighlightedAchievementBadges
               achievements={profile?.highlighted_achievements}
+              className="min-w-0"
             />
           </div>
 
@@ -497,9 +498,10 @@ export function GamesCanvasUserProfile({
                 </Badge>
                 */}
               </div>
-              <div className="mt-1">
+              <div className="mt-1 min-w-0">
                 <HighlightedAchievementBadges
                   achievements={profile?.highlighted_achievements}
+                  className="min-w-0"
                 />
               </div>
             </div>

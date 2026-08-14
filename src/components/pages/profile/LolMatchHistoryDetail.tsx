@@ -54,14 +54,16 @@ export function LolMatchHistoryDetail({
             <span className="font-medium text-foreground text-sm">
               {detail.queueLabel}
             </span>
-            {detail.isRemake ? (
-              <p className="mt-1 text-sm font-bold text-zinc-400">Remake</p>
+                {detail.isRemake ? (
+              <p className="mt-1 text-sm font-bold text-zinc-500 dark:text-zinc-400">
+                Remake
+              </p>
             ) : detail.viewerResult ? (
               <p
                 className={`mt-1 text-sm font-bold ${
                   detail.viewerResult === "win"
-                    ? "text-emerald-400"
-                    : "text-rose-500"
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-rose-600 dark:text-rose-500"
                 }`}
               >
                 {detail.viewerResult === "win" ? "Vitória" : "Derrota"}
@@ -118,8 +120,10 @@ export function LolMatchHistoryDetail({
                 const isBlue = p.teamId === 100;
                 const border = isBlue
                   ? "border-l-[3px] border-l-sky-500"
-                  : "border-l-[3px] border-l-red-600";
-                const rowBg = isBlue ? "bg-sky-950/40" : "bg-red-950/40";
+                  : "border-l-[3px] border-l-rose-500 dark:border-l-red-600";
+                const rowBg = isBlue
+                  ? "bg-sky-100/70 dark:bg-sky-950/40"
+                  : "bg-rose-100/70 dark:bg-red-950/40";
                 const eloText = eloLabelFromParticipant(p);
                 const laneText =
                   p.laneLabel && p.laneLabel !== "UNKNOWN"
@@ -129,7 +133,7 @@ export function LolMatchHistoryDetail({
                 return (
                   <React.Fragment key={participantKey}>
                     {firstRedIndex > 0 && idx === firstRedIndex ? (
-                      <tr className="border-y border-border/70 bg-red-950/50 text-muted-foreground">
+                      <tr className="border-y border-border/70 bg-rose-100/80 dark:bg-red-950/50 text-muted-foreground">
                         <th className="px-2 py-2 w-[220px] text-left font-medium">
                           Jogador
                         </th>
@@ -210,7 +214,7 @@ export function LolMatchHistoryDetail({
                             <span
                               className={`block truncate text-left font-medium text-[11px] ${
                                 p.isViewer
-                                  ? "text-amber-400"
+                                  ? "text-amber-700 dark:text-amber-400"
                                   : "text-foreground"
                               }`}
                               title={p.riotId}
@@ -286,7 +290,7 @@ export function LolMatchHistoryDetail({
                       <td className="px-2 py-2 align-top whitespace-nowrap">
                         <div className="font-semibold tabular-nums">
                           {p.kills} /{" "}
-                          <span className="text-rose-400">{p.deaths}</span> /{" "}
+                          <span className="text-rose-600 dark:text-rose-400">{p.deaths}</span> /{" "}
                           {p.assists}
                         </div>
                         <div className="text-muted-foreground">
@@ -382,8 +386,8 @@ export function LolMatchHistoryDetail({
           <TeamPanel
             title="Equipe azul"
             win={blueWin}
-            accentTitleClass="text-sky-200"
-            panelClass="border-sky-600/70 bg-sky-950/45"
+            accentTitleClass="text-sky-800 dark:text-sky-200"
+            panelClass="border-sky-300/90 bg-sky-50 dark:border-sky-600/70 dark:bg-sky-950/45"
             objectives={blue?.objectives}
             kills={detail.summary.blueKills}
             gold={detail.summary.blueGold}
@@ -393,8 +397,8 @@ export function LolMatchHistoryDetail({
           <TeamPanel
             title="Equipe vermelha"
             win={redWin}
-            accentTitleClass="text-red-200"
-            panelClass="border-red-600/70 bg-red-950/45"
+            accentTitleClass="text-rose-800 dark:text-red-200"
+            panelClass="border-rose-300/90 bg-rose-50 dark:border-red-600/70 dark:bg-red-950/45"
             objectives={red?.objectives}
             kills={detail.summary.redKills}
             gold={detail.summary.redGold}
@@ -474,7 +478,7 @@ function TeamPanel({
         {title}
       </div>
       <div
-        className={`mt-1 text-sm font-bold ${win ? "text-emerald-400" : "text-rose-500"}`}
+        className={`mt-1 text-sm font-bold ${win ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-500"}`}
       >
         {win ? "Vitória" : "Derrota"}
       </div>

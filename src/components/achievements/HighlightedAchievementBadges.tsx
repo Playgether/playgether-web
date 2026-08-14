@@ -427,12 +427,16 @@ export function HighlightedAchievementBadges({
       );
       if (available <= 0) return;
 
+      // Folga para borda/glow dos chips — sem isso o estágio “cabe” na
+      // medição mas a row com overflow corta o último/meio badge.
+      const fitBudget = Math.max(0, available - 8);
+
       let chosen: number = 0;
       for (let i = 0; i < TITLE_STAGES.length; i++) {
         const stage = TITLE_STAGES[i];
         const el = measureRefs.current[i];
         if (!el) continue;
-        if (el.scrollWidth <= available + 1) {
+        if (el.scrollWidth <= fitBudget) {
           chosen = stage;
           break;
         }
@@ -485,8 +489,10 @@ export function HighlightedAchievementBadges({
 
         <div
           className={cn(
-            "flex w-full max-w-full items-center overflow-hidden",
-            resolvedIconOnly ? "flex-nowrap gap-0.5" : "flex-nowrap gap-1",
+            "flex w-full max-w-full items-center py-0.5",
+            resolvedIconOnly
+              ? "flex-nowrap gap-0.5 overflow-x-auto scrollbar-none"
+              : "flex-wrap gap-1 overflow-visible",
           )}
         >
           <BadgesRow

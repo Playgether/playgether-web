@@ -188,6 +188,7 @@ function MediaPostCard({
             <div className="relative w-full h-full bg-muted">
               <VideoComponent
                 media_id={firstMedia.media_file}
+                allowFullscreen={false}
                 className="object-cover w-full h-full"
                 preload="metadata"
               />

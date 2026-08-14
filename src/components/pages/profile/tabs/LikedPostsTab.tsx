@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, Heart, MessageCircle } from "lucide-react";
+import { Clock, Heart, Images, MessageCircle, Play } from "lucide-react";
 import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 import type { PostProps } from "@/app/feed/types/PostProps";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
+import { useProfilePostsContext } from "@/app/profile/context/ProfilePostsContext";
+import { CldImage } from "next-cloudinary";
 
 async function fetchLikedPosts(cursor: string | null): Promise<{ data: PostProps[]; next_page: string | null }> {
   const params = new URLSearchParams({ page_size: "10" });
@@ -22,6 +24,7 @@ interface LikedPostsTabProps {
 }
 
 export function LikedPostsTab({ onPostClick }: LikedPostsTabProps) {
+  const { injectPost } = useProfilePostsContext();
   const [posts, setPosts] = useState<PostProps[]>([]);
   const [nextPage, setNextPage] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -61,6 +64,14 @@ export function LikedPostsTab({ onPostClick }: LikedPostsTabProps) {
     }
   }, [nextPage, isLoadingMore]);
 
+  const handlePostClick = useCallback(
+    (post: PostProps) => {
+      injectPost(post);
+      onPostClick(post.id);
+    },
+    [injectPost, onPostClick]
+  );
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -81,7 +92,7 @@ export function LikedPostsTab({ onPostClick }: LikedPostsTabProps) {
   return (
     <div className="space-y-4">
       {posts.map((post) => (
-        <LikedPostCard key={post.id} post={post} onClick={() => onPostClick(post.id)} />
+        <LikedPostCard key={post.id} post={post} onClick={() => handlePostClick(post)} />
       ))}
       {nextPage && (
         <div className="flex justify-center pt-2">
@@ -112,12 +123,37 @@ function LikedPostCard({ post, onClick }: { post: PostProps; onClick: () => void
       ? post.comment.slice(0, 200) + "..."
       : post.comment;
 
+  const medias = post.medias ?? [];
+  const mediaCount = medias.length;
+  const firstMedia = medias[0];
+  const hasMedia = Boolean(post.has_post_media && firstMedia);
+  const isVideo =
+    firstMedia?.media_type?.toLowerCase().includes("video") ||
+    firstMedia?.file_format?.toLowerCase().includes("mp4") ||
+    firstMedia?.file_format?.toLowerCase().includes("webm");
+
+  const stats = (
+    <div className="flex items-center gap-4">
+      <div className="flex items-center gap-1.5 text-rose-500">
+        <Heart className="h-4 w-4 fill-rose-500" />
+        <span className="text-xs">{post.quantity_likes}</span>
+      </div>
+      <div
+        className="flex items-center gap-1.5 text-muted-foreground"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <MessageCircle className="h-4 w-4" />
+        <span className="text-xs">{post.quantity_comment}</span>
+      </div>
+    </div>
+  );
+
   return (
     <Card
       className="hover:shadow-card transition-shadow duration-200 cursor-pointer"
       onClick={onClick}
     >
-      <CardContent className="p-4 space-y-3">
+      <CardContent className="space-y-2.5 p-3 sm:p-4">
         <div className="flex items-center gap-2.5">
           <ProfileAvatar
             displayName={post.name ?? ""}
@@ -127,33 +163,51 @@ function LikedPostCard({ post, onClick }: { post: PostProps; onClick: () => void
             fallbackTextClassName="text-xs"
           />
           <div className="min-w-0">
-            <p className="text-sm font-medium text-foreground leading-none truncate">
+            <p className="truncate text-sm font-medium leading-none text-foreground">
               {post.name || post.username}
             </p>
-            <p className="text-xs text-muted-foreground truncate">@{post.username}</p>
+            <p className="truncate text-xs text-muted-foreground">@{post.username}</p>
           </div>
-          <span className="ml-auto text-xs text-muted-foreground flex items-center gap-1 shrink-0">
+          <span className="ml-auto flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
             <Clock className="h-3 w-3" />
             <DateAndHour date={post.timestamp} />
           </span>
         </div>
 
-        {truncated && (
-          <p className="text-sm text-foreground leading-relaxed line-clamp-3">{truncated}</p>
-        )}
+        <div className="flex items-start gap-3">
+          <div className="min-w-0 flex-1 space-y-2">
+            {truncated ? (
+              <p className="line-clamp-3 text-sm leading-snug text-foreground">
+                {truncated}
+              </p>
+            ) : hasMedia ? (
+              <p className="text-xs italic text-muted-foreground">Post com mídia</p>
+            ) : null}
+            {stats}
+          </div>
 
-        <div className="flex items-center gap-4 pt-1 border-t border-border">
-          <div className="flex items-center gap-1.5 text-rose-500">
-            <Heart className="h-4 w-4 fill-rose-500" />
-            <span className="text-xs">{post.quantity_likes}</span>
-          </div>
-          <div
-            className="flex items-center gap-1.5 text-muted-foreground"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <MessageCircle className="h-4 w-4" />
-            <span className="text-xs">{post.quantity_comment}</span>
-          </div>
+          {hasMedia && firstMedia ? (
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-muted">
+              <CldImage
+                src={firstMedia.media_file}
+                alt=""
+                width={56}
+                height={56}
+                className="h-full w-full object-cover"
+              />
+              {isVideo ? (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/35">
+                  <Play className="h-3.5 w-3.5 fill-white text-white" />
+                </div>
+              ) : null}
+              {mediaCount > 1 ? (
+                <div className="absolute bottom-0.5 right-0.5 flex items-center gap-0.5 rounded bg-black/70 px-1 py-0.5 text-[10px] font-medium leading-none text-white">
+                  <Images className="h-2.5 w-2.5" />
+                  {mediaCount}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </CardContent>
     </Card>

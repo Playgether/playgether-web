@@ -116,6 +116,7 @@ export function ProfilePostsProvider({
     posts: PostProps[];
     nextPage: string | null;
   }>({ posts: [], nextPage: null });
+  const [injectedPosts, setInjectedPosts] = useState<PostProps[]>([]);
 
   const hasActiveMediaFilters = !!(mediaSearch.trim() || mediaDateFrom || mediaDateTo);
   const hasActiveTextFilters = !!(textSearch.trim() || textDateFrom || textDateTo);
@@ -287,6 +288,7 @@ export function ProfilePostsProvider({
   const removePost = useCallback((postId: number) => {
     setMediaPosts((prev) => prev.filter((p) => p.id !== postId));
     setTextPosts((prev) => prev.filter((p) => p.id !== postId));
+    setInjectedPosts((prev) => prev.filter((p) => p.id !== postId));
     setMediaCache((c) => ({
       ...c,
       posts: c.posts.filter((p) => p.id !== postId),
@@ -315,9 +317,17 @@ export function ProfilePostsProvider({
   const getPostById = useCallback(
     (postId: number) =>
       mediaPosts.find((p) => p.id === postId) ??
-      textPosts.find((p) => p.id === postId),
-    [mediaPosts, textPosts]
+      textPosts.find((p) => p.id === postId) ??
+      injectedPosts.find((p) => p.id === postId),
+    [mediaPosts, textPosts, injectedPosts]
   );
+
+  const injectPost = useCallback((post: PostProps) => {
+    setInjectedPosts((prev) => {
+      if (prev.some((p) => p.id === post.id)) return prev;
+      return [post, ...prev];
+    });
+  }, []);
 
   const handleLike = useCallback((postId: number) => {
     updatePostInLists(postId, (p) => ({
@@ -327,6 +337,19 @@ export function ProfilePostsProvider({
         ? p.quantity_likes - 1
         : p.quantity_likes + 1,
     }));
+    setInjectedPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId
+          ? {
+              ...p,
+              user_already_like: !p.user_already_like,
+              quantity_likes: p.user_already_like
+                ? p.quantity_likes - 1
+                : p.quantity_likes + 1,
+            }
+          : p
+      )
+    );
   }, [updatePostInLists]);
 
   const increaseCommentCount = useCallback((postId: number) => {
@@ -334,6 +357,13 @@ export function ProfilePostsProvider({
       ...p,
       quantity_comment: p.quantity_comment + 1,
     }));
+    setInjectedPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId
+          ? { ...p, quantity_comment: p.quantity_comment + 1 }
+          : p
+      )
+    );
   }, [updatePostInLists]);
 
   const decreaseCommentCount = useCallback((postId: number) => {
@@ -341,9 +371,16 @@ export function ProfilePostsProvider({
       ...p,
       quantity_comment: Math.max(0, p.quantity_comment - 1),
     }));
+    setInjectedPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId
+          ? { ...p, quantity_comment: Math.max(0, p.quantity_comment - 1) }
+          : p
+      )
+    );
   }, [updatePostInLists]);
 
-  const posts = [...mediaPosts, ...textPosts];
+  const posts = [...mediaPosts, ...textPosts, ...injectedPosts];
 
   const feedContextValue: FeedContextType = {
     posts,
@@ -362,7 +399,7 @@ export function ProfilePostsProvider({
     isFetchingNextPage: false,
     increaseCommentCount,
     decreaseCommentCount,
-    injectPost: () => {},
+    injectPost,
     handleAuthorFollow: () => {},
   };
 

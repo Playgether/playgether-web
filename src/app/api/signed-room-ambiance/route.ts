@@ -1,32 +1,12 @@
-import { v2 as cloudinary } from "cloudinary";
-import { PresetsCloudinary } from "../../../components/content_types/PresetsCloudinary";
+import { signCloudinaryUploadParams } from "../_lib/signCloudinaryUpload";
 
-cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-/**
- * Upload assinado para mídia de ambientação por período (preset `rooms-ambiance`).
- * No Cloudinary, o preset precisa aceitar imagem e vídeo (e limites desejados no painel).
- */
+/** Upload assinado para ambientação (preset image ou video). */
 export async function POST(request: Request) {
   const body = await request.json();
   const { paramsToSign } = body;
-
-  paramsToSign.upload_preset = PresetsCloudinary.rooms_ambiance;
-
-  if (!process.env.CLOUDINARY_API_SECRET) {
-    throw new Error(
-      "CLOUDINARY_API_SECRET não está definido nas variáveis de ambiente."
-    );
-  }
-
-  const signature = cloudinary.utils.api_sign_request(
+  const result = await signCloudinaryUploadParams(
     paramsToSign,
-    process.env.CLOUDINARY_API_SECRET
+    "rooms_ambiance",
   );
-
-  return Response.json({ signature });
+  return Response.json(result);
 }

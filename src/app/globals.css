@@ -627,6 +627,14 @@ All colors MUST be HSL.
     opacity: 1;
   }
 
+  /*
+   * `controlsList="nofullscreen"` bloqueia a ação, mas o Chromium pode manter
+   * o botão desabilitado visível. Esta classe também remove o botão da UI.
+   */
+  .video-controls-no-fullscreen::-webkit-media-controls-fullscreen-button {
+    display: none !important;
+  }
+
   /* Better contrast class */
   .bg-better-contrast {
     background-color: hsl(var(--better-contrast));

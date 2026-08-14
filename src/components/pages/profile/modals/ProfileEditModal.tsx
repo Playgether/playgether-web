@@ -18,6 +18,11 @@ import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import { CustomToastProps } from "@/error/custom-toaster/enum";
 import { patchProfile, PROFILE_BIO_MAX_LENGTH } from "@/services/patchProfile";
 import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
+import {
+  BYTES_8_MB,
+  BYTES_10_MB,
+  CLOUDINARY_IMAGE_FORMATS,
+} from "@/app/utils/cloudinaryUploadConfig";
 import type { getProfileByUsernameProps } from "@/services/getProfileByUsername";
 import { useAuthContext } from "@/context/AuthContext";
 import axios from "axios";
@@ -370,7 +375,9 @@ export function ProfileEditModal({
                     cropping: true,
                     croppingAspectRatio: 3,
                     language: "pt-br",
-                    clientAllowedFormats: ["image"],
+                    clientAllowedFormats: [...CLOUDINARY_IMAGE_FORMATS],
+                    maxImageFileSize: BYTES_10_MB,
+                    resourceType: "image",
                   }}
                   onSuccess={handleBannerUploadSuccess}
                   onError={handleBannerUploadError}
@@ -437,7 +444,9 @@ export function ProfileEditModal({
                     cropping: true,
                     croppingAspectRatio: 1,
                     language: "pt-br",
-                    clientAllowedFormats: ["image"],
+                    clientAllowedFormats: [...CLOUDINARY_IMAGE_FORMATS],
+                    maxImageFileSize: BYTES_8_MB,
+                    resourceType: "image",
                   }}
                   onSuccess={handleUploadSuccess}
                   onError={handleUploadError}

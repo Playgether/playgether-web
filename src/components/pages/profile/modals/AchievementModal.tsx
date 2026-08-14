@@ -186,26 +186,26 @@ export function AchievementModal({
                 />
               ) : null}
 
-              <div className="relative z-10 p-6 pt-12">
+              <div className="relative z-10 p-6 pt-12 text-zinc-100">
                 <DialogClose
-                  className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none z-50 p-1"
+                  className="absolute right-4 top-4 rounded-sm text-zinc-200 opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none z-50 p-1"
                   aria-label="Fechar"
                 >
                   <X className="h-4 w-4" />
                 </DialogClose>
                 <DialogHeader className="text-left">
-                  <DialogTitle className="flex items-center gap-2 text-left">
+                  <DialogTitle className="flex items-center gap-2 text-left text-zinc-50">
                     <span>{achievement.icon}</span>
                     {achievement.title}
                   </DialogTitle>
-                  <DialogDescription className="text-left">
+                  <DialogDescription className="text-left text-zinc-300">
                     {achievement.description}
                   </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-3 mt-4">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Raridade</span>
+                    <span className="text-zinc-400">Raridade</span>
                     <Badge
                       variant="outline"
                       className="text-white border-0 text-xs gap-1.5"
@@ -219,29 +219,31 @@ export function AchievementModal({
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Jogo</span>
-                    <span className="font-medium">{achievement.game}</span>
+                    <span className="text-zinc-400">Jogo</span>
+                    <span className="font-medium text-zinc-100">
+                      {achievement.game}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      Conquistado em
+                    <span className="text-zinc-400">Conquistado em</span>
+                    <span className="font-medium text-zinc-100">
+                      {achievement.date}
                     </span>
-                    <span className="font-medium">{achievement.date}</span>
                   </div>
                   {/* Taxa global (%): oculto no lançamento — poucos usuários distorce o número.
                       O backend pode continuar enviando `percentage`; reative quando houver base estável. */}
                   {/* <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">
+                    <span className="text-zinc-400">
                       % dos jogadores
                     </span>
-                    <span className="font-medium">
+                    <span className="font-medium text-zinc-100">
                       {achievement.percentage}%
                     </span>
                   </div> */}
 
                   {achievement.progression ? (
-                    <div className="pt-2 border-t border-border">
-                      <div className="text-sm font-medium mb-2">
+                    <div className="pt-2 border-t border-white/15">
+                      <div className="text-sm font-medium mb-2 text-zinc-100">
                         Caminho da Conquista
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -256,7 +258,7 @@ export function AchievementModal({
                               className={
                                 unlocked
                                   ? "text-white border-0"
-                                  : "border-border text-muted-foreground bg-muted/60"
+                                  : "border-white/20 text-zinc-300 bg-white/10"
                               }
                               style={
                                 unlocked
@@ -270,7 +272,7 @@ export function AchievementModal({
                         })}
                       </div>
                       {hasNextCheckpoint ? (
-                        <div className="text-sm text-muted-foreground mt-2">
+                        <div className="text-sm text-zinc-400 mt-2">
                           Próxima:{" "}
                           {achievement.progression!.unit === "h"
                             ? `${nextForView}h`
