@@ -1,8 +1,9 @@
 "use client";
 
 import { loadMoreChatRoomMessages } from "@/actions/loadMoreChatRoomMessages";
-import { getAmbientPeriodForNow } from "@/app/utils/roomAmbientPeriod";
 import {
+  getActiveAmbientMediaValue,
+  getRoomAmbientMode,
   parseAmbientMediaValue,
   resolveAmbientAbsoluteUrl,
 } from "@/app/utils/roomAmbientMedia";
@@ -79,6 +80,7 @@ export default function RoomChatMessagesPanel({
   const canDeleteMessages = can("messages.delete");
   const canKickMembers = can("members.kick");
   const canMuteMembers = can("members.mute");
+  const ambientMode = getRoomAmbientMode(room.ambient_images);
 
   const resolveAuthorId = useCallback(
     (message: ChatRoomMessages) => {
@@ -99,14 +101,14 @@ export default function RoomChatMessagesPanel({
   const loadingOlderRef = useRef(false);
 
   useEffect(() => {
+    if (ambientMode === "fixed") return;
     const id = window.setInterval(() => setTimeTick((t) => t + 1), 60_000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [ambientMode]);
 
   const ambientBackground = useMemo(() => {
-    const period = getAmbientPeriodForNow();
-    const raw = room.ambient_images?.[period];
-    const parsed = parseAmbientMediaValue(raw ? String(raw) : "");
+    const raw = getActiveAmbientMediaValue(room.ambient_images);
+    const parsed = parseAmbientMediaValue(raw);
     if (!parsed) return null;
     return { parsed, url: resolveAmbientAbsoluteUrl(parsed) };
   }, [room.ambient_images, timeTick]);

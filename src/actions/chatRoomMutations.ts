@@ -1,7 +1,7 @@
 "use server";
 
 import { api } from "@/services/api";
-import { ChatRoom } from "@/types/ChatRoom";
+import { ChatRoom, RoomAmbientSettings } from "@/types/ChatRoom";
 import { ChatRules } from "@/types/ChatRules";
 import { cookies } from "next/headers";
 
@@ -21,7 +21,7 @@ export async function patchChatRoomSettings(
     slug: string;
     banner: string | null;
     description: string;
-    ambient_images: Record<string, string>;
+    ambient_images: RoomAmbientSettings;
   }>
 ) {
   const headers = await bearerHeaders();

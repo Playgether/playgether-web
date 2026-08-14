@@ -369,6 +369,7 @@ export function ProfileEditModal({
                   signatureEndpoint="/api/signed-profile-banner"
                   options={{
                     uploadPreset: PresetsCloudinary.profile_banners,
+                    sources: ["local"],
                     multiple: false,
                     tags: [user?.username ?? "user", "profile", "banner"],
                     singleUploadAutoClose: true,
@@ -433,6 +434,7 @@ export function ProfileEditModal({
                   signatureEndpoint="/api/signed-profile"
                   options={{
                     uploadPreset: PresetsCloudinary.profile_image,
+                    sources: ["local"],
                     multiple: false,
                     tags: [
                       user?.username ?? "user",

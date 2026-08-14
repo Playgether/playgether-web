@@ -37,6 +37,7 @@ const ProfileCard = ({ children }: { children: React.ReactNode }) => {
         signatureEndpoint="/api/signed-profile"
         options={{
           uploadPreset: PresetsCloudinary.profile_image,
+          sources: ["local"],
           multiple: false,
           tags: [`${user?.username}`, "profile", "image", "user"],
           singleUploadAutoClose: false,

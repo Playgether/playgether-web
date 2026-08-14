@@ -9,7 +9,7 @@ import {
   canManageRoomSettings,
 } from "@/lib/roomPermissions";
 import { cn } from "@/lib/utils";
-import { ChatRoom } from "@/types/ChatRoom";
+import { ChatRoom, RoomAmbientSettings } from "@/types/ChatRoom";
 import { ChatRoomMessages } from "@/types/ChatRoomMessages";
 import {
   Gamepad2,
@@ -155,7 +155,7 @@ export default function RoomChatView({
   const [gameAccessNotice, setGameAccessNotice] = useState<string | null>(null);
   const [showSidebar, setShowSidebar] = useState(false);
   const [isFavorite, setIsFavorite] = useState(room.is_favorited ?? false);
-  const [ambientImages, setAmbientImages] = useState<Record<string, string>>(
+  const [ambientImages, setAmbientImages] = useState<RoomAmbientSettings>(
     room.ambient_images ?? {},
   );
   const [, startFavoriteTransition] = useTransition();
@@ -306,7 +306,7 @@ export default function RoomChatView({
         return (
           <div className="min-h-0 flex-1 overflow-hidden">
             <RoomImagesPanel
-              room={room}
+              room={{ ...room, ambient_images: ambientImages }}
               onAmbientImagesUpdated={setAmbientImages}
             />
           </div>

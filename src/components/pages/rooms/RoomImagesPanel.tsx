@@ -9,10 +9,12 @@ import {
   AMBIENT_VIDEO_MAX_DURATION_SEC,
   AMBIENT_VIDEO_MAX_LONG_SIDE,
   AMBIENT_VIDEO_MAX_SHORT_SIDE,
+  getRoomAmbientMode,
   parseAmbientMediaValue,
   resolveAmbientAbsoluteUrl,
   storedValueFromUploadResult,
 } from "@/app/utils/roomAmbientMedia";
+import type { AmbientPeriodKey } from "@/app/utils/roomAmbientPeriod";
 import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
 import {
   BYTES_10_MB,
@@ -26,7 +28,11 @@ import {
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useRoomPermissions } from "@/context/RoomPermissionsContext";
-import { ChatRoom } from "@/types/ChatRoom";
+import {
+  ChatRoom,
+  RoomAmbientMode,
+  RoomAmbientSettings,
+} from "@/types/ChatRoom";
 import { CldUploadWidget } from "next-cloudinary";
 import {
   CloudMoon,
@@ -47,11 +53,22 @@ const PERIODS = [
   { key: "dawn" as const, label: "Madrugada", Icon: CloudMoon },
 ] as const;
 
-type AmbientKey = (typeof PERIODS)[number]["key"];
+const FIXED_SLOT = {
+  key: "fixed" as const,
+  label: "Fundo fixo",
+  Icon: ImageIcon,
+};
 
-function ambientFromRoom(room: ChatRoom): Record<AmbientKey, string> {
+type AmbientMediaKey = AmbientPeriodKey | "fixed";
+type EditableAmbientSettings = Record<AmbientMediaKey, string> & {
+  mode: RoomAmbientMode;
+};
+
+function ambientFromRoom(room: ChatRoom): EditableAmbientSettings {
   const from = room.ambient_images ?? {};
   return {
+    mode: getRoomAmbientMode(from),
+    fixed: String(from.fixed ?? ""),
     morning: String(from.morning ?? ""),
     afternoon: String(from.afternoon ?? ""),
     night: String(from.night ?? ""),
@@ -61,17 +78,16 @@ function ambientFromRoom(room: ChatRoom): Record<AmbientKey, string> {
 
 interface RoomImagesPanelProps {
   room: ChatRoom;
-  onAmbientImagesUpdated?: (next: Record<string, string>) => void;
+  onAmbientImagesUpdated?: (next: RoomAmbientSettings) => void;
 }
 
 export default function RoomImagesPanel({
   room,
   onAmbientImagesUpdated,
 }: RoomImagesPanelProps) {
-  const [ambientBackgrounds, setAmbientBackgrounds] = useState<
-    Record<AmbientKey, string>
-  >(() => ambientFromRoom(room));
-  const ambientRef = useRef<Record<AmbientKey, string>>(ambientFromRoom(room));
+  const [ambientSettings, setAmbientSettings] =
+    useState<EditableAmbientSettings>(() => ambientFromRoom(room));
+  const ambientRef = useRef<EditableAmbientSettings>(ambientFromRoom(room));
 
   const [expandedImage, setExpandedImage] = useState<{
     url: string;
@@ -181,14 +197,14 @@ export default function RoomImagesPanel({
   useEffect(() => {
     const from = ambientFromRoom(room);
     ambientRef.current = from;
-    setAmbientBackgrounds(from);
+    setAmbientSettings(from);
     const b = room.banner ?? "";
     bannerRef.current = b;
     setBannerPublicId(b);
   }, [room.slug]);
 
   const persistAmbientImages = async (
-    next: Record<AmbientKey, string>,
+    next: EditableAmbientSettings,
   ): Promise<boolean> => {
     beginSave();
     setError(null);
@@ -223,13 +239,30 @@ export default function RoomImagesPanel({
     }
   };
 
-  const handleRemoveAmbient = (period: AmbientKey) => {
-    const previousId = ambientRef.current[period];
+  const handleAmbientModeChange = (mode: RoomAmbientMode) => {
+    if (mode === ambientRef.current.mode || !canManage || isSaving) return;
+    const snapshot = { ...ambientRef.current };
+    const next = { ...ambientRef.current, mode };
+    ambientRef.current = next;
+    setAmbientSettings(next);
+    void (async () => {
+      const ok = await persistAmbientImages(next);
+      if (ok) {
+        onAmbientImagesUpdated?.(next);
+      } else {
+        ambientRef.current = snapshot;
+        setAmbientSettings(snapshot);
+      }
+    })();
+  };
+
+  const handleRemoveAmbient = (key: AmbientMediaKey) => {
+    const previousId = ambientRef.current[key];
     if (!previousId || !canManage) return;
     const snapshot = { ...ambientRef.current };
-    const next = { ...ambientRef.current, [period]: "" };
+    const next = { ...ambientRef.current, [key]: "" };
     ambientRef.current = next;
-    setAmbientBackgrounds(next);
+    setAmbientSettings(next);
     void (async () => {
       const ok = await persistAmbientImages(next);
       if (ok) {
@@ -242,13 +275,13 @@ export default function RoomImagesPanel({
         }
       } else {
         ambientRef.current = snapshot;
-        setAmbientBackgrounds(snapshot);
+        setAmbientSettings(snapshot);
       }
     })();
   };
 
   const handleAmbientUploadSuccess = async (
-    period: AmbientKey,
+    key: AmbientMediaKey,
     result: {
       info?: {
         public_id?: string;
@@ -269,21 +302,21 @@ export default function RoomImagesPanel({
       return;
     }
 
-    const dedupeKey = `${period}:${stored}:${result?.info?.asset_id ?? ""}`;
+    const dedupeKey = `${key}:${stored}:${result?.info?.asset_id ?? ""}`;
     if (lastAmbientDedupe.current === dedupeKey) return;
     lastAmbientDedupe.current = dedupeKey;
 
-    const previousId = ambientRef.current[period] || "";
+    const previousId = ambientRef.current[key] || "";
     const snapshot = { ...ambientRef.current };
-    const next = { ...ambientRef.current, [period]: stored };
+    const next = { ...ambientRef.current, [key]: stored };
     ambientRef.current = next;
-    setAmbientBackgrounds(next);
+    setAmbientSettings(next);
 
     const ok = await persistAmbientImages(next);
     if (!ok) {
       await deleteCloudinaryRoomAmbientAsset(stored);
       ambientRef.current = snapshot;
-      setAmbientBackgrounds(snapshot);
+      setAmbientSettings(snapshot);
       return;
     }
 
@@ -407,16 +440,51 @@ export default function RoomImagesPanel({
       <div>
         <h3 className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
           <Sunrise className="h-3.5 w-3.5" />
-          Ambientação por horário
+          Ambientação do chat
         </h3>
+        <div className="mb-3 grid grid-cols-2 gap-1 rounded-lg border border-border/60 bg-muted/40 p-1">
+          {(
+            [
+              ["fixed", "Fundo fixo"],
+              ["schedule", "Por horário"],
+            ] as const
+          ).map(([mode, label]) => {
+            const active = ambientSettings.mode === mode;
+            return (
+              <button
+                key={mode}
+                type="button"
+                aria-pressed={active}
+                disabled={!canManage || isSaving}
+                onClick={() => handleAmbientModeChange(mode)}
+                className={`rounded-md px-3 py-2 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                  active
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
         <p className="mb-2 text-[11px] text-muted-foreground">
+          {ambientSettings.mode === "fixed"
+            ? "Use uma única mídia durante todo o dia. "
+            : "Defina uma mídia diferente para cada período. "}
           Imagem ou vídeo. Vídeo: até {AMBIENT_VIDEO_MAX_DURATION_SEC / 60} min,
-          Full HD ({AMBIENT_VIDEO_MAX_LONG_SIDE}×{AMBIENT_VIDEO_MAX_SHORT_SIDE}
-          px no máximo).
+          Full HD ({AMBIENT_VIDEO_MAX_LONG_SIDE}×
+          {AMBIENT_VIDEO_MAX_SHORT_SIDE}px no máximo).
         </p>
-        <div className="grid grid-cols-2 gap-2">
-          {PERIODS.map((p) => {
-            const rawAmbient = ambientBackgrounds[p.key];
+        <div
+          className={
+            ambientSettings.mode === "fixed"
+              ? "grid max-w-md grid-cols-1 gap-2"
+              : "grid grid-cols-2 gap-2"
+          }
+        >
+          {(ambientSettings.mode === "fixed" ? [FIXED_SLOT] : PERIODS).map((p) => {
+            const rawAmbient = ambientSettings[p.key];
             const parsedAmbient = parseAmbientMediaValue(rawAmbient);
             const hasMedia = !!parsedAmbient;
             return (

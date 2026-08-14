@@ -339,6 +339,7 @@ export default function AccountSettingsPage() {
             <div className="absolute bottom-2 right-2 flex gap-2">
               <CldUploadWidget
                 uploadPreset={PresetsCloudinary.profile_banners}
+                options={{ sources: ["local"] }}
                 onSuccess={(result: any) => { setNewBanner(result?.info?.public_id ?? null); setRemoveBanner(false); }}
               >
                 {({ open }) => (
@@ -366,6 +367,7 @@ export default function AccountSettingsPage() {
             <div className="flex gap-2">
               <CldUploadWidget
                 uploadPreset={PresetsCloudinary.profile_image}
+                options={{ sources: ["local"] }}
                 onSuccess={(result: any) => { setNewPhoto(result?.info?.public_id ?? null); setRemovePhoto(false); }}
               >
                 {({ open }) => (
