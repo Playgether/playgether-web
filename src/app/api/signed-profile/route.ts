@@ -1,11 +1,9 @@
-import { signCloudinaryUploadParams } from "../_lib/signCloudinaryUpload";
+import { handleSignedCloudinaryUpload } from "../_lib/handleSignedCloudinaryUpload";
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const { paramsToSign } = body;
-  const result = await signCloudinaryUploadParams(
-    paramsToSign,
+  return handleSignedCloudinaryUpload(
+    request,
     "profile_photos",
+    "signed-profile",
   );
-  return Response.json(result);
 }

@@ -1,12 +1,10 @@
-import { signCloudinaryUploadParams } from "../_lib/signCloudinaryUpload";
+import { handleSignedCloudinaryUpload } from "../_lib/handleSignedCloudinaryUpload";
 
 /** Upload assinado para banner de sala (preset `chat-room-banner`). */
 export async function POST(request: Request) {
-  const body = await request.json();
-  const { paramsToSign } = body;
-  const result = await signCloudinaryUploadParams(
-    paramsToSign,
+  return handleSignedCloudinaryUpload(
+    request,
     "chat_room_banner",
+    "signed-room-banner",
   );
-  return Response.json(result);
 }

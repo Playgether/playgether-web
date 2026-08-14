@@ -1,5 +1,3 @@
-import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
-
 /** Extensões aceitas no Upload Widget (alinhar ao Allowed formats do preset). */
 export const CLOUDINARY_IMAGE_FORMATS = [
   "jpg",
@@ -26,8 +24,8 @@ export const EAGER_WIDTHS_BANNER = [2560, 1920, 1280, 720] as const;
 export const EAGER_WIDTHS_PROFILE_PHOTO = [1024, 256, 128, 64] as const;
 export const EAGER_WIDTHS_VIDEO = [1280, 720] as const;
 
-export const POST_VIDEO_MAX_DURATION_SEC = 30;
-export const MILESTONE_VIDEO_MAX_DURATION_SEC = 60;
+export const POST_VIDEO_MAX_DURATION_SEC = 90;
+export const MILESTONE_VIDEO_MAX_DURATION_SEC = 30;
 export const AMBIENT_VIDEO_MAX_DURATION_SEC = 180;
 export const AMBIENT_VIDEO_MAX_LONG_SIDE = 1920;
 export const AMBIENT_VIDEO_MAX_SHORT_SIDE = 1080;
@@ -35,135 +33,158 @@ export const AMBIENT_VIDEO_MAX_SHORT_SIDE = 1080;
 const VIDEO_EXT_RE = /\.(mp4|mov|webm|m4v)$/i;
 const IMAGE_EXT_RE = /\.(jpe?g|png|webp|heic|heif|gif|avif)$/i;
 
-function isVideoLike(file: { type?: string; name?: string }): boolean {
-  if (file.type?.startsWith("video/")) return true;
-  if (file.type?.startsWith("image/")) return false;
-  const name = file.name ?? "";
+type PreBatchFileMeta = {
+  type?: string;
+  name?: string;
+  size?: number;
+  file?: unknown;
+  nativeFile?: unknown;
+  slice?: (start?: number, end?: number, contentType?: string) => Blob;
+};
+
+function isBlobLike(value: unknown): value is Blob {
+  // Não usar `instanceof Blob`: o Upload Widget pode rodar em iframe
+  // e o File vem de outro realm, falhando no instanceof do window pai.
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as PreBatchFileMeta;
+  return (
+    typeof candidate.size === "number" &&
+    typeof candidate.slice === "function" &&
+    typeof candidate.type === "string"
+  );
+}
+
+function isVideoLike(file: PreBatchFileMeta): boolean {
+  const blob = unwrapPreBatchBlob(file);
+  const type = (blob && "type" in blob ? blob.type : "") || file.type || "";
+  const name =
+    (blob && "name" in blob && typeof (blob as File).name === "string"
+      ? (blob as File).name
+      : undefined) ||
+    file.name ||
+    "";
+
+  if (type.startsWith("video/") || type === "video") return true;
+  if (type.startsWith("image/") || type === "image") return false;
   if (VIDEO_EXT_RE.test(name)) return true;
   if (IMAGE_EXT_RE.test(name)) return false;
   return false;
 }
 
+/**
+ * O Upload Widget nem sempre entrega um `File`/`Blob` puro em `data.files`.
+ * Em vários fluxos o item é um wrapper com `file` / `nativeFile`.
+ * Também evita `instanceof` por causa de arquivos vindos de iframe.
+ */
+export function unwrapPreBatchBlob(entry: unknown): Blob | null {
+  if (isBlobLike(entry)) return entry as Blob;
+  if (!entry || typeof entry !== "object") return null;
+
+  const candidate = entry as Record<string, unknown>;
+  for (const key of ["file", "nativeFile", "originalFile", "rawFile"]) {
+    if (isBlobLike(candidate[key])) return candidate[key] as Blob;
+  }
+  for (const value of Object.values(candidate)) {
+    if (isBlobLike(value)) return value as Blob;
+  }
+  return null;
+}
+
 function filesFromPreBatch(data: { files?: unknown[] }) {
   return (data?.files ?? []).filter(
-    (f): f is { type?: string; name?: string } =>
-      !!f && typeof f === "object",
+    (f): f is PreBatchFileMeta => !!f && typeof f === "object",
   );
 }
 
-/** Mensagem de lote misto — imagem e vídeo usam presets diferentes. */
-export const MIXED_MEDIA_BATCH_MESSAGE =
-  "Envie imagens e vídeos em seleções separadas.";
+function readVideoDuration(file: Blob): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    const release = () => URL.revokeObjectURL(objectUrl);
 
-/**
- * Handlers pareados (preBatch + prepareUploadParams) com estado isolado por widget.
- *
- * `prepareUploadParams` não recebe nenhuma identificação do arquivo e o widget
- * assina na ordem em que os uploads começam, que não é a ordem de seleção do
- * `preBatch`. Por isso o lote precisa ter um único tipo: assim o preset vale
- * para todos os arquivos e não depende de ordem.
- */
-export function createDualPresetUploadHandlers(opts: {
-  signatureEndpoint: string;
-  imagePreset: PresetsCloudinary;
-  videoPreset: PresetsCloudinary;
-  /** Avisa que o lote mistura imagem e vídeo (upload cancelado). */
-  onRejectMixedBatch?: (message: string) => void;
-  /**
-   * Validação extra no preBatch (ex.: duração de ambientação).
-   * Deve chamar done() ou done({ cancel: true }).
-   */
-  validatePreBatch?: (
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      const { duration } = video;
+      release();
+      if (!Number.isFinite(duration)) {
+        reject(new Error("Duração de vídeo inválida"));
+        return;
+      }
+      resolve(duration);
+    };
+    video.onerror = () => {
+      release();
+      reject(new Error("Não foi possível ler o vídeo"));
+    };
+    video.src = objectUrl;
+  });
+}
+
+export function createVideoDurationPreBatchValidator(opts: {
+  maxDurationSec: number;
+  onError: (message: string) => void;
+}) {
+  return (
     done: (options?: { cancel?: boolean }) => void,
     data: { files?: unknown[] },
-  ) => void;
-}) {
-  let batchKind: "image" | "video" = "image";
-  const apiKey = process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY;
-
-  /** Chamar ao abrir o widget: evita herdar o tipo do lote anterior. */
-  const reset = () => {
-    batchKind = "image";
-  };
-
-  const preBatch = (
-    cb: (options?: { cancel?: boolean }) => void,
-    data: { files?: unknown[] },
   ) => {
-    const kinds = new Set(
-      filesFromPreBatch(data).map((file) =>
-        isVideoLike(file) ? "video" : "image",
-      ),
-    );
-
-    if (kinds.size > 1) {
-      opts.onRejectMixedBatch?.(MIXED_MEDIA_BATCH_MESSAGE);
-      cb({ cancel: true });
+    const videos = filesFromPreBatch(data).filter(isVideoLike);
+    if (!videos.length) {
+      done();
       return;
     }
 
-    batchKind = kinds.has("video") ? "video" : "image";
-
-    if (opts.validatePreBatch) {
-      opts.validatePreBatch(cb, data);
-      return;
-    }
-    cb();
-  };
-
-  const prepareUploadParams = (
-    cb: (params: Record<string, unknown> | Record<string, unknown>[]) => void,
-    params: Record<string, unknown> | Record<string, unknown>[],
-  ) => {
-    if (!apiKey) {
-      cb({ error: "NEXT_PUBLIC_CLOUDINARY_API_KEY não definido" });
+    // O widget roda em iframe e normalmente entrega só metadados aqui.
+    // Sem o arquivo não dá para medir a duração: segue o upload e deixa a
+    // checagem definitiva para `videoExceedsMaxDuration` no onSuccess.
+    const blobs = videos
+      .map(unwrapPreBatchBlob)
+      .filter((blob): blob is Blob => !!blob);
+    if (!blobs.length) {
+      done();
       return;
     }
 
-    const looksVideo = batchKind === "video";
-    const upload_preset = looksVideo ? opts.videoPreset : opts.imagePreset;
-    const list = Array.isArray(params) ? params : [params];
-
-    void Promise.all(
-      list.map(async (entry) => {
-        const paramsToSign = { ...entry, upload_preset };
-
-        const response = await fetch(opts.signatureEndpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ paramsToSign }),
-        });
-        if (!response.ok) {
-          throw new Error(`Falha ao assinar upload (${response.status})`);
+    void Promise.all(blobs.map((blob) => readVideoDuration(blob)))
+      .then((durations) => {
+        if (
+          durations.some(
+            (duration) => duration > opts.maxDurationSec + 0.25,
+          )
+        ) {
+          opts.onError(
+            `Vídeos devem ter no máximo ${opts.maxDurationSec} segundos.`,
+          );
+          done({ cancel: true });
+          return;
         }
-        const result = (await response.json()) as { signature?: string };
-        if (!result.signature) {
-          throw new Error("Assinatura Cloudinary ausente na resposta");
-        }
-
-        return {
-          ...paramsToSign,
-          signature: result.signature,
-          api_key: apiKey,
-          resourceType: looksVideo ? "video" : "image",
-        };
-      }),
-    )
-      .then((results) => {
-        cb(results.length === 1 ? results[0]! : results);
+        done();
       })
-      .catch((error: unknown) => {
-        console.error("Cloudinary prepareUploadParams:", error);
-        cb({
-          error:
-            error instanceof Error
-              ? error.message
-              : "Falha ao preparar upload",
-        });
+      .catch(() => {
+        // Metadados ilegíveis aqui não devem travar o envio: o onSuccess
+        // ainda valida a duração informada pelo Cloudinary.
+        done();
       });
   };
+}
 
-  return { preBatch, prepareUploadParams, reset };
+export interface CloudinaryUploadInfo {
+  resource_type?: string;
+  duration?: number;
+  public_id?: string;
+  width?: number;
+  height?: number;
+}
+
+/** Duração real do asset, já processada pelo Cloudinary (só vem em vídeo). */
+export function videoExceedsMaxDuration(
+  info: CloudinaryUploadInfo | undefined,
+  maxDurationSec: number,
+): boolean {
+  if (info?.resource_type !== "video") return false;
+  const { duration } = info;
+  if (typeof duration !== "number" || !Number.isFinite(duration)) return false;
+  return duration > maxDurationSec + 0.25;
 }
 
 export function snapEagerWidth(

@@ -1,7 +1,7 @@
 import { CldUploadWidget } from "next-cloudinary";
 import { GoFileMedia } from "react-icons/go";
 import { useAuthContext } from "../../../../../../../context/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PostMediaProps } from "../../../../../../../services/postPost";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import { CustomToastProps } from "@/error/custom-toaster/enum";
@@ -11,6 +11,9 @@ import {
   BYTES_5_MB,
   BYTES_50_MB,
   CLOUDINARY_IMAGE_AND_VIDEO_FORMATS,
+  createVideoDurationPreBatchValidator,
+  POST_VIDEO_MAX_DURATION_SEC,
+  videoExceedsMaxDuration,
 } from "@/app/utils/cloudinaryUploadConfig";
 
 const Step3 = ({
@@ -23,9 +26,31 @@ const Step3 = ({
   const [widgetKey, setWidgetKey] = useState(0);
   const [activeUploads, setActiveUploads] = useState(0);
   const { user } = useAuthContext();
+  const validatePostVideoDuration = useMemo(
+    () =>
+      createVideoDurationPreBatchValidator({
+        maxDurationSec: POST_VIDEO_MAX_DURATION_SEC,
+        onError: (message) => {
+          CustomToast.error("Vídeo inválido", {
+            description: message,
+            duration: CustomToastProps.defaultDuration,
+          });
+        },
+      }),
+    [],
+  );
 
   const handleUploadSuccess = async (result) => {
-    console.log(result);
+    if (videoExceedsMaxDuration(result?.info, POST_VIDEO_MAX_DURATION_SEC)) {
+      deletePostFile(result.info.public_id, "", "video").catch(console.error);
+      CustomToast.error("Vídeo muito longo", {
+        description: `Vídeos devem ter no máximo ${POST_VIDEO_MAX_DURATION_SEC} segundos.`,
+        duration: CustomToastProps.defaultDuration,
+      });
+      setActiveUploads((prevCount) => prevCount - 1);
+      return;
+    }
+
     await setUploadedFiles((prevFiles: PostMediaProps[]) => [
       ...prevFiles,
       {
@@ -96,7 +121,9 @@ const Step3 = ({
       <div className="flex flex-col gap-1 w-full text-center">
         <p className="text-xs">Envie até 5 fotos ou vídeos.</p>
         <p className="text-xs">Fotos podem ter no máximo 5mb e vídeos 50mb.</p>
-        <p className="text-xs">Vídeos devem ter no máximo 30 segundos.</p>
+        <p className="text-xs">
+          Vídeos devem ter no máximo {POST_VIDEO_MAX_DURATION_SEC} segundos.
+        </p>
       </div>
       <div className="w-full flex justify-center pt-2">
         <CldUploadWidget
@@ -113,6 +140,7 @@ const Step3 = ({
             ],
             maxImageFileSize: BYTES_5_MB,
             maxVideoFileSize: BYTES_50_MB,
+            preBatch: validatePostVideoDuration,
             language: "pt-br",
             showCompletedButton: true,
             multiple: true,

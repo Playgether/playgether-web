@@ -1,12 +1,10 @@
-import { signCloudinaryUploadParams } from "../_lib/signCloudinaryUpload";
+import { handleSignedCloudinaryUpload } from "../_lib/handleSignedCloudinaryUpload";
 
-/** Upload assinado para ambientação (preset image ou video). */
+/** Upload assinado para ambientação (preset único de imagem e vídeo). */
 export async function POST(request: Request) {
-  const body = await request.json();
-  const { paramsToSign } = body;
-  const result = await signCloudinaryUploadParams(
-    paramsToSign,
+  return handleSignedCloudinaryUpload(
+    request,
     "rooms_ambiance",
+    "signed-room-ambiance",
   );
-  return Response.json(result);
 }

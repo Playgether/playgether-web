@@ -20,7 +20,8 @@ import {
   BYTES_8_MB,
   CLOUDINARY_IMAGE_AND_VIDEO_FORMATS,
   CLOUDINARY_IMAGE_FORMATS,
-  createDualPresetUploadHandlers,
+  unwrapPreBatchBlob,
+  videoExceedsMaxDuration,
 } from "@/app/utils/cloudinaryUploadConfig";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -63,7 +64,10 @@ interface RoomImagesPanelProps {
   onAmbientImagesUpdated?: (next: Record<string, string>) => void;
 }
 
-export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
+export default function RoomImagesPanel({
+  room,
+  onAmbientImagesUpdated,
+}: RoomImagesPanelProps) {
   const [ambientBackgrounds, setAmbientBackgrounds] = useState<
     Record<AmbientKey, string>
   >(() => ambientFromRoom(room));
@@ -83,61 +87,76 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const ambientUploadHandlers = useMemo(
+  const validateAmbientMedia = useMemo(
     () =>
-      createDualPresetUploadHandlers({
-        signatureEndpoint: "/api/signed-room-ambiance",
-        imagePreset: PresetsCloudinary.rooms_ambiance,
-        videoPreset: PresetsCloudinary.rooms_ambiance_videos,
-        validatePreBatch: (done, data) => {
-          const file = data?.files?.[0] as File | undefined;
-          if (!file) {
-            done();
-            return;
-          }
-          if (!file.type?.startsWith("video/")) {
-            setError(null);
-            done();
-            return;
-          }
-          const objectUrl = URL.createObjectURL(file);
-          const video = document.createElement("video");
-          video.preload = "metadata";
-          video.onloadedmetadata = () => {
-            URL.revokeObjectURL(objectUrl);
-            const w = video.videoWidth;
-            const h = video.videoHeight;
-            const long = Math.max(w, h);
-            const short = Math.min(w, h);
-            if (
-              !Number.isFinite(video.duration) ||
-              video.duration > AMBIENT_VIDEO_MAX_DURATION_SEC + 0.25
-            ) {
-              setError("Vídeo: duração máxima de 3 minutos.");
-              done({ cancel: true });
-              return;
-            }
-            if (
-              long > AMBIENT_VIDEO_MAX_LONG_SIDE ||
-              short > AMBIENT_VIDEO_MAX_SHORT_SIDE
-            ) {
-              setError(
-                "Vídeo: resolução máxima Full HD (1920×1080, qualquer orientação).",
-              );
-              done({ cancel: true });
-              return;
-            }
-            setError(null);
-            done();
-          };
-          video.onerror = () => {
-            URL.revokeObjectURL(objectUrl);
-            setError("Não foi possível ler o vídeo. Tente outro arquivo.");
+      (
+        done: (options?: { cancel?: boolean }) => void,
+        data: { files?: unknown[] },
+      ) => {
+        const entry = data?.files?.[0];
+        const file = unwrapPreBatchBlob(entry);
+        const meta =
+          entry && typeof entry === "object"
+            ? (entry as { type?: string; name?: string })
+            : null;
+        const mime = (file && "type" in file ? file.type : "") || meta?.type || "";
+        const name =
+          (file && "name" in file && typeof (file as File).name === "string"
+            ? (file as File).name
+            : undefined) ||
+          meta?.name ||
+          "";
+        const isVideo =
+          mime.startsWith("video/") ||
+          mime === "video" ||
+          /\.(mp4|mov|webm|m4v)$/i.test(name);
+
+        if (!file) {
+          done();
+          return;
+        }
+        if (!isVideo) {
+          setError(null);
+          done();
+          return;
+        }
+        const objectUrl = URL.createObjectURL(file);
+        const video = document.createElement("video");
+        video.preload = "metadata";
+        video.onloadedmetadata = () => {
+          URL.revokeObjectURL(objectUrl);
+          const w = video.videoWidth;
+          const h = video.videoHeight;
+          const long = Math.max(w, h);
+          const short = Math.min(w, h);
+          if (
+            !Number.isFinite(video.duration) ||
+            video.duration > AMBIENT_VIDEO_MAX_DURATION_SEC + 0.25
+          ) {
+            setError("Vídeo: duração máxima de 3 minutos.");
             done({ cancel: true });
-          };
-          video.src = objectUrl;
-        },
-      }),
+            return;
+          }
+          if (
+            long > AMBIENT_VIDEO_MAX_LONG_SIDE ||
+            short > AMBIENT_VIDEO_MAX_SHORT_SIDE
+          ) {
+            setError(
+              "Vídeo: resolução máxima Full HD (1920×1080, qualquer orientação).",
+            );
+            done({ cancel: true });
+            return;
+          }
+          setError(null);
+          done();
+        };
+        video.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          setError("Não foi possível ler o vídeo. Tente outro arquivo.");
+          done({ cancel: true });
+        };
+        video.src = objectUrl;
+      },
     [],
   );
 
@@ -235,11 +254,20 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
         public_id?: string;
         asset_id?: string;
         resource_type?: string;
+        duration?: number;
+        width?: number;
+        height?: number;
       };
     },
   ) => {
     const stored = storedValueFromUploadResult(result?.info ?? {});
     if (!stored || !canManage) return;
+
+    if (videoExceedsMaxDuration(result?.info, AMBIENT_VIDEO_MAX_DURATION_SEC)) {
+      await deleteCloudinaryRoomAmbientAsset(stored);
+      setError("Vídeo: duração máxima de 3 minutos.");
+      return;
+    }
 
     const dedupeKey = `${period}:${stored}:${result?.info?.asset_id ?? ""}`;
     if (lastAmbientDedupe.current === dedupeKey) return;
@@ -457,9 +485,7 @@ export default function RoomImagesPanel({ room }: RoomImagesPanelProps) {
                           maxVideoFileSize: BYTES_100_MB,
                           language: "pt-br",
                           styles: { zIndex: 200000 },
-                          preBatch: ambientUploadHandlers.preBatch,
-                          prepareUploadParams:
-                            ambientUploadHandlers.prepareUploadParams,
+                          preBatch: validateAmbientMedia,
                         }}
                         onSuccess={(result: unknown) =>
                           void handleAmbientUploadSuccess(

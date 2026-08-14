@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +28,9 @@ import {
   BYTES_5_MB,
   BYTES_50_MB,
   CLOUDINARY_IMAGE_AND_VIDEO_FORMATS,
+  createVideoDurationPreBatchValidator,
+  POST_VIDEO_MAX_DURATION_SEC,
+  videoExceedsMaxDuration,
 } from "@/app/utils/cloudinaryUploadConfig";
 
 export const CreatePostModal = () => {
@@ -37,6 +40,19 @@ export const CreatePostModal = () => {
   const [widgetKey, setWidgetKey] = useState(0);
   const [isWidgetOpen, setIsWidgetOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const validatePostVideoDuration = useMemo(
+    () =>
+      createVideoDurationPreBatchValidator({
+        maxDurationSec: POST_VIDEO_MAX_DURATION_SEC,
+        onError: (message) => {
+          CustomToast.error("Vídeo inválido", {
+            description: message,
+            duration: CustomToastProps.defaultDuration,
+          });
+        },
+      }),
+    [],
+  );
   const createPostContext = useCreatePostContext();
   const { user } = useAuthContext();
   const { profile } = useProfileContext();
@@ -62,6 +78,15 @@ export const CreatePostModal = () => {
   const handleUploadSuccess = async (result: any) => {
     const info = result?.info;
     if (!info || typeof info !== "object" || !info.public_id) {
+      return;
+    }
+
+    if (videoExceedsMaxDuration(info, POST_VIDEO_MAX_DURATION_SEC)) {
+      deletePostFile(info.public_id, "", "video").catch(console.error);
+      CustomToast.error("Vídeo muito longo", {
+        description: `Vídeos devem ter no máximo ${POST_VIDEO_MAX_DURATION_SEC} segundos.`,
+        duration: CustomToastProps.defaultDuration,
+      });
       return;
     }
 
@@ -327,6 +352,7 @@ export const CreatePostModal = () => {
                     ],
                     maxImageFileSize: BYTES_5_MB,
                     maxVideoFileSize: BYTES_50_MB,
+                    preBatch: validatePostVideoDuration,
                     language: "pt-br",
                     showCompletedButton: true,
                     multiple: true,

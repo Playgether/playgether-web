@@ -5,6 +5,7 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
 import VideoComponent from "@/components/layouts/VideoComponent/VideoComponent";
+import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -30,10 +31,18 @@ export function PostMediaLightbox({
   onOpenChange,
 }: PostMediaLightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [isMediaLoaded, setIsMediaLoaded] = useState(false);
 
   useEffect(() => {
-    if (open) setCurrentIndex(initialIndex);
+    if (open) {
+      setCurrentIndex(initialIndex);
+      setIsMediaLoaded(false);
+    }
   }, [initialIndex, open]);
+
+  useEffect(() => {
+    setIsMediaLoaded(false);
+  }, [currentIndex]);
 
   const currentMedia = medias[currentIndex];
   if (!currentMedia) return null;
@@ -93,23 +102,43 @@ export function PostMediaLightbox({
               : undefined
           }
         >
+          {!isMediaLoaded ? (
+            <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-white">
+              <LoadingComponent
+                showText
+                text="Carregando mídia..."
+                className="h-10 w-10 text-white"
+              />
+            </div>
+          ) : null}
+
           {isImage ? (
             <ImageComponent
+              key={currentMedia.media_file}
               media_id={currentMedia.media_file}
               alt="Post media fullscreen"
               delivery="master"
               objectFit="contain"
               objectPosition="center"
-              className="h-full w-full cursor-zoom-out"
+              className={cn(
+                "h-full w-full cursor-zoom-out transition-opacity duration-300",
+                isMediaLoaded ? "opacity-100" : "opacity-0",
+              )}
+              onLoadingComplete={() => setIsMediaLoaded(true)}
             />
           ) : (
             <VideoComponent
               key={currentMedia.media_file}
               media_id={currentMedia.media_file}
               delivery="master"
-              className="max-h-full max-w-full cursor-default object-contain"
+              className={cn(
+                "max-h-full max-w-full cursor-default object-contain transition-opacity duration-300",
+                isMediaLoaded ? "opacity-100" : "opacity-0",
+              )}
               controls
+              allowFullscreen={false}
               autoPlay
+              onLoadedData={() => setIsMediaLoaded(true)}
               onLoadedMetadata={(event) => {
                 if (currentIndex === initialIndex && initialVideoTime > 0) {
                   event.currentTarget.currentTime = initialVideoTime;

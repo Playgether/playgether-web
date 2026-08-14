@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,14 @@ import { CustomToast } from "@/components/ui/customSonner";
 import { CustomToastProps } from "@/error/custom-toaster/enum";
 import { deletePostFile } from "@/services/cloudinary_requests/deletePostFile";
 import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
+import {
+  BYTES_5_MB,
+  BYTES_50_MB,
+  CLOUDINARY_IMAGE_AND_VIDEO_FORMATS,
+  createVideoDurationPreBatchValidator,
+  MILESTONE_VIDEO_MAX_DURATION_SEC,
+  videoExceedsMaxDuration,
+} from "@/app/utils/cloudinaryUploadConfig";
 import type { MilestoneMediaInput } from "@/actions/milestones";
 import type {
   ProfileMilestone,
@@ -55,6 +63,19 @@ export function MilestoneModal({
   const [uploadedFiles, setUploadedFiles] = useState<MilestoneMediaInput[]>([]);
   const [widgetKey, setWidgetKey] = useState(0);
   const [isWidgetOpen, setIsWidgetOpen] = useState(false);
+  const validateMilestoneVideoDuration = useMemo(
+    () =>
+      createVideoDurationPreBatchValidator({
+        maxDurationSec: MILESTONE_VIDEO_MAX_DURATION_SEC,
+        onError: (message) => {
+          CustomToast.error("Vídeo inválido", {
+            description: message,
+            duration: CustomToastProps.defaultDuration,
+          });
+        },
+      }),
+    [],
+  );
 
   const handleWidgetOpen = () => {
     setIsWidgetOpen(true);
@@ -88,6 +109,16 @@ export function MilestoneModal({
   }, [isOpen, milestone]);
 
   const handleUploadSuccess = (result: any) => {
+    const info = result?.info;
+    if (videoExceedsMaxDuration(info, MILESTONE_VIDEO_MAX_DURATION_SEC)) {
+      deletePostFile(info.public_id, "", "video").catch(console.error);
+      CustomToast.error("Vídeo muito longo", {
+        description: `Vídeos devem ter no máximo ${MILESTONE_VIDEO_MAX_DURATION_SEC} segundos.`,
+        duration: CustomToastProps.defaultDuration,
+      });
+      return;
+    }
+
     setUploadedFiles((prev) => {
       if (prev.length >= 3) return prev;
       return [
@@ -247,9 +278,13 @@ export function MilestoneModal({
                       sources: ["local"],
                       maxFiles: 3 - uploadedFiles.length,
                       multiple: true,
-                      clientAllowedFormats: ["image", "video"],
-                      maxImageFileSize: 5000000,
-                      maxVideoFileSize: 50000000,
+                      resourceType: "auto",
+                      clientAllowedFormats: [
+                        ...CLOUDINARY_IMAGE_AND_VIDEO_FORMATS,
+                      ],
+                      maxImageFileSize: BYTES_5_MB,
+                      maxVideoFileSize: BYTES_50_MB,
+                      preBatch: validateMilestoneVideoDuration,
                       language: "pt-br",
                       showCompletedButton: true,
                     }}
