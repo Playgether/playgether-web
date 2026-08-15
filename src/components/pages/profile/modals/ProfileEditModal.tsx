@@ -105,13 +105,26 @@ export function ProfileEditModal({
         duration: CustomToastProps.defaultDuration,
       });
     } catch (err: any) {
+      let persistedDespiteError = false;
       try {
         await axios.post("/api/signed-delete-posts/", {
           public_id: publicId,
           resource_type: "image",
         });
       } catch (delErr) {
-        console.error("Erro ao remover mídia órfã:", delErr);
+        persistedDespiteError =
+          axios.isAxiosError(delErr) && delErr.response?.status === 409;
+        if (!persistedDespiteError) {
+          console.error("Erro ao remover mídia órfã:", delErr);
+        }
+      }
+      if (persistedDespiteError) {
+        onProfileUpdated({ profile_photo: publicId });
+        setOldProfilePhotoPublicId(publicId);
+        CustomToast.success("Foto de perfil atualizada!", {
+          duration: CustomToastProps.defaultDuration,
+        });
+        return;
       }
       setNewProfilePhoto(null);
       CustomToast.error("Erro ao salvar foto", {
@@ -195,13 +208,26 @@ export function ProfileEditModal({
         duration: CustomToastProps.defaultDuration,
       });
     } catch (err: any) {
+      let persistedDespiteError = false;
       try {
         await axios.post("/api/signed-delete-posts/", {
           public_id: publicId,
           resource_type: "image",
         });
       } catch (delErr) {
-        console.error("Erro ao remover mídia órfã:", delErr);
+        persistedDespiteError =
+          axios.isAxiosError(delErr) && delErr.response?.status === 409;
+        if (!persistedDespiteError) {
+          console.error("Erro ao remover mídia órfã:", delErr);
+        }
+      }
+      if (persistedDespiteError) {
+        onProfileUpdated({ profile_banner: publicId });
+        setOldProfileBannerPublicId(publicId);
+        CustomToast.success("Banner atualizado!", {
+          duration: CustomToastProps.defaultDuration,
+        });
+        return;
       }
       setNewProfileBanner(null);
       CustomToast.error("Erro ao salvar banner", {

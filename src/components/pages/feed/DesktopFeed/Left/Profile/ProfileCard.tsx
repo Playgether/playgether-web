@@ -6,13 +6,7 @@ import { useAuthContext } from "../../../../../../context/AuthContext";
 import DefaultButton from "../../../../../elements/DefaultButton/DefaultButton";
 import { useRouter } from "next/navigation";
 import ProfileImagePost from "../../Middle/PostsComponents/ProfileImagePost/ProfileImagePost";
-import { CldUploadWidget } from "next-cloudinary";
 import { IoCreateOutline } from "react-icons/io5";
-import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
-import {
-  BYTES_8_MB,
-  CLOUDINARY_IMAGE_FORMATS,
-} from "@/app/utils/cloudinaryUploadConfig";
 
 /** Este componente é o wrapper principal do card de profile na página feed. Seu intuito é ser o wrapper de todo o card e seus componentes filhos. */
 const ProfileCard = ({ children }: { children: React.ReactNode }) => {
@@ -33,29 +27,10 @@ const ProfileCard = ({ children }: { children: React.ReactNode }) => {
           className="h-full w-full"
         />
       </div>
-      <CldUploadWidget
-        signatureEndpoint="/api/signed-profile"
-        options={{
-          uploadPreset: PresetsCloudinary.profile_image,
-          sources: ["local"],
-          multiple: false,
-          tags: [`${user?.username}`, "profile", "image", "user"],
-          singleUploadAutoClose: false,
-          clientAllowedFormats: [...CLOUDINARY_IMAGE_FORMATS],
-          maxImageFileSize: BYTES_8_MB,
-          resourceType: "image",
-          language: "pt-br",
-        }}
-      >
-        {({ open }) => {
-          return (
-            <IoCreateOutline
-              className="h-8 w-8 cursor-pointer absolute top-2 right-2"
-              onClick={() => open()}
-            />
-          );
-        }}
-      </CldUploadWidget>
+      <IoCreateOutline
+        className="h-8 w-8 cursor-pointer absolute top-2 right-2"
+        onClick={() => route.push("/settings/account")}
+      />
       <div className="text-center w-full">{children}</div>
       <ProfileCardBio />
       <div className="flex space-x-3">

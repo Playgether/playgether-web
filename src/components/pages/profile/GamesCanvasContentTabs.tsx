@@ -36,7 +36,6 @@ import { deletePostProfile } from "@/services/deletePostProfile";
 import { getProfileMilestonesClient } from "@/services/getProfileMilestones";
 import { createMilestone, updateMilestone } from "@/actions/milestones";
 import { deleteMilestone } from "@/services/deleteMilestone";
-import { deletePostFile } from "@/services/cloudinary_requests/deletePostFile";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { GamesCanvasUserProfile } from "./GamesCanvasUserProfile";
 import { cn } from "@/lib/utils";
@@ -410,7 +409,7 @@ export function GamesCanvasContentTabs({
     date: string;
     medias: { media_url: string; media_type: "image" | "video"; public_id: string }[];
   }) => {
-    if (!profile) return;
+    if (!profile) return false;
     setIsMilestoneSubmitting(true);
     try {
       if (milestoneModalMode === "add") {
@@ -421,6 +420,7 @@ export function GamesCanvasContentTabs({
           CustomToast.success("Marco criado!", {
             duration: CustomToastProps.defaultDuration,
           });
+          return true;
         } else {
           throw new Error((res as any).error ?? "Erro ao criar marco");
         }
@@ -435,6 +435,7 @@ export function GamesCanvasContentTabs({
           CustomToast.success("Marco atualizado!", {
             duration: CustomToastProps.defaultDuration,
           });
+          return true;
         } else {
           throw new Error((res as any).error ?? "Erro ao atualizar marco");
         }
@@ -448,17 +449,16 @@ export function GamesCanvasContentTabs({
         description: msg,
         duration: CustomToastProps.defaultDuration,
       });
+      return false;
     } finally {
       setIsMilestoneSubmitting(false);
     }
+    return false;
   };
 
   const handleDeleteMilestone = async (milestone: any) => {
     setIsDeletingMilestone(true);
     try {
-      for (const m of milestone.medias ?? []) {
-        await deletePostFile(m.public_id, "", m.media_type).catch(console.error);
-      }
       await deleteMilestone(milestone.id);
       setMilestones((prev) => prev.filter((m) => m.id !== milestone.id));
       setConfirmModalOpen(false);

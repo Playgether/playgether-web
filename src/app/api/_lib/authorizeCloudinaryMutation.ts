@@ -15,6 +15,22 @@ export async function authorizeCloudinaryMutation(): Promise<void> {
   );
 }
 
+export async function authorizeCloudinaryDeleteMutation(
+  publicId: string,
+  resourceType: string,
+): Promise<void> {
+  const accessToken = await ensureAccessTokenCookie();
+  if (!accessToken) {
+    throw new CloudinaryAuthorizationError(401, "Não autorizado");
+  }
+
+  await api.post(
+    "/api/v1/uploads/authorize-delete/",
+    { public_id: publicId, resource_type: resourceType },
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  );
+}
+
 export class CloudinaryAuthorizationError extends Error {
   constructor(
     public readonly status: number,
@@ -34,7 +50,7 @@ export function cloudinaryMutationErrorResponse(
 
   if (axios.isAxiosError(error)) {
     const status = error.response?.status;
-    if (status === 401 || status === 403 || status === 429) {
+    if (status && status >= 400 && status < 500) {
       const message =
         error.response?.data?.detail ??
         (status === 429

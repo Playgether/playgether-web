@@ -1,20 +1,12 @@
-import { v2 as cloudinary } from "cloudinary";
 import {
-  authorizeCloudinaryMutation,
+  authorizeCloudinaryDeleteMutation,
   cloudinaryMutationErrorResponse,
 } from "../_lib/authorizeCloudinaryMutation";
 
-cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
 const ALLOWED_RESOURCE_TYPES = new Set(["image", "video"]);
 
 export async function POST(request: Request) {
   try {
-    await authorizeCloudinaryMutation();
-
     const body = (await request.json()) as {
       public_id?: unknown;
       resource_type?: unknown;
@@ -37,11 +29,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await cloudinary.uploader.destroy(publicId, {
-      invalidate: true,
-      resource_type: resourceType,
-    });
-    return Response.json(result);
+    await authorizeCloudinaryDeleteMutation(publicId, resourceType);
+    return Response.json(
+      { queued: true, public_id: publicId, resource_type: resourceType },
+      { status: 202 },
+    );
   } catch (error) {
     return cloudinaryMutationErrorResponse(error, "signed-delete-posts");
   }

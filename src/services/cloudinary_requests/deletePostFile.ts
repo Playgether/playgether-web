@@ -19,6 +19,11 @@ export async function deleteCloudinaryImage(
       });
       return true;
     } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 409) {
+        // O asset já foi persistido. A proteção do backend impediu apagar
+        // mídia viva (ex.: resposta do create/update se perdeu por timeout).
+        return true;
+      }
       console.error(
         `Erro ao excluir imagem no Cloudinary (tentativa ${attempt + 1}/3):`,
         error
@@ -47,6 +52,9 @@ export async function deleteCloudinaryRoomAmbientAsset(
       });
       return true;
     } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 409) {
+        return true;
+      }
       console.error(
         `Erro ao excluir mídia de ambientação (tentativa ${attempt + 1}/3):`,
         error,
@@ -68,6 +76,9 @@ export const deletePostFile = async (public_id:string, media_folder:string, medi
 
         return response.data;
     } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 409) {
+            return { protected: true };
+        }
         console.error('Algum erro ocorreu ao deletar o arquivo:', error);
         throw error;
     }

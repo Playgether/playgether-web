@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +16,11 @@ import { useProfileContext } from "@/context/ProfileContext";
 import { useAuthContext } from "@/context/AuthContext";
 import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
 import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
+import { deleteCloudinaryImage } from "@/services/cloudinary_requests/deletePostFile";
+import {
+  BYTES_8_MB,
+  CLOUDINARY_IMAGE_FORMATS,
+} from "@/app/utils/cloudinaryUploadConfig";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +39,8 @@ export default function AccountSettingsPage() {
   const [bio, setBio] = useState("");
   const [newPhoto, setNewPhoto] = useState<string | null>(null);
   const [newBanner, setNewBanner] = useState<string | null>(null);
+  const pendingPhotoRef = useRef<string | null>(null);
+  const pendingBannerRef = useRef<string | null>(null);
   const [removePhoto, setRemovePhoto] = useState(false);
   const [removeBanner, setRemoveBanner] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -77,6 +84,17 @@ export default function AccountSettingsPage() {
     }
   }, [profile]);
 
+  useEffect(() => {
+    return () => {
+      if (pendingPhotoRef.current) {
+        void deleteCloudinaryImage(pendingPhotoRef.current);
+      }
+      if (pendingBannerRef.current) {
+        void deleteCloudinaryImage(pendingBannerRef.current);
+      }
+    };
+  }, []);
+
   const refreshMe = async () => {
     const res = await fetch("/api/users/me/", { credentials: "include" });
     if (res.ok) setMe(await res.json());
@@ -93,6 +111,8 @@ export default function AccountSettingsPage() {
         ...(removeBanner ? { profile_banner: null } : newBanner ? { profile_banner: newBanner } : {}),
       });
       await fetchProfile();
+      pendingPhotoRef.current = null;
+      pendingBannerRef.current = null;
       setNewPhoto(null);
       setNewBanner(null);
       setRemovePhoto(false);
@@ -103,6 +123,44 @@ export default function AccountSettingsPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handlePendingPhoto = (publicId: string) => {
+    const previous = pendingPhotoRef.current;
+    pendingPhotoRef.current = publicId;
+    setNewPhoto(publicId);
+    setRemovePhoto(false);
+    if (previous && previous !== publicId) {
+      void deleteCloudinaryImage(previous);
+    }
+  };
+
+  const handlePendingBanner = (publicId: string) => {
+    const previous = pendingBannerRef.current;
+    pendingBannerRef.current = publicId;
+    setNewBanner(publicId);
+    setRemoveBanner(false);
+    if (previous && previous !== publicId) {
+      void deleteCloudinaryImage(previous);
+    }
+  };
+
+  const handleRemovePendingPhoto = () => {
+    if (pendingPhotoRef.current) {
+      void deleteCloudinaryImage(pendingPhotoRef.current);
+      pendingPhotoRef.current = null;
+    }
+    setRemovePhoto(true);
+    setNewPhoto(null);
+  };
+
+  const handleRemovePendingBanner = () => {
+    if (pendingBannerRef.current) {
+      void deleteCloudinaryImage(pendingBannerRef.current);
+      pendingBannerRef.current = null;
+    }
+    setRemoveBanner(true);
+    setNewBanner(null);
   };
 
   const handleChangeEmail = async (totpCode?: string) => {
@@ -338,9 +396,21 @@ export default function AccountSettingsPage() {
             )}
             <div className="absolute bottom-2 right-2 flex gap-2">
               <CldUploadWidget
+                signatureEndpoint="/api/signed-profile-banner"
                 uploadPreset={PresetsCloudinary.profile_banners}
-                options={{ sources: ["local"] }}
-                onSuccess={(result: any) => { setNewBanner(result?.info?.public_id ?? null); setRemoveBanner(false); }}
+                options={{
+                  sources: ["local"],
+                  multiple: false,
+                  resourceType: "image",
+                  clientAllowedFormats: [...CLOUDINARY_IMAGE_FORMATS],
+                  maxImageFileSize: BYTES_8_MB,
+                }}
+                onSuccess={(result: any) => {
+                  const publicId = result?.info?.public_id;
+                  if (typeof publicId === "string" && publicId) {
+                    handlePendingBanner(publicId);
+                  }
+                }}
               >
                 {({ open }) => (
                   <Button type="button" size="sm" variant="secondary" className="h-8 px-3 text-xs rounded-lg" onClick={() => open()}>
@@ -350,7 +420,7 @@ export default function AccountSettingsPage() {
               </CldUploadWidget>
               {currentBanner && (
                 <Button type="button" size="sm" variant="destructive" className="h-8 px-3 text-xs rounded-lg"
-                  onClick={() => { setRemoveBanner(true); setNewBanner(null); }}>
+                  onClick={handleRemovePendingBanner}>
                   <Trash2 className="w-3.5 h-3.5" />
                 </Button>
               )}
@@ -366,9 +436,21 @@ export default function AccountSettingsPage() {
             />
             <div className="flex gap-2">
               <CldUploadWidget
+                signatureEndpoint="/api/signed-profile"
                 uploadPreset={PresetsCloudinary.profile_image}
-                options={{ sources: ["local"] }}
-                onSuccess={(result: any) => { setNewPhoto(result?.info?.public_id ?? null); setRemovePhoto(false); }}
+                options={{
+                  sources: ["local"],
+                  multiple: false,
+                  resourceType: "image",
+                  clientAllowedFormats: [...CLOUDINARY_IMAGE_FORMATS],
+                  maxImageFileSize: BYTES_8_MB,
+                }}
+                onSuccess={(result: any) => {
+                  const publicId = result?.info?.public_id;
+                  if (typeof publicId === "string" && publicId) {
+                    handlePendingPhoto(publicId);
+                  }
+                }}
               >
                 {({ open }) => (
                   <Button type="button" size="sm" variant="outline" className="h-8 px-3 text-xs rounded-lg" onClick={() => open()}>
@@ -379,7 +461,7 @@ export default function AccountSettingsPage() {
               {currentPhoto && (
                 <Button type="button" size="sm" variant="ghost"
                   className="h-8 px-3 text-xs rounded-lg text-destructive hover:text-destructive"
-                  onClick={() => { setRemovePhoto(true); setNewPhoto(null); }}>
+                  onClick={handleRemovePendingPhoto}>
                   <Trash2 className="w-3.5 h-3.5 mr-1" />Remover
                 </Button>
               )}

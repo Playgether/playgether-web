@@ -142,6 +142,20 @@ export const CreatePostModal = () => {
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const queueMediaCleanup = async (medias: typeof uploadedFiles) => {
+    await Promise.allSettled(
+      medias
+        .filter((media) => Boolean(media.media_file))
+        .map((media) =>
+          deletePostFile(
+            media.media_file,
+            media.media_folder,
+            media.media_type,
+          ),
+        ),
+    );
+  };
+
   const handleSubmit = async () => {
     if (!content.trim() && uploadedFiles.length === 0) return;
     if (isSubmitting) return;
@@ -181,14 +195,7 @@ export const CreatePostModal = () => {
       }
     } catch (error) {
       if (uploadedFiles.length > 0) {
-        for (const media of uploadedFiles) {
-          if (!media.media_file) continue;
-          await deletePostFile(
-            media.media_file,
-            media.media_folder,
-            media.media_type,
-          );
-        }
+        await queueMediaCleanup(uploadedFiles);
         setUploadedFiles([]);
       }
 
@@ -211,13 +218,7 @@ export const CreatePostModal = () => {
     }
 
     if (!open && uploadedFiles.length > 0) {
-      for (const media of uploadedFiles) {
-        await deletePostFile(
-          media.media_file,
-          media.media_folder,
-          media.media_type,
-        );
-      }
+      await queueMediaCleanup(uploadedFiles);
       setUploadedFiles([]);
     }
 

@@ -51,7 +51,7 @@ export function MilestoneModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: MilestoneFormData) => Promise<void>;
+  onSubmit: (data: MilestoneFormData) => Promise<boolean>;
   milestone: ProfileMilestone | null;
   mode: "add" | "edit";
   profileId: number;
@@ -63,6 +63,9 @@ export function MilestoneModal({
   const [uploadedFiles, setUploadedFiles] = useState<MilestoneMediaInput[]>([]);
   const [widgetKey, setWidgetKey] = useState(0);
   const [isWidgetOpen, setIsWidgetOpen] = useState(false);
+  const persistedPublicIds = new Set(
+    (milestone?.medias ?? []).map((media) => media.public_id),
+  );
   const validateMilestoneVideoDuration = useMemo(
     () =>
       createVideoDurationPreBatchValidator({
@@ -142,7 +145,9 @@ export function MilestoneModal({
 
   const removeMedia = (index: number) => {
     const media = uploadedFiles[index];
-    deletePostFile(media.public_id, "", media.media_type).catch(console.error);
+    if (!persistedPublicIds.has(media.public_id)) {
+      deletePostFile(media.public_id, "", media.media_type).catch(console.error);
+    }
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
@@ -159,12 +164,13 @@ export function MilestoneModal({
       });
       return;
     }
-    await onSubmit({
+    const saved = await onSubmit({
       title: title.trim(),
       description: description.trim() || "",
       date,
       medias: uploadedFiles,
     });
+    if (!saved) return;
     setTitle("");
     setDescription("");
     setDate("");
@@ -174,8 +180,10 @@ export function MilestoneModal({
 
   const handleCloseModal = (open: boolean) => {
     if (!open) {
-      if (mode === "add" && uploadedFiles.length > 0) {
-        uploadedFiles.forEach((m) => {
+      if (uploadedFiles.length > 0) {
+        uploadedFiles
+          .filter((media) => !persistedPublicIds.has(media.public_id))
+          .forEach((m) => {
           deletePostFile(m.public_id, "", m.media_type).catch(console.error);
         });
         setUploadedFiles([]);
@@ -314,7 +322,10 @@ export function MilestoneModal({
               </div>
             </div>
             <DialogFooter className="shrink-0 border-t border-border px-6 py-4">
-              <Button variant="outline" onClick={onClose}>
+              <Button
+                variant="outline"
+                onClick={() => handleCloseModal(false)}
+              >
                 Cancelar
               </Button>
               <Button
