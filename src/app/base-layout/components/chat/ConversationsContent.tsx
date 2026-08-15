@@ -29,6 +29,7 @@ import {
 import type { ConversationInterface } from "../../types/chat/ConversationInterface";
 import type { MessageInterface } from "../../types/chat/MessageInterface";
 import { resolvePlaygetherMediaUrl } from "@/lib/resolvePlaygetherMediaUrl";
+import { decodeSharedContent, sharedContentPreviewText } from "@/lib/sharedContent";
 import { cn } from "@/lib/utils";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import type { MegaphoneReplyDraft } from "@/context/ConversationsWidgetContext";
@@ -297,13 +298,15 @@ export function ConversationsContent({
         msg.encrypted_key_recipient,
         msg.iv,
         isSender,
-        msg.encrypted_key_sender
+        msg.encrypted_key_sender ?? ""
       );
       if (cancelled || !plain) return;
+      const shared = decodeSharedContent(plain);
+      const text = shared ? sharedContentPreviewText(shared) : plain;
       setDecryptedPreviews((prev) => {
         // Evita sobrescrever se outra mensagem mais nova já chegou
         if (prev[conv.id]?.messageId === msg.id) return prev;
-        return { ...prev, [conv.id]: { messageId: msg.id, text: plain } };
+        return { ...prev, [conv.id]: { messageId: msg.id, text } };
       });
     });
 
@@ -345,15 +348,17 @@ export function ConversationsContent({
             msg.encrypted_key_recipient!,
             msg.iv!,
             isSender,
-            msg.encrypted_key_sender
+            msg.encrypted_key_sender ?? ""
           );
           content = plain ?? "🔒 Não foi possível decifrar";
         }
 
+        const shared = decodeSharedContent(content);
         decrypted.push({
           id: msg.id,
           sender: msg.sender_username,
-          content,
+          content: shared ? sharedContentPreviewText(shared) : content,
+          sharedContent: shared ?? undefined,
           timestamp: new Date(msg.timestamp).toLocaleTimeString("pt-BR", {
             hour: "2-digit",
             minute: "2-digit",
@@ -420,15 +425,18 @@ export function ConversationsContent({
           msg.encrypted_key_recipient!,
           msg.iv!,
           isSender,
-          msg.encrypted_key_sender
+          msg.encrypted_key_sender ?? ""
         );
         content = plain ?? "🔒 Não foi possível decifrar";
       }
 
+      const shared = decodeSharedContent(content);
+      const displayText = shared ? sharedContentPreviewText(shared) : content;
       const ui: MessageInterface = {
         id: msg.id,
         sender: msg.sender_username,
-        content,
+        content: displayText,
+        sharedContent: shared ?? undefined,
         timestamp: new Date(msg.timestamp).toLocaleTimeString("pt-BR", {
           hour: "2-digit",
           minute: "2-digit",
@@ -456,7 +464,7 @@ export function ConversationsContent({
       if (msg.conversation_id && content) {
         setDecryptedPreviews((prev) => ({
           ...prev,
-          [msg.conversation_id!]: { messageId: msg.id, text: content },
+          [msg.conversation_id!]: { messageId: msg.id, text: displayText },
         }));
       }
       // Marca como lida no servidor enquanto a conversa está aberta

@@ -54,7 +54,7 @@ export function LolMatchHistoryDetail({
             <span className="font-medium text-foreground text-sm">
               {detail.queueLabel}
             </span>
-                {detail.isRemake ? (
+            {detail.isRemake ? (
               <p className="mt-1 text-sm font-bold text-zinc-500 dark:text-zinc-400">
                 Remake
               </p>
@@ -126,9 +126,7 @@ export function LolMatchHistoryDetail({
                   : "bg-rose-100/70 dark:bg-red-950/40";
                 const eloText = eloLabelFromParticipant(p);
                 const laneText =
-                  p.laneLabel && p.laneLabel !== "UNKNOWN"
-                    ? p.laneLabel
-                    : "";
+                  p.laneLabel && p.laneLabel !== "UNKNOWN" ? p.laneLabel : "";
                 const participantKey = `${p.riotId}-${p.teamId}-${p.championId}-${idx}`;
                 return (
                   <React.Fragment key={participantKey}>
@@ -290,8 +288,10 @@ export function LolMatchHistoryDetail({
                       <td className="px-2 py-2 align-top whitespace-nowrap">
                         <div className="font-semibold tabular-nums">
                           {p.kills} /{" "}
-                          <span className="text-rose-600 dark:text-rose-400">{p.deaths}</span> /{" "}
-                          {p.assists}
+                          <span className="text-rose-600 dark:text-rose-400">
+                            {p.deaths}
+                          </span>{" "}
+                          / {p.assists}
                         </div>
                         <div className="text-muted-foreground">
                           {p.kdaRatio.toFixed(2)}:1
@@ -479,6 +479,7 @@ function TeamPanel({
       </div>
       <div
         className={`mt-1 text-sm font-bold ${win ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-500"}`}
+        className={`mt-1 text-sm font-bold ${win ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-500"}`}
       >
         {win ? "Vitória" : "Derrota"}
       </div>
@@ -590,7 +591,9 @@ function WithTooltip({
 
 function spellTooltip(name?: string, description?: string) {
   if (!name && !description) return "";
-  const cleanDesc = description ? normalizeTooltipDescription(description).trim() : "";
+  const cleanDesc = description
+    ? normalizeTooltipDescription(description).trim()
+    : "";
   if (!cleanDesc) {
     return (name || "").trim();
   }

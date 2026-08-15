@@ -7,6 +7,8 @@ import {
   Swords,
   Plus,
   DoorOpen,
+  MessageSquarePlus,
+  Clapperboard,
 } from "lucide-react";
 import Image from "next/image";
 import { profilePhotoToAvatarSrc } from "@/components/profile/ProfileAvatar";
@@ -18,9 +20,12 @@ import GamerSidbarConversationsButtons from "./GameSideBarConversationsButton";
 import { PresenceStatusDot } from "@/components/presence/PresenceStatusDot";
 import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { FeedbackDialog } from "../feedback/FeedbackDialog";
 
 const sidebarItems: GamerSideBarItensInterface[] = [
   { icon: <Home className="w-6 h-6" />, label: "Início", href: "/feed" },
+  { icon: <Clapperboard className="w-6 h-6" />, label: "Cuts", href: "/cuts" },
   { icon: <Swords className="w-6 h-6" />, label: "Duo", href: "/duo" },
   { icon: <DoorOpen className="w-6 h-6" />, label: "Salas", href: "/rooms" },
   {
@@ -54,6 +59,7 @@ export const GamerSidebar = () => {
   );
 
   const isProfileActive = user ? pathname?.startsWith(`/profile/${user.username}`) : false;
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   return (
     <div className="group/sidebar fixed left-0 top-0 z-50 flex h-full w-20 flex-col items-center overflow-hidden border-r border-sidebar-border bg-gradient-primary py-6 transition-[width] duration-300 ease-in-out hover:w-56">
@@ -119,7 +125,26 @@ export const GamerSidebar = () => {
             </span>
           </div>
         )}
+        {/* Feedback — separado na base do nav */}
+        <div className="mt-auto pt-2">
+          <button
+            type="button"
+            aria-label="Feedback"
+            title="Feedback"
+            onClick={() => setFeedbackOpen(true)}
+            className="flex h-14 w-full items-center rounded-xl text-white/60 transition-all duration-300 hover:bg-white/20 hover:text-white"
+          >
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center">
+              <MessageSquarePlus className="h-5 w-5" />
+            </div>
+            <span className="max-w-0 overflow-hidden whitespace-nowrap text-sm font-medium opacity-0 transition-all delay-100 duration-300 group-hover/sidebar:max-w-xs group-hover/sidebar:opacity-100">
+              Feedback
+            </span>
+          </button>
+        </div>
       </nav>
+
+      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </div>
   );
 };

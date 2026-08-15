@@ -26,7 +26,8 @@ import {
   videoExceedsMaxDuration,
 } from "@/app/utils/cloudinaryUploadConfig";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useRoomPermissions } from "@/context/RoomPermissionsContext";
 import {
   ChatRoom,
@@ -616,6 +617,9 @@ export default function RoomImagesPanel({
         }}
       >
         <DialogContent className="max-w-3xl p-2">
+          <VisuallyHidden>
+            <DialogTitle>{expandedImage?.label ?? "Mídia da sala"}</DialogTitle>
+          </VisuallyHidden>
           {expandedImage ? (
             <div className="flex min-h-[200px] flex-col items-center justify-center gap-2">
               {expandedImage.isVideo ? (

@@ -103,7 +103,8 @@ export function useDuoSocket({
           setState((s) => ({
             ...s,
             queueStatus: msg.status,
-            expiresAt: msg.status === "evicted" ? null : (msg.expires_at ?? s.expiresAt),
+            expiresAt:
+              msg.status === "evicted" ? null : (msg.expires_at ?? s.expiresAt),
             isNearExpiry: msg.is_near_expiry ?? s.isNearExpiry,
             evictionReason:
               msg.status === "evicted"
@@ -136,11 +137,21 @@ export function useDuoSocket({
       }
     }
 
-    const socketPath = `/ws/duo/${encodeURIComponent(gameSlug)}/`;
-    requestWebSocketTicket(socketPath)
-      .then(({ ticket }) => {
+    fetch("/api/notifications-ws-token", { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : { ticket: null }))
+      .then((data: { ticket?: string | null }) => {
         if (cancelled) return;
-        const wsUrl = buildAuthenticatedWebSocketUrl(socketPath, ticket);
+        if (!data?.ticket) {
+          setState((s) => ({
+            ...s,
+            error: "Faça login para usar o Duo Finder.",
+            connected: false,
+          }));
+          return;
+        }
+
+        const base = wsBaseUrl().replace(/\/$/, "");
+        const wsUrl = `${base}/ws/duo/${encodeURIComponent(gameSlug)}/?ticket=${encodeURIComponent(data.ticket)}`;
 
         ws = new WebSocket(wsUrl);
         wsRef.current = ws;
@@ -168,7 +179,10 @@ export function useDuoSocket({
       })
       .catch(() => {
         if (!cancelled) {
-          setState((s) => ({ ...s, error: "Não foi possível autenticar o WebSocket." }));
+          setState((s) => ({
+            ...s,
+            error: "Não foi possível autenticar o WebSocket.",
+          }));
         }
       });
 
@@ -183,7 +197,7 @@ export function useDuoSocket({
     (preferences: Partial<GamePreferences>) => {
       send({ type: "start_search", preferences });
     },
-    [send]
+    [send],
   );
 
   const leaveQueue = useCallback(() => {
@@ -198,7 +212,7 @@ export function useDuoSocket({
     (preferences: Partial<GamePreferences>) => {
       send({ type: "update_preferences", preferences });
     },
-    [send]
+    [send],
   );
 
   const pulseDuoResultsPresence = useCallback(() => {

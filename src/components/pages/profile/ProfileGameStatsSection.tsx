@@ -716,7 +716,7 @@ export function ProfileGameStatsSection({
                 </div>
               ))}
               {isLolBackfillRunning ? (
-                <div className="flex items-center gap-2 text-xs text-amber-800 dark:text-amber-200 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
+                <div className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-200 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
                   <Info className="h-3.5 w-3.5 shrink-0" />
                   <span>
                     Exibindo as partidas mais recentes. O restante da temporada
@@ -1839,7 +1839,7 @@ function lolKdaPerformanceTone(
 }
 
 function lolKdaToneClasses(tone: "bad" | "ok" | "good"): string {
-  if (tone === "bad") return "text-rose-600 dark:text-rose-400";
+  if (tone === "bad") return "text-rose-500 dark:text-rose-400";
   if (tone === "ok") return "text-amber-600 dark:text-amber-300";
   return "text-emerald-600 dark:text-emerald-400";
 }
@@ -3033,7 +3033,9 @@ function mapLolMatchesToUi(
     };
 
     const viewerParticipant =
-      match.matchDetail?.participants.find((participant) => participant.isViewer) ?? null;
+      match.matchDetail?.participants.find(
+        (participant) => participant.isViewer,
+      ) ?? null;
     const blueParticipants =
       match.matchDetail?.participants
         .filter((participant) => participant.teamId === 100)
@@ -3462,7 +3464,7 @@ function MatchHistory({
                                                 className="h-3.5 w-3.5 rounded-[3px] border border-blue-300/40 object-cover"
                                               />
                                             ) : null}
-                                            <span className="truncate text-blue-800 dark:text-blue-100">
+                                            <span className="truncate text-blue-700 dark:text-blue-100">
                                               {participant.gameName}
                                             </span>
                                           </span>
@@ -3505,7 +3507,7 @@ function MatchHistory({
                                                 className="h-3.5 w-3.5 rounded-[3px] border border-rose-300/40 object-cover"
                                               />
                                             ) : null}
-                                            <span className="truncate text-rose-800 dark:text-rose-100">
+                                            <span className="truncate text-rose-700 dark:text-rose-100">
                                               {participant.gameName}
                                             </span>
                                           </span>

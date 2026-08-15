@@ -18,7 +18,9 @@ export type RoomEventPresenceViewer = {
 export function useRoomEventSocket(eventId: number | null) {
   const wsRef = useRef<WebSocket | null>(null);
   const [connected, setConnected] = useState(false);
-  const [notices, setNotices] = useState<{ code: string; message: string }[]>([]);
+  const [notices, setNotices] = useState<{ code: string; message: string }[]>(
+    [],
+  );
   const [state, setState] = useState<Record<string, unknown> | null>(null);
   const [buttonWinnerId, setButtonWinnerId] = useState<number | null>(null);
   const [eventMessages, setEventMessages] = useState<RoomEventMessage[]>([]);
@@ -52,12 +54,12 @@ export function useRoomEventSocket(eventId: number | null) {
   useEffect(() => {
     if (!eventId) return;
     let cancelled = false;
-    const socketPath = `/ws/room-events/${eventId}/`;
 
-    requestWebSocketTicket(socketPath)
-      .then(({ ticket }) => {
-        if (cancelled) return;
-        const wsUrl = buildAuthenticatedWebSocketUrl(socketPath, ticket);
+    fetch("/api/notifications-ws-token", { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : { ticket: null }))
+      .then((data: { ticket?: string | null }) => {
+        if (cancelled || !data?.ticket) return;
+        const wsUrl = `${wsBaseUrl().replace(/\/$/, "")}/ws/room-events/${eventId}/?ticket=${encodeURIComponent(data.ticket)}`;
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 
@@ -85,10 +87,15 @@ export function useRoomEventSocket(eventId: number | null) {
                 return [...prev, m];
               });
             }
-            if (msg?.type === "event_message_deleted" && msg.message_id != null) {
+            if (
+              msg?.type === "event_message_deleted" &&
+              msg.message_id != null
+            ) {
               const deletedId = Number(msg.message_id);
               if (Number.isFinite(deletedId)) {
-                setEventMessages((prev) => prev.filter((x) => x.id !== deletedId));
+                setEventMessages((prev) =>
+                  prev.filter((x) => x.id !== deletedId),
+                );
               }
             }
             if (msg?.type === "presence_update" && Array.isArray(msg.viewers)) {
@@ -121,7 +128,9 @@ export function useRoomEventSocket(eventId: number | null) {
   const claimButton = useCallback(() => {
     setSocketError(null);
     if (wsRef.current?.readyState !== WebSocket.OPEN) {
-      setSocketError("Conexão com o evento indisponível. Aguarde “Ao vivo” ou atualize a página.");
+      setSocketError(
+        "Conexão com o evento indisponível. Aguarde “Ao vivo” ou atualize a página.",
+      );
       return;
     }
     send({ type: "claim_button" });

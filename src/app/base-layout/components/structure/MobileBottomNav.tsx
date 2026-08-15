@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Swords, DoorOpen } from "lucide-react";
+import { Home, Swords, DoorOpen, Clapperboard } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { profilePhotoToAvatarSrc } from "@/components/profile/ProfileAvatar";
@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { icon: Home, label: "Início", href: "/feed" },
+  { icon: Clapperboard, label: "Cuts", href: "/cuts" },
   { icon: Swords, label: "Duo", href: "/duo" },
   { icon: DoorOpen, label: "Salas", href: "/rooms" },
 ] as const;
@@ -37,7 +38,7 @@ export function MobileBottomNav() {
       aria-label="Navegação principal"
       className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-background/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom,0px)] lg:hidden"
     >
-      <div className="mx-auto grid h-14 max-w-lg grid-cols-4 items-stretch px-2">
+      <div className="mx-auto grid h-14 max-w-lg grid-cols-5 items-stretch px-2">
         {navItems.map(({ icon: Icon, label, href }) => {
           const isActive =
             href === "/feed"

@@ -31,7 +31,51 @@ export const useSecureWebSocket = (options: UseSecureWebSocketOptions) => {
   } = options;
 
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [wsTicket, setWsTicket] = useState<string | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [wsBaseUrl, setWsBaseUrl] = useState<string | null>(null);
+  const reconnectCountRef = useRef(0);
+
+  // 1. ✅ Função para construir a URL do WebSocket
+  const getWebSocketBaseUrl = useCallback((): string | null => {
+    // Prioridade: variável de ambiente definida explicitamente
+    if (process.env.NEXT_PUBLIC_WS_URL) {
+      return process.env.NEXT_PUBLIC_WS_URL;
+    }
+
+    // Fallback: construção dinâmica (apenas no cliente)
+    if (typeof window !== "undefined") {
+      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+      const host = window.location.hostname;
+      const port = process.env.NEXT_PUBLIC_WS_PORT || "8000";
+      return `${protocol}://${host}:${port}`;
+    }
+
+    return null;
+  }, []);
+
+  // 2. ✅ Troca o access token por um ticket opaco de uso único (TTL 120s)
+  const checkAuthorization = useCallback(async (): Promise<boolean> => {
+    try {
+      const response = await fetch("/api/ws/authorize", {
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setIsAuthorized(data.authorized);
+        setWsTicket(data.ticket ?? null);
+
+        if (!data.authorized) {
+          setConnectionError(data.error || "Não autorizado");
+        }
+
+        return data.authorized;
+      } else {
+        setConnectionError("Erro na autorização");
+        return false;
+      }
+    } catch {
 
   const getSocketUrl = useCallback(async (): Promise<string> => {
     if (!url) throw new Error("WebSocket path is required.");
@@ -48,6 +92,13 @@ export const useSecureWebSocket = (options: UseSecureWebSocketOptions) => {
     }
   }, [url]);
 
+  // 3. ✅ URL completa do WebSocket (ticket opaco — JWT não vai na URL)
+  const fullWsUrl =
+    wsBaseUrl && isAuthorized && wsTicket && url
+      ? `${wsBaseUrl}${url}${url.includes("?") ? "&" : "?"}ticket=${encodeURIComponent(wsTicket)}`
+      : null;
+
+  // 4. ✅ Hook useWebSocket
   const { sendMessage, lastMessage, readyState, getWebSocket } = useWebSocket(
     getSocketUrl,
     {

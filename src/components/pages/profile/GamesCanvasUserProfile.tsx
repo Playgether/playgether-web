@@ -52,7 +52,9 @@ export function GamesCanvasUserProfile({
   const [likes, setLikes] = useState(profile?.quantity_likes ?? 0);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [bioExpanded, setBioExpanded] = useState(false);
-  const [followListModal, setFollowListModal] = useState<"followers" | "following" | null>(null);
+  const [followListModal, setFollowListModal] = useState<
+    "followers" | "following" | null
+  >(null);
 
   useEffect(() => {
     setBioExpanded(false);
@@ -149,7 +151,9 @@ export function GamesCanvasUserProfile({
           follows:
             action === "follow"
               ? ([...(profile.follows ?? []), userId] as [])
-              : ((profile.follows ?? []).filter((id) => Number(id) !== userId) as []),
+              : ((profile.follows ?? []).filter(
+                  (id) => Number(id) !== userId,
+                ) as []),
         });
       }
     },
@@ -362,7 +366,7 @@ export function GamesCanvasUserProfile({
           <div className="mt-1 min-w-0 pl-11">
             <HighlightedAchievementBadges
               achievements={profile?.highlighted_achievements}
-              className="min-w-0"
+              iconOnly
             />
           </div>
 
@@ -598,7 +602,9 @@ export function GamesCanvasUserProfile({
                   className="h-7 flex-1 border-border text-[11px] hover:border-primary/40 hover:bg-primary/10"
                   onClick={async () => {
                     if (!profile?.user_id) return;
-                    const conv = await startConversation(String(profile.user_id));
+                    const conv = await startConversation(
+                      String(profile.user_id),
+                    );
                     if (conv) openWithConversation(conv.id);
                   }}
                 >
@@ -731,18 +737,33 @@ export function GamesCanvasUserProfile({
 
                 <div className="grid grid-cols-4 gap-2 py-3 lg:grid-cols-2 lg:gap-3 lg:py-4">
                   {userStats.map((stat, index) => {
-                    const isClickable = stat.label === "Seguidores" || stat.label === "Seguindo";
-                    const modalType = stat.label === "Seguidores" ? "followers" : "following";
+                    const isClickable =
+                      stat.label === "Seguidores" || stat.label === "Seguindo";
+                    const modalType =
+                      stat.label === "Seguidores" ? "followers" : "following";
                     return (
                       <div
                         key={index}
                         className={`space-y-0.5 text-center lg:space-y-1 ${isClickable ? "cursor-pointer rounded-lg p-1 transition-colors hover:bg-muted/50" : ""}`}
-                        onClick={isClickable ? () => setFollowListModal(modalType) : undefined}
+                        onClick={
+                          isClickable
+                            ? () => setFollowListModal(modalType)
+                            : undefined
+                        }
                         role={isClickable ? "button" : undefined}
                         tabIndex={isClickable ? 0 : undefined}
-                        onKeyDown={isClickable ? (e) => { if (e.key === "Enter") setFollowListModal(modalType); } : undefined}
+                        onKeyDown={
+                          isClickable
+                            ? (e) => {
+                                if (e.key === "Enter")
+                                  setFollowListModal(modalType);
+                              }
+                            : undefined
+                        }
                       >
-                        <div className={`text-base transition-all duration-300 lg:text-lg ${stat.color}`}>
+                        <div
+                          className={`text-base transition-all duration-300 lg:text-lg ${stat.color}`}
+                        >
                           {stat.value}
                         </div>
                         <div className="text-[10px] uppercase tracking-wide text-muted-foreground lg:text-xs">
@@ -788,7 +809,9 @@ export function GamesCanvasUserProfile({
                         onClick={handleFollow}
                       >
                         <UserPlus className="h-4 w-4 mr-1 shrink-0" />
-                        <span className="truncate">{isFollowing ? "Seguindo" : "Seguir"}</span>
+                        <span className="truncate">
+                          {isFollowing ? "Seguindo" : "Seguir"}
+                        </span>
                       </Button>
                       <Button
                         variant="outline"
@@ -796,7 +819,9 @@ export function GamesCanvasUserProfile({
                         className="flex-1 min-w-0 border-border hover:bg-primary/10 hover:border-primary/40"
                         onClick={async () => {
                           if (!profile?.user_id) return;
-                          const conv = await startConversation(String(profile.user_id));
+                          const conv = await startConversation(
+                            String(profile.user_id),
+                          );
                           if (conv) openWithConversation(conv.id);
                         }}
                       >

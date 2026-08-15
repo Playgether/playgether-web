@@ -155,7 +155,7 @@ export function AchievementModal({
             </div>
 
             <div
-              className="relative z-[2] col-start-1 row-start-1 min-h-0 min-w-0 overflow-hidden"
+              className="relative z-[2] col-start-1 row-start-1 min-h-0 min-w-0 overflow-hidden text-white"
               style={{
                 margin: `${ringInsetPx}px`,
                 background: config.cardBg,
@@ -198,14 +198,14 @@ export function AchievementModal({
                     <span>{achievement.icon}</span>
                     {achievement.title}
                   </DialogTitle>
-                  <DialogDescription className="text-left text-zinc-300">
+                  <DialogDescription className="text-left !text-white/80">
                     {achievement.description}
                   </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-3 mt-4">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-zinc-400">Raridade</span>
+                    <span className="text-white/70">Raridade</span>
                     <Badge
                       variant="outline"
                       className="text-white border-0 text-xs gap-1.5"
@@ -219,16 +219,11 @@ export function AchievementModal({
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-zinc-400">Jogo</span>
-                    <span className="font-medium text-zinc-100">
-                      {achievement.game}
-                    </span>
+                    <span className="text-white/70">Jogo</span>
+                    <span className="font-medium">{achievement.game}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-zinc-400">Conquistado em</span>
-                    <span className="font-medium text-zinc-100">
-                      {achievement.date}
-                    </span>
+                    <span className="text-white/70">Conquistado em</span>
                   </div>
                   {/* Taxa global (%): oculto no lançamento — poucos usuários distorce o número.
                       O backend pode continuar enviando `percentage`; reative quando houver base estável. */}
@@ -242,8 +237,8 @@ export function AchievementModal({
                   </div> */}
 
                   {achievement.progression ? (
-                    <div className="pt-2 border-t border-white/15">
-                      <div className="text-sm font-medium mb-2 text-zinc-100">
+                    <div className="pt-2 border-t border-white/20">
+                      <div className="text-sm font-medium mb-2">
                         Caminho da Conquista
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -258,7 +253,7 @@ export function AchievementModal({
                               className={
                                 unlocked
                                   ? "text-white border-0"
-                                  : "border-white/20 text-zinc-300 bg-white/10"
+                                  : "border-white/20 text-white/50 bg-white/10"
                               }
                               style={
                                 unlocked
@@ -272,7 +267,7 @@ export function AchievementModal({
                         })}
                       </div>
                       {hasNextCheckpoint ? (
-                        <div className="text-sm text-zinc-400 mt-2">
+                        <div className="text-sm text-white/70 mt-2">
                           Próxima:{" "}
                           {achievement.progression!.unit === "h"
                             ? `${nextForView}h`

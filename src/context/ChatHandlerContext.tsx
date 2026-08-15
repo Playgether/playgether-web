@@ -146,9 +146,11 @@ const ChatHandlerContext = createContext<ChatHandlerContextProps>(
 );
 
 const ChatHandlerContextProvider = ({
+  ticket,
   chatroom,
   children,
 }: {
+  ticket: string;
   chatroom: string;
   children: React.ReactNode;
 }) => {
@@ -175,7 +177,7 @@ const ChatHandlerContextProvider = ({
   }, [socketPath]);
 
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
-    socketUrl,
+    `${wsBaseUrl()}/ws/chatroom/${encodedChatroom}?ticket=${ticket}`,
     {
       share: false,
       shouldReconnect: () => false,
@@ -196,15 +198,20 @@ const ChatHandlerContextProvider = ({
   const suppressAutoFollowScrollRef = useRef(false);
   const { user } = useAuthContext();
   const router = useRouter();
-  const { muteNotice, applyMuteNotice, refresh: refreshPermissions } =
-    useRoomPermissions();
+  const {
+    muteNotice,
+    applyMuteNotice,
+    refresh: refreshPermissions,
+  } = useRoomPermissions();
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
   const [newMessageId, setNewMessageId] = useState(0);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUsersChatRoom[]>([]);
   const [joinNotices, setJoinNotices] = useState<RoomJoinNotice[]>([]);
   const [roomEventInvite, setRoomEventInvite] =
     useState<RoomEventInvitePayload | null>(null);
-  const [roomMusic, setRoomMusic] = useState<RoomMusicState>(defaultRoomMusicState);
+  const [roomMusic, setRoomMusic] = useState<RoomMusicState>(
+    defaultRoomMusicState,
+  );
   const prevRoomMusicRef = useRef<RoomMusicState>(defaultRoomMusicState());
   const addRestoreIndexRef = useRef<number | null>(null);
   const [roomMusicError, setRoomMusicError] = useState<string | null>(null);
@@ -214,7 +221,9 @@ const ChatHandlerContextProvider = ({
   const [roomAmbienceMessages, setRoomAmbienceMessages] = useState<
     RoomAmbienceMessage[]
   >([]);
-  const [roomAmbienceError, setRoomAmbienceError] = useState<string | null>(null);
+  const [roomAmbienceError, setRoomAmbienceError] = useState<string | null>(
+    null,
+  );
   const chatSurfaceHiddenRef = useRef(false);
   const ambienceHistoryLoadedRef = useRef<string | null>(null);
   const roomAmbienceSessionRef = useRef("");
@@ -255,9 +264,14 @@ const ChatHandlerContextProvider = ({
   const clearRoomEventInvite = () => setRoomEventInvite(null);
 
   const clearRoomMusicError = useCallback(() => setRoomMusicError(null), []);
-  const clearRoomAmbienceError = useCallback(() => setRoomAmbienceError(null), []);
+  const clearRoomAmbienceError = useCallback(
+    () => setRoomAmbienceError(null),
+    [],
+  );
 
-  const sendRoomMusicDirectRef = useRef<((payload: RoomMusicClientAction) => void) | null>(null);
+  const sendRoomMusicDirectRef = useRef<
+    ((payload: RoomMusicClientAction) => void) | null
+  >(null);
 
   const sendRoomMusic = useCallback(
     (payload: RoomMusicClientAction) => {
@@ -351,9 +365,11 @@ const ChatHandlerContextProvider = ({
           const o = x as Record<string, unknown>;
           const video_id = typeof o.video_id === "string" ? o.video_id : "";
           const title = typeof o.title === "string" ? o.title : "Música";
-          const added_by = typeof o.added_by === "string" ? o.added_by : undefined;
+          const added_by =
+            typeof o.added_by === "string" ? o.added_by : undefined;
           const artist = typeof o.artist === "string" ? o.artist : undefined;
-          const thumbnail = typeof o.thumbnail === "string" ? o.thumbnail : undefined;
+          const thumbnail =
+            typeof o.thumbnail === "string" ? o.thumbnail : undefined;
           const duration_sec =
             typeof o.duration_sec === "number" && o.duration_sec > 0
               ? o.duration_sec
@@ -362,22 +378,38 @@ const ChatHandlerContextProvider = ({
           // active_provider — whitelist only known values
           const rawProvider = o.active_provider;
           const active_provider =
-            rawProvider === "spotify" || rawProvider === "deezer" || rawProvider === "youtube"
+            rawProvider === "spotify" ||
+            rawProvider === "deezer" ||
+            rawProvider === "youtube"
               ? rawProvider
               : "youtube";
 
           // providers block — pass through if it is an object, else undefined
           const providers =
-            o.providers && typeof o.providers === "object" && !Array.isArray(o.providers)
+            o.providers &&
+            typeof o.providers === "object" &&
+            !Array.isArray(o.providers)
               ? (o.providers as import("@/types/RoomMusic").MediaProviders)
               : undefined;
 
           const isrc = typeof o.isrc === "string" ? o.isrc : undefined;
           const canonical_track_id =
-            typeof o.canonical_track_id === "string" ? o.canonical_track_id : undefined;
+            typeof o.canonical_track_id === "string"
+              ? o.canonical_track_id
+              : undefined;
 
-          return { video_id, title, added_by, artist, thumbnail, duration_sec,
-                   active_provider, providers, isrc, canonical_track_id };
+          return {
+            video_id,
+            title,
+            added_by,
+            artist,
+            thumbnail,
+            duration_sec,
+            active_provider,
+            providers,
+            isrc,
+            canonical_track_id,
+          };
         })
         .filter((x) => {
           // Accept valid YouTube video_id OR tracks where an alternative provider exists
@@ -434,7 +466,9 @@ const ChatHandlerContextProvider = ({
     },
     room_music_error: (data: { message?: string }) => {
       setRoomMusicError(
-        typeof data.message === "string" ? data.message : "Erro na música da sala.",
+        typeof data.message === "string"
+          ? data.message
+          : "Erro na música da sala.",
       );
     },
     room_ambience_state: (data: {
@@ -468,8 +502,7 @@ const ChatHandlerContextProvider = ({
         next.sync_epoch_ms =
           typeof s.sync_epoch_ms === "number" ? s.sync_epoch_ms : 0;
         const rawCmd = (s as { playback_command?: unknown }).playback_command;
-        next.playback_command =
-          rawCmd === "go_live" ? "go_live" : null;
+        next.playback_command = rawCmd === "go_live" ? "go_live" : null;
         next.viewers = Array.isArray(s.viewers)
           ? s.viewers
               .filter((x) => Boolean(x) && typeof x === "object")
@@ -479,7 +512,8 @@ const ChatHandlerContextProvider = ({
                   user_id: typeof o.user_id === "string" ? o.user_id : "",
                   username: typeof o.username === "string" ? o.username : "",
                   fullname: typeof o.fullname === "string" ? o.fullname : "",
-                  profile_photo: typeof o.profile_photo === "string" ? o.profile_photo : "",
+                  profile_photo:
+                    typeof o.profile_photo === "string" ? o.profile_photo : "",
                 };
               })
               .filter((x) => Boolean(x.user_id))
@@ -551,7 +585,9 @@ const ChatHandlerContextProvider = ({
                   ? m.reply_to_username
                   : undefined,
               reply_to_body:
-                typeof m.reply_to_body === "string" ? m.reply_to_body : undefined,
+                typeof m.reply_to_body === "string"
+                  ? m.reply_to_body
+                  : undefined,
               transmission_session_id: msgSession,
             } satisfies RoomAmbienceMessage;
           })
@@ -569,8 +605,8 @@ const ChatHandlerContextProvider = ({
       if (!m || typeof m !== "object") return;
       const currentSession = roomAmbienceSessionRef.current.trim();
       const msgSession = (
-        typeof (m as { transmission_session_id?: string }).transmission_session_id ===
-        "string"
+        typeof (m as { transmission_session_id?: string })
+          .transmission_session_id === "string"
           ? (m as { transmission_session_id: string }).transmission_session_id
           : ""
       ).trim();
@@ -593,7 +629,9 @@ const ChatHandlerContextProvider = ({
             ? m.reply_to_id
             : undefined,
         reply_to_username:
-          typeof m.reply_to_username === "string" ? m.reply_to_username : undefined,
+          typeof m.reply_to_username === "string"
+            ? m.reply_to_username
+            : undefined,
         reply_to_body:
           typeof m.reply_to_body === "string" ? m.reply_to_body : undefined,
         transmission_session_id: msgSession || undefined,
@@ -615,7 +653,9 @@ const ChatHandlerContextProvider = ({
     },
     room_ambience_anchor_request: () => {
       if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("playgether:ambience-anchor-request"));
+        window.dispatchEvent(
+          new CustomEvent("playgether:ambience-anchor-request"),
+        );
       }
     },
     room_event_sync: (data: {

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -98,6 +99,9 @@ export const ConversationsModal = ({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="flex max-h-[min(90dvh,720px)] max-w-6xl flex-col gap-0 overflow-hidden p-0 bg-background/95 backdrop-blur-xl border border-primary/20">
+        <VisuallyHidden>
+          <DialogTitle>Conversas</DialogTitle>
+        </VisuallyHidden>
         {Components.ChatModalHeader}
         <div className="flex min-h-0 flex-1 h-[min(70dvh,560px)] sm:h-[min(70vh,600px)]">
           {/* Conversations List */}

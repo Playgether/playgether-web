@@ -1,14 +1,12 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Bookmark, BookmarkCheck, Plus, Loader2, Check, FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { CustomToast } from "@/components/ui/customSonner";
-import { useFeedContext } from "@/app/feed/context/FeedContext";
-import type { PostProps } from "@/app/feed/types/PostProps";
 
 interface Collection {
   id: number;
@@ -17,13 +15,20 @@ interface Collection {
   cover_media: string | null;
 }
 
+export type SavableContentType = "post" | "cut";
+
 interface BookmarkButtonProps {
-  post: PostProps;
-  size?: "sm" | "md";
+  item: { id: number; user_already_saved?: boolean };
+  contentType?: SavableContentType;
+  /** "lg" = h-6 w-6, para conviver lado a lado com ícones de ação (curtir, comentar...). */
+  size?: "sm" | "md" | "lg";
+  onSavedChange?: (saved: boolean, saveId: number | null) => void;
+  /** Sobrescreve a cor/estilo do gatilho (ex: ícone branco sobre vídeo escuro). */
+  triggerClassName?: string;
 }
 
-export function BookmarkButton({ post, size = "sm" }: BookmarkButtonProps) {
-  const { handleSave } = useFeedContext();
+export function BookmarkButton({ item, contentType = "post", size = "sm", onSavedChange, triggerClassName }: BookmarkButtonProps) {
+  const [isSaved, setIsSaved] = useState(!!item.user_already_saved);
   const [isSaving, setIsSaving] = useState(false);
   const [open, setOpen] = useState(false);
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -35,7 +40,9 @@ export function BookmarkButton({ post, size = "sm" }: BookmarkButtonProps) {
   const [isCreating, setIsCreating] = useState(false);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const isSaved = !!post.user_already_saved;
+  useEffect(() => {
+    setIsSaved(!!item.user_already_saved);
+  }, [item.user_already_saved]);
 
   // Quick save/unsave on click (when popover is not open)
   const handleQuickSave = useCallback(async (e: React.MouseEvent) => {
@@ -48,46 +55,42 @@ export function BookmarkButton({ post, size = "sm" }: BookmarkButtonProps) {
         const res = await fetch("/api/saved-posts", {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ post_id: post.id }),
+          body: JSON.stringify({ content_type: contentType, object_id: item.id }),
         });
         if (res.ok || res.status === 204) {
-          handleSave(post.id, null);
-          CustomToast.neutral("Post removido dos salvos.");
+          setIsSaved(false);
+          onSavedChange?.(false, null);
+          CustomToast.neutral(contentType === "cut" ? "Cut removido dos salvos." : "Post removido dos salvos.");
         }
       } else {
         const res = await fetch("/api/saved-posts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ post_id: post.id }),
+          body: JSON.stringify({ content_type: contentType, object_id: item.id }),
         });
         if (res.ok) {
           const data = await res.json();
-          handleSave(post.id, data.id);
-          CustomToast.success("Post salvo!");
+          setIsSaved(true);
+          onSavedChange?.(true, data.id);
+          CustomToast.success(contentType === "cut" ? "Cut salvo!" : "Post salvo!");
         }
       }
     } catch {
-      CustomToast.error("Erro ao salvar post.");
+      CustomToast.error("Erro ao salvar.");
     } finally {
       setIsSaving(false);
     }
-  }, [isSaving, open, isSaved, post.id, handleSave]);
+  }, [isSaving, open, isSaved, item.id, contentType, onSavedChange]);
 
   const loadCollections = useCallback(async () => {
     setLoadingCollections(true);
     try {
-      const [colRes, savedRes] = await Promise.all([
-        fetch("/api/collections"),
-        fetch(`/api/collections`), // reuse — we'll check per-collection below
-      ]);
+      const colRes = await fetch("/api/collections");
       if (colRes.ok) {
         const data: Collection[] = await colRes.json();
         setCollections(data);
-        // Check which collections this post is in
-        const postInCols = new Set<number>();
-        // We need to check per collection — but that's expensive.
-        // Instead, we'll rely on the optimistic toggle state.
-        setInCollections(postInCols);
+        // Relies on optimistic toggle state for membership (no per-collection lookup endpoint yet).
+        setInCollections(new Set());
       }
     } finally {
       setLoadingCollections(false);
@@ -113,7 +116,7 @@ export function BookmarkButton({ post, size = "sm" }: BookmarkButtonProps) {
         const res = await fetch(`/api/collections/${col.id}/posts`, {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ post_id: post.id }),
+          body: JSON.stringify({ content_type: contentType, object_id: item.id }),
         });
         if (res.ok || res.status === 204) {
           setInCollections((prev) => { const s = new Set(prev); s.delete(col.id); return s; });
@@ -122,12 +125,13 @@ export function BookmarkButton({ post, size = "sm" }: BookmarkButtonProps) {
         const res = await fetch(`/api/collections/${col.id}/posts`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ post_id: post.id }),
+          body: JSON.stringify({ content_type: contentType, object_id: item.id }),
         });
         if (res.ok) {
           setInCollections((prev) => new Set(prev).add(col.id));
           if (!isSaved) {
-            handleSave(post.id, post.id);
+            setIsSaved(true);
+            onSavedChange?.(true, item.id);
           }
         }
       }
@@ -136,7 +140,7 @@ export function BookmarkButton({ post, size = "sm" }: BookmarkButtonProps) {
     } finally {
       setTogglingCollection(null);
     }
-  }, [togglingCollection, inCollections, post.id, isSaved, handleSave]);
+  }, [togglingCollection, inCollections, item.id, contentType, isSaved, onSavedChange]);
 
   const handleCreateCollection = useCallback(async () => {
     if (!newName.trim() || isCreating) return;
@@ -145,14 +149,17 @@ export function BookmarkButton({ post, size = "sm" }: BookmarkButtonProps) {
       const res = await fetch("/api/collections", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newName.trim(), post_id: post.id }),
+        body: JSON.stringify({ name: newName.trim(), content_type: contentType, object_id: item.id }),
       });
       if (res.ok) {
         const data = await res.json();
         const newCol: Collection = { id: data.id, name: data.name, post_count: 1, cover_media: null };
         setCollections((prev) => [newCol, ...prev]);
         setInCollections((prev) => new Set(prev).add(data.id));
-        if (!isSaved) handleSave(post.id, data.id);
+        if (!isSaved) {
+          setIsSaved(true);
+          onSavedChange?.(true, item.id);
+        }
         setNewName("");
         setCreatingNew(false);
         CustomToast.success(`Coleção "${data.name}" criada!`);
@@ -162,20 +169,21 @@ export function BookmarkButton({ post, size = "sm" }: BookmarkButtonProps) {
     } finally {
       setIsCreating(false);
     }
-  }, [newName, isCreating, post.id, isSaved, handleSave]);
+  }, [newName, isCreating, item.id, contentType, isSaved, onSavedChange]);
 
-  const iconSize = size === "sm" ? "h-4 w-4" : "h-5 w-5";
+  const iconSize = size === "sm" ? "h-4 w-4" : size === "md" ? "h-5 w-5" : "h-6 w-6";
   const btnClass = cn(
-    "p-1.5 text-muted-foreground hover:text-primary sm:p-2",
-    isSaved && "text-primary"
+    "inline-flex items-center justify-center rounded-md p-1.5 text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 sm:p-2",
+    isSaved && "text-primary",
+    triggerClassName,
   );
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
+        {/* Botão puro (não usa <Button>) para o tamanho do ícone não ser forçado pelo [&_svg]:size-4 do design system */}
+        <button
+          type="button"
           onClick={(e) => {
             // If not yet open, a plain click saves quickly; long hover opens popover
             if (!open) handleQuickSave(e);
@@ -195,7 +203,7 @@ export function BookmarkButton({ post, size = "sm" }: BookmarkButtonProps) {
               ? <BookmarkCheck className={iconSize} />
               : <Bookmark className={iconSize} />
           }
-        </Button>
+        </button>
       </PopoverTrigger>
 
       <PopoverContent
