@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
-import { getWsTicket } from "@/actions/getWsTicket";
 
+/**
+ * Legacy endpoint kept temporarily so stale clients fail without receiving
+ * the session access token. WebSocket clients must use /api/ws/authorize.
+ */
 export async function GET() {
-  const ticket = await getWsTicket();
-
-  if (!ticket) {
-    return NextResponse.json({ ticket: null }, { status: 401 });
-  }
-
-  return NextResponse.json({ ticket });
+  return NextResponse.json(
+    {
+      detail: "Use /api/ws/authorize with a scoped WebSocket path.",
+    },
+    {
+      status: 410,
+      headers: { "Cache-Control": "no-store" },
+    },
+  );
 }

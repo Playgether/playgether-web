@@ -7,32 +7,11 @@ import { NotificationWrapper } from "./NotificationWrapper";
 import EmptyData from "@/components/elements/EmptyDataComponent/EmptyData";
 import { useSecureWebSocket } from "@/hooks/useSecureWebSocket";
 
-function NotificationBody({
-  notificationsParent,
-}: {
-  notificationsParent: any[];
-}) {
+function NotificationBody({ notificationsParent }: { notificationsParent: any[] }) {
   const [notifications, setNotifications] = useState(notificationsParent);
-  const [wsUrl, setWsUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/notifications-ws-token", { credentials: "include" })
-      .then((res) => (res.ok ? res.json() : { ticket: null }))
-      .then((data) => {
-        if (!cancelled && data?.ticket) {
-          setWsUrl(`${WS_URL}/ws/notifications/?ticket=${data.ticket}`);
-        }
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const { lastJsonMessage } = useWebSocket(wsUrl ?? "ws://localhost", {
-    share: false,
-    shouldReconnect: () => !!wsUrl,
+  const { lastMessage } = useSecureWebSocket({
+    url: "/ws/notifications/",
+    shouldReconnect: () => true,
   });
 
   useEffect(() => {
@@ -58,16 +37,14 @@ function NotificationBody({
       const newNotification: {
         object_id: number;
         message: string;
-        actors: any[];
+        actors: any[]; 
         timestamp: Date;
         content_type: number;
         notification_type: string;
       } = {
         object_id: lastJsonMessage.object_id as number,
         message: lastJsonMessage.message as string,
-        actors: Array.isArray(lastJsonMessage.actors)
-          ? lastJsonMessage.actors
-          : [],
+        actors: Array.isArray(lastJsonMessage.actors) ? lastJsonMessage.actors : [],
         timestamp: lastJsonMessage.timestamp as Date,
         content_type: lastJsonMessage.content_type as number,
         notification_type: lastJsonMessage.notification_type as string,
@@ -76,27 +53,23 @@ function NotificationBody({
         // Caso actors seja 0, remover a notificação
         if (newNotification.actors.length === 0) {
           return prevNotifications.filter(
-            (notification) =>
-              !(
-                notification.object_id === newNotification.object_id &&
-                notification.content_type === newNotification.content_type &&
-                notification.notification_type ===
-                  newNotification.notification_type
-              ),
+            (notification) => 
+              !(notification.object_id === newNotification.object_id &&
+              notification.content_type === newNotification.content_type &&
+              notification.notification_type === newNotification.notification_type)
           );
         }
 
         // Verifica se a notificação já existe
         const existingIndex = prevNotifications.findIndex(
-          (notification) =>
+          (notification) => 
             notification.object_id === newNotification.object_id &&
             notification.content_type === newNotification.content_type &&
-            notification.notification_type ===
-              newNotification.notification_type,
+            notification.notification_type === newNotification.notification_type
         );
 
         let updatedNotifications;
-
+        
         if (existingIndex !== -1) {
           // Atualiza a notificação existente
           updatedNotifications = [...prevNotifications];
@@ -122,9 +95,7 @@ function NotificationBody({
     <>
       {notifications && notifications.length > 0 ? (
         notifications.map((notification, index) => (
-          <NotificationWrapper
-            key={`${notification.object_id}-${notification.content_type}-${notification.notification_type}-${index}`}
-          >
+          <NotificationWrapper key={`${notification.object_id}-${notification.content_type}-${notification.notification_type}-${index}`}>
             <NotificationsStructure actors={notification.actors}>
               <NotificationDate timestamp={notification.timestamp} />
             </NotificationsStructure>
