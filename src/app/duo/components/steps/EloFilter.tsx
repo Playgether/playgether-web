@@ -6,9 +6,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, Clock, Filter, MessageSquare, Trophy } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import type { Game, GamePreferences, GameSchema, LolSchema, CsSchema } from "../../types/duo";
+import type { Game, GamePreferences, GameSchema, LolSchema, CsSchema, ValorantSchema } from "../../types/duo";
 import { lolTierEmblemUrl } from "@/lib/lolRankedEmblem";
+import { valorantTierEmblemUrl } from "@/lib/valorantRankEmblem";
 import { LolRankEmblemFrame } from "@/components/lol/LolRankEmblemFrame";
+import { premierRangeStyle } from "../../constants/csPremier";
+import { isValorantDuoSlug } from "../../utils/isValorantGame";
 
 const PLAY_TIMES = [
   { id: "morning", label: "Manhã (6h – 12h)" },
@@ -34,9 +37,11 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
   const slug = game.acronym.toLowerCase();
   const isLol = slug === "lol";
   const isCs = slug === "cs2";
+  const isValorant = isValorantDuoSlug(slug);
+  const usesEloTiers = isLol || isValorant;
 
   // LoL: multi-select elo tiers
-  const lolSchema = isLol ? (schema as LolSchema) : null;
+  const lolSchema = usesEloTiers ? (schema as LolSchema | ValorantSchema) : null;
   const [selectedElos, setSelectedElos] = useState<string[]>(
     (preferences as any).accepted_elo ?? []
   );
@@ -77,7 +82,7 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
       play_times: selectedTimes,
       duo_note: note,
     } as Partial<GamePreferences>;
-    if (isLol) {
+    if (usesEloTiers) {
       onNext({ ...base, accepted_elo: selectedElos } as Partial<GamePreferences>);
     } else if (isCs) {
       onNext({ ...base, accepted_ranges: selectedRanges } as Partial<GamePreferences>);
@@ -86,12 +91,12 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
     }
   }
 
-  const eloLabel = isLol ? "Elo" : "Range de Pontos Premier";
-  const eloOptions: string[] = isLol
+  const eloLabel = isCs ? "Range de Pontos Premier" : "Elo";
+  const eloOptions: string[] = usesEloTiers
     ? (lolSchema?.elo_tiers ?? [])
     : (csSchema?.premier_ranges ?? []);
-  const selectedEloValues = isLol ? selectedElos : selectedRanges;
-  const toggleEloFn = isLol ? toggleElo : toggleRange;
+  const selectedEloValues = usesEloTiers ? selectedElos : selectedRanges;
+  const toggleEloFn = usesEloTiers ? toggleElo : toggleRange;
 
   return (
     <div className="min-h-layout-main w-full max-w-full flex items-center justify-center px-4 py-10 sm:px-6">
@@ -126,7 +131,7 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
                 <h3 className="text-base font-semibold text-card-foreground">{eloLabel}</h3>
                 <p className="text-xs text-muted-foreground">
                   {selectedEloValues.length === 0
-                    ? `Qualquer ${isLol ? "elo" : "range"} será considerado.`
+                    ? `Qualquer ${isCs ? "range" : "elo"} será considerado.`
                     : `${selectedEloValues.length} opção(ões) selecionada(s).`}
                 </p>
               </div>
@@ -137,7 +142,7 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
                 <span className="truncate">
                   {selectedEloValues.length > 0
                     ? `${selectedEloValues.length} selecionado(s)`
-                    : `Selecionar ${isLol ? "elos" : "ranges"}`}
+                    : `Selecionar ${isCs ? "ranges" : "elos"}`}
                 </span>
                 <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
               </PopoverTrigger>
@@ -146,7 +151,12 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
                 className="z-[120] max-h-60 w-[var(--radix-popover-trigger-width)] min-w-[12rem] overflow-y-auto border-border p-2 shadow-lg"
               >
                 {eloOptions.map((opt) => {
-                  const emblem = isLol ? lolTierEmblemUrl(opt) : null;
+                  const emblem = isLol
+                    ? lolTierEmblemUrl(opt)
+                    : isValorant
+                      ? valorantTierEmblemUrl(opt)
+                      : null;
+                  const premierStyle = isCs ? premierRangeStyle(opt) : null;
                   return (
                     <div
                       key={opt}
@@ -162,10 +172,15 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
                           src={emblem}
                           alt={`Elo ${opt}`}
                           frameClass="h-11 w-11"
-                          zoomPercent={182}
+                          zoomPercent={isValorant ? 118 : 182}
+                        />
+                      ) : premierStyle ? (
+                        <span
+                          className={`h-4 w-4 shrink-0 rounded-full ring-2 ring-background ${premierStyle.dot}`}
+                          aria-hidden
                         />
                       ) : null}
-                      <span className="text-sm">{opt}</span>
+                      <span className={`text-sm ${premierStyle ? premierStyle.text : ""}`}>{opt}</span>
                     </div>
                   );
                 })}
@@ -176,7 +191,7 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
               <button
                 type="button"
                 className="mt-3 text-xs font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-primary hover:underline"
-                onClick={() => (isLol ? setSelectedElos([]) : setSelectedRanges([]))}
+                onClick={() => (usesEloTiers ? setSelectedElos([]) : setSelectedRanges([]))}
               >
                 Limpar seleção
               </button>

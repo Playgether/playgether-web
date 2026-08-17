@@ -146,11 +146,9 @@ const ChatHandlerContext = createContext<ChatHandlerContextProps>(
 );
 
 const ChatHandlerContextProvider = ({
-  ticket,
   chatroom,
   children,
 }: {
-  ticket: string;
   chatroom: string;
   children: React.ReactNode;
 }) => {
@@ -177,7 +175,7 @@ const ChatHandlerContextProvider = ({
   }, [socketPath]);
 
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
-    `${wsBaseUrl()}/ws/chatroom/${encodedChatroom}?ticket=${ticket}`,
+    socketUrl,
     {
       share: false,
       shouldReconnect: () => false,

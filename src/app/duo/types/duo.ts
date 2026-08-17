@@ -35,7 +35,11 @@ export interface CsStats {
   hours_played: number | null;
 }
 
-export type GameStats = LolStats | CsStats;
+export interface ValorantStats {
+  self_declared: boolean;
+}
+
+export type GameStats = LolStats | CsStats | ValorantStats;
 
 export interface StatsResponse {
   connected: boolean;
@@ -56,7 +60,13 @@ export interface CsSchema {
   play_times: string[];
 }
 
-export type GameSchema = LolSchema | CsSchema;
+export interface ValorantSchema {
+  roles: string[];
+  elo_tiers: string[];
+  play_times: string[];
+}
+
+export type GameSchema = LolSchema | CsSchema | ValorantSchema;
 
 // ─── Preferences (user-filled form data) ─────────────────────────────────────
 
@@ -81,7 +91,16 @@ export interface CsPreferences {
   duo_note?: string;
 }
 
-export type GamePreferences = LolPreferences | CsPreferences;
+export interface ValorantPreferences {
+  own_elo: string;
+  roles: string[];
+  desired_roles: string[];
+  accepted_elo: string[];
+  play_times: string[];
+  duo_note?: string;
+}
+
+export type GamePreferences = LolPreferences | CsPreferences | ValorantPreferences;
 
 // ─── Queue ───────────────────────────────────────────────────────────────────
 
@@ -100,6 +119,12 @@ export interface DuoQueue {
 
 // ─── Match ───────────────────────────────────────────────────────────────────
 
+export interface AccountVerification {
+  connected: boolean;
+  level: "verified" | "linked" | "self_declared" | "none";
+  label: string | null;
+}
+
 export interface MatchPartner {
   user_id: string | number;
   username: string;
@@ -109,6 +134,8 @@ export interface MatchPartner {
   preferences: Partial<GamePreferences>;
   /** Estatísticas do jogo (CS2, LoL, …) vindas do backend. */
   game_stats?: Record<string, unknown> | null;
+  /** Conta do jogo vinculada (Riot, Steam, …). */
+  account_verification?: AccountVerification | null;
   /** Conquistas fixadas no perfil (até 3), para exibir no card do duo. */
   highlighted_achievements?: HighlightedAchievementPublic[];
 }
