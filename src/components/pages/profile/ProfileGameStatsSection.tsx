@@ -60,11 +60,10 @@ import type {
 import { getLolHistory } from "@/services/getLolStats";
 import { LolMatchHistoryDetail } from "@/components/pages/profile/LolMatchHistoryDetail";
 import { LolRankEmblemFrame } from "@/components/lol/LolRankEmblemFrame";
+import { GameMediaImage } from "@/components/media/GameMediaImage";
 import { cn } from "@/lib/utils";
 import {
-  getCs2WeaponIconsMap,
   peekCs2WeaponIconUrl,
-  resolveCs2WeaponIconName,
 } from "@/lib/cs2WeaponIcons";
 import { Info } from "lucide-react";
 
@@ -934,9 +933,6 @@ const CS2_SHARED_WEAPONS = new Set([
   "ZEUS X27",
 ]);
 
-const CS2_MAP_ICON_BASE =
-  "https://raw.githubusercontent.com/MurkyYT/cs2-map-icons/main/images";
-
 /** Arquivo sem extensão (ex.: de_mirage) — ícones completos, não thumbs. */
 const CS2_MAP_ICON_STEM: Record<string, string> = {
   dust2: "de_dust2",
@@ -998,7 +994,22 @@ function isValidMapIconStem(stem: string): boolean {
   return /^(de|cs|ar)_[a-z0-9_]+$/i.test(stem);
 }
 
-function getCs2MapIconUrl(mapName: string): string {
+const CS2_MAP_CLOUDINARY_SLUG: Record<string, string> = {
+  de_dust2: "dust2",
+  de_mirage: "mirage",
+  de_inferno: "inferno",
+  de_overpass: "overpass",
+  de_nuke: "nuke",
+  de_ancient: "ancient",
+  de_anubis: "anubis",
+  de_vertigo: "vertigo",
+  de_train: "train",
+  de_cache: "cache",
+  de_cbble: "cobblestone",
+  cs_office: "office",
+};
+
+function getCs2MapPublicId(mapName: string): string {
   const raw = normalizeMapName(mapName);
   const compact = raw.replace(/_/g, "");
   let stem =
@@ -1012,22 +1023,20 @@ function getCs2MapIconUrl(mapName: string): string {
   if (!isValidMapIconStem(stem)) {
     stem = MAP_ICON_FALLBACK_STEM;
   }
-  return `${CS2_MAP_ICON_BASE}/${stem}.png`;
+  const slug = CS2_MAP_CLOUDINARY_SLUG[stem] ?? stem.replace(/^(de|cs|ar)_/, "");
+  return `games/cs2/maps/${slug}`;
 }
 
 function Cs2MapIcon({ mapName }: { mapName: string }) {
-  const fallbackUrl = `${CS2_MAP_ICON_BASE}/${MAP_ICON_FALLBACK_STEM}.png`;
-  const [src, setSrc] = useState(() => getCs2MapIconUrl(mapName));
-
   return (
-    <img
-      src={src}
+    <GameMediaImage
+      src={getCs2MapPublicId(mapName)}
       alt={`Ícone ${mapName}`}
-      className="h-12 w-12 object-contain transition-transform duration-300 ease-out will-change-transform md:group-hover:scale-110"
-      loading="lazy"
-      onError={() => {
-        if (src !== fallbackUrl) setSrc(fallbackUrl);
-      }}
+      size="asset"
+      className="h-12 w-12"
+      imgClassName="transition-transform duration-300 ease-out will-change-transform md:group-hover:scale-110"
+      spinnerClassName="h-4 w-4"
+      fallback={<MapIcon className="h-6 w-6 text-muted-foreground" aria-hidden />}
     />
   );
 }
@@ -1169,34 +1178,15 @@ function Cs2StatBar({
 }
 
 function Cs2WeaponIcon({ name }: { name: string }) {
-  const resolvedName = resolveCs2WeaponIconName(name);
-  const [url, setUrl] = useState<string | null>(() =>
-    peekCs2WeaponIconUrl(name),
-  );
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    if (url) return;
-    let cancelled = false;
-    void getCs2WeaponIconsMap().then((map) => {
-      if (!cancelled) setUrl(map.get(resolvedName) ?? null);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [name, resolvedName, url]);
-
-  if (!url || failed) {
-    return <Crosshair className="h-4 w-4 text-muted-foreground" aria-hidden />;
-  }
-
+  const url = peekCs2WeaponIconUrl(name);
   return (
-    <img
+    <GameMediaImage
       src={url}
       alt=""
-      className="h-full w-full object-contain"
-      loading="lazy"
-      onError={() => setFailed(true)}
+      size="asset"
+      className="h-full w-full"
+      spinnerClassName="h-3.5 w-3.5"
+      fallback={<Crosshair className="h-4 w-4 text-muted-foreground" aria-hidden />}
     />
   );
 }
@@ -1317,10 +1307,6 @@ function formatSyncedAt(iso?: string | null): string | null {
 }
 
 function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
-  useEffect(() => {
-    void getCs2WeaponIconsMap();
-  }, []);
-
   const mergedFromLegacy = mergeCs2WeaponEntries([
     ...(stats.weapons ?? []),
     ...(stats.ctWeaponKills ?? []),

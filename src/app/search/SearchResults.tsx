@@ -17,6 +17,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
+import { GameMediaImage } from "@/components/media/GameMediaImage";
 import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
 import {
   searchGlobal,
@@ -160,7 +161,6 @@ function RoomCard({ room, onClick }: { room: SearchRoom; onClick: () => void }) 
 }
 
 function GameCard({ game, onClick }: { game: SearchGame; onClick: () => void }) {
-  const src = game.icon ? resolveGameMediaUrl(game.icon) : null;
   return (
     <button
       type="button"
@@ -168,11 +168,17 @@ function GameCard({ game, onClick }: { game: SearchGame; onClick: () => void }) 
       className="flex w-full items-center gap-3 border-b border-border/30 px-3 py-3 text-left transition-colors last:border-0 hover:bg-muted/60 sm:gap-4 sm:px-4 sm:py-4"
     >
       <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted sm:h-12 sm:w-12">
-        {src ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={src} alt={game.name} className="w-full h-full object-cover" />
+        {game.icon ? (
+          <GameMediaImage
+            src={game.icon}
+            alt={game.name}
+            size="icon"
+            objectFit="cover"
+            className="h-full w-full"
+            spinnerClassName="h-4 w-4"
+          />
         ) : (
-          <Gamepad2 className="w-5 h-5 text-muted-foreground" />
+          <Gamepad2 className="h-5 w-5 text-muted-foreground" />
         )}
       </div>
       <div className="flex-1 min-w-0">

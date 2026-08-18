@@ -9,7 +9,7 @@ import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import { SettingsPageWrapper, SettingsSection } from "../components/SettingsPageWrapper";
 import { apiFetch } from "@/services/apiFetch";
 import { getGames, type GameDetails } from "@/services/getGames";
-import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
+import { GameMediaImage } from "@/components/media/GameMediaImage";
 import { useAuthContext } from "@/context/AuthContext";
 import { disconnectSteam } from "@/services/disconnectSteam";
 import {
@@ -31,12 +31,6 @@ interface PlatformStatus {
 
 interface ConnectionsStatus {
   platforms: Record<string, PlatformStatus>;
-}
-
-function resolveMediaUrl(value: string | null | undefined): string {
-  if (!value) return "";
-  if (value.startsWith("http") || value.startsWith("/")) return value;
-  return getCloudinaryUrl(value);
 }
 
 type PlatformKind = "steam" | "lol" | "valorant" | null;
@@ -69,14 +63,16 @@ function handleConnectSteam() {
 }
 
 function GameIcon({ icon, image, avatar, name }: { icon?: string | null; image?: string | null; avatar?: string | null; name: string }) {
-  const src = resolveMediaUrl(avatar ?? icon ?? image);
+  const src = avatar ?? icon ?? image;
   if (src) {
     return (
-      <img
+      <GameMediaImage
         src={src}
         alt={name}
-        className="w-10 h-10 rounded-xl object-cover"
-        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+        size="icon"
+        objectFit="cover"
+        className="h-10 w-10 rounded-xl"
+        spinnerClassName="h-4 w-4"
       />
     );
   }

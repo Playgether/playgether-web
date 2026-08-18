@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ChevronRight, Gamepad2, Loader2 } from "lucide-react";
-import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
+import { GameMediaImage } from "@/components/media/GameMediaImage";
 import {
   HoverCard,
   HoverCardContent,
@@ -58,14 +58,16 @@ export function GameSelection({ onSelect }: GameSelectionProps) {
         {!loading && !error && (
           <div className="grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             {games.map((game, index) => {
-              const coverSrc = resolveGameMediaUrl(game.image);
-              const iconSrc = resolveGameMediaUrl(game.icon);
               const titleRow = (
                 <div className="flex min-w-0 flex-1 items-center gap-3">
-                  {iconSrc ? (
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border/50 bg-background/80 shadow-sm">
-                      <img src={iconSrc} alt="" className="h-7 w-7 object-contain" />
-                    </span>
+                  {game.icon ? (
+                    <GameMediaImage
+                      src={game.icon}
+                      alt=""
+                      size="icon"
+                      className="h-10 w-10 shrink-0 rounded-lg border border-border/50 bg-background/80 shadow-sm"
+                      spinnerClassName="h-4 w-4"
+                    />
                   ) : (
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border/50 bg-muted/40">
                       <Gamepad2 className="h-5 w-5 text-muted-foreground" />
@@ -96,12 +98,14 @@ export function GameSelection({ onSelect }: GameSelectionProps) {
                       aria-hidden
                     />
                     <div className="relative flex h-full w-full items-center justify-center p-4 sm:p-5">
-                      {coverSrc ? (
-                        <img
-                          src={coverSrc}
+                      {game.image ? (
+                        <GameMediaImage
+                          src={game.image}
                           alt=""
-                          decoding="async"
-                          className="max-h-full max-w-full object-contain drop-shadow-md transition-transform duration-300 group-hover:scale-[1.03]"
+                          size="banner"
+                          className="h-full w-full"
+                          imgClassName="max-h-full max-w-full drop-shadow-md transition-transform duration-300 group-hover:scale-[1.03]"
+                          spinnerClassName="h-6 w-6"
                         />
                       ) : (
                         <Gamepad2 className="h-14 w-14 text-muted-foreground/60" />

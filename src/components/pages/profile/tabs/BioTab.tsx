@@ -26,7 +26,7 @@ import { getStatsGames } from "@/services/getStatsGames";
 import { getGames, type GameDetails } from "@/services/getGames";
 import { getCs2Stats } from "@/services/getCs2Stats";
 import { getLolStats } from "@/services/getLolStats";
-import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
+import { GameMediaImage } from "@/components/media/GameMediaImage";
 
 type BioGameStat = {
   slug: "lol" | "csgo";
@@ -214,21 +214,23 @@ export function BioTab({
     const stats = slug ? gameStats[slug] : undefined;
     const usesPlaygetherPostSync = slug === "lol";
     const icon = game.icon ?? game.image ?? null;
-    const imageUrl = icon
-      ? icon.startsWith("http") || icon.startsWith("/")
-        ? icon
-        : getCloudinaryUrl(icon)
-      : "";
 
     return (
       <div
         key={game.id}
         className="flex items-center gap-3 p-3 bg-card/50 rounded-lg border border-border"
       >
-        {imageUrl ? (
-          <img src={imageUrl} alt={game.name} className="w-8 h-8 rounded object-cover" />
+        {icon ? (
+          <GameMediaImage
+            src={icon}
+            alt={game.name}
+            size="icon"
+            objectFit="cover"
+            className="h-8 w-8 rounded"
+            spinnerClassName="h-3.5 w-3.5"
+          />
         ) : (
-          <div className="w-8 h-8 rounded bg-muted" />
+          <div className="h-8 w-8 rounded bg-muted" />
         )}
         <div>
           <div className="font-medium text-card-foreground">{game.name}</div>

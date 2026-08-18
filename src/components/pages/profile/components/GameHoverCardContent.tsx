@@ -1,5 +1,5 @@
 "use client";
-import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
+import { GameMediaImage } from "@/components/media/GameMediaImage";
 
 type Props = {
   title: string;
@@ -8,52 +8,42 @@ type Props = {
   logo?: string | null;
 };
 
-function toMediaUrl(value?: string | null): string {
-  if (!value) return "";
-  if (value.startsWith("http")) return value;
-  if (value.startsWith("/")) return value;
-  return getCloudinaryUrl(value);
-}
-
 export function GameHoverCardContent({
   title,
   description,
   cover,
   logo,
 }: Props) {
-  const coverUrl = toMediaUrl(cover);
-  const logoUrl = toMediaUrl(logo);
-
-  const hasCover = !!coverUrl;
-  const hasLogo = !!logoUrl;
+  const hasCover = Boolean(cover);
+  const hasLogo = Boolean(logo);
 
   return (
-    <div className="space-y-3 text-left max-h-64 overflow-y-auto pr-1">
-      {/* {hasCover ? (
-        <img
-          src={coverUrl}
+    <div className="max-h-64 space-y-3 overflow-y-auto pr-1 text-left">
+      {hasCover ? (
+        <GameMediaImage
+          src={cover}
           alt={`${title} cover`}
-          className="w-full h-24 object-contain rounded-md bg-card/50"
+          size="banner"
+          className="h-24 w-full rounded-md border border-border bg-card/50"
+          spinnerClassName="h-5 w-5"
         />
-      ) : (
-        <div className="w-full h-24 rounded-md bg-card/50 border border-border">
-          <p>No Banner</p>
-        </div>
-      )} */}
+      ) : null}
 
       <div className="flex items-start gap-3">
         {hasLogo ? (
-          <img
-            src={logoUrl}
+          <GameMediaImage
+            src={logo}
             alt={`${title} logo`}
-            className="w-12 h-12 rounded-md object-contain bg-card/50 border border-border"
+            size="icon"
+            className="h-12 w-12 shrink-0 rounded-md border border-border bg-card/50"
+            spinnerClassName="h-4 w-4"
           />
         ) : (
-          <div className="w-12 h-12 rounded-md bg-card/50 border border-border" />
+          <div className="h-12 w-12 shrink-0 rounded-md border border-border bg-card/50" />
         )}
 
         <div className="min-w-0">
-          <div className="font-semibold truncate">{title}</div>
+          <div className="truncate font-semibold">{title}</div>
           {description ? (
             <p className="text-sm text-muted-foreground">{description}</p>
           ) : null}
