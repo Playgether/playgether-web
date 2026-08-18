@@ -154,10 +154,16 @@ export function CreateCutDialog({ open, onOpenChange, onCreated }: CreateCutDial
               )}
             </CldUploadWidget>
           ) : (
-            <div className="relative overflow-hidden rounded-xl bg-black aspect-[9/16] max-h-64 mx-auto w-auto">
+            <div
+              className="relative mx-auto max-h-64 w-auto max-w-full overflow-hidden rounded-xl bg-black"
+              style={{
+                aspectRatio:
+                  video.width && video.height ? `${video.width} / ${video.height}` : "9 / 16",
+              }}
+            >
               <video
                 src={video.secure_url}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-contain"
                 muted
                 loop
                 autoPlay
