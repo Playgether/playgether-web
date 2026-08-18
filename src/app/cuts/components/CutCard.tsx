@@ -16,16 +16,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Cut } from "@/types/Cut";
-import { getCloudinaryVideoUrl } from "@/app/utils/getCloudinaryVideo";
+import { getCloudinaryCutVideoUrl } from "@/app/utils/getCloudinaryVideo";
 import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
 import { CutOptionsMenu } from "./CutOptionsMenu";
 import { CutShareDialog } from "./CutShareDialog";
 import { BookmarkButton } from "@/components/ui/BookmarkButton";
-
-function aspectFromSize(width?: number | null, height?: number | null, fallback = 9 / 16): number {
-  if (width && height && width > 0 && height > 0) return width / height;
-  return fallback;
-}
 
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -63,8 +58,6 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
   const videoRef = useRef<HTMLVideoElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
 
-  const [mediaAspect, setMediaAspect] = useState(() => aspectFromSize(cut.width, cut.height));
-
   const [muted, setMuted] = useState(true);
   const [volume, setVolume] = useState(1);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
@@ -91,10 +84,6 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
   }, []);
 
   useEffect(() => {
-    setMediaAspect(aspectFromSize(cut.width, cut.height));
-  }, [cut.id, cut.width, cut.height]);
-
-  useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
     if (isActive) {
@@ -113,7 +102,6 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
     const onPause = () => setPlaying(false);
     const onLoadedMeta = () => {
       setDuration(video.duration || 0);
-      setMediaAspect(aspectFromSize(video.videoWidth, video.videoHeight, aspectFromSize(cut.width, cut.height)));
     };
     const onTimeUpdate = () => {
       if (!isSeeking && video.duration) {
@@ -130,7 +118,7 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
       video.removeEventListener("loadedmetadata", onLoadedMeta);
       video.removeEventListener("timeupdate", onTimeUpdate);
     };
-  }, [isSeeking, cut.width, cut.height]);
+  }, [isSeeking]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -262,22 +250,18 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
 
   const avatarSrc = cut.profile_photo ? getCloudinaryUrl(cut.profile_photo) : null;
   const VolumeIcon = muted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
-  const fillsFrame = mediaAspect <= 4 / 3 + 0.01;
 
   return (
     <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-black">
-      <div className="flex h-full items-center justify-center gap-3 px-2">
+      <div className="flex h-full w-full items-center justify-center gap-3 lg:px-2">
         <div
-          className="relative h-full w-full max-w-[420px] overflow-hidden bg-black"
+          className="relative h-full w-full min-w-0 overflow-hidden bg-black lg:max-w-[420px]"
           onClick={handleVideoTap}
         >
           <video
             ref={videoRef}
-            src={getCloudinaryVideoUrl(cut.video_file)}
-            className={cn(
-              "relative h-full w-full",
-              fillsFrame ? "object-cover" : "object-contain",
-            )}
+            src={getCloudinaryCutVideoUrl(cut.video_file)}
+            className="relative h-full w-full object-cover"
             loop
             playsInline
             preload="metadata"

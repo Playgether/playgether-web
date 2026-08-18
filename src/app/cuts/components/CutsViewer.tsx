@@ -68,6 +68,16 @@ export function CutsViewer({ initialCuts, initialNext, isAuthenticated }: CutsVi
 
   const closeComments = useCallback(() => setCommentsCut(null), []);
 
+  const activeCutId = cuts[activeIndex]?.id;
+  useEffect(() => {
+    if (activeCutId == null || typeof window === "undefined") return;
+    const next = `/cuts/${activeCutId}`;
+    const path = window.location.pathname;
+    if (path === next) return;
+    if (path !== "/cuts" && !/^\/cuts\/[^/]+$/.test(path)) return;
+    window.history.replaceState(window.history.state, "", next);
+  }, [activeCutId]);
+
   if (cuts.length === 0) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-black">

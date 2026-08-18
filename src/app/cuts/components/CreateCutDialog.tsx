@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { CldUploadWidget, CloudinaryUploadWidgetResults } from "next-cloudinary";
 import { Loader2, Upload, X, Clapperboard } from "lucide-react";
 import {
@@ -13,8 +13,17 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { createCut } from "@/actions/getCuts";
 import { Cut } from "@/types/Cut";
+import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
+import { deletePostFile } from "@/services/cloudinary_requests/deletePostFile";
+import { useAuthContext } from "@/context/AuthContext";
+import {
+  BYTES_200_MB,
+  CLOUDINARY_CUT_VIDEO_FORMATS,
+  createVideoDurationPreBatchValidator,
+  CUT_VIDEO_MAX_DURATION_SEC,
+  videoExceedsMaxDuration,
+} from "@/app/utils/cloudinaryUploadConfig";
 
-const MAX_DURATION = 240;
 const MAX_CHARS = 2200;
 
 interface UploadedVideo {
@@ -34,12 +43,27 @@ interface CreateCutDialogProps {
   onCreated?: (cut: Cut) => void;
 }
 
+function queueCutCleanup(publicId: string) {
+  deletePostFile(publicId, "", "video").catch(console.error);
+}
+
 export function CreateCutDialog({ open, onOpenChange, onCreated }: CreateCutDialogProps) {
+  const { user } = useAuthContext();
   const [video, setVideo] = useState<UploadedVideo | null>(null);
   const [caption, setCaption] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [isWidgetOpen, setIsWidgetOpen] = useState(false);
+  const skipCleanupRef = useRef(false);
+
+  const validateCutDuration = useMemo(
+    () =>
+      createVideoDurationPreBatchValidator({
+        maxDurationSec: CUT_VIDEO_MAX_DURATION_SEC,
+        onError: (message) => setError(message),
+      }),
+    [],
+  );
 
   function reset() {
     setVideo(null);
@@ -48,7 +72,14 @@ export function CreateCutDialog({ open, onOpenChange, onCreated }: CreateCutDial
   }
 
   function handleOpenChange(val: boolean) {
-    if (!val) reset();
+    if (!val && isWidgetOpen) return;
+    if (!val) {
+      if (video && !skipCleanupRef.current) {
+        queueCutCleanup(video.public_id);
+      }
+      skipCleanupRef.current = false;
+      reset();
+    }
     onOpenChange(val);
   }
 
@@ -56,12 +87,22 @@ export function CreateCutDialog({ open, onOpenChange, onCreated }: CreateCutDial
     if (result.event !== "success" || !result.info || typeof result.info === "string") return;
     const info = result.info as typeof result.info & {
       duration?: number;
+      resource_type?: string;
       video?: { duration?: number };
     };
     const duration = info.duration ?? info.video?.duration;
 
-    if (duration && duration > MAX_DURATION) {
-      setError(`O vídeo pode ter no máximo ${MAX_DURATION} segundos.`);
+    if (
+      videoExceedsMaxDuration(
+        {
+          resource_type: info.resource_type || "video",
+          duration,
+        },
+        CUT_VIDEO_MAX_DURATION_SEC,
+      )
+    ) {
+      queueCutCleanup(info.public_id);
+      setError(`O vídeo pode ter no máximo ${CUT_VIDEO_MAX_DURATION_SEC} segundos.`);
       return;
     }
 
@@ -76,6 +117,11 @@ export function CreateCutDialog({ open, onOpenChange, onCreated }: CreateCutDial
       bytes: info.bytes,
       thumbnail_url: info.thumbnail_url,
     });
+  }
+
+  function handleRemoveVideo() {
+    if (video) queueCutCleanup(video.public_id);
+    setVideo(null);
   }
 
   function handleSubmit() {
@@ -98,6 +144,7 @@ export function CreateCutDialog({ open, onOpenChange, onCreated }: CreateCutDial
         return;
       }
 
+      skipCleanupRef.current = true;
       onCreated?.(cut);
       handleOpenChange(false);
     });
@@ -124,8 +171,12 @@ export function CreateCutDialog({ open, onOpenChange, onCreated }: CreateCutDial
               options={{
                 sources: ["local"],
                 maxFiles: 1,
-                maxVideoFileSize: 400_000_000,
-                clientAllowedFormats: ["mp4", "mov", "webm"],
+                tags: [user?.username || "user", "cut"],
+                uploadPreset: PresetsCloudinary.cuts,
+                resourceType: "video",
+                clientAllowedFormats: [...CLOUDINARY_CUT_VIDEO_FORMATS],
+                maxVideoFileSize: BYTES_200_MB,
+                preBatch: validateCutDuration,
                 language: "pt-br",
                 showCompletedButton: true,
                 multiple: false,
@@ -148,7 +199,9 @@ export function CreateCutDialog({ open, onOpenChange, onCreated }: CreateCutDial
                   <Upload className="h-8 w-8 text-muted-foreground" />
                   <div className="text-center">
                     <p className="text-sm font-medium">Clique para enviar seu vídeo</p>
-                    <p className="mt-1 text-xs text-muted-foreground">MP4, MOV ou WebM · Máx. 4min · 400 MB</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      MP4, MOV ou WebM · Máx. {CUT_VIDEO_MAX_DURATION_SEC / 60}min · 200 MB
+                    </p>
                   </div>
                 </button>
               )}
@@ -172,16 +225,16 @@ export function CreateCutDialog({ open, onOpenChange, onCreated }: CreateCutDial
               <button
                 type="button"
                 aria-label="Remover vídeo"
-                onClick={() => setVideo(null)}
+                onClick={handleRemoveVideo}
                 className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
               >
                 <X className="h-4 w-4" />
               </button>
-              {video.duration && (
+              {video.duration ? (
                 <span className="absolute bottom-2 right-2 rounded bg-black/60 px-1.5 py-0.5 text-xs text-white">
                   {Math.round(video.duration)}s
                 </span>
-              )}
+              ) : null}
             </div>
           )}
 
@@ -196,7 +249,7 @@ export function CreateCutDialog({ open, onOpenChange, onCreated }: CreateCutDial
             {caption.length}/{MAX_CHARS}
           </p>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => handleOpenChange(false)} disabled={isPending}>

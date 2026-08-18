@@ -7,6 +7,7 @@ export const CLOUDINARY_IMAGE_FORMATS = [
   "heic",
 ] as const;
 export const CLOUDINARY_VIDEO_FORMATS = ["mp4", "mov"] as const;
+export const CLOUDINARY_CUT_VIDEO_FORMATS = ["mp4", "mov", "webm"] as const;
 export const CLOUDINARY_IMAGE_AND_VIDEO_FORMATS = [
   ...CLOUDINARY_IMAGE_FORMATS,
   ...CLOUDINARY_VIDEO_FORMATS,
@@ -17,14 +18,17 @@ export const BYTES_8_MB = 8 * 1024 * 1024;
 export const BYTES_10_MB = 10 * 1024 * 1024;
 export const BYTES_50_MB = 50 * 1024 * 1024;
 export const BYTES_100_MB = 100 * 1024 * 1024;
+export const BYTES_200_MB = 200 * 1024 * 1024;
 
 /** Larguras eager — delivery deve snapar para estas. */
 export const EAGER_WIDTHS_FEED = [1280, 720, 480] as const;
 export const EAGER_WIDTHS_BANNER = [2560, 1920, 1280, 720] as const;
 export const EAGER_WIDTHS_PROFILE_PHOTO = [1024, 256, 128, 64] as const;
 export const EAGER_WIDTHS_VIDEO = [1280, 720] as const;
+export const EAGER_WIDTHS_CUTS = [720, 480] as const;
 
 export const POST_VIDEO_MAX_DURATION_SEC = 90;
+export const CUT_VIDEO_MAX_DURATION_SEC = 240;
 export const MILESTONE_VIDEO_MAX_DURATION_SEC = 30;
 export const AMBIENT_VIDEO_MAX_DURATION_SEC = 180;
 export const AMBIENT_VIDEO_MAX_LONG_SIDE = 1920;

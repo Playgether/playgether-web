@@ -6,6 +6,8 @@ import Image from "next/image";
 import { Cut } from "@/types/Cut";
 import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
+import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
+import type { HighlightedAchievementPublic } from "@/types/highlightedAchievements";
 
 interface CutComment {
   id: number;
@@ -14,6 +16,7 @@ interface CutComment {
   timestamp: string;
   user_username?: string;
   created_by_user_photo?: string | null;
+  highlighted_achievements?: HighlightedAchievementPublic[];
 }
 
 interface CutCommentsPanelProps {
@@ -141,9 +144,18 @@ function CommentRow({ comment }: { comment: CutComment }) {
           </span>
         )}
       </span>
-      <div className="flex-1">
-        <span className="text-xs font-semibold text-white/80">@{comment.user_username ?? "user"} </span>
-        <span className="text-sm text-white/90">{comment.comment}</span>
+      <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="shrink-0 text-xs font-semibold text-white/80">
+            @{comment.user_username ?? "user"}
+          </span>
+          <HighlightedAchievementBadges
+            achievements={comment.highlighted_achievements}
+            className="max-w-full"
+            compact
+          />
+        </div>
+        <p className="text-sm text-white/90">{comment.comment}</p>
       </div>
     </div>
   );
