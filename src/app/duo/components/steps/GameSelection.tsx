@@ -123,7 +123,6 @@ export function GameSelection({ onSelect }: GameSelectionProps) {
                           <GameHoverCardContent
                             title={game.name}
                             description={game.description}
-                            cover={game.image}
                             logo={game.icon}
                           />
                         </HoverCardContent>

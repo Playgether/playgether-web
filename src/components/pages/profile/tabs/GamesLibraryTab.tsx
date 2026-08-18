@@ -223,7 +223,6 @@ export function GamesLibraryTab({
                           <GameHoverCardContent
                             title={game.name}
                             description={game.description}
-                            cover={game.image}
                             logo={game.icon}
                           />
                           {game.acronym ? (
@@ -245,7 +244,6 @@ export function GamesLibraryTab({
                             <GameHoverCardContent
                               title={game.company.name}
                               description={game.company.description}
-                              cover={game.company.banner}
                               logo={game.company.logo}
                             />
                           </HoverCardContent>

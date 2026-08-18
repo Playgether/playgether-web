@@ -4,31 +4,18 @@ import { GameMediaImage } from "@/components/media/GameMediaImage";
 type Props = {
   title: string;
   description?: string | null;
-  cover?: string | null;
   logo?: string | null;
 };
 
 export function GameHoverCardContent({
   title,
   description,
-  cover,
   logo,
 }: Props) {
-  const hasCover = Boolean(cover);
   const hasLogo = Boolean(logo);
 
   return (
-    <div className="max-h-64 space-y-3 overflow-y-auto pr-1 text-left">
-      {hasCover ? (
-        <GameMediaImage
-          src={cover}
-          alt={`${title} cover`}
-          size="banner"
-          className="h-24 w-full rounded-md border border-border bg-card/50"
-          spinnerClassName="h-5 w-5"
-        />
-      ) : null}
-
+    <div className="max-h-64 overflow-y-auto pr-1 text-left">
       <div className="flex items-start gap-3">
         {hasLogo ? (
           <GameMediaImage

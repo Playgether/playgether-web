@@ -48,21 +48,21 @@ export default function GamerSidbarConversationsButtons({
         aria-label={item.label}
         title={item.label}
         className={cn(
-          "w-full h-14 flex items-center rounded-xl transition-all duration-300 relative",
-          "hover:bg-white/20 hover:shadow-glow-neon hover:scale-[1.02]",
+          "relative flex h-14 w-full items-center rounded-xl transition-all duration-300 short:h-11",
+          "hover:scale-[1.02] hover:bg-white/20 hover:shadow-glow-neon",
           isActive
             ? "bg-white/20 text-white shadow-glow-neon"
             : "text-white/80 hover:text-white"
         )}
       >
         {/* Ícone — container fixo w-14 para manter centralizado quando sidebar fechada */}
-        <div className="w-14 h-14 flex-shrink-0 flex items-center justify-center relative">
+        <div className="relative flex h-14 w-14 flex-shrink-0 items-center justify-center short:h-11">
           <div
             className={cn(
               "flex items-center justify-center",
               item.rounded === "full"
-                ? "w-10 h-10 rounded-full overflow-hidden ring-2 ring-purple-400/60 shadow-[0_0_10px_2px_rgba(168,85,247,0.35)] hover:ring-purple-300 hover:shadow-[0_0_16px_4px_rgba(168,85,247,0.55)]"
-                : "w-6 h-6"
+                ? "h-10 w-10 overflow-hidden rounded-full ring-2 ring-purple-400/60 shadow-[0_0_10px_2px_rgba(168,85,247,0.35)] hover:ring-purple-300 hover:shadow-[0_0_16px_4px_rgba(168,85,247,0.55)] short:h-8 short:w-8"
+                : "h-6 w-6 short:h-5 short:w-5"
             )}
           >
             {item.icon}
