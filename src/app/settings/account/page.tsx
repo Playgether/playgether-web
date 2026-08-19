@@ -402,6 +402,10 @@ export default function AccountSettingsPage() {
                   sources: ["local"],
                   multiple: false,
                   resourceType: "image",
+                  cropping: true,
+                  croppingAspectRatio: 3,
+                  croppingCoordinatesMode: "custom",
+                  language: "pt-br",
                   clientAllowedFormats: [...CLOUDINARY_IMAGE_FORMATS],
                   maxImageFileSize: BYTES_8_MB,
                 }}
@@ -442,6 +446,10 @@ export default function AccountSettingsPage() {
                   sources: ["local"],
                   multiple: false,
                   resourceType: "image",
+                  cropping: true,
+                  croppingAspectRatio: 1,
+                  croppingCoordinatesMode: "custom",
+                  language: "pt-br",
                   clientAllowedFormats: [...CLOUDINARY_IMAGE_FORMATS],
                   maxImageFileSize: BYTES_8_MB,
                 }}
