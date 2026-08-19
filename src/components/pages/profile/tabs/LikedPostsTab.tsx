@@ -10,6 +10,7 @@ import type { PostProps } from "@/app/feed/types/PostProps";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { useProfilePostsContext } from "@/app/profile/context/ProfilePostsContext";
 import { CldImage } from "next-cloudinary";
+import { MentionText } from "@/components/mentions/MentionText";
 
 async function fetchLikedPosts(cursor: string | null): Promise<{ data: PostProps[]; next_page: string | null }> {
   const params = new URLSearchParams({ page_size: "10" });
@@ -20,7 +21,7 @@ async function fetchLikedPosts(cursor: string | null): Promise<{ data: PostProps
 }
 
 interface LikedPostsTabProps {
-  onPostClick: (postId: number) => void;
+  onPostClick: (postId: string) => void;
 }
 
 export function LikedPostsTab({ onPostClick }: LikedPostsTabProps) {
@@ -178,7 +179,7 @@ function LikedPostCard({ post, onClick }: { post: PostProps; onClick: () => void
           <div className="min-w-0 flex-1 space-y-2">
             {truncated ? (
               <p className="line-clamp-3 text-sm leading-snug text-foreground">
-                {truncated}
+                <MentionText text={truncated} />
               </p>
             ) : hasMedia ? (
               <p className="text-xs italic text-muted-foreground">Post com mídia</p>

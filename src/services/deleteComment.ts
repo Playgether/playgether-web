@@ -3,7 +3,7 @@ import { TokenData } from "./updateTokenRequest";
 
 
 
-export const deleteComment = async (authTokens : TokenData | null | undefined, object_id: number) => {
+export const deleteComment = async (authTokens : TokenData | null | undefined, object_id: string) => {
     try{
         const response = await api.delete(`/api/v1/comments/${object_id}/`, {
             headers: {

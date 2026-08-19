@@ -8,11 +8,11 @@ export interface PostCommentsApiReturn {
 }
 export interface PostsCommentsProps {
   answers: PostCommentsApiReturn;
-  id: number;
+  id: string;
   created_by_user_name: string;
   created_by_user_photo: string;
   user_already_like: boolean;
-  object_id: number;
+  object_id: string | number;
   comment: string;
   timestamp: Date;
   quantity_comment: number;
@@ -28,11 +28,11 @@ export interface PostsCommentsProps {
 }
 
 export interface PostCommentsOfCommentsProps {
-  id: number;
+  id: string;
   created_by_user_name: string;
   created_by_user_photo: string;
   user_username?: string;
-  object_id: number;
+  object_id: string | number;
   comment: string;
   timestamp: Date;
   quantity_comment: number;
@@ -46,7 +46,7 @@ export interface PostCommentsOfCommentsProps {
 }
 
 export async function getCommentsClient(
-  id: number,
+  id: string,
   pageParam: string | null = null
 ) {
   try {

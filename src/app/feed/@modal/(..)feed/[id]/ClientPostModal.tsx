@@ -6,23 +6,22 @@ import { apiFetch } from "@/services/apiFetch";
 import type { PostProps } from "@/app/feed/types/PostProps";
 import React from "react";
 
-function ClientPostModalInner({ postId }: { postId?: number }) {
+function ClientPostModalInner({ postId }: { postId?: string }) {
   const { getPostById, injectPost } = useFeedContext();
-  const postIdNum = Number(postId);
   const [ready, setReady] = useState(false);
 
-  const postInContext = Number.isNaN(postIdNum) ? undefined : getPostById(postIdNum);
+  const postInContext = postId ? getPostById(postId) : undefined;
 
   useEffect(() => {
-    if (!postIdNum || Number.isNaN(postIdNum)) return;
+    if (!postId) return;
 
-    if (getPostById(postIdNum)) {
+    if (getPostById(postId)) {
       setReady(true);
       return;
     }
 
     // Post not in feed context — fetch from API and inject
-    apiFetch(`/api/posts/${postIdNum}`, { credentials: "include" })
+    apiFetch(`/api/posts/${postId}`, { credentials: "include" })
       .then((res) => {
         if (!res.ok) return;
         return res.json() as Promise<PostProps>;
@@ -34,7 +33,7 @@ function ClientPostModalInner({ postId }: { postId?: number }) {
         }
       })
       .catch(() => setReady(false));
-  }, [postIdNum, injectPost]);
+  }, [postId, injectPost]);
 
   // Re-check after inject
   useEffect(() => {
@@ -46,7 +45,7 @@ function ClientPostModalInner({ postId }: { postId?: number }) {
   return <PostModal postId={postInContext.id} />;
 }
 
-function ClientPostModal({ postId }: { postId?: number }) {
+function ClientPostModal({ postId }: { postId?: string }) {
   return (
     <Suspense fallback={null}>
       <ClientPostModalInner postId={postId} />

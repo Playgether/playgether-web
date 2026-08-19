@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CldImage } from "next-cloudinary";
 import { useProfilePostsContext } from "@/app/profile/context/ProfilePostsContext";
+import { MentionText } from "@/components/mentions/MentionText";
 
 interface Collection {
   id: number;
@@ -51,7 +52,7 @@ async function fetchCollections(): Promise<Collection[]> {
 }
 
 interface SavedPostsTabProps {
-  onPostClick: (postId: number) => void;
+  onPostClick: (postId: string) => void;
 }
 
 export function SavedPostsTab({ onPostClick }: SavedPostsTabProps) {
@@ -293,7 +294,7 @@ function PostListView({
   title: string;
   fetchFn: (cursor: string | null) => Promise<{ data: PostProps[]; next_page: string | null }>;
   onBack: () => void;
-  onPostClick: (postId: number) => void;
+  onPostClick: (postId: string) => void;
   onDeleteCollection?: () => void;
 }) {
   const { injectPost } = useProfilePostsContext();
@@ -428,7 +429,9 @@ function SavedPostCard({ post, onClick }: { post: PostProps; onClick: () => void
           </span>
         </div>
         {truncated && (
-          <p className="text-sm text-muted-foreground leading-snug line-clamp-2">{truncated}</p>
+          <p className="text-sm text-muted-foreground leading-snug line-clamp-2">
+            <MentionText text={truncated} />
+          </p>
         )}
         {!truncated && firstMedia && (
           <p className="text-xs text-muted-foreground italic">Post com mídia</p>

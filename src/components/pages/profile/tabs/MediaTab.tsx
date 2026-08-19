@@ -21,7 +21,7 @@ import { ProfileTabSearchBar } from "./ProfileTabSearchBar";
 interface MediaTabProps {
   profile: getProfileByUsernameProps | null;
   isOwner?: boolean;
-  onPostClick: (postId: number) => void;
+  onPostClick: (postId: string) => void;
   onDeletePost?: (post: PostProps) => void;
 }
 

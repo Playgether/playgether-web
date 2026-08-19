@@ -6,8 +6,8 @@ import { cookies } from "next/headers";
 export const updateCommentAction = async (data: {
   content_type: string;
   comment: string;
-  object_id: number;
-  comment_id?: number;
+  object_id: number | string;
+  comment_id?: string;
 }) => {
   const accessToken = (await cookies()).get("accessToken")?.value;
   try {

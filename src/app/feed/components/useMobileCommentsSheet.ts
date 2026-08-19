@@ -29,7 +29,7 @@ type SetExpanded = Dispatch<SetStateAction<boolean>>;
 export function useMobileCommentsSheet(
   expanded: boolean,
   setExpanded: SetExpanded,
-  postId: number,
+  postId: string,
 ) {
   const isLgDesktop = useIsLgDesktop();
   const reduceMotion = useReducedMotion();

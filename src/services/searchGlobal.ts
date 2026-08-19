@@ -24,7 +24,7 @@ export interface SearchRoom {
 }
 
 export interface SearchPost {
-  id: number;
+  id: string;
   comment: string;
   username: string;
   name: string;

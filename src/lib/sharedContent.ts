@@ -2,7 +2,7 @@ const SHARE_MARKER = "PGTHER_SHARE";
 
 export interface SharedCutContent {
   type: "cut";
-  id: number;
+  id: string;
   username: string;
   name: string;
   caption: string;
@@ -13,7 +13,7 @@ export interface SharedCutContent {
 }
 
 export function encodeSharedCut(cut: {
-  id: number;
+  id: string;
   username: string;
   name: string;
   caption: string;

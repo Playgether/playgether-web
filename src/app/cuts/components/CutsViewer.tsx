@@ -68,6 +68,22 @@ export function CutsViewer({ initialCuts, initialNext, isAuthenticated }: CutsVi
 
   const closeComments = useCallback(() => setCommentsCut(null), []);
 
+  const handleDeleteCut = useCallback((cutId: string) => {
+    setCuts((prev) => {
+      const idx = prev.findIndex((c) => c.id === cutId);
+      if (idx === -1) return prev;
+
+      setActiveIndex((current) => {
+        if (idx < current) return current - 1;
+        if (idx === current && current >= prev.length - 1) return Math.max(0, current - 1);
+        return current;
+      });
+
+      return prev.filter((c) => c.id !== cutId);
+    });
+    setCommentsCut((prev) => (prev?.id === cutId ? null : prev));
+  }, []);
+
   const activeCutId = cuts[activeIndex]?.id;
   useEffect(() => {
     if (activeCutId == null || typeof window === "undefined") return;
@@ -115,6 +131,7 @@ export function CutsViewer({ initialCuts, initialNext, isAuthenticated }: CutsVi
                 isAuthenticated={isAuthenticated}
                 onOpenComments={setCommentsCut}
                 commentsActive={commentsCut?.id === cut.id}
+                onDeleted={handleDeleteCut}
               />
             </div>
           ))}

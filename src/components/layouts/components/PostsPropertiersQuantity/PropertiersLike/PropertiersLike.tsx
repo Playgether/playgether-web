@@ -13,7 +13,7 @@ export interface PropertiersLikeProps
   iconClassName?: string;
   clicked: boolean;
   content_type: string;
-  object_id: number;
+  object_id: string | number;
   onAddLike?: () => void;
   onDeleteLike?: () => void;
   /** When set (e.g. guest), click opens auth instead of liking. */

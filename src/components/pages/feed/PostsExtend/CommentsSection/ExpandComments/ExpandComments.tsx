@@ -18,7 +18,7 @@ export interface ExpandedCommentsProps {
   /** Esta prop recebe alguma resposta de algum comentário, e então, este componente gera esta resposta */
   answer: PostsCommentsProps;
   /** Esta prop recebe o id do comentário original que esta resposta pertence */
-  comment_id: number;
+  comment_id: string;
 }
 
 /** Este componente é responsável por gerar cada resposta de cada comentário */

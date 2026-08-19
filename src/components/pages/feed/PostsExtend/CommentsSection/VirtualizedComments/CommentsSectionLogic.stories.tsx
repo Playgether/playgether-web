@@ -21,7 +21,7 @@ const mockCommentsOfCommentsNoLogin: PostsCommentsProps[] = [
     created_by_user_name: "David Matthew",
     created_by_user_photo:
       "https://images.unsplash.com/photo-1529665253569-6d01c0eaf7b6?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8cHJvZmlsZXxlbnwwfHwwfHx8MA%3D%3D",
-    id: 3,
+    id: "3",
     quantity_likes: 23,
     quantity_comment: 0,
     timestamp: new Date("2024-05-29T10:30:00Z"),
@@ -40,7 +40,7 @@ const mockCommentsOfCommentsNoLogin: PostsCommentsProps[] = [
     created_by_user_name: "Mia Jensen",
     created_by_user_photo:
       "https://images.unsplash.com/photo-1614090965443-3df21c6906ec?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxleHBsb3JlLWZlZWR8MTR8fHxlbnwwfHx8fHw%3D",
-    id: 2,
+    id: "2",
     quantity_likes: 45,
     quantity_comment: 0,
     timestamp: new Date("2024-05-29T10:30:00Z"),
@@ -61,7 +61,7 @@ const mockAnswers: PostsCommentsProps[] = [
     created_by_user_name: "David Matthew",
     created_by_user_photo:
       "https://images.unsplash.com/photo-1529665253569-6d01c0eaf7b6?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8cHJvZmlsZXxlbnwwfHwwfHx8MA%3D%3D",
-    id: 3,
+    id: "3",
     quantity_likes: 23,
     quantity_comment: 0,
     timestamp: new Date("2024-05-29T10:30:00Z"),
@@ -80,7 +80,7 @@ const mockAnswers: PostsCommentsProps[] = [
     created_by_user_name: "Mia Jensen",
     created_by_user_photo:
       "https://images.unsplash.com/photo-1614090965443-3df21c6906ec?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxleHBsb3JlLWZlZWR8MTR8fHxlbnwwfHx8fHw%3D",
-    id: 2,
+    id: "2",
     quantity_likes: 45,
     quantity_comment: 0,
     timestamp: new Date("2024-05-29T10:30:00Z"),
@@ -101,7 +101,7 @@ const mockCommentsWithAnswers: PostsCommentsProps[] = [
     created_by_user_name: "David Matthew",
     created_by_user_photo:
       "https://images.unsplash.com/photo-1529665253569-6d01c0eaf7b6?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8cHJvZmlsZXxlbnwwfHwwfHx8MA%3D%3D",
-    id: 3,
+    id: "3",
     quantity_likes: 23,
     quantity_comment: 0,
     timestamp: new Date("2024-05-29T10:30:00Z"),
@@ -120,7 +120,7 @@ const mockCommentsWithAnswers: PostsCommentsProps[] = [
     created_by_user_name: "Mia Jensen",
     created_by_user_photo:
       "https://images.unsplash.com/photo-1614090965443-3df21c6906ec?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxleHBsb3JlLWZlZWR8MTR8fHxlbnwwfHx8fHw%3D",
-    id: 2,
+    id: "2",
     quantity_likes: 45,
     quantity_comment: 0,
     timestamp: new Date("2024-05-29T10:30:00Z"),
@@ -141,7 +141,7 @@ const mockCommentsLogin: PostsCommentsProps[] = [
     created_by_user_name: "David Matthew",
     created_by_user_photo:
       "https://images.unsplash.com/photo-1529665253569-6d01c0eaf7b6?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8cHJvZmlsZXxlbnwwfHwwfHx8MA%3D%3D",
-    id: 3,
+    id: "3",
     quantity_likes: 23,
     quantity_comment: 0,
     timestamp: new Date("2024-05-29T10:30:00Z"),
@@ -160,7 +160,7 @@ const mockCommentsLogin: PostsCommentsProps[] = [
     created_by_user_name: "Mia Jensen",
     created_by_user_photo:
       "https://images.unsplash.com/photo-1614090965443-3df21c6906ec?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxleHBsb3JlLWZlZWR8MTR8fHxlbnwwfHx8fHw%3D",
-    id: 2,
+    id: "2",
     quantity_likes: 45,
     quantity_comment: 0,
     timestamp: new Date("2024-05-29T10:30:00Z"),

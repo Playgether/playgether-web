@@ -1,6 +1,6 @@
 import { apiFetch } from "@/services/apiFetch";
 
-export const deleteLike = async (object_id: number, content_type: string) => {
+export const deleteLike = async (object_id: string | number, content_type: string) => {
   try {
     const response = await apiFetch(
       `/api/likes/?content_type=${content_type}&object_id=${object_id}`,

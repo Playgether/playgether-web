@@ -16,7 +16,7 @@ import {
 
 export type FormCommentProps = {
   /** Esta prop recebe o id do comentário que esta sendo respondido */
-  object_id: number;
+  object_id: string | number;
 };
 
 type dataProps = {

@@ -12,7 +12,7 @@ import { CutCommentsPanel } from "@/app/cuts/components/CutCommentsPanel";
 import type { Cut } from "@/types/Cut";
 
 interface SharedCutModalProps {
-  cutId: number | null;
+  cutId: string | null;
   onOpenChange: (open: boolean) => void;
 }
 

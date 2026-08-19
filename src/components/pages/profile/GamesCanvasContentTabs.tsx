@@ -271,7 +271,7 @@ export function GamesCanvasContentTabs({
   const [isDeletingPost, setIsDeletingPost] = useState(false);
   const [isDeletingMilestone, setIsDeletingMilestone] = useState(false);
   const [isMilestoneSubmitting, setIsMilestoneSubmitting] = useState(false);
-  const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
   const loadMoreComments = useCallback(async () => {
     if (!profile || !nextPage || isLoadingMore) return;
@@ -490,7 +490,7 @@ export function GamesCanvasContentTabs({
     if (!open) setConfirmAction(null);
   };
 
-  const handleDeletePost = async (postId: number) => {
+  const handleDeletePost = async (postId: string) => {
     const post = getPostById(postId);
     setIsDeletingPost(true);
     try {

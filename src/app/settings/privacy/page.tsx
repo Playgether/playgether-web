@@ -29,6 +29,12 @@ const AUDIENCE_OPTIONS = [
   { value: "nobody", label: "Ninguém" },
 ];
 
+const TAG_AUDIENCE_OPTIONS = [
+  { value: "everyone", label: "Todos" },
+  { value: "friends", label: "Apenas amigos" },
+  { value: "nobody", label: "Ninguém" },
+];
+
 interface RestrictedUser {
   id: number;
   user_id: number;
@@ -360,10 +366,14 @@ export default function PrivacySettingsPage() {
             loading={loading}
           />
           <SettingsSelectRow
-            label="Quem pode me marcar"
-            description="Controla quem pode te marcar em posts e comentários."
-            value={prefs?.who_can_tag ?? "everyone"}
-            options={AUDIENCE_OPTIONS}
+            label="Quem pode mencionar você"
+            description="Controla quem pode te mencionar com @ em posts e comentários."
+            value={
+              prefs?.who_can_tag === "followers"
+                ? "friends"
+                : (prefs?.who_can_tag ?? "everyone")
+            }
+            options={TAG_AUDIENCE_OPTIONS}
             onValueChange={(v) => update({ who_can_tag: v as UserPreferences["who_can_tag"] })}
             loading={loading}
           />

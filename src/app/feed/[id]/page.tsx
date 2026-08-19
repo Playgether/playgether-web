@@ -8,9 +8,10 @@ import { CommentsContextProvider } from "@/context/CommentsContext";
 import { getCommentsServer } from "@/services/getCommentsServer";
 import { optionalAuthHeaders } from "@/lib/optionalAuthHeaders";
 import { PostPageClient } from "./PostPageClient";
+import { isPublicId } from "@/lib/publicId";
 import type { PostProps } from "@/app/feed/types/PostProps";
 
-async function fetchPost(id: number): Promise<PostProps | null> {
+async function fetchPost(id: string): Promise<PostProps | null> {
   try {
     const headers = await optionalAuthHeaders();
     const res = await api.get(`/api/v1/posts/${id}/`, {
@@ -28,23 +29,21 @@ export default async function PostPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const postId = Number(id);
-
-  if (Number.isNaN(postId)) notFound();
+  if (!isPublicId(id)) notFound();
 
   const cookieStore = await cookies();
   const isGuest = !cookieStore.get("refreshToken")?.value;
 
   const [post, initialComments] = await Promise.all([
-    fetchPost(postId),
-    getCommentsServer(postId),
+    fetchPost(id),
+    getCommentsServer(id),
   ]);
 
   if (!post) notFound();
 
   const content = (
-    <CommentsContextProvider response={initialComments} postId={postId}>
-      <PostPageClient postId={postId} post={post} isGuest={isGuest} />
+    <CommentsContextProvider response={initialComments} postId={id}>
+      <PostPageClient postId={id} post={post} isGuest={isGuest} />
     </CommentsContextProvider>
   );
 

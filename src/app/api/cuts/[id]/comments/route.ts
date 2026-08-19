@@ -25,7 +25,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const body = await request.json();
     const response = await api.post(
       "/api/v1/comments/",
-      { ...body, content_type: "cut", object_id: Number(id) },
+      { ...body, content_type: "cut", object_id: id },
       { headers: { Authorization: `Bearer ${accessToken}` } },
     );
     return NextResponse.json(response.data, { status: response.status });

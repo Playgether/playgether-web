@@ -25,7 +25,6 @@ import MoreMediasParagraph from "../components/MoreMediasParagraph";
 import ShareModalHeader from "../components/ShareModalHeader";
 import MediaSelectedButtonsImage from "../components/MediaSelectedButtonsImage";
 import MediaSelectedButtonsVideo from "../components/MediaSelectedButtonsVideo";
-import { Button } from "@/components/ui/button";
 import ButtonCommentPostModal from "../components/ButtonCommentPostModal";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import {
@@ -73,15 +72,7 @@ export const FeedServerComponents = {
       ),
     },
     buttons: {
-      answer: (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-xs text-muted-foreground hover:text-primary p-2 h-auto"
-        >
-          Responder
-        </Button>
-      ),
+      answer: "Responder",
       comment: <ButtonCommentPostModal />,
     },
   },

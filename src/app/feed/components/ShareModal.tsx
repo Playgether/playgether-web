@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { MentionTextarea } from "@/components/mentions/MentionTextarea";
+import { MentionText } from "@/components/mentions/MentionText";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { useFeedServerContext } from "../context/FeedServerContext";
@@ -91,10 +92,10 @@ export const ShareModal = ({
           </div>
 
           {/* Comment Input */}
-          <Textarea
+          <MentionTextarea
             placeholder="Adicione um comentário..."
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={setContent}
             className="min-h-24 resize-none bg-muted/60 border-border/50 focus:border-primary/50"
           />
 
@@ -112,7 +113,9 @@ export const ShareModal = ({
                   <p className="text-xs text-muted-foreground">@{post.username}</p>
                 </div>
               </div>
-              <p className="text-sm text-foreground line-clamp-3">{post.comment}</p>
+              <p className="text-sm text-foreground line-clamp-3">
+                <MentionText text={post.comment} />
+              </p>
             </CardContent>
           </Card>
 

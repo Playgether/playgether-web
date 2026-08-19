@@ -17,6 +17,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
+import { MentionText } from "@/components/mentions/MentionText";
 import { GameMediaImage } from "@/components/media/GameMediaImage";
 import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
 import {
@@ -109,7 +110,9 @@ function PostCard({ post, onClick }: { post: SearchPost; onClick: () => void }) 
           <span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">·</span>
           <span className="shrink-0 text-xs text-muted-foreground">{timeAgo(post.timestamp)}</span>
         </div>
-        <p className="line-clamp-2 break-words text-sm text-foreground/90 sm:line-clamp-3">{post.comment}</p>
+        <p className="line-clamp-2 break-words text-sm text-foreground/90 sm:line-clamp-3">
+          <MentionText text={post.comment} />
+        </p>
         {post.has_post_media && (
           <span className="inline-flex items-center gap-1 mt-1.5 text-xs text-muted-foreground">
             <ImageIcon className="w-3.5 h-3.5" />Mídia

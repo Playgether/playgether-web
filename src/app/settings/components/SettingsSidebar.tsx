@@ -9,8 +9,8 @@ import {
   Bell,
   Palette,
   Gamepad2,
-  Plug,
   Monitor,
+  Mail,
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,7 @@ const navItems = [
   { label: "Jogos Conectados", href: "/settings/games", icon: Gamepad2 },
   // { label: "Integrações", href: "/settings/integrations", icon: Plug }, // TODO: habilitar quando implementado
   { label: "Dispositivos", href: "/settings/devices", icon: Monitor },
+  { label: "Ajuda e contato", href: "/settings/contact", icon: Mail },
 ];
 
 export function SettingsSidebar() {

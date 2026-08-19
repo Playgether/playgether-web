@@ -6,11 +6,13 @@ import Image from "next/image";
 import { Cut } from "@/types/Cut";
 import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
+import { MentionTextarea } from "@/components/mentions/MentionTextarea";
+import { MentionText } from "@/components/mentions/MentionText";
 import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
 import type { HighlightedAchievementPublic } from "@/types/highlightedAchievements";
 
 interface CutComment {
-  id: number;
+  id: string;
   comment: string;
   user: number;
   timestamp: string;
@@ -31,7 +33,7 @@ export function CutCommentsPanel({ cut, isAuthenticated, onClose, variant }: Cut
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     fetch(`/api/cuts/${cut.id}/comments`, { credentials: "include" })
@@ -92,13 +94,15 @@ export function CutCommentsPanel({ cut, isAuthenticated, onClose, variant }: Cut
 
       {isAuthenticated && (
         <div className="flex items-center gap-2 border-t border-white/10 px-4 py-3">
-          <input
+          <MentionTextarea
             ref={inputRef}
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={setText}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
             placeholder="Adicionar comentário…"
-            className="flex-1 rounded-full bg-white/10 px-4 py-2 text-sm text-white placeholder:text-white/40 outline-none focus:ring-1 focus:ring-primary/50"
+            rows={1}
+            dropdownSide="top"
+            className="min-h-0 flex-1 rounded-full bg-white/10 px-4 py-2 text-sm text-white placeholder:text-white/40 outline-none focus-visible:ring-1 focus-visible:ring-primary/50 focus-visible:ring-offset-0 resize-none border-0"
           />
           <button
             type="button"
@@ -155,7 +159,9 @@ function CommentRow({ comment }: { comment: CutComment }) {
             compact
           />
         </div>
-        <p className="text-sm text-white/90">{comment.comment}</p>
+        <p className="text-sm text-white/90">
+          <MentionText text={comment.comment} />
+        </p>
       </div>
     </div>
   );

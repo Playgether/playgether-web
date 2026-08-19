@@ -3,6 +3,7 @@
 import { createContext, useState, useContext, useEffect, useCallback } from "react";
 import { useAuthContext } from "./AuthContext";
 import { apiFetch } from "@/services/apiFetch";
+import { useNotifications } from "@/app/feed/hooks/useNotificationsWebSocket";
 
 export interface NotificationItem {
   id: number;
@@ -40,9 +41,9 @@ const NotificationsContextProvider = ({
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const refetch = useCallback(async () => {
+  const refetch = useCallback(async (options?: { silent?: boolean }) => {
     if (!user?.user_id) return;
-    setLoading(true);
+    if (!options?.silent) setLoading(true);
     try {
       const res = await apiFetch("/api/notifications", { credentials: "include" });
       if (!res.ok) return;
@@ -51,13 +52,22 @@ const NotificationsContextProvider = ({
     } catch {
       // silent
     } finally {
-      setLoading(false);
+      if (!options?.silent) setLoading(false);
     }
   }, [user?.user_id]);
 
   useEffect(() => {
     if (user?.user_id) void refetch();
   }, [user?.user_id, refetch]);
+
+  const refetchSilent = useCallback(() => {
+    void refetch({ silent: true });
+  }, [refetch]);
+
+  useNotifications({
+    onNewNotification: refetchSilent,
+    onNotificationRemoved: refetchSilent,
+  });
 
   const markAsRead = useCallback(async (id: number) => {
     setNotifications((prev) =>

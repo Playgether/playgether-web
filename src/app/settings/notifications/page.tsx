@@ -35,11 +35,11 @@ export default function NotificationsSettingsPage() {
     label: string;
     description: string;
   }> = [
-    { key: "notif_likes", label: "Curtidas", description: "Quando alguém curtir seu post, comentário ou perfil." },
-    { key: "notif_comments", label: "Comentários", description: "Quando alguém comentar no seu conteúdo." },
+    { key: "notif_likes", label: "Curtidas", description: "Quando alguém curtir seu post, cut, comentário ou perfil." },
+    { key: "notif_comments", label: "Comentários", description: "Quando alguém comentar no seu post, cut ou perfil." },
     { key: "notif_new_followers", label: "Novos seguidores", description: "Quando alguém começar a te seguir." },
     { key: "notif_messages", label: "Mensagens privadas", description: "Quando você receber uma nova mensagem direta." },
-    { key: "notif_mentions", label: "Menções", description: "Quando alguém te mencionar em um post ou comentário." },
+    { key: "notif_mentions", label: "Menções", description: "Quando alguém te mencionar em um post, cut ou comentário." },
     { key: "notif_clan_invites", label: "Convites para salas", description: "Quando você for convidado para entrar em uma sala." },
     { key: "notif_friend_requests", label: "Solicitações de amizade", description: "Quando alguém quiser te seguir (conta privada)." },
     { key: "notif_platform_updates", label: "Atualizações da plataforma", description: "Novidades, features e comunicados da PlayGether." },

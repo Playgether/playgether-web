@@ -2,7 +2,7 @@ import type { PostProps } from "@/app/feed/types/PostProps";
 import { apiFetch } from "@/services/apiFetch";
 
 export async function deletePostProfile(
-  postId: number,
+  postId: string,
   _post: PostProps | null,
 ): Promise<void> {
   const response = await apiFetch(`/api/posts/${postId}`, {

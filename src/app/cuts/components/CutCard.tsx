@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { Cut } from "@/types/Cut";
 import { getCloudinaryCutVideoUrl } from "@/app/utils/getCloudinaryVideo";
 import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
+import { MentionText } from "@/components/mentions/MentionText";
 import { CutOptionsMenu } from "./CutOptionsMenu";
 import { CutShareDialog } from "./CutShareDialog";
 import { BookmarkButton } from "@/components/ui/BookmarkButton";
@@ -50,11 +51,12 @@ interface CutCardProps {
   isAuthenticated?: boolean;
   onOpenComments: (cut: Cut) => void;
   commentsActive?: boolean;
+  onDeleted?: (cutId: string) => void;
 }
 
 type Pulse = { type: "play" | "pause" | "like"; key: number };
 
-export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commentsActive }: CutCardProps) {
+export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commentsActive, onDeleted }: CutCardProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
 
@@ -345,7 +347,7 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
               size="lg"
               triggerClassName="h-auto w-auto p-0 text-white hover:text-white hover:bg-transparent active:scale-125 transition-transform"
             />
-            <CutOptionsMenu cut={cut} onShare={() => setShareOpen(true)} />
+            <CutOptionsMenu cut={cut} onShare={() => setShareOpen(true)} onDeleted={onDeleted} />
           </div>
 
           <div
@@ -397,7 +399,9 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
                 <span className="text-sm font-bold text-white drop-shadow">@{cut.username}</span>
               </Link>
               {cut.caption && (
-                <p className="line-clamp-2 text-sm text-white/90 drop-shadow">{cut.caption}</p>
+                <p className="line-clamp-2 text-sm text-white/90 drop-shadow">
+                  <MentionText text={cut.caption} />
+                </p>
               )}
             </div>
           </div>
@@ -413,7 +417,7 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
             size="lg"
             triggerClassName="h-auto w-auto p-0 text-white hover:text-white hover:bg-transparent active:scale-125 transition-transform"
           />
-          <CutOptionsMenu cut={cut} onShare={() => setShareOpen(true)} />
+          <CutOptionsMenu cut={cut} onShare={() => setShareOpen(true)} onDeleted={onDeleted} />
         </div>
       </div>
 

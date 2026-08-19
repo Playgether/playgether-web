@@ -26,6 +26,7 @@ import { getStatsGames } from "@/services/getStatsGames";
 import { getGames, type GameDetails } from "@/services/getGames";
 import { getCs2Stats } from "@/services/getCs2Stats";
 import { getLolStats } from "@/services/getLolStats";
+import { MentionText } from "@/components/mentions/MentionText";
 import { GameMediaImage } from "@/components/media/GameMediaImage";
 
 type BioGameStat = {
@@ -384,7 +385,7 @@ export function BioTab({
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {comment.comment ?? comment.content}
+                    <MentionText text={comment.comment ?? comment.content} />
                   </p>
                 </div>
                 {(comment.author === "Você" ||
