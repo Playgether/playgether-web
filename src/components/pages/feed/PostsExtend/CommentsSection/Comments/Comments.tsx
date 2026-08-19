@@ -11,13 +11,13 @@ import { UseFormState } from "../../../../../layouts/ConstFormStateLayout";
 import { AnswerComment } from "../AnswerComment/AnswerComment";
 import { PostsCommentsProps } from "../../../../../../services/getComments";
 import { useCommentsContext } from "../../../../../../context/CommentsContext";
-import { BorderLine } from "../../../DesktopFeed/MultUseComponents/BorderLine/BorderLine";
+import { MentionText } from "@/components/mentions/MentionText";
 
 export interface CommentsProps {
   /** Esta prop recebe um comentário específico que é do tipo PostsCommentsProps */
   item: PostsCommentsProps;
 
-  post_id: number; // id do post ao qual o comentário pertence (é necessário para fazer a subtrair a quantidade de comentários de um post após a exclusão de um comentário)
+  post_id: string; // id do post ao qual o comentário pertence (é necessário para fazer a subtrair a quantidade de comentários de um post após a exclusão de um comentário)
 }
 
 /** Este componente é responsável por gerar toda a aba de cada comentário em PostExtend, tanto a parte do comentário em sí quanto a parte de responder cada comentário.
@@ -81,7 +81,7 @@ export const Comments = ({ item, post_id }: CommentsProps) => {
         ) : (
           <div className="w-full">
             <p className="whitespace-pre-wrap" key={item.id}>
-              {item.comment}
+              <MentionText text={item.comment} />
             </p>
           </div>
         )}

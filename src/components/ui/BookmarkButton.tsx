@@ -18,7 +18,7 @@ interface Collection {
 export type SavableContentType = "post" | "cut";
 
 interface BookmarkButtonProps {
-  item: { id: number; user_already_saved?: boolean };
+  item: { id: string; user_already_saved?: boolean };
   contentType?: SavableContentType;
   /** "lg" = h-6 w-6, para conviver lado a lado com ícones de ação (curtir, comentar...). */
   size?: "sm" | "md" | "lg";
@@ -131,7 +131,7 @@ export function BookmarkButton({ item, contentType = "post", size = "sm", onSave
           setInCollections((prev) => new Set(prev).add(col.id));
           if (!isSaved) {
             setIsSaved(true);
-            onSavedChange?.(true, item.id);
+            onSavedChange?.(true, typeof data?.id === "number" ? data.id : null);
           }
         }
       }
@@ -158,7 +158,7 @@ export function BookmarkButton({ item, contentType = "post", size = "sm", onSave
         setInCollections((prev) => new Set(prev).add(data.id));
         if (!isSaved) {
           setIsSaved(true);
-          onSavedChange?.(true, item.id);
+          onSavedChange?.(true, typeof data?.id === "number" ? data.id : null);
         }
         setNewName("");
         setCreatingNew(false);

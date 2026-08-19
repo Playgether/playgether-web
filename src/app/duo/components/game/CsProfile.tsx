@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useMemo } from "react";
 import { Crosshair, Clock, CrosshairIcon, Target, UserCog, Zap } from "lucide-react";
+import { PREMIER_RANGES, premierRangeChipClass } from "../../constants/csPremier";
 import type { CsStats } from "../../types/duo";
 
 const CS_ROLES = [
@@ -17,10 +19,32 @@ const CS_WEAPONS = [
   "USP-S", "Glock", "MP5-SD", "MP9", "SG 553",
 ] as const;
 
-const PREMIER_RANGES = [
-  "0-4999", "5000-9999", "10000-14999",
-  "15000-19999", "20000-24999", "25000-29999", "30000+",
-] as const;
+const CS_ROLE_SET = new Set<string>(CS_ROLES);
+const CS_WEAPON_SET = new Set<string>(CS_WEAPONS);
+
+function normalizeCsRoles(roles: string[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const role of roles) {
+    if (!CS_ROLE_SET.has(role) || seen.has(role)) continue;
+    seen.add(role);
+    out.push(role);
+    if (out.length >= 2) break;
+  }
+  return out;
+}
+
+function normalizeCsWeapons(weapons: string[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const weapon of weapons) {
+    if (!CS_WEAPON_SET.has(weapon) || seen.has(weapon)) continue;
+    seen.add(weapon);
+    out.push(weapon);
+    if (out.length >= 3) break;
+  }
+  return out;
+}
 
 interface CsProfileProps {
   stats: CsStats;
@@ -41,18 +65,48 @@ export function CsProfile({
   onWeaponsChange,
   onRangeChange,
 }: CsProfileProps) {
-  const toggleRole = (role: string) =>
+  const validSelectedRoles = useMemo(
+    () => normalizeCsRoles(selectedRoles),
+    [selectedRoles],
+  );
+  const validSelectedWeapons = useMemo(
+    () => normalizeCsWeapons(selectedWeapons),
+    [selectedWeapons],
+  );
+
+  useEffect(() => {
+    if (
+      validSelectedRoles.length !== selectedRoles.length ||
+      validSelectedRoles.some((role, index) => role !== selectedRoles[index])
+    ) {
+      onRolesChange(validSelectedRoles);
+    }
+  }, [validSelectedRoles, selectedRoles, onRolesChange]);
+
+  useEffect(() => {
+    if (
+      validSelectedWeapons.length !== selectedWeapons.length ||
+      validSelectedWeapons.some((weapon, index) => weapon !== selectedWeapons[index])
+    ) {
+      onWeaponsChange(validSelectedWeapons);
+    }
+  }, [validSelectedWeapons, selectedWeapons, onWeaponsChange]);
+
+  const toggleRole = (role: string) => {
     onRolesChange(
-      selectedRoles.includes(role)
-        ? selectedRoles.filter((r) => r !== role)
-        : [...selectedRoles, role]
+      validSelectedRoles.includes(role)
+        ? validSelectedRoles.filter((r) => r !== role)
+        : validSelectedRoles.length >= 2
+          ? validSelectedRoles
+          : [...validSelectedRoles, role],
     );
+  };
 
   const toggleWeapon = (weapon: string) => {
-    if (selectedWeapons.includes(weapon)) {
-      onWeaponsChange(selectedWeapons.filter((w) => w !== weapon));
-    } else if (selectedWeapons.length < 3) {
-      onWeaponsChange([...selectedWeapons, weapon]);
+    if (validSelectedWeapons.includes(weapon)) {
+      onWeaponsChange(validSelectedWeapons.filter((w) => w !== weapon));
+    } else if (validSelectedWeapons.length < 3) {
+      onWeaponsChange([...validSelectedWeapons, weapon]);
     }
   };
 
@@ -64,11 +118,7 @@ export function CsProfile({
         key={r}
         aria-pressed={on}
         onClick={() => onRangeChange(r)}
-        className={`rounded-full border px-3 py-2 text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 sm:text-sm ${
-          on
-            ? "border-primary/70 bg-primary/20 text-primary shadow-glow-primary/25"
-            : "border-border/70 bg-background/45 text-muted-foreground hover:border-primary/35 hover:text-card-foreground"
-        }`}
+        className={`rounded-full border px-3 py-2 text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 sm:text-sm ${premierRangeChipClass(r, on)}`}
       >
         {r}
       </button>
@@ -152,8 +202,8 @@ export function CsProfile({
           </div>
           <div className="flex flex-wrap gap-2">
             {CS_ROLES.map((role) => {
-              const selected = selectedRoles.includes(role);
-              const disabled = !selected && selectedRoles.length >= 2;
+              const selected = validSelectedRoles.includes(role);
+              const disabled = !selected && validSelectedRoles.length >= 2;
               return (
                 <button
                   type="button"
@@ -188,8 +238,8 @@ export function CsProfile({
           </div>
           <div className="flex flex-wrap gap-2">
             {CS_WEAPONS.map((weapon) => {
-              const selected = selectedWeapons.includes(weapon);
-              const disabled = !selected && selectedWeapons.length >= 3;
+              const selected = validSelectedWeapons.includes(weapon);
+              const disabled = !selected && validSelectedWeapons.length >= 3;
               return (
                 <button
                   type="button"

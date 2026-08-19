@@ -85,7 +85,12 @@ export default function DuoSteps({ initialStep }: { initialStep: string }) {
       onSelect={(game) => {
         void (async () => {
           setResolvingGameSelection(true);
-          updateShared({ selectedGame: game });
+          updateShared({
+            selectedGame: game,
+            preferences: {},
+            stats: null,
+            schema: null,
+          });
           const slug = game.acronym.toLowerCase();
           try {
             const queues = await getActiveQueues();

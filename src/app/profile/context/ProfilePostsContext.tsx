@@ -52,7 +52,7 @@ interface ProfilePostsContextValue extends FeedContextType {
   setTextDateRange: (from: string, to: string) => void;
   clearMediaFilters: () => void;
   clearTextFilters: () => void;
-  removePost: (postId: number) => void;
+  removePost: (postId: string) => void;
 }
 
 const ProfilePostsContext = createContext<ProfilePostsContextValue | undefined>(
@@ -285,7 +285,7 @@ export function ProfilePostsProvider({
     onPostAddedToCache,
   ]);
 
-  const removePost = useCallback((postId: number) => {
+  const removePost = useCallback((postId: string) => {
     setMediaPosts((prev) => prev.filter((p) => p.id !== postId));
     setTextPosts((prev) => prev.filter((p) => p.id !== postId));
     setInjectedPosts((prev) => prev.filter((p) => p.id !== postId));
@@ -301,7 +301,7 @@ export function ProfilePostsProvider({
 
   const updatePostInLists = useCallback(
     (
-      postId: number,
+      postId: string,
       updater: (post: PostProps) => PostProps
     ) => {
       setMediaPosts((prev) =>
@@ -315,7 +315,7 @@ export function ProfilePostsProvider({
   );
 
   const getPostById = useCallback(
-    (postId: number) =>
+    (postId: string) =>
       mediaPosts.find((p) => p.id === postId) ??
       textPosts.find((p) => p.id === postId) ??
       injectedPosts.find((p) => p.id === postId),
@@ -329,7 +329,7 @@ export function ProfilePostsProvider({
     });
   }, []);
 
-  const handleLike = useCallback((postId: number) => {
+  const handleLike = useCallback((postId: string) => {
     updatePostInLists(postId, (p) => ({
       ...p,
       user_already_like: !p.user_already_like,
@@ -352,7 +352,7 @@ export function ProfilePostsProvider({
     );
   }, [updatePostInLists]);
 
-  const increaseCommentCount = useCallback((postId: number) => {
+  const increaseCommentCount = useCallback((postId: string) => {
     updatePostInLists(postId, (p) => ({
       ...p,
       quantity_comment: p.quantity_comment + 1,
@@ -366,7 +366,7 @@ export function ProfilePostsProvider({
     );
   }, [updatePostInLists]);
 
-  const decreaseCommentCount = useCallback((postId: number) => {
+  const decreaseCommentCount = useCallback((postId: string) => {
     updatePostInLists(postId, (p) => ({
       ...p,
       quantity_comment: Math.max(0, p.quantity_comment - 1),

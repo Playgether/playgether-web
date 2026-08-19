@@ -23,6 +23,8 @@ import {
   Sun,
   Sunset,
   Moon,
+  ShieldCheck,
+  Link2,
 } from "lucide-react";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { PresenceStatusDot } from "@/components/presence/PresenceStatusDot";
@@ -35,8 +37,16 @@ import { startConversation } from "@/services/directMessages";
 import { useConversationsWidget } from "@/context/ConversationsWidgetContext";
 import { LolRankEmblemFrame } from "@/components/lol/LolRankEmblemFrame";
 import { LolLaneRoleIcon } from "@/components/lol/LolLaneRoleIcon";
+import { ValorantRoleIcon } from "@/components/valorant/ValorantRoleIcon";
 import { lolTierEmblemUrl } from "@/lib/lolRankedEmblem";
+import { valorantTierEmblemUrl } from "@/lib/valorantRankEmblem";
 import type { DuoMatch, Game, GamePreferences } from "../../types/duo";
+import { isValorantDuoSlug } from "../../utils/isValorantGame";
+import { VAL_RANK_COLORS } from "../../constants/valorant";
+import {
+  premierRangeChipClass,
+  premierRangeStyle,
+} from "../../constants/csPremier";
 
 interface MatchResultsProps {
   game: Game;
@@ -53,15 +63,6 @@ type FilterMode = "all" | "online";
 
 const PATIENT_SEARCH_MS = 50_000;
 const CS2_ROLE_OPTIONS = ["AWPer", "Entry", "Second Entry", "Support", "Lurker", "IGL"] as const;
-const CS2_PREMIER_RANGE_OPTIONS = [
-  "0-4999",
-  "5000-9999",
-  "10000-14999",
-  "15000-19999",
-  "20000-24999",
-  "25000-29999",
-  "30000+",
-] as const;
 
 function partnerLooksActive(status: string) {
   return status === "online" || status === "away" || status === "dnd";
@@ -468,6 +469,10 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
     ? `${partner.first_name} ${partner.last_name}`.trim()
     : partner.username;
 
+  const verification = partner.account_verification;
+  const showVerifiedBadge = verification?.level === "verified";
+  const showLinkedBadge = verification?.level === "linked";
+
   return (
     <div
       className="card-glass min-w-0 bg-[#0F172A] rounded-xl p-6 animate-fade-in-scale hover:scale-[1.02] transition-all duration-300"
@@ -493,7 +498,20 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
           </div>
 
           <div>
-            <h3 className="text-lg font-bold text-card-foreground">{displayName}</h3>
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-lg font-bold text-card-foreground">{displayName}</h3>
+              {showVerifiedBadge ? (
+                <Badge className="border-emerald-500/40 bg-emerald-500/15 text-emerald-300 text-[10px] font-medium px-1.5 py-0">
+                  <ShieldCheck className="mr-1 h-3 w-3" />
+                  {verification?.label ?? "Verificado"}
+                </Badge>
+              ) : showLinkedBadge ? (
+                <Badge className="border-sky-500/40 bg-sky-500/15 text-sky-300 text-[10px] font-medium px-1.5 py-0">
+                  <Link2 className="mr-1 h-3 w-3" />
+                  {verification?.label ?? "Conta conectada"}
+                </Badge>
+              ) : null}
+            </div>
             <p className="text-muted-foreground text-xs">@{partner.username}</p>
           </div>
         </div>
@@ -692,7 +710,7 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
                   Dele
                 </p>
                 {prefs.own_range ? (
-                  <InfoRow label="Faixa Premier" value={prefs.own_range} />
+                  <PremierRangeRow label="Faixa Premier" range={prefs.own_range} />
                 ) : null}
                 {prefs.roles?.length > 0 ? (
                   <InfoRow
@@ -717,13 +735,14 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
                   O que procura
                 </p>
                 {prefs.accepted_ranges?.length > 0 ? (
-                  <InfoRow
-                    label="Faixas que aceita"
-                    value={summarizeSelectionList(prefs.accepted_ranges, {
-                      allCount: CS2_PREMIER_RANGE_OPTIONS.length,
-                      allLabel: "Todas",
-                    })}
-                  />
+                  <div className="w-full min-w-0 space-y-1.5 text-sm">
+                    <p className="text-muted-foreground leading-5">Faixas que aceita</p>
+                    <div className="flex w-full max-w-full flex-wrap content-start justify-start gap-1.5">
+                      {(prefs.accepted_ranges as string[]).map((range) => (
+                        <PremierRangeBadge key={range} range={range} />
+                      ))}
+                    </div>
+                  </div>
                 ) : null}
                 {prefs.desired_roles?.length > 0 ? (
                   <InfoRow
@@ -773,6 +792,91 @@ function MatchCard({ match, index }: { match: DuoMatch; index: number }) {
             </div>
           </>
         )}
+
+        {isValorantDuoSlug(slug) ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-0">
+            <div className="space-y-2 sm:pr-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                Dele
+              </p>
+              {prefs.own_elo ? (
+                <ValorantEloRow label="Elo informado" tier={prefs.own_elo} />
+              ) : null}
+              {prefs.roles?.length > 0 ? (
+                <div className="w-full min-w-0 space-y-1.5 text-sm">
+                  <p className="text-muted-foreground leading-5">Funções</p>
+                  <div className="flex w-full max-w-full flex-wrap content-start justify-start gap-1.5">
+                    {(prefs.roles as string[]).map((role) => (
+                      <span
+                        key={role}
+                        className="inline-flex shrink-0 items-center gap-0.5 rounded border border-border/50 bg-muted/50 px-1.5 py-0.5"
+                      >
+                        <ValorantRoleIcon roleLabel={role} className="h-3.5 w-3.5" />
+                        <span className="whitespace-nowrap text-[11px] font-medium leading-none text-card-foreground">
+                          {role}
+                        </span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+            <div className="space-y-2 sm:border-l sm:border-border/60 sm:pl-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                O que procura
+              </p>
+              {prefs.accepted_elo?.length > 0 ? (
+                <div className="w-full min-w-0 space-y-1.5 text-sm">
+                  <p className="text-muted-foreground leading-5">Elos que aceita</p>
+                  <div className="flex w-full max-w-full flex-wrap content-start justify-start gap-1.5">
+                    {(prefs.accepted_elo as string[]).map((tier) => {
+                      const emblem = valorantTierEmblemUrl(tier);
+                      const tierColor = VAL_RANK_COLORS[tier] ?? "text-card-foreground";
+                      return (
+                        <span
+                          key={tier}
+                          className="inline-flex shrink-0 items-center gap-1.5 rounded border border-border/50 bg-muted/50 py-1 pl-1 pr-1.5"
+                        >
+                          {emblem ? (
+                            <LolRankEmblemFrame
+                              src={emblem}
+                              alt=""
+                              frameClass="h-6 w-6 shrink-0"
+                              zoomPercent={118}
+                            />
+                          ) : null}
+                          <span
+                            className={`whitespace-nowrap text-[11px] font-medium leading-none ${tierColor}`}
+                          >
+                            {tier}
+                          </span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
+              {prefs.desired_roles?.length > 0 ? (
+                <div className="w-full min-w-0 space-y-1.5 text-sm">
+                  <p className="text-muted-foreground leading-5">Funções no duo</p>
+                  <div className="flex w-full max-w-full flex-wrap content-start justify-start gap-1.5">
+                    {(prefs.desired_roles as string[]).map((role) => (
+                      <span
+                        key={role}
+                        className="inline-flex shrink-0 items-center gap-0.5 rounded border border-border/50 bg-muted/50 px-1.5 py-0.5"
+                      >
+                        <ValorantRoleIcon roleLabel={role} className="h-3.5 w-3.5" />
+                        <span className="whitespace-nowrap text-[11px] font-medium leading-none text-card-foreground">
+                          {role}
+                        </span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
 
         {prefs.play_times?.length > 0 ? (
           <div className="pt-1">
@@ -835,21 +939,71 @@ function PlayTimeChip({ slotId }: { slotId: string }) {
   );
 }
 
+function PremierRangeBadge({ range }: { range: string }) {
+  const style = premierRangeStyle(range);
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium leading-none ${premierRangeChipClass(range, true)}`}
+    >
+      {style ? <span className={`h-2 w-2 rounded-full ${style.dot}`} aria-hidden /> : null}
+      {range}
+    </span>
+  );
+}
+
+function PremierRangeRow({ label, range }: { label: string; range: string }) {
+  return (
+    <div className="grid grid-cols-[auto,minmax(0,1fr)] items-start gap-x-3 text-sm">
+      <span className="text-muted-foreground leading-5">{label}</span>
+      <span className="flex justify-end">
+        <PremierRangeBadge range={range} />
+      </span>
+    </div>
+  );
+}
+
+function ValorantEloRow({ label, tier }: { label: string; tier: string }) {
+  const emblem = valorantTierEmblemUrl(tier);
+  const tierColor = VAL_RANK_COLORS[tier] ?? "text-card-foreground";
+  return (
+    <div className="grid grid-cols-[auto,minmax(0,1fr)] items-center gap-x-3 text-sm">
+      <span className="text-muted-foreground leading-5">{label}</span>
+      <span className="flex items-center justify-end gap-1.5">
+        {emblem ? (
+          <LolRankEmblemFrame
+            src={emblem}
+            alt=""
+            frameClass="h-7 w-7 shrink-0"
+            zoomPercent={118}
+          />
+        ) : null}
+        <span className={`font-medium leading-none ${tierColor}`}>{tier}</span>
+      </span>
+    </div>
+  );
+}
+
 function InfoRow({
   label,
   value,
   valuePrefix,
+  valueClassName,
 }: {
   label: string;
   value: string;
   valuePrefix?: ReactNode;
+  valueClassName?: string;
 }) {
   return (
     <div className="grid grid-cols-[auto,minmax(0,1fr)] items-start gap-x-3 text-sm">
       <span className="text-muted-foreground leading-5">{label}</span>
       <span className="flex items-start justify-end gap-2 text-right">
         {valuePrefix ? <span className="shrink-0 pt-0.5">{valuePrefix}</span> : null}
-        <span className="break-words font-medium leading-5 text-card-foreground">{value}</span>
+        <span
+          className={`break-words font-medium leading-5 text-card-foreground ${valueClassName ?? ""}`}
+        >
+          {value}
+        </span>
       </span>
     </div>
   );

@@ -9,7 +9,7 @@ import { Heart, Images, MessageCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface PostPageRecommendationsProps {
-  currentPostId: number;
+  currentPostId: string;
   authorUsername: string;
   /** Guests only see author posts — not personalized "Posts para você". */
   isGuest?: boolean;
@@ -46,7 +46,7 @@ export function PostPageRecommendations({
           const [authorWithMedia, authorWithoutMedia] =
             await Promise.all(authorPromises);
 
-          const authorById = new Map<number, PostProps>();
+          const authorById = new Map<string, PostProps>();
           for (const post of [...authorWithMedia, ...authorWithoutMedia]) {
             if (post.id !== currentPostId) authorById.set(post.id, post);
           }
@@ -61,7 +61,7 @@ export function PostPageRecommendations({
             fetch("/api/feed", { credentials: "include" }),
           ]);
 
-        const authorById = new Map<number, PostProps>();
+        const authorById = new Map<string, PostProps>();
         for (const post of [...authorWithMedia, ...authorWithoutMedia]) {
           if (post.id !== currentPostId) authorById.set(post.id, post);
         }

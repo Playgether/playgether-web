@@ -20,7 +20,7 @@ export type FormCommentProps = {
    */
   content_type: string;
   /** Esta prop recebe o id do objeto que esta sendo comentado, ou seja, neste caso, o id do post que está sendo comentado. */
-  object_id: number;
+  object_id: number | string;
 };
 
 type dataProps = {

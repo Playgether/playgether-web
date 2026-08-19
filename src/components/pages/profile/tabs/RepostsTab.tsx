@@ -14,9 +14,10 @@ import { Clock, Heart, MessageCircle, MoreHorizontal, Repeat2, Trash2 } from "lu
 import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 import type { getProfileByUsernameProps } from "@/services/getProfileByUsername";
+import { MentionText } from "@/components/mentions/MentionText";
 
 interface OriginalPost {
-  id: number;
+  id: string;
   comment: string | null;
   timestamp: string;
   has_post_media: boolean;
@@ -32,7 +33,7 @@ interface ProfileRepost {
   id: number;
   timestamp: string;
   comment: string | null;
-  object_id: number;
+  object_id: string;
   quantity_likes: number;
   quantity_comment: number;
   created_by_user_name: string;
@@ -119,7 +120,7 @@ function RepostCard({
 }: {
   repost: ProfileRepost;
   isOwner: boolean;
-  onPostClick: (postId: number) => void;
+  onPostClick: (postId: string) => void;
   onUndoRepost: (repostId: number) => void;
 }) {
   const post = repost.original_post;
@@ -165,7 +166,9 @@ function RepostCard({
 
         {/* Repost caption */}
         {repost.comment && (
-          <p className="text-sm text-foreground leading-relaxed">{repost.comment}</p>
+          <p className="text-sm text-foreground leading-relaxed">
+            <MentionText text={repost.comment} />
+          </p>
         )}
 
         {/* Original post preview */}
@@ -185,7 +188,7 @@ function RepostCard({
             </div>
             {post.comment && (
               <p className="text-sm text-foreground leading-relaxed line-clamp-3">
-                {post.comment}
+                <MentionText text={post.comment} />
               </p>
             )}
             {post.has_post_media && !post.comment && (

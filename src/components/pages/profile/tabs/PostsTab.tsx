@@ -16,11 +16,12 @@ import type { getProfileByUsernameProps } from "@/services/getProfileByUsername"
 import type { PostProps } from "@/app/feed/types/PostProps";
 import { useProfilePostsContext } from "@/app/profile/context/ProfilePostsContext";
 import { ProfileTabSearchBar } from "./ProfileTabSearchBar";
+import { MentionText } from "@/components/mentions/MentionText";
 
 interface PostsTabProps {
   profile: getProfileByUsernameProps | null;
   isOwner?: boolean;
-  onPostClick: (postId: number) => void;
+  onPostClick: (postId: string) => void;
   onDeletePost?: (post: PostProps) => void;
 }
 
@@ -228,7 +229,7 @@ function TextPostCard({
         <div className="space-y-3">
           <div className="flex flex-col gap-2 pr-8 sm:flex-row sm:items-start sm:justify-between">
             <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-foreground">
-              {truncatedComment || "Sem legenda"}
+              {truncatedComment ? <MentionText text={truncatedComment} /> : "Sem legenda"}
             </p>
             <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground sm:text-sm">
               <Clock className="h-3 w-3" />

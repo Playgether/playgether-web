@@ -11,4 +11,6 @@ export enum PresetsCloudinary {
   chat_room_banner = "chat-room-banner",
   /** Mídia de post — imagem e vídeo no mesmo preset (permite lote misto). */
   posts = "posts",
+  /** Vídeos de cuts — pasta raiz `cuts`, só vídeo. */
+  cuts = "cuts",
 }

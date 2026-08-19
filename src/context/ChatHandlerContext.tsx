@@ -151,11 +151,9 @@ const ChatHandlerContext = createContext<ChatHandlerContextProps>(
 );
 
 const ChatHandlerContextProvider = ({
-  ticket,
   chatroom,
   children,
 }: {
-  ticket: string;
   chatroom: string;
   children: React.ReactNode;
 }) => {

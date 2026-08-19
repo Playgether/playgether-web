@@ -14,6 +14,7 @@ const ALLOWED_BY_KIND: Record<string, PresetsCloudinary[]> = {
   profile_photos: [PresetsCloudinary.profile_image],
   profile_banners: [PresetsCloudinary.profile_banners],
   chat_room_banner: [PresetsCloudinary.chat_room_banner],
+  cuts: [PresetsCloudinary.cuts],
 };
 
 /**

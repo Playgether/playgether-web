@@ -10,7 +10,7 @@ export interface PostProps {
   likes: PostLikes[];
   reposts: PostReposts[];
   medias: PostMedias[];
-  id: number;
+  id: string;
   timestamp: Date;
   quantity_visualization: number;
   quantity_comment: number;

@@ -1,22 +1,20 @@
-/**
- * Mesmos assets que games/services/lol_stats_service.py (LOL_LANE_ICON_BY_ROLE_LABEL).
- */
-const CDRAGON_PARTIES_LANE_BASE =
-  "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-parties/global/default";
+import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
 
 const BY_API_LABEL: Record<string, string> = {
-  TOP: `${CDRAGON_PARTIES_LANE_BASE}/icon-position-top.png`,
-  JG: `${CDRAGON_PARTIES_LANE_BASE}/icon-position-jungle.png`,
-  MID: `${CDRAGON_PARTIES_LANE_BASE}/icon-position-middle.png`,
-  ADC: `${CDRAGON_PARTIES_LANE_BASE}/icon-position-bottom.png`,
-  SUP: `${CDRAGON_PARTIES_LANE_BASE}/icon-position-utility.png`,
+  TOP: "top",
+  JG: "jungle",
+  MID: "mid",
+  ADC: "adc",
+  SUP: "support",
 };
 
 /** Labels do schema duo LoL: Top, Jungle, Mid, ADC, Support */
 export function lolLaneIconUrlForDuoRole(roleLabel: string): string | null {
   const key = duoLolRoleToApiLabel(roleLabel.trim());
   if (!key) return null;
-  return BY_API_LABEL[key] ?? null;
+  const slug = BY_API_LABEL[key];
+  if (!slug) return null;
+  return getCloudinaryUrl(`games/lol/lanes/${slug}`, 128);
 }
 
 function duoLolRoleToApiLabel(role: string): string | null {

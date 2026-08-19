@@ -913,12 +913,18 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
             <div
               key={msg.id}
               className={cn(
-                "group relative max-w-[92%] rounded-2xl px-3 py-2 text-sm",
+                "group flex max-w-[92%] items-start gap-1 rounded-2xl px-3 py-2 text-sm",
                 msg.is_system ? "bg-muted/50 text-muted-foreground" : "bg-primary/10 text-foreground"
               )}
             >
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-semibold uppercase text-muted-foreground">
+                  {msg.username ?? "Sistema"}
+                </p>
+                <p className="whitespace-pre-wrap">{msg.body}</p>
+              </div>
               {canModerateEvent && !msg.is_system && activeEvent ? (
-                <div className="absolute right-1 top-1">
+                <div className="shrink-0 self-start">
                   <RoomMessageActionsMenu
                     roomSlug={room.slug}
                     messageId={msg.id}
@@ -935,10 +941,6 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
                   />
                 </div>
               ) : null}
-              <p className="text-[10px] font-semibold uppercase text-muted-foreground">
-                {msg.username ?? "Sistema"}
-              </p>
-              <p className="whitespace-pre-wrap">{msg.body}</p>
             </div>
           ))}
           <div ref={messagesEndRef} />

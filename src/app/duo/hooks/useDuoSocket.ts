@@ -138,10 +138,11 @@ export function useDuoSocket({
       }
     }
 
-    fetch("/api/notifications-ws-token", { credentials: "include" })
-      .then((res) => (res.ok ? res.json() : { ticket: null }))
-      .then((data: { ticket?: string | null }) => {
+    const socketPath = `/ws/duo/${encodeURIComponent(gameSlug)}/`;
+    requestWebSocketTicket(socketPath)
+      .then(({ ticket }) => {
         if (cancelled) return;
+        const wsUrl = buildAuthenticatedWebSocketUrl(socketPath, ticket);
         if (!data?.ticket) {
           setState((s) => ({
             ...s,

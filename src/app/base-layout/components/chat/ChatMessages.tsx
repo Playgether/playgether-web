@@ -89,7 +89,7 @@ export default function ChatMessages({
 }: {
   messages: MessageInterface[];
 }) {
-  const [openCutId, setOpenCutId] = useState<number | null>(null);
+  const [openCutId, setOpenCutId] = useState<string | null>(null);
 
   return (
     <>

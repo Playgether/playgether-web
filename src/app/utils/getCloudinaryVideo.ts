@@ -1,4 +1,5 @@
 import {
+  EAGER_WIDTHS_CUTS,
   EAGER_WIDTHS_VIDEO,
   snapEagerWidth,
 } from "@/app/utils/cloudinaryUploadConfig";
@@ -21,6 +22,17 @@ export const getCloudinaryVideoUrl = (public_id: string, width?: number) => {
 export const getCloudinaryVideoMasterUrl = (public_id: string) => {
   if (!public_id) return "";
   return `https://res.cloudinary.com/${cloudName}/video/upload/q_auto:good/f_auto/${public_id}`;
+};
+
+/**
+ * Delivery de cut alinhado aos eagers (c_limit + q_auto + width).
+ * Sem `width`, usa 720 (eager padrão de cuts).
+ */
+export const getCloudinaryCutVideoUrl = (public_id: string, width?: number) => {
+  if (!public_id) return "";
+  const w = snapEagerWidth(width, EAGER_WIDTHS_CUTS);
+  const quality = w === 480 ? "eco" : "good";
+  return `https://res.cloudinary.com/${cloudName}/video/upload/c_limit,q_auto:${quality},w_${w}/f_auto/${public_id}`;
 };
 
 /**

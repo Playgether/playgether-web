@@ -26,21 +26,21 @@ type CommentsContextProps = {
   comments: ApiResponseComments;
   addNewComment: (newComment: PostsCommentsProps) => void;
   addAnswerComment: (
-    objectId: number,
+    objectId: string,
     answerComment: PostsCommentsProps,
   ) => void;
   editComment: (updatedComment: PostsCommentsProps) => void;
-  deleteCommentContext: (comment: number) => void;
-  openAnswers: (commentId: number, pageParam?: string) => Promise<void>;
-  decreaseRepliesCount: (comment: number) => void;
+  deleteCommentContext: (comment: string) => void;
+  openAnswers: (commentId: string, pageParam?: string) => Promise<void>;
+  decreaseRepliesCount: (comment: string) => void;
   editAnswerComment: (
-    comment_id: number,
-    answer_id: number,
+    comment_id: string,
+    answer_id: string,
     answerComment: PostsCommentsProps,
   ) => void;
-  deleteAnswerContext: (comment_id: number, answer_id: number) => void;
-  handleLikeComment: (id: number) => void;
-  handleLikeAny: (id: number, parentId?: number) => void;
+  deleteAnswerContext: (comment_id: string, answer_id: string) => void;
+  handleLikeComment: (id: string) => void;
+  handleLikeAny: (id: string, parentId?: string) => void;
   fetchNextPage: (options?: FetchNextPageOptions) => Promise<any> | null;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
@@ -61,7 +61,7 @@ export function CommentsContextProvider({
 }: {
   children: ReactNode;
   response: ApiResponseComments;
-  postId: number;
+  postId: string;
 }) {
   const [comments, setComments] = useState<ApiResponseComments>(response);
   const [isFecthingNextAnswers, setIsFecthingNextAnswers] = useState(false);
@@ -124,7 +124,7 @@ export function CommentsContextProvider({
   // ===================== FUNÇÕES ===================== //
 
   // Like otimista para comentário OU reply
-  const handleLikeAny = (id: number, parentId?: number) => {
+  const handleLikeAny = (id: string, parentId?: string) => {
     setComments((prev) => ({
       ...prev,
       data: prev.data.map((comment) => {
@@ -165,7 +165,7 @@ export function CommentsContextProvider({
   };
 
   // Mantém função antiga para compatibilidade
-  const handleLikeComment = (postId: number) => handleLikeAny(postId);
+  const handleLikeComment = (postId: string) => handleLikeAny(postId);
 
   const fetchNextAnswers = async (comment: PostsCommentsProps) => {
     setIsFecthingNextAnswers(true);
@@ -201,7 +201,7 @@ export function CommentsContextProvider({
       setIsFecthingNextAnswers(false);
     }
   };
-  const openAnswers = async (commentId: number, pageParam = "") => {
+  const openAnswers = async (commentId: string, pageParam = "") => {
     setIsFecthingNextAnswers(true);
     const comment = comments.data.find((c) => c.id === commentId);
     if (
@@ -228,7 +228,7 @@ export function CommentsContextProvider({
     setIsFecthingNextAnswers(false);
   };
 
-  const decreaseRepliesCount = (commentId: number) => {
+  const decreaseRepliesCount = (commentId: string) => {
     setComments((prev) => ({
       data: prev.data.map((c) =>
         c.id === commentId
@@ -252,7 +252,7 @@ export function CommentsContextProvider({
   };
 
   const addAnswerComment = (
-    objectId: number,
+    objectId: string,
     answerComment: PostsCommentsProps,
   ) => {
     setComments((prev) => ({
@@ -281,15 +281,15 @@ export function CommentsContextProvider({
     }));
   };
 
-  const deleteCommentContext = (idComment: number) => {
+  const deleteCommentContext = (idComment: string) => {
     setComments((prev) => ({
       data: prev.data.filter((c) => c.id !== idComment),
     }));
   };
 
   const editAnswerComment = (
-    comment_id: number,
-    answer_id: number,
+    comment_id: string,
+    answer_id: string,
     answerComment: PostsCommentsProps,
   ) => {
     setComments((prev) => ({
@@ -310,7 +310,7 @@ export function CommentsContextProvider({
     }));
   };
 
-  const deleteAnswerContext = (comment_id: number, answer_id: number) => {
+  const deleteAnswerContext = (comment_id: string, answer_id: string) => {
     setComments((prev) => ({
       data: prev.data.map((c) =>
         c.id === comment_id

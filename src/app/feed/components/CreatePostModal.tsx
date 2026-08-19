@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { MentionTextarea } from "@/components/mentions/MentionTextarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ImagePlay, X, Send, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -290,10 +290,10 @@ export const CreatePostModal = () => {
             </div>
 
             {/* Content Input */}
-            <Textarea
+            <MentionTextarea
               placeholder="O que está acontecendo?"
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={setContent}
               className="min-h-32 resize-none border-border/50 bg-muted/60 focus:border-primary/50 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary/50 focus-visible:ring-offset-0"
             />
 

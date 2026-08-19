@@ -1,7 +1,7 @@
 "use client";
 
 import { useSecureWebSocket } from "@/hooks/useSecureWebSocket";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { NotificationProps } from "../types/NotificationProps";
 
 interface UseNotificationsOptions {
@@ -10,96 +10,94 @@ interface UseNotificationsOptions {
   notificationsList?: NotificationProps[];
 }
 
+function isSameNotification(a: NotificationProps, b: NotificationProps) {
+  return (
+    a.object_id === b.object_id &&
+    a.content_type === b.content_type &&
+    a.notification_type === b.notification_type
+  );
+}
+
+function sortByTimestamp(list: NotificationProps[]) {
+  return list.toSorted(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+  );
+}
+
 export const useNotifications = (options?: UseNotificationsOptions) => {
   const [notifications, setNotifications] = useState<NotificationProps[]>(
-    options?.notificationsList ?? []
+    options?.notificationsList ?? [],
   );
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const handleMessage = useCallback(
-    (message: any) => {
-      if (
-        message &&
-        typeof message === "object" &&
-        "message" in message &&
-        "actors" in message &&
-        "timestamp" in message &&
-        "object_id" in message &&
-        "content_type" in message &&
-        "notification_type" in message
-      ) {
-        const newNotification: NotificationProps = {
-          object_id: message.object_id as number,
-          message: message.message as string,
-          actors: Array.isArray(message.actors) ? message.actors : [],
-          timestamp: new Date(message.timestamp),
-          content_type: message.content_type as number,
-          notification_type: message.notification_type as string,
-          action_url: (message.action_url as string | null | undefined) ?? null,
-          id: message.id as string,
-        };
+  const notificationsRef = useRef(notifications);
+  notificationsRef.current = notifications;
 
-        setNotifications((prevNotifications) => {
-          // Caso actors seja 0, remover a notificação
-          if (newNotification.actors.length === 0) {
-            const removedNotification = prevNotifications.find(
-              (notification) =>
-                notification.object_id === newNotification.object_id &&
-                notification.content_type === newNotification.content_type &&
-                notification.notification_type ===
-                  newNotification.notification_type
-            );
+  const onNewNotificationRef = useRef(options?.onNewNotification);
+  onNewNotificationRef.current = options?.onNewNotification;
 
-            if (removedNotification) {
-              options?.onNotificationRemoved?.(removedNotification);
-            }
+  const onNotificationRemovedRef = useRef(options?.onNotificationRemoved);
+  onNotificationRemovedRef.current = options?.onNotificationRemoved;
 
-            return prevNotifications.filter(
-              (notification) =>
-                !(
-                  notification.object_id === newNotification.object_id &&
-                  notification.content_type === newNotification.content_type &&
-                  notification.notification_type ===
-                    newNotification.notification_type
-                )
-            );
-          }
+  const handleMessage = useCallback((message: any) => {
+    if (
+      !message ||
+      typeof message !== "object" ||
+      !("message" in message) ||
+      !("actors" in message) ||
+      !("timestamp" in message) ||
+      !("object_id" in message) ||
+      !("content_type" in message) ||
+      !("notification_type" in message)
+    ) {
+      return;
+    }
 
-          // Verifica se a notificação já existe
-          const existingIndex = prevNotifications.findIndex(
-            (notification) =>
-              notification.object_id === newNotification.object_id &&
-              notification.content_type === newNotification.content_type &&
-              notification.notification_type ===
-                newNotification.notification_type
-          );
+    const incoming: NotificationProps = {
+      object_id: message.object_id as number,
+      message: message.message as string,
+      actors: Array.isArray(message.actors) ? message.actors : [],
+      timestamp: new Date(message.timestamp),
+      content_type: message.content_type as number,
+      notification_type: message.notification_type as string,
+      action_url: (message.action_url as string | null | undefined) ?? null,
+      id: message.id as string,
+      read: message.is_read === true ? true : message.is_read === false ? false : undefined,
+    };
 
-          let updatedNotifications;
+    const prev = notificationsRef.current;
 
-          if (existingIndex !== -1) {
-            // Atualiza a notificação existente
-            updatedNotifications = [...prevNotifications];
-            updatedNotifications[existingIndex] = newNotification;
-          } else {
-            // Adiciona a nova notificação
-            updatedNotifications = [newNotification, ...prevNotifications];
-            setUnreadCount((prev) => prev + 1);
-            options?.onNewNotification?.(newNotification);
-          }
+    if (incoming.actors.length === 0) {
+      const removed = prev.find((notification) =>
+        isSameNotification(notification, incoming),
+      );
+      const next = prev.filter(
+        (notification) => !isSameNotification(notification, incoming),
+      );
+      notificationsRef.current = next;
+      setNotifications(next);
+      if (removed) onNotificationRemovedRef.current?.(removed);
+      return;
+    }
 
-          // Ordena por timestamp (do mais recente para o mais antigo)
-          updatedNotifications.sort((a, b) => {
-            return (
-              new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-            );
-          });
+    const existingIndex = prev.findIndex((notification) =>
+      isSameNotification(notification, incoming),
+    );
+    const isNew = existingIndex === -1;
+    const next = isNew
+      ? [incoming, ...prev]
+      : prev.map((notification, index) =>
+          index === existingIndex ? incoming : notification,
+        );
+    const sorted = sortByTimestamp(next);
+    notificationsRef.current = sorted;
+    setNotifications(sorted);
 
-          return updatedNotifications;
-        });
-      }
-    },
-    [options]
-  );
+    if (isNew) {
+      setUnreadCount((count) => count + 1);
+    }
+    onNewNotificationRef.current?.(incoming);
+  }, []);
 
   const { connectionStatus, isConnected, connectionError, reconnect } =
     useSecureWebSocket({
@@ -110,17 +108,15 @@ export const useNotifications = (options?: UseNotificationsOptions) => {
 
   const markAsRead = useCallback((notificationId?: string) => {
     if (notificationId) {
-      // Marcar notificação específica como lida
       setNotifications((prev) =>
         prev.map((notif) =>
-          notif.id === notificationId ? { ...notif, read: true } : notif
-        )
+          notif.id === notificationId ? { ...notif, read: true } : notif,
+        ),
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
     } else {
-      // Marcar todas como lidas
       setNotifications((prev) =>
-        prev.map((notif) => ({ ...notif, read: true }))
+        prev.map((notif) => ({ ...notif, read: true })),
       );
       setUnreadCount(0);
     }

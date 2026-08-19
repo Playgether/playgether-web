@@ -5,7 +5,7 @@ import { PostsCommentsProps } from "../../../../../../services/getComments";
 import { CommentContentType } from "../../../../../content_types/CommentContentType";
 
 const mockComment: PostsCommentsProps = {
-  id: 1,
+  id: "1",
   created_by_user_name: "David Matthew",
   quantity_likes: 55,
   quantity_comment: 2,

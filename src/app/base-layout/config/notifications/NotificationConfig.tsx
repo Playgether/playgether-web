@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, UserPlus, Trophy, Bell, Swords } from "lucide-react";
+import { AtSign, Heart, MessageCircle, UserPlus, Trophy, Bell, Swords } from "lucide-react";
 
 export interface NotificationConfig {
   icon: JSX.Element;
@@ -12,6 +12,9 @@ export const notificationConfig: Record<string, NotificationConfig> = {
   },
   follow: {
     icon: <UserPlus className="w-4 h-4 text-neon-green" />,
+  },
+  mention: {
+    icon: <AtSign className="w-4 h-4 text-neon-blue" />,
   },
   achievement: {
     icon: <Trophy className="w-4 h-4 text-secondary-start" />,

@@ -17,6 +17,8 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
+import { MentionText } from "@/components/mentions/MentionText";
+import { GameMediaImage } from "@/components/media/GameMediaImage";
 import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
 import {
   searchGlobal,
@@ -108,7 +110,9 @@ function PostCard({ post, onClick }: { post: SearchPost; onClick: () => void }) 
           <span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">·</span>
           <span className="shrink-0 text-xs text-muted-foreground">{timeAgo(post.timestamp)}</span>
         </div>
-        <p className="line-clamp-2 break-words text-sm text-foreground/90 sm:line-clamp-3">{post.comment}</p>
+        <p className="line-clamp-2 break-words text-sm text-foreground/90 sm:line-clamp-3">
+          <MentionText text={post.comment} />
+        </p>
         {post.has_post_media && (
           <span className="inline-flex items-center gap-1 mt-1.5 text-xs text-muted-foreground">
             <ImageIcon className="w-3.5 h-3.5" />Mídia
@@ -160,7 +164,6 @@ function RoomCard({ room, onClick }: { room: SearchRoom; onClick: () => void }) 
 }
 
 function GameCard({ game, onClick }: { game: SearchGame; onClick: () => void }) {
-  const src = game.icon ? resolveGameMediaUrl(game.icon) : null;
   return (
     <button
       type="button"
@@ -168,11 +171,17 @@ function GameCard({ game, onClick }: { game: SearchGame; onClick: () => void }) 
       className="flex w-full items-center gap-3 border-b border-border/30 px-3 py-3 text-left transition-colors last:border-0 hover:bg-muted/60 sm:gap-4 sm:px-4 sm:py-4"
     >
       <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted sm:h-12 sm:w-12">
-        {src ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={src} alt={game.name} className="w-full h-full object-cover" />
+        {game.icon ? (
+          <GameMediaImage
+            src={game.icon}
+            alt={game.name}
+            size="icon"
+            objectFit="cover"
+            className="h-full w-full"
+            spinnerClassName="h-4 w-4"
+          />
         ) : (
-          <Gamepad2 className="w-5 h-5 text-muted-foreground" />
+          <Gamepad2 className="h-5 w-5 text-muted-foreground" />
         )}
       </div>
       <div className="flex-1 min-w-0">

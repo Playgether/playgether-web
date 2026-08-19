@@ -11,7 +11,7 @@ export interface Props {
 
 export interface CommentSectionLogicInterface {
   /**  Esta prop recebe o número do post em que você quer dar o get nos comentários */
-  postId: number;
+  postId: string;
 }
 
 /** Este componente é responsável apenas por acionar a função "fetchComments" em "useCommentsContext". Seu intuito é servir como uma função assíncrona que espera os comentários

@@ -1,9 +1,12 @@
+import type { HighlightedAchievementPublic } from "@/types/highlightedAchievements";
+
 export interface ChatRoomMessages {
   id: number;
   author_id?: number;
   author_name: string;
   author_username: string;
   author_profile_photo: string;
+  author_highlighted_achievements?: HighlightedAchievementPublic[];
   body: string;
   created_at: Date;
   viewed: boolean;

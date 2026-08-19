@@ -7,6 +7,8 @@ import type { Game, GamePreferences, GameSchema, GameStats, LolStats, CsStats } 
 import { getGameSchema, getGameStats } from "../../services/duoApi";
 import { LolProfile } from "../game/LolProfile";
 import { CsProfile } from "../game/CsProfile";
+import { ValorantProfile } from "../game/ValorantProfile";
+import { isValorantDuoSlug } from "../../utils/isValorantGame";
 
 interface GameVerificationProps {
   game: Game;
@@ -33,15 +35,17 @@ export function GameVerification({
   const [schema, setSchema] = useState<GameSchema | null>(null);
 
   const slug = game.acronym.toLowerCase();
+  const isValorant = isValorantDuoSlug(slug);
 
-  // Editable LoL fields
   const [lolMainRole, setLolMainRole] = useState("Mid");
   const [lolSecondaryRole, setLolSecondaryRole] = useState("Support");
 
-  // Editable CS fields
   const [csRoles, setCsRoles] = useState<string[]>([]);
   const [csWeapons, setCsWeapons] = useState<string[]>([]);
   const [csOwnRange, setCsOwnRange] = useState("");
+
+  const [valOwnElo, setValOwnElo] = useState("");
+  const [valRoles, setValRoles] = useState<string[]>([]);
 
   useEffect(() => {
     setLoading(true);
@@ -74,27 +78,39 @@ export function GameVerification({
         setCsWeapons(p.favorite_weapons as string[]);
       if (typeof p.own_range === "string" && p.own_range) setCsOwnRange(p.own_range);
     }
-  }, [slug, initialPreferences]);
+    if (isValorant) {
+      if (typeof p.own_elo === "string" && p.own_elo) setValOwnElo(p.own_elo);
+      if (Array.isArray(p.roles)) setValRoles(p.roles as string[]);
+    }
+  }, [slug, isValorant, initialPreferences]);
 
   function buildPreferences(): Partial<GamePreferences> {
     if (slug === "lol") {
       return {
         main_role: lolMainRole,
         secondary_role: lolSecondaryRole,
-      } as any;
+      } as Partial<GamePreferences>;
     }
     if (slug === "cs2") {
       return {
         own_range: csOwnRange,
         favorite_weapons: csWeapons,
         roles: csRoles,
-      } as any;
+      } as Partial<GamePreferences>;
+    }
+    if (isValorant) {
+      return {
+        own_elo: valOwnElo,
+        roles: valRoles,
+      } as Partial<GamePreferences>;
     }
     return {};
   }
 
+  const canContinue = isValorant ? Boolean(valOwnElo) && valRoles.length > 0 : true;
+
   function handleContinue() {
-    if (!stats || !schema) return;
+    if (!stats || !schema || !canContinue) return;
     onReady(stats, schema, buildPreferences());
   }
 
@@ -120,20 +136,20 @@ export function GameVerification({
               {game.name}
             </h1>
             <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground sm:text-base">
-              Confira os dados da sua conta e ajuste o que for preciso antes de buscar um duo.
+              {isValorant
+                ? "Informe seu elo e funções antes de buscar um duo."
+                : "Confira os dados da sua conta e ajuste o que for preciso antes de buscar um duo."}
             </p>
           </div>
         )}
 
-        {/* Loading */}
-        {loading && (
+        {loading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-10 h-10 text-primary animate-spin" />
           </div>
-        )}
+        ) : null}
 
-        {/* Error */}
-        {error && (
+        {error ? (
           <div className="rounded-2xl border border-destructive/35 bg-destructive/5 p-8 text-center backdrop-blur-sm">
             <AlertTriangle className="mx-auto mb-3 h-9 w-9 text-destructive" />
             <p className="font-medium text-destructive">{error}</p>
@@ -141,9 +157,9 @@ export function GameVerification({
               Tentar novamente
             </Button>
           </div>
-        )}
+        ) : null}
 
-        {!loading && !error && connected === false && (
+        {!loading && !error && connected === false ? (
           <div className="rounded-2xl border border-amber-500/25 bg-amber-500/[0.06] p-8 text-center shadow-sm backdrop-blur-sm">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/15 ring-1 ring-amber-500/25">
               <AlertTriangle className="h-7 w-7 text-amber-400" />
@@ -154,24 +170,28 @@ export function GameVerification({
               <span className="font-medium text-primary">{game.name}</span> para usar o Duo Finder.
             </p>
             <Button
-              onClick={() => (window.location.href = "/profile/biblioteca")}
+              onClick={() => {
+                window.location.href = "/profile/biblioteca";
+              }}
               className="rounded-xl bg-gradient-primary text-primary-foreground shadow-lg shadow-primary/20 hover:shadow-glow-primary"
             >
               Conectar conta
             </Button>
           </div>
-        )}
+        ) : null}
 
-        {!loading && !error && connected === true && stats && (
+        {!loading && !error && connected === true && stats ? (
           <div className="space-y-6">
-            <div className="flex items-center gap-3 rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.07] px-4 py-3 text-emerald-400">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 ring-1 ring-emerald-500/20">
-                <CheckCircle className="h-5 w-5" />
-              </span>
-              <span className="text-sm font-semibold">Conta conectada</span>
-            </div>
+            {isValorant ? null : (
+              <div className="flex items-center gap-3 rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.07] px-4 py-3 text-emerald-400">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 ring-1 ring-emerald-500/20">
+                  <CheckCircle className="h-5 w-5" />
+                </span>
+                <span className="text-sm font-semibold">Conta conectada</span>
+              </div>
+            )}
 
-            {slug === "lol" && (
+            {slug === "lol" ? (
               <LolProfile
                 stats={stats as LolStats}
                 mainRole={lolMainRole}
@@ -179,9 +199,9 @@ export function GameVerification({
                 onMainRoleChange={setLolMainRole}
                 onSecondaryRoleChange={setLolSecondaryRole}
               />
-            )}
+            ) : null}
 
-            {slug === "cs2" && (
+            {slug === "cs2" ? (
               <CsProfile
                 stats={stats as CsStats}
                 selectedRoles={csRoles}
@@ -191,18 +211,28 @@ export function GameVerification({
                 onWeaponsChange={setCsWeapons}
                 onRangeChange={setCsOwnRange}
               />
-            )}
+            ) : null}
+
+            {isValorant ? (
+              <ValorantProfile
+                ownElo={valOwnElo}
+                selectedRoles={valRoles}
+                onEloChange={setValOwnElo}
+                onRolesChange={setValRoles}
+              />
+            ) : null}
 
             <div className="flex justify-center pt-2">
               <Button
                 onClick={handleContinue}
-                className="h-12 min-w-[12rem] rounded-xl bg-gradient-primary px-12 font-semibold text-primary-foreground shadow-lg shadow-primary/15 transition-all duration-300 hover:scale-[1.02] hover:shadow-glow-primary"
+                disabled={!canContinue}
+                className="h-12 min-w-[12rem] rounded-xl bg-gradient-primary px-12 font-semibold text-primary-foreground shadow-lg shadow-primary/15 transition-all duration-300 hover:scale-[1.02] hover:shadow-glow-primary disabled:pointer-events-none disabled:opacity-45"
               >
                 Continuar
               </Button>
             </div>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

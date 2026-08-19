@@ -28,9 +28,11 @@ export const getCloudinaryMasterUrl = (public_id: string) => {
 };
 
 /** URL absoluta, relativa ou public_id Cloudinary — mesmo critério da biblioteca de jogos no perfil. */
-export function resolveGameMediaUrl(value: string | null | undefined): string {
+export function resolveGameMediaUrl(
+  value: string | null | undefined,
+  width?: number,
+): string {
   if (!value) return "";
-  if (value.startsWith("http")) return value;
-  if (value.startsWith("/")) return value;
-  return getCloudinaryUrl(value);
+  if (value.startsWith("http") || value.startsWith("/")) return value;
+  return getCloudinaryUrl(value, width);
 }

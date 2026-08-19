@@ -1,5 +1,5 @@
 export interface Cut {
-  id: number;
+  id: string;
   caption: string;
   video_file: string;
   thumbnail: string;

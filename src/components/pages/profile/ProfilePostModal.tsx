@@ -11,7 +11,7 @@ import { apiFetch } from "@/services/apiFetch";
 import type { PostProps } from "@/app/feed/types/PostProps";
 
 interface ProfilePostModalProps {
-  postId: number | null;
+  postId: string | null;
   open: boolean;
   onClose: () => void;
 }

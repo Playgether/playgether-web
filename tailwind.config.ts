@@ -21,6 +21,7 @@ export default {
 			screens: {
 				xs: '375px',
 				'3xl': '1920px',
+				short: { raw: '(max-height: 800px)' },
 			},
 			colors: {
 				border: 'hsl(var(--border))',

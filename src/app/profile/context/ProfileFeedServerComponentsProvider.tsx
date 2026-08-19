@@ -25,7 +25,6 @@ import MoreMediasParagraph from "@/app/feed/components/MoreMediasParagraph";
 import ShareModalHeader from "@/app/feed/components/ShareModalHeader";
 import MediaSelectedButtonsImage from "@/app/feed/components/MediaSelectedButtonsImage";
 import MediaSelectedButtonsVideo from "@/app/feed/components/MediaSelectedButtonsVideo";
-import { Button } from "@/components/ui/button";
 import ButtonCommentPostModal from "@/app/feed/components/ButtonCommentPostModal";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import {
@@ -73,15 +72,7 @@ const ProfileFeedServerComponents = {
       ),
     },
     buttons: {
-      answer: (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-xs text-muted-foreground hover:text-primary p-2 h-auto"
-        >
-          Responder
-        </Button>
-      ),
+      answer: "Responder",
       comment: <ButtonCommentPostModal />,
     },
   },

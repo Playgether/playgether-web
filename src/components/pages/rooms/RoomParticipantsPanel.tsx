@@ -2,6 +2,7 @@
 
 import { PresenceStatusDot } from "@/components/presence/PresenceStatusDot";
 import ProfileImagePost from "@/components/pages/feed/DesktopFeed/Middle/PostsComponents/ProfileImagePost/ProfileImagePost";
+import { RoomMemberIdentity } from "@/components/pages/rooms/RoomMemberIdentity";
 import { useAuthContext } from "@/context/AuthContext";
 import { useChatHandlerContext } from "@/context/ChatHandlerContext";
 import { usePresenceContext } from "@/context/PresenceContext";
@@ -92,9 +93,9 @@ export default function RoomParticipantsPanel({
           filteredUsers.map((user) => (
             <div
               key={user.id}
-              className="group flex cursor-pointer items-center gap-2.5 rounded-lg p-2.5 transition-colors hover:bg-muted/60"
+              className="group flex cursor-pointer items-start gap-2.5 rounded-lg p-2.5 transition-colors hover:bg-muted/60"
             >
-              <div className="relative flex-shrink-0">
+              <div className="relative shrink-0">
                 <ProfileImagePost
                   link_photo={user.profile_photo}
                   username={user.username}
@@ -105,15 +106,23 @@ export default function RoomParticipantsPanel({
                   userId={String(user.id)}
                   sizeClass="h-3 w-3"
                   borderClass="border-2 border-card"
-                  allowPicker={
-                    selfId != null && user.id === selfId
-                  }
+                  allowPicker={selfId != null && user.id === selfId}
+                  className="absolute -bottom-0.5 -right-0.5"
                 />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate whitespace-nowrap text-sm font-semibold text-foreground">
-                  {user.fullname}
-                </p>
+                <RoomMemberIdentity
+                  username={user.username}
+                  displayName={user.fullname}
+                  profilePhoto={user.profile_photo}
+                  userId={user.id}
+                  roomOwnerId={room.owner}
+                  permissionsSnapshot={snapshot}
+                  highlightedAchievements={user.highlighted_achievements}
+                  showAvatar={false}
+                  nameClassName="truncate text-sm font-semibold text-foreground"
+                  roleClassName="truncate text-[10px] text-muted-foreground"
+                />
                 <p className="truncate text-xs text-muted-foreground">
                   @{user.username}
                 </p>

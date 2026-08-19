@@ -13,8 +13,8 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
-import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
 import { GameHoverCardContent } from "@/components/pages/profile/components/GameHoverCardContent";
+import { GameMediaImage } from "@/components/media/GameMediaImage";
 import { getStatsGames, type StatsGame } from "@/services/getStatsGames";
 import { getCs2Stats, type Cs2StatsResponse } from "@/services/getCs2Stats";
 import {
@@ -28,13 +28,6 @@ import {
   type LolTimeScope,
 } from "@/services/getLolStats";
 import { syncLolStats } from "@/services/syncLolStats";
-
-function resolveMediaUrl(value: string | null | undefined): string {
-  if (!value) return "";
-  if (value.startsWith("http")) return value;
-  if (value.startsWith("/")) return value;
-  return getCloudinaryUrl(value);
-}
 
 const cs2StatsCacheByProfileId = new Map<number, Cs2StatsResponse | null>();
 const cs2StatsPromiseByProfileId = new Map<
@@ -416,11 +409,16 @@ export function GameStatsTab({
                 onClick={() => setSelectedGame(slug)}
               >
                 <CardContent className="p-6 text-center space-y-4">
-                  <img
-                    src={resolveMediaUrl(game.icon ?? game.image)}
-                    alt={game.name}
-                    className="w-16 h-16 mx-auto rounded-lg object-cover group-hover:scale-105 transition-transform duration-200"
-                  />
+                  {game.icon || game.image ? (
+                    <GameMediaImage
+                      src={game.icon ?? game.image}
+                      alt={game.name}
+                      size="icon"
+                      objectFit="cover"
+                      className="mx-auto h-16 w-16 rounded-lg transition-transform duration-200 group-hover:scale-105"
+                      spinnerClassName="h-5 w-5"
+                    />
+                  ) : null}
                   <HoverCard>
                     <HoverCardTrigger asChild>
                       <h3 className="font-semibold text-lg cursor-help">{game.name}</h3>
@@ -429,7 +427,6 @@ export function GameStatsTab({
                       <GameHoverCardContent
                         title={game.name}
                         description={game.description}
-                        cover={game.image}
                         logo={game.icon}
                       />
                       {game.acronym ? (
@@ -451,7 +448,6 @@ export function GameStatsTab({
                       <GameHoverCardContent
                         title={game.company.name}
                         description={game.company.description}
-                        cover={game.company.banner}
                         logo={game.company.logo}
                       />
                       </HoverCardContent>

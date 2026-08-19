@@ -25,7 +25,8 @@ import { DeleteCommentModal } from "../@modal/(..)feed/components/DeleteCommentM
 import { deleteCommentAction } from "@/actions/deleteComment";
 import { PostsCommentsProps } from "@/services/getComments";
 import { useQueryClient } from "@tanstack/react-query";
-import { Textarea } from "@/components/ui/textarea";
+import { MentionTextarea } from "@/components/mentions/MentionTextarea";
+import { MentionText } from "@/components/mentions/MentionText";
 import { updateCommentAction } from "@/actions/updateComment";
 import { CommentContentType } from "@/components/content_types/CommentContentType";
 import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
@@ -69,7 +70,7 @@ export const PostModal = ({
   onRequireAuth,
   isGuest = false,
 }: {
-  postId: number;
+  postId: string;
   onClose?: () => void;
   fullPage?: boolean;
   /** Guest shared-link: open login instead of mutating. */
@@ -79,8 +80,8 @@ export const PostModal = ({
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [isCurrentMediaLoaded, setIsCurrentMediaLoaded] = useState(false);
   const [mediaFullscreenOpen, setMediaFullscreenOpen] = useState(false);
-  const [openReplies, setOpenReplies] = useState<Set<number>>(new Set());
-  const [loadingReplies, setLoadingReplies] = useState<Set<number>>(new Set());
+  const [openReplies, setOpenReplies] = useState<Set<string>>(new Set());
+  const [loadingReplies, setLoadingReplies] = useState<Set<string>>(new Set());
   const [showFullText, setShowFullText] = useState(false);
   const [overlayTextExpanded, setOverlayTextExpanded] = useState(false);
   const searchParams = useSearchParams();
@@ -112,16 +113,16 @@ export const PostModal = ({
   const [isDeletingComment, setIsDeletingComment] = useState(false);
   const [selectedComment, setSelectedComment] =
     useState<PostsCommentsProps | null>(null);
-  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const [isUpdatingComment, setIsUpdatingComment] = useState(false);
   const [selectedCommentParentId, setSelectedCommentParentId] = useState<
-    number | null
+    string | null
   >(null);
-  const [loadingMoreReplies, setLoadingMoreReplies] = useState<Set<number>>(
+  const [loadingMoreReplies, setLoadingMoreReplies] = useState<Set<string>>(
     new Set(),
   );
-  const [replyingToCommentId, setReplyingToCommentId] = useState<number | null>(
+  const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(
     null,
   );
   const [replyContent, setReplyContent] = useState("");
@@ -367,7 +368,7 @@ export const PostModal = ({
     commentId: number,
     content_type: string,
     comment: string,
-    object_id: number,
+    object_id: string | number,
     isReplie: boolean,
   ) => {
     if (!editingContent.trim()) return;
@@ -447,9 +448,9 @@ export const PostModal = ({
   const postShellClassName =
     "bg-card border border-border/50 backdrop-blur-sm shadow-card rounded-2xl overflow-hidden";
 
-  const isRepliesOpen = (id: number) => openReplies.has(id);
-  const isRepliesLoading = (id: number) => loadingReplies.has(id);
-  const isLoadingMoreReplies = (id: number) => loadingMoreReplies.has(id);
+  const isRepliesOpen = (id: string) => openReplies.has(id);
+  const isRepliesLoading = (id: string) => loadingReplies.has(id);
+  const isLoadingMoreReplies = (id: string) => loadingMoreReplies.has(id);
 
   const toggleReplies = async (commentId: number) => {
     if (!isRepliesOpen(commentId)) {
@@ -674,29 +675,28 @@ export const PostModal = ({
           achievements={post.highlighted_achievements}
           className="min-w-0 max-w-full"
           compact
-          adaptive={false}
         />
       </div>
       {post.comment ? (
-        <button
-          type="button"
-          onClick={() => setOverlayTextExpanded((v) => !v)}
-          className="mt-3 w-full text-left"
-        >
+        <div className="mt-3 w-full text-left">
           <p
             className={cn(
               "whitespace-pre-wrap text-sm leading-relaxed text-white/95 drop-shadow-sm",
               !overlayTextExpanded && "line-clamp-3",
             )}
           >
-            {post.comment}
+            <MentionText text={post.comment} />
           </p>
           {post.comment.length > 100 ? (
-            <span className="mt-0.5 text-xs font-medium text-white/70">
+            <button
+              type="button"
+              onClick={() => setOverlayTextExpanded((v) => !v)}
+              className="mt-0.5 text-xs font-medium text-white/70"
+            >
               {overlayTextExpanded ? "ver menos" : "ver mais"}
-            </span>
+            </button>
           ) : null}
-        </button>
+        </div>
       ) : null}
       <div className="mt-3 text-white [&_button]:text-white/90 [&_button:hover]:text-white">
         <PostPropertiers.Root className="">
@@ -802,7 +802,7 @@ export const PostModal = ({
                     </div>
                     {post.comment ? (
                       <p className="mt-4 whitespace-pre-wrap text-[15px] leading-relaxed text-foreground">
-                        {post.comment}
+                        <MentionText text={post.comment} />
                       </p>
                     ) : (
                       <p className="mt-4 text-sm text-muted-foreground">
@@ -1194,13 +1194,13 @@ export const PostModal = ({
                       </Button>
                       {showFullText ? (
                         <p className="text-foreground leading-relaxed whitespace-pre-wrap">
-                          {post.comment}
+                          <MentionText text={post.comment} />
                         </p>
                       ) : null}
                     </>
                   ) : (
                     <p className="px-3 text-foreground leading-relaxed whitespace-pre-wrap">
-                      {post.comment}
+                      <MentionText text={post.comment} />
                     </p>
                   )}
                 </div>
@@ -1346,6 +1346,10 @@ export const PostModal = ({
                                     <HighlightedAchievementBadges
                                       achievements={comment.highlighted_achievements}
                                       className="max-w-full"
+                                      compact
+                                      iconOnly
+                                      max={3}
+                                      showOverflowCounter={false}
                                     />
                                     <span className="shrink-0 text-xs text-muted-foreground">
                                       <DateAndHour date={comment.timestamp} />
@@ -1379,17 +1383,15 @@ export const PostModal = ({
                               {/* Conteúdo do comentário */}
                               <div className="bg-muted/50 rounded-lg p-3 w-full">
                                 {editingCommentId === comment.id ? (
-                                  <Textarea
+                                  <MentionTextarea
                                     value={editingContent}
-                                    onChange={(e) =>
-                                      setEditingContent(e.target.value)
-                                    }
+                                    onChange={setEditingContent}
                                     className="min-h-[80px] text-sm bg-background border-border/50 w-full"
                                     autoFocus
                                   />
                                 ) : (
                                   <p className="text-sm whitespace-pre-wrap">
-                                    {comment.comment}
+                                    <MentionText text={comment.comment} />
                                   </p>
                                 )}
 
@@ -1459,7 +1461,7 @@ export const PostModal = ({
                                       setReplyingToCommentId(comment.id),
                                     )
                                   }
-                                  className="text-muted-foreground hover:text-primary"
+                                  className="text-xs text-muted-foreground hover:text-primary p-2 h-auto"
                                 >
                                   {buttons.answer}
                                 </Button>
@@ -1474,11 +1476,9 @@ export const PostModal = ({
                                   }}
                                   className="mt-3 space-y-2"
                                 >
-                                  <Textarea
+                                  <MentionTextarea
                                     value={replyContent}
-                                    onChange={(e) =>
-                                      setReplyContent(e.target.value)
-                                    }
+                                    onChange={setReplyContent}
                                     onKeyDown={(e) => handleKeyDown(e, () => handleReply(comment.id))}
                                     placeholder="Escreva uma resposta..."
                                     className="min-h-[80px] text-sm bg-muted/50 border-border/50 w-full"
@@ -1585,6 +1585,10 @@ export const PostModal = ({
                                                 reply.highlighted_achievements
                                               }
                                               className="max-w-full"
+                                              compact
+                                              iconOnly
+                                              max={3}
+                                              showOverflowCounter={false}
                                             />
                                             <span className="shrink-0 text-xs text-muted-foreground">
                                               <DateAndHour
@@ -1613,17 +1617,15 @@ export const PostModal = ({
                                       {/* Conteúdo da reply */}
                                       <div className="bg-muted/60 rounded-lg p-3">
                                         {editingCommentId === reply.id ? (
-                                          <Textarea
+                                          <MentionTextarea
                                             value={editingContent}
-                                            onChange={(e) =>
-                                              setEditingContent(e.target.value)
-                                            }
+                                            onChange={setEditingContent}
                                             className="min-h-[60px] text-sm bg-background border-border/50 w-full"
                                             autoFocus
                                           />
                                         ) : (
                                           <p className="text-sm break-words whitespace-pre-wrap">
-                                            {reply.comment}
+                                            <MentionText text={reply.comment} />
                                           </p>
                                         )}
 
@@ -1766,13 +1768,14 @@ export const PostModal = ({
                 className="sticky bottom-0 w-full shrink-0 border-t border-border/50 bg-card p-3 lg:p-4"
               >
                 <div className="relative">
-                  <Textarea
+                  <MentionTextarea
                     value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
+                    onChange={setNewComment}
                     onKeyDown={(e) => handleKeyDown(e, handleComment)}
                     placeholder="Adicione um comentário..."
                     className="flex-1 bg-muted/50 border-border/50 w-full pr-24 resize-none"
                     rows={1}
+                    dropdownSide="top"
                   />
                   {newComment.trim() && (
                     <Button
