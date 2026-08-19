@@ -2,11 +2,15 @@
 
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
+import { useChatHandlerContext } from "@/context/ChatHandlerContext";
+import { useRoomPermissions } from "@/context/RoomPermissionsContext";
 import {
   CHAT_EMOJI_CATEGORIES,
   searchChatEmojis,
 } from "@/lib/chatEmojis";
+import { getRoomMemberRoleLabels } from "@/lib/roomMemberMeta";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import TextareaAutosize from "react-textarea-autosize";
@@ -62,6 +66,7 @@ export const AmbienceChatLine = memo(function AmbienceChatLine({
   onReply,
   onPin,
   onUnpin,
+  roomOwnerId,
   roomSlug,
   canDeleteMessage,
   canKickAuthor,
@@ -75,6 +80,7 @@ export const AmbienceChatLine = memo(function AmbienceChatLine({
   onReply?: (m: RoomAmbienceMessage) => void;
   onPin?: (m: RoomAmbienceMessage) => void;
   onUnpin?: () => void;
+  roomOwnerId?: string | number | null;
   roomSlug?: string;
   canDeleteMessage?: boolean;
   canKickAuthor?: boolean;
@@ -83,6 +89,8 @@ export const AmbienceChatLine = memo(function AmbienceChatLine({
   onMessageDeleted?: () => void;
 }) {
   const float = variant === "float";
+  const { snapshot } = useRoomPermissions();
+  const { onlineUsers } = useChatHandlerContext();
   const motion = !float
     ? "animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
     : "";
@@ -96,6 +104,11 @@ export const AmbienceChatLine = memo(function AmbienceChatLine({
     roomSlug &&
     authorId != null &&
     (canDeleteMessage || canKickAuthor || canMuteAuthor);
+
+  const highlightedAchievements =
+    onlineUsers.find((u) => u.username === m.author_username)
+      ?.highlighted_achievements ?? null;
+  const roleLabels = getRoomMemberRoleLabels(authorId, roomOwnerId, snapshot);
 
   if (isSystem) {
     return (
@@ -126,7 +139,7 @@ export const AmbienceChatLine = memo(function AmbienceChatLine({
   return (
     <div
       className={cn(
-        "group relative flex gap-2 rounded-lg border px-2 py-2 [contain:content]",
+        "group relative flex items-start gap-2 rounded-lg border px-2 py-2 [contain:content]",
         motion,
         isPinned && !float && "ring-1 ring-primary/40",
         float
@@ -140,17 +153,34 @@ export const AmbienceChatLine = memo(function AmbienceChatLine({
         profilePhoto={m.author_photo}
         sizeClass="h-8 w-8"
         fallbackTextClassName="text-[10px]"
-        className={cn("mt-0.5 shrink-0 ring-1", float ? "ring-white/25" : "ring-border")}
+        className={cn("shrink-0 ring-1", float ? "ring-white/25" : "ring-border")}
       />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
           <p className={cn("text-[11px] font-semibold", float ? "text-zinc-100" : "text-foreground")}>
             {m.author_username}
           </p>
+          <HighlightedAchievementBadges
+            achievements={highlightedAchievements}
+            compact
+            iconOnly
+            max={3}
+            showOverflowCounter={false}
+          />
           {isPinned ? (
             <Pin className={cn("h-3 w-3 shrink-0", float ? "text-primary" : "text-primary")} />
           ) : null}
         </div>
+        {roleLabels.length > 0 ? (
+          <p
+            className={cn(
+              "truncate text-[10px] leading-tight",
+              float ? "text-zinc-400" : "text-muted-foreground",
+            )}
+          >
+            {roleLabels.join(" · ")}
+          </p>
+        ) : null}
         {m.reply_to_id && m.reply_to_username && m.reply_to_body ? (
           <ReplyQuote
             username={m.reply_to_username}

@@ -257,7 +257,7 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
     <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-black">
       <div className="flex h-full w-full items-center justify-center gap-3 lg:px-2">
         <div
-          className="relative h-full w-full min-w-0 overflow-hidden bg-black lg:max-w-[420px]"
+          className="relative aspect-[9/16] h-full w-auto max-h-full max-w-full min-w-0 overflow-hidden bg-black lg:max-w-[420px]"
           onClick={handleVideoTap}
         >
           <video

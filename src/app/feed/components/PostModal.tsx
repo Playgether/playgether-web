@@ -675,7 +675,6 @@ export const PostModal = ({
           achievements={post.highlighted_achievements}
           className="min-w-0 max-w-full"
           compact
-          adaptive={false}
         />
       </div>
       {post.comment ? (
@@ -1347,6 +1346,10 @@ export const PostModal = ({
                                     <HighlightedAchievementBadges
                                       achievements={comment.highlighted_achievements}
                                       className="max-w-full"
+                                      compact
+                                      iconOnly
+                                      max={3}
+                                      showOverflowCounter={false}
                                     />
                                     <span className="shrink-0 text-xs text-muted-foreground">
                                       <DateAndHour date={comment.timestamp} />
@@ -1582,6 +1585,10 @@ export const PostModal = ({
                                                 reply.highlighted_achievements
                                               }
                                               className="max-w-full"
+                                              compact
+                                              iconOnly
+                                              max={3}
+                                              showOverflowCounter={false}
                                             />
                                             <span className="shrink-0 text-xs text-muted-foreground">
                                               <DateAndHour

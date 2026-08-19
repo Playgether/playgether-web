@@ -9,6 +9,7 @@ import {
 } from "@/app/utils/roomAmbientMedia";
 import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
 import ProfileImagePost from "@/components/pages/feed/DesktopFeed/Middle/PostsComponents/ProfileImagePost/ProfileImagePost";
+import { RoomMemberIdentity } from "@/components/pages/rooms/RoomMemberIdentity";
 import { useAuthContext } from "@/context/AuthContext";
 import { useChatHandlerContext } from "@/context/ChatHandlerContext";
 import { usePresenceContext } from "@/context/PresenceContext";
@@ -81,6 +82,19 @@ export default function RoomChatMessagesPanel({
   const canKickMembers = can("members.kick");
   const canMuteMembers = can("members.mute");
   const ambientMode = getRoomAmbientMode(room.ambient_images);
+
+  const resolveAuthorAchievements = useCallback(
+    (message: ChatRoomMessages) => {
+      if (message.author_highlighted_achievements?.length) {
+        return message.author_highlighted_achievements;
+      }
+      return (
+        onlineUsers.find((u) => u.username === message.author_username)
+          ?.highlighted_achievements ?? null
+      );
+    },
+    [onlineUsers],
+  );
 
   const resolveAuthorId = useCallback(
     (message: ChatRoomMessages) => {
@@ -251,7 +265,7 @@ export default function RoomChatMessagesPanel({
                   ) : null}
 
                   <div
-                    className={`group flex min-w-0 gap-2 animate-message-fade-in ${
+                    className={`group flex min-w-0 items-start gap-2 animate-message-fade-in ${
                       isMine ? "flex-row-reverse" : ""
                     }`}
                   >
@@ -260,7 +274,7 @@ export default function RoomChatMessagesPanel({
                         username={message.author_username}
                         displayName={message.author_name}
                         link_photo={message.author_profile_photo}
-                        className="mt-1 h-8 w-8 flex-shrink-0 ring-1 ring-border"
+                        className="h-8 w-8 shrink-0 ring-1 ring-border"
                       />
                     ) : null}
 
@@ -268,11 +282,18 @@ export default function RoomChatMessagesPanel({
                       className={`relative min-w-0 max-w-[75%] ${isMine ? "items-end" : ""}`}
                     >
                       {!isMine ? (
-                        <div className="mb-0.5 flex flex-col gap-0.5 md:flex-row md:items-center md:gap-2">
-                          <span className="whitespace-nowrap text-sm font-bold text-foreground">
-                            {message.author_name}
-                          </span>
-                        </div>
+                        <RoomMemberIdentity
+                          username={message.author_username}
+                          displayName={message.author_name}
+                          profilePhoto={message.author_profile_photo}
+                          userId={authorId}
+                          roomOwnerId={room.owner}
+                          permissionsSnapshot={snapshot}
+                          highlightedAchievements={resolveAuthorAchievements(message)}
+                          showAvatar={false}
+                          className="mb-0.5"
+                          nameClassName="text-sm font-bold text-foreground"
+                        />
                       ) : null}
 
                       <div

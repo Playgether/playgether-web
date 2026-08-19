@@ -6,8 +6,10 @@ import { handleApiError } from "../../../utils/handleApiError";
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const accessToken = (await cookies()).get("accessToken")?.value;
   const { id } = await params;
+  const cursor = request.nextUrl.searchParams.get("cursor");
   try {
     const response = await api.get(`/api/v1/cuts/${id}/comments/`, {
+      params: cursor ? { cursor } : {},
       headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
     });
     return NextResponse.json(response.data);

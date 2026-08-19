@@ -67,6 +67,21 @@ export function CutsViewer({ initialCuts, initialNext, isAuthenticated }: CutsVi
   };
 
   const closeComments = useCallback(() => setCommentsCut(null), []);
+  const handleCommentsCountChange = useCallback((cutId: string, delta: number) => {
+    if (delta === 0) return;
+    setCuts((prev) =>
+      prev.map((item) =>
+        item.id === cutId
+          ? { ...item, comments_count: Math.max(0, item.comments_count + delta) }
+          : item,
+      ),
+    );
+    setCommentsCut((prev) =>
+      prev && prev.id === cutId
+        ? { ...prev, comments_count: Math.max(0, prev.comments_count + delta) }
+        : prev,
+    );
+  }, []);
 
   const handleDeleteCut = useCallback((cutId: string) => {
     setCuts((prev) => {
@@ -85,6 +100,19 @@ export function CutsViewer({ initialCuts, initialNext, isAuthenticated }: CutsVi
   }, []);
 
   const activeCutId = cuts[activeIndex]?.id;
+  const activeCut = cuts[activeIndex] ?? null;
+
+  useEffect(() => {
+    if (commentsCut == null) return;
+    if (activeCut == null) {
+      setCommentsCut(null);
+      return;
+    }
+    if (commentsCut.id !== activeCut.id) {
+      setCommentsCut(activeCut);
+    }
+  }, [activeCut, commentsCut]);
+
   useEffect(() => {
     if (activeCutId == null || typeof window === "undefined") return;
     const next = `/cuts/${activeCutId}`;
@@ -207,6 +235,7 @@ export function CutsViewer({ initialCuts, initialNext, isAuthenticated }: CutsVi
             isAuthenticated={isAuthenticated}
             onClose={closeComments}
             variant="side"
+            onCommentsCountChange={handleCommentsCountChange}
           />
         </div>
       )}
@@ -218,6 +247,7 @@ export function CutsViewer({ initialCuts, initialNext, isAuthenticated }: CutsVi
           isAuthenticated={isAuthenticated}
           onClose={closeComments}
           variant="sheet"
+          onCommentsCountChange={handleCommentsCountChange}
         />
       )}
     </div>
