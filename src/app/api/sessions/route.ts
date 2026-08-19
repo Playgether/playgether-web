@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { UAParser } from "ua-parser-js";
 import { api } from "@/services/api";
 
 export interface SessionEntry {
@@ -14,25 +15,25 @@ export interface SessionEntry {
 }
 
 function parseUserAgent(ua: string): SessionEntry["device"] {
-  const s = ua.toLowerCase();
+  if (!ua) return { browser: "Navegador desconhecido", os: "SO desconhecido", type: "desktop" };
 
-  let type: "desktop" | "mobile" | "tablet" = "desktop";
-  if (/tablet|ipad|playbook|silk/i.test(ua)) type = "tablet";
-  else if (/mobile|android|iphone|ipod|blackberry|opera mini|iemobile/i.test(ua)) type = "mobile";
+  const result = UAParser(ua);
 
-  let browser = "Navegador desconhecido";
-  if (s.includes("edg/") || s.includes("edge/")) browser = "Edge";
-  else if (s.includes("chrome") && !s.includes("chromium")) browser = "Chrome";
-  else if (s.includes("firefox")) browser = "Firefox";
-  else if (s.includes("safari") && !s.includes("chrome")) browser = "Safari";
-  else if (s.includes("opera") || s.includes("opr/")) browser = "Opera";
+  const browser = [result.browser.name, result.browser.version?.split(".")[0]]
+    .filter(Boolean)
+    .join(" ") || "Navegador desconhecido";
 
-  let os = "SO desconhecido";
-  if (s.includes("windows")) os = "Windows";
-  else if (s.includes("mac os") || s.includes("macos")) os = "macOS";
-  else if (s.includes("android")) os = "Android";
-  else if (s.includes("iphone") || s.includes("ipad")) os = "iOS";
-  else if (s.includes("linux")) os = "Linux";
+  // iOS/iPadOS não expõem o modelo exato (ex.: "iPhone 13") nem no UA nem via
+  // client hints — a Apple simplesmente não repassa esse dado. "iPhone"/"iPad"
+  // genérico é o máximo detectável nesses casos.
+  const deviceLabel = [result.device.vendor, result.device.model]
+    .filter(Boolean)
+    .join(" ");
+  const os = deviceLabel || [result.os.name, result.os.version].filter(Boolean).join(" ") || "SO desconhecido";
+
+  const rawType = result.device.type;
+  const type: "desktop" | "mobile" | "tablet" =
+    rawType === "tablet" ? "tablet" : rawType === "mobile" ? "mobile" : "desktop";
 
   return { browser, os, type };
 }
@@ -40,17 +41,19 @@ function parseUserAgent(ua: string): SessionEntry["device"] {
 async function geolocateIp(
   ip: string | null,
 ): Promise<{ city: string; country: string; flag: string } | null> {
-  if (!ip || ip === "127.0.0.1" || ip.startsWith("192.168.") || ip.startsWith("10.")) {
+  if (!ip || ip === "127.0.0.1" || ip === "::1" || ip.startsWith("192.168.") || ip.startsWith("10.")) {
     return { city: "Local", country: "Desenvolvimento", flag: "🏠" };
   }
   try {
-    const resp = await fetch(`http://ip-api.com/json/${ip}?fields=status,city,country,countryCode`, {
-      next: { revalidate: 3600 },
-    });
+    const resp = await fetch(
+      `http://ip-api.com/json/${ip}?fields=status,city,region,country,countryCode`,
+      { next: { revalidate: 3600 } },
+    );
     if (!resp.ok) return null;
     const data = (await resp.json()) as {
       status: string;
       city?: string;
+      region?: string;
       country?: string;
       countryCode?: string;
     };
@@ -60,7 +63,10 @@ async function geolocateIp(
       .split("")
       .map((c) => String.fromCodePoint(0x1f1e6 - 65 + c.charCodeAt(0)))
       .join("");
-    return { city: data.city ?? "", country: data.country ?? "", flag };
+    // Dentro do Brasil, "Cidade, UF" é mais útil que "Cidade, Brasil".
+    const region =
+      data.countryCode === "BR" && data.region ? data.region : data.country ?? "";
+    return { city: data.city ?? "", country: region, flag };
   } catch {
     return null;
   }
