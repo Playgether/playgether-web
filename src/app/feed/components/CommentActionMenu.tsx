@@ -22,6 +22,7 @@ import {
   UserX,
 } from "lucide-react";
 import { CustomToast } from "@/components/ui/customSonner";
+import { cn } from "@/lib/utils";
 import { PostsCommentsProps } from "@/services/getComments";
 
 interface CommentActionMenuProps {
@@ -32,6 +33,7 @@ interface CommentActionMenuProps {
   onDelete: () => void;
   onCommentUpdate: (updatedComment: PostsCommentsProps) => void;
   isReply?: boolean;
+  triggerClassName?: string;
 }
 
 export function CommentActionMenu({
@@ -42,6 +44,7 @@ export function CommentActionMenu({
   onDelete,
   onCommentUpdate,
   isReply = false,
+  triggerClassName,
 }: CommentActionMenuProps) {
   const [loading, setLoading] = useState(false);
 
@@ -144,7 +147,10 @@ export function CommentActionMenu({
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 text-muted-foreground hover:text-foreground"
+          className={cn(
+            "h-7 w-7 text-muted-foreground hover:text-foreground",
+            triggerClassName,
+          )}
           disabled={loading}
         >
           <MoreHorizontal className="h-4 w-4" />

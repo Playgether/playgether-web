@@ -228,7 +228,7 @@ export default function RoomChatMessagesPanel({
         onScroll={handleMessagesScroll}
         ref={messagesDiv}
       >
-        <div className="relative z-10 space-y-3">
+        <div className="relative z-10 space-y-2">
           {loadingOlder ? (
             <div className="flex items-center justify-center gap-2 py-2 text-xs text-muted-foreground">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -265,7 +265,7 @@ export default function RoomChatMessagesPanel({
                   ) : null}
 
                   <div
-                    className={`group flex min-w-0 items-start gap-2 animate-message-fade-in ${
+                    className={`group flex w-full min-w-0 items-start gap-2 animate-message-fade-in ${
                       isMine ? "flex-row-reverse" : ""
                     }`}
                   >
@@ -279,7 +279,9 @@ export default function RoomChatMessagesPanel({
                     ) : null}
 
                     <div
-                      className={`relative min-w-0 max-w-[75%] ${isMine ? "items-end" : ""}`}
+                      className={`flex min-w-0 max-w-[calc(100%-2.5rem)] flex-col ${
+                        isMine ? "ml-auto items-end" : "items-start"
+                      }`}
                     >
                       {!isMine ? (
                         <RoomMemberIdentity
@@ -289,23 +291,37 @@ export default function RoomChatMessagesPanel({
                           userId={authorId}
                           roomOwnerId={room.owner}
                           permissionsSnapshot={snapshot}
-                          highlightedAchievements={resolveAuthorAchievements(message)}
+                          highlightedAchievements={resolveAuthorAchievements(
+                            message,
+                          )}
                           showAvatar={false}
-                          className="mb-0.5"
-                          nameClassName="text-sm font-bold text-foreground"
+                          inlineRole
+                          className="mb-0.5 min-w-0"
+                          nameClassName="text-xs font-semibold text-foreground"
+                          roleClassName="text-[10px] text-muted-foreground"
+                          suffix={
+                            <span className="shrink-0 whitespace-nowrap text-[10px] tabular-nums leading-none text-muted-foreground">
+                              · <DateAndHour date={message.created_at} />
+                            </span>
+                          }
                         />
                       ) : null}
 
                       <div
-                        className={`relative break-words whitespace-pre-wrap rounded-lg px-3 py-2 text-sm backdrop-blur-sm ${
-                          isMine
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-card/75 text-card-foreground"
+                        className={`flex max-w-full items-start gap-0.5 ${
+                          isMine ? "flex-row-reverse" : ""
                         }`}
                       >
                         <div
-                          className={`absolute top-1 ${isMine ? "left-1" : "right-1"}`}
+                          className={`w-fit max-w-[min(100%,36rem)] break-words whitespace-pre-wrap rounded-lg px-3 py-1.5 text-sm leading-snug backdrop-blur-sm ${
+                            isMine
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-card/75 text-card-foreground"
+                          }`}
                         >
+                          {message.body}
+                        </div>
+                        <div className="shrink-0 self-start pt-0.5">
                           <RoomMessageActionsMenu
                             roomSlug={room.slug}
                             messageId={message.id}
@@ -319,15 +335,12 @@ export default function RoomChatMessagesPanel({
                             align={isMine ? "start" : "end"}
                           />
                         </div>
-                        {message.body}
                       </div>
-                      <span
-                        className={`mt-0.5 block text-[10px] text-muted-foreground ${
-                          isMine ? "text-right" : ""
-                        }`}
-                      >
-                        <DateAndHour date={message.created_at} />
-                      </span>
+                      {isMine ? (
+                        <span className="mt-0.5 text-right text-[10px] tabular-nums leading-none text-muted-foreground">
+                          <DateAndHour date={message.created_at} />
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                 </div>

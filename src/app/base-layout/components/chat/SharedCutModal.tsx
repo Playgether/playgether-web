@@ -63,6 +63,7 @@ export function SharedCutModal({ cutId, onOpenChange }: SharedCutModalProps) {
                 isAuthenticated={!!user}
                 onOpenComments={() => setCommentsOpen(true)}
                 commentsActive={commentsOpen}
+                onCutUpdate={setCut}
               />
             </div>
 

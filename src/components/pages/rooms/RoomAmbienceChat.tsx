@@ -139,7 +139,7 @@ export const AmbienceChatLine = memo(function AmbienceChatLine({
   return (
     <div
       className={cn(
-        "group relative flex items-start gap-2 rounded-lg border px-2 py-2 [contain:content]",
+        "group flex items-start gap-2 rounded-lg border px-2 py-2 [contain:content]",
         motion,
         isPinned && !float && "ring-1 ring-primary/40",
         float
@@ -195,7 +195,7 @@ export const AmbienceChatLine = memo(function AmbienceChatLine({
       {canInteract ? (
         <div
           className={cn(
-            "absolute right-1 top-1 flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100",
+            "flex shrink-0 gap-0.5 self-start opacity-0 transition-opacity group-hover:opacity-100",
             float && "opacity-100",
           )}
         >

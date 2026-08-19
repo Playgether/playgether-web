@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, Flag, ExternalLink, Send, Link2, Code2, UserCircle2, Trash2 } from "lucide-react";
+import { MoreHorizontal, Flag, ExternalLink, Send, Link2, Code2, UserCircle2, Trash2, MessageCircle, MessageCircleOff } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -27,9 +27,10 @@ interface CutOptionsMenuProps {
   cut: Cut;
   onShare: () => void;
   onDeleted?: (cutId: string) => void;
+  onCutUpdate?: (cut: Cut) => void;
 }
 
-export function CutOptionsMenu({ cut, onShare, onDeleted }: CutOptionsMenuProps) {
+export function CutOptionsMenu({ cut, onShare, onDeleted, onCutUpdate }: CutOptionsMenuProps) {
   const [open, setOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reporting, setReporting] = useState(false);
@@ -73,6 +74,30 @@ export function CutOptionsMenu({ cut, onShare, onDeleted }: CutOptionsMenuProps)
     }
   };
 
+  const handleToggleComments = async () => {
+    setOpen(false);
+    const newState = !cut.comments_disabled;
+    try {
+      const res = await fetch(`/api/cuts/${cut.id}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ comments_disabled: newState }),
+      });
+      if (res.ok) {
+        const updated = { ...cut, comments_disabled: newState };
+        onCutUpdate?.(updated);
+        CustomToast.neutral(
+          newState ? "Comentários desativados." : "Comentários ativados.",
+        );
+      } else {
+        CustomToast.error("Erro ao alterar configuração de comentários.");
+      }
+    } catch {
+      CustomToast.error("Erro ao alterar configuração de comentários.");
+    }
+  };
+
   const handleReport = async () => {
     setReporting(true);
     try {
@@ -107,16 +132,31 @@ export function CutOptionsMenu({ cut, onShare, onDeleted }: CutOptionsMenuProps)
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56 border-border/50 bg-background/95 backdrop-blur-xl">
           {cut.is_own ? (
-            <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onClick={() => {
-                setOpen(false);
-                setDeleteOpen(true);
-              }}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Excluir
-            </DropdownMenuItem>
+            <>
+              <DropdownMenuItem onClick={() => void handleToggleComments()}>
+                {cut.comments_disabled ? (
+                  <>
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Ligar comentários
+                  </>
+                ) : (
+                  <>
+                    <MessageCircleOff className="mr-2 h-4 w-4" />
+                    Desligar comentários
+                  </>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => {
+                  setOpen(false);
+                  setDeleteOpen(true);
+                }}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Excluir
+              </DropdownMenuItem>
+            </>
           ) : (
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"

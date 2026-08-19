@@ -52,11 +52,12 @@ interface CutCardProps {
   onOpenComments: (cut: Cut) => void;
   commentsActive?: boolean;
   onDeleted?: (cutId: string) => void;
+  onCutUpdate?: (cut: Cut) => void;
 }
 
 type Pulse = { type: "play" | "pause" | "like"; key: number };
 
-export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commentsActive, onDeleted }: CutCardProps) {
+export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commentsActive, onDeleted, onCutUpdate }: CutCardProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
 
@@ -347,7 +348,7 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
               size="lg"
               triggerClassName="h-auto w-auto p-0 text-white hover:text-white hover:bg-transparent active:scale-125 transition-transform"
             />
-            <CutOptionsMenu cut={cut} onShare={() => setShareOpen(true)} onDeleted={onDeleted} />
+            <CutOptionsMenu cut={cut} onShare={() => setShareOpen(true)} onDeleted={onDeleted} onCutUpdate={onCutUpdate} />
           </div>
 
           <div
@@ -417,7 +418,7 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
             size="lg"
             triggerClassName="h-auto w-auto p-0 text-white hover:text-white hover:bg-transparent active:scale-125 transition-transform"
           />
-          <CutOptionsMenu cut={cut} onShare={() => setShareOpen(true)} onDeleted={onDeleted} />
+          <CutOptionsMenu cut={cut} onShare={() => setShareOpen(true)} onDeleted={onDeleted} onCutUpdate={onCutUpdate} />
         </div>
       </div>
 

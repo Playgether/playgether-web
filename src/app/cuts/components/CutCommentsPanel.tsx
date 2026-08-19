@@ -11,6 +11,24 @@ import { MentionText } from "@/components/mentions/MentionText";
 import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
 import type { HighlightedAchievementPublic } from "@/types/highlightedAchievements";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { CommentActionMenu } from "@/app/feed/components/CommentActionMenu";
+import { CommentContentType } from "@/components/content_types/CommentContentType";
+import { useAuthContext } from "@/context/AuthContext";
+import { deleteCommentAction } from "@/actions/deleteComment";
+import { updateCommentAction } from "@/actions/updateComment";
+import type { PostsCommentsProps } from "@/services/getComments";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { CustomToast } from "@/components/ui/customSonner";
 
 interface CutComment {
   id: string;
@@ -21,6 +39,8 @@ interface CutComment {
   created_by_user_photo?: string | null;
   highlighted_achievements?: HighlightedAchievementPublic[];
   quantity_comment?: number;
+  is_pinned?: boolean;
+  is_hidden?: boolean;
   answers?: {
     results: CutComment[];
     next?: string | null;
@@ -55,6 +75,29 @@ function normalizeResponse(data: unknown): CutCommentsResponse {
   };
 }
 
+function toPostsCommentsProps(comment: CutComment): PostsCommentsProps {
+  return {
+    id: comment.id,
+    comment: comment.comment,
+    user_username: comment.user_username ?? "",
+    created_by_user_name: comment.user_username ?? "",
+    created_by_user_photo: comment.created_by_user_photo ?? "",
+    timestamp: new Date(comment.timestamp),
+    user: comment.user,
+    quantity_comment: comment.quantity_comment ?? 0,
+    is_pinned: comment.is_pinned,
+    is_hidden: comment.is_hidden,
+    highlighted_achievements: comment.highlighted_achievements,
+    answers: { next: "", previous: "", results: [] },
+    user_already_like: false,
+    object_id: "",
+    quantity_likes: 0,
+    content_type: CommentContentType.cut,
+    edited: false,
+    quantity_replies: comment.quantity_comment ?? 0,
+  };
+}
+
 export function CutCommentsPanel({
   cut,
   isAuthenticated,
@@ -62,6 +105,18 @@ export function CutCommentsPanel({
   variant,
   onCommentsCountChange,
 }: CutCommentsPanelProps) {
+  const { user } = useAuthContext();
+  const currentUsername = user?.username;
+  const [commentsDisabled, setCommentsDisabled] = useState(cut.comments_disabled);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState("");
+  const [isUpdatingComment, setIsUpdatingComment] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeletingComment, setIsDeletingComment] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState<{
+    comment: CutComment;
+    parentId?: string;
+  } | null>(null);
   const [expandedReplies, setExpandedReplies] = useState<Record<string, boolean>>({});
   const [replyTextByComment, setReplyTextByComment] = useState<Record<string, string>>({});
   const [replyComposerOpenByComment, setReplyComposerOpenByComment] = useState<Record<string, boolean>>({});
@@ -113,6 +168,156 @@ export function CutCommentsPanel({
   );
 
   const loadingInitial = comments.length === 0 && (isFetching || !cached);
+
+  useEffect(() => {
+    setCommentsDisabled(cut.comments_disabled);
+  }, [cut.comments_disabled, cut.id]);
+
+  const removeCommentFromCache = useCallback(
+    (commentId: string, parentId?: string) => {
+      queryClient.setQueryData(
+        queryKey,
+        (old: { pages: CutCommentsResponse[]; pageParams: unknown[] } | undefined) => {
+          if (!old) return old;
+          if (parentId) {
+            return {
+              ...old,
+              pages: old.pages.map((page) => ({
+                ...page,
+                results: page.results.map((comment) =>
+                  comment.id === parentId
+                    ? {
+                        ...comment,
+                        quantity_comment: Math.max(0, (comment.quantity_comment ?? 1) - 1),
+                        answers: {
+                          results: (comment.answers?.results ?? []).filter(
+                            (reply) => reply.id !== commentId,
+                          ),
+                          next: comment.answers?.next ?? null,
+                          previous: comment.answers?.previous ?? null,
+                        },
+                      }
+                    : comment,
+                ),
+              })),
+            };
+          }
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              results: page.results.filter((comment) => comment.id !== commentId),
+            })),
+          };
+        },
+      );
+    },
+    [queryClient, queryKey],
+  );
+
+  const handleCommentUpdate = useCallback(
+    (commentId: string, parentId: string | undefined, updated: PostsCommentsProps) => {
+      const patch = (comment: CutComment): CutComment => ({
+        ...comment,
+        comment: updated.comment,
+        is_pinned: updated.is_pinned,
+        is_hidden: updated.is_hidden,
+      });
+
+      queryClient.setQueryData(
+        queryKey,
+        (old: { pages: CutCommentsResponse[]; pageParams: unknown[] } | undefined) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              results: page.results.map((comment) => {
+                if (!parentId && comment.id === commentId) {
+                  return patch(comment);
+                }
+                if (parentId && comment.id === parentId) {
+                  return {
+                    ...comment,
+                    answers: {
+                      results: (comment.answers?.results ?? []).map((reply) =>
+                        reply.id === commentId ? patch(reply) : reply,
+                      ),
+                      next: comment.answers?.next ?? null,
+                      previous: comment.answers?.previous ?? null,
+                    },
+                  };
+                }
+                return comment;
+              }),
+            })),
+          };
+        },
+      );
+    },
+    [queryClient, queryKey],
+  );
+
+  const handleEditComment = useCallback((comment: CutComment) => {
+    setEditingCommentId(comment.id);
+    setEditingContent(comment.comment);
+  }, []);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingCommentId(null);
+    setEditingContent("");
+  }, []);
+
+  const handleSaveEdit = useCallback(
+    async (comment: CutComment, parentId?: string) => {
+      if (!editingContent.trim()) return;
+      setIsUpdatingComment(true);
+      try {
+        const response = await updateCommentAction({
+          comment_id: comment.id,
+          comment: editingContent,
+          content_type: parentId ? CommentContentType.comment : CommentContentType.cut,
+          object_id: parentId ?? cut.id,
+        });
+        handleCommentUpdate(comment.id, parentId, {
+          ...toPostsCommentsProps(comment),
+          ...response,
+          comment: editingContent,
+        });
+        setEditingCommentId(null);
+        setEditingContent("");
+      } catch {
+        CustomToast.error("Erro ao editar comentário.");
+      } finally {
+        setIsUpdatingComment(false);
+      }
+    },
+    [cut.id, editingContent, handleCommentUpdate],
+  );
+
+  const handleDeleteRequest = useCallback((comment: CutComment, parentId?: string) => {
+    setCommentToDelete({ comment, parentId });
+    setDeleteDialogOpen(true);
+  }, []);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!commentToDelete) return;
+    setIsDeletingComment(true);
+    try {
+      await deleteCommentAction(commentToDelete.comment.id);
+      removeCommentFromCache(commentToDelete.comment.id, commentToDelete.parentId);
+      if (!commentToDelete.parentId) {
+        onCommentsCountChange?.(cut.id, -1);
+      }
+      setDeleteDialogOpen(false);
+      setCommentToDelete(null);
+      CustomToast.success("Comentário excluído.");
+    } catch {
+      CustomToast.error("Erro ao excluir comentário.");
+    } finally {
+      setIsDeletingComment(false);
+    }
+  }, [commentToDelete, cut.id, onCommentsCountChange, removeCommentFromCache]);
 
   const updateCommentInCache = (
     commentId: string,
@@ -216,7 +421,7 @@ export function CutCommentsPanel({
 
   const handleSendReply = async (commentId: string) => {
     const content = (replyTextByComment[commentId] ?? "").trim();
-    if (!isAuthenticated || !content) return;
+    if (!isAuthenticated || !content || commentsDisabled) return;
     setReplyingCommentId(commentId);
     try {
       const response = await fetch("/api/comments", {
@@ -271,7 +476,7 @@ export function CutCommentsPanel({
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleCreateComment = useCallback(async (content: string) => {
-    if (!isAuthenticated) return false;
+    if (!isAuthenticated || commentsDisabled) return false;
     try {
       const res = await fetch(`/api/cuts/${cut.id}/comments`, {
         method: "POST",
@@ -308,7 +513,7 @@ export function CutCommentsPanel({
       // ignore
     }
     return false;
-  }, [cut.id, isAuthenticated, onCommentsCountChange, queryClient, queryKey]);
+  }, [cut.id, commentsDisabled, isAuthenticated, onCommentsCountChange, queryClient, queryKey]);
 
   const body = (
     <>
@@ -338,7 +543,20 @@ export function CutCommentsPanel({
           <>
             {comments.map((c) => (
               <div key={c.id} className="space-y-2">
-                <CommentRow comment={c} />
+                <CommentRow
+                  comment={c}
+                  cutOwnerUsername={cut.username}
+                  currentUsername={currentUsername}
+                  editingCommentId={editingCommentId}
+                  editingContent={editingContent}
+                  isUpdatingComment={isUpdatingComment}
+                  onEditingContentChange={setEditingContent}
+                  onEdit={() => handleEditComment(c)}
+                  onDelete={() => handleDeleteRequest(c)}
+                  onCommentUpdate={(updated) => handleCommentUpdate(c.id, undefined, updated)}
+                  onSaveEdit={() => void handleSaveEdit(c)}
+                  onCancelEdit={handleCancelEdit}
+                />
 
                 <div className="ml-11 flex items-center gap-4 text-xs text-white/60">
                   {(c.quantity_comment ?? 0) > 0 && (
@@ -351,7 +569,7 @@ export function CutCommentsPanel({
                       {` (${c.quantity_comment})`}
                     </button>
                   )}
-                  {isAuthenticated && (
+                  {isAuthenticated && !commentsDisabled && (
                     <button
                       type="button"
                       onClick={() => {
@@ -367,7 +585,7 @@ export function CutCommentsPanel({
 
                 {expandedReplies[c.id] && (
                   <div className="ml-11 space-y-3">
-                    {isAuthenticated && replyComposerOpenByComment[c.id] && (
+                    {isAuthenticated && !commentsDisabled && replyComposerOpenByComment[c.id] && (
                       <div className="flex items-center gap-2">
                         <MentionTextarea
                           value={replyTextByComment[c.id] ?? ""}
@@ -408,7 +626,24 @@ export function CutCommentsPanel({
                     ) : (
                       <>
                         {c.answers?.results?.map((reply) => (
-                          <CommentRow key={reply.id} comment={reply} compact />
+                          <CommentRow
+                            key={reply.id}
+                            comment={reply}
+                            compact
+                            cutOwnerUsername={cut.username}
+                            currentUsername={currentUsername}
+                            editingCommentId={editingCommentId}
+                            editingContent={editingContent}
+                            isUpdatingComment={isUpdatingComment}
+                            onEditingContentChange={setEditingContent}
+                            onEdit={() => handleEditComment(reply)}
+                            onDelete={() => handleDeleteRequest(reply, c.id)}
+                            onCommentUpdate={(updated) =>
+                              handleCommentUpdate(reply.id, c.id, updated)
+                            }
+                            onSaveEdit={() => void handleSaveEdit(reply, c.id)}
+                            onCancelEdit={handleCancelEdit}
+                          />
                         ))}
                         {c.answers?.next && (
                           <button
@@ -451,7 +686,34 @@ export function CutCommentsPanel({
         )}
       </div>
 
-      {isAuthenticated && <NewCommentComposer onSubmit={handleCreateComment} />}
+      {commentsDisabled ? (
+        <div className="border-t border-white/10 px-4 py-3 text-center text-sm text-white/50">
+          Comentários desativados pelo autor.
+        </div>
+      ) : isAuthenticated ? (
+        <NewCommentComposer onSubmit={handleCreateComment} />
+      ) : null}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="border border-border/50 bg-background/95 backdrop-blur-xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir comentário?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingComment}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void handleConfirmDelete()}
+              disabled={isDeletingComment}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeletingComment ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 
@@ -505,8 +767,39 @@ function RepliesSkeleton() {
   );
 }
 
-const CommentRow = memo(function CommentRow({ comment, compact = false }: { comment: CutComment; compact?: boolean }) {
+const CommentRow = memo(function CommentRow({
+  comment,
+  compact = false,
+  cutOwnerUsername,
+  currentUsername,
+  editingCommentId,
+  editingContent,
+  isUpdatingComment,
+  onEditingContentChange,
+  onEdit,
+  onDelete,
+  onCommentUpdate,
+  onSaveEdit,
+  onCancelEdit,
+}: {
+  comment: CutComment;
+  compact?: boolean;
+  cutOwnerUsername: string;
+  currentUsername?: string;
+  editingCommentId: string | null;
+  editingContent: string;
+  isUpdatingComment: boolean;
+  onEditingContentChange: (value: string) => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onCommentUpdate: (updated: PostsCommentsProps) => void;
+  onSaveEdit: () => void;
+  onCancelEdit: () => void;
+}) {
   const avatarSrc = comment.created_by_user_photo ? getCloudinaryUrl(comment.created_by_user_photo) : null;
+  const menuComment = toPostsCommentsProps(comment);
+  const isEditing = editingCommentId === comment.id;
+
   return (
     <div className="flex gap-3">
       <span className={`flex shrink-0 overflow-hidden rounded-full bg-white/10 ${compact ? "h-7 w-7" : "h-8 w-8"}`}>
@@ -519,22 +812,71 @@ const CommentRow = memo(function CommentRow({ comment, compact = false }: { comm
         )}
       </span>
       <div className="min-w-0 flex-1">
-        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="shrink-0 text-xs font-semibold text-white/80">
-            @{comment.user_username ?? "user"}
-          </span>
-          <HighlightedAchievementBadges
-            achievements={comment.highlighted_achievements}
-            className="max-w-full"
-            compact
-            iconOnly
-            max={3}
-            showOverflowCounter={false}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="shrink-0 text-xs font-semibold text-white/80">
+              @{comment.user_username ?? "user"}
+            </span>
+            <HighlightedAchievementBadges
+              achievements={comment.highlighted_achievements}
+              className="max-w-full"
+              compact
+              iconOnly
+              max={3}
+              showOverflowCounter={false}
+            />
+            {comment.is_pinned ? (
+              <span className="shrink-0 text-[10px] font-medium text-primary">Fixado</span>
+            ) : null}
+            {comment.is_hidden && cutOwnerUsername === currentUsername ? (
+              <span className="shrink-0 text-[10px] text-white/40">Oculto</span>
+            ) : null}
+          </div>
+          <CommentActionMenu
+            comment={menuComment}
+            postOwnerUsername={cutOwnerUsername}
+            currentUsername={currentUsername}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onCommentUpdate={onCommentUpdate}
+            isReply={compact}
+            triggerClassName="h-7 w-7 shrink-0 text-white/60 hover:bg-white/10 hover:text-white"
           />
         </div>
-        <p className={`${compact ? "text-xs" : "text-sm"} text-white/90`}>
-          <MentionText text={comment.comment} />
-        </p>
+        {isEditing ? (
+          <div className="mt-1 space-y-2">
+            <MentionTextarea
+              value={editingContent}
+              onChange={onEditingContentChange}
+              rows={2}
+              dropdownSide="top"
+              className="min-h-0 w-full resize-none rounded-lg border-0 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/40 outline-none focus-visible:ring-1 focus-visible:ring-primary/50"
+            />
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                disabled={isUpdatingComment}
+                onClick={onSaveEdit}
+                className="h-8"
+              >
+                {isUpdatingComment ? "Salvando..." : "Salvar"}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={isUpdatingComment}
+                onClick={onCancelEdit}
+                className="h-8 text-white/70 hover:text-white"
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <p className={`${compact ? "text-xs" : "text-sm"} text-white/90`}>
+            <MentionText text={comment.comment} />
+          </p>
+        )}
       </div>
     </div>
   );

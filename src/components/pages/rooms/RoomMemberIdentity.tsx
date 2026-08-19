@@ -7,7 +7,7 @@ import { getRoomMemberRoleLabels } from "@/lib/roomMemberMeta";
 import type { HighlightedAchievementPublic } from "@/types/highlightedAchievements";
 import type { RoomPermissionsSnapshot } from "@/types/RoomPermissions";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 
 type RoomMemberIdentityProps = {
   username: string;
@@ -22,7 +22,9 @@ type RoomMemberIdentityProps = {
   roleClassName?: string;
   showAvatar?: boolean;
   showRole?: boolean;
+  inlineRole?: boolean;
   linkProfile?: boolean;
+  suffix?: ReactNode;
   className?: string;
 };
 
@@ -39,7 +41,9 @@ export function RoomMemberIdentity({
   roleClassName = "text-[10px] text-muted-foreground",
   showAvatar = true,
   showRole = true,
+  inlineRole = false,
   linkProfile = true,
+  suffix,
   className,
 }: RoomMemberIdentityProps) {
   const roleLabels = useMemo(
@@ -82,8 +86,14 @@ export function RoomMemberIdentity({
             max={3}
             showOverflowCounter={false}
           />
+          {showRole && inlineRole && roleLabels.length > 0 ? (
+            <span className={cn("shrink-0", roleClassName)}>
+              · {roleLabels.join(" · ")}
+            </span>
+          ) : null}
+          {suffix}
         </div>
-        {showRole && roleLabels.length > 0 ? (
+        {showRole && !inlineRole && roleLabels.length > 0 ? (
           <p className={cn("truncate leading-tight", roleClassName)}>
             {roleLabels.join(" · ")}
           </p>
