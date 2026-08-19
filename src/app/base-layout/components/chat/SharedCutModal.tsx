@@ -16,6 +16,9 @@ interface SharedCutModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+/** Above ConversationsWidget (z-70) and ChatHeader dropdown (z-100). */
+const SHARED_CUT_MODAL_Z = "z-[110]";
+
 export function SharedCutModal({ cutId, onOpenChange }: SharedCutModalProps) {
   const { user } = useAuthContext();
   const isLgDesktop = useIsLgDesktop();
@@ -39,7 +42,8 @@ export function SharedCutModal({ cutId, onOpenChange }: SharedCutModalProps) {
     <Dialog open={cutId !== null} onOpenChange={onOpenChange}>
       <DialogContent
         hideCloseButton
-        className="left-0 top-0 h-dvh w-screen max-w-none translate-x-0 translate-y-0 gap-0 rounded-none border-0 bg-black p-0 sm:w-screen sm:p-0 lg:left-[50%] lg:top-[50%] lg:h-[88vh] lg:w-[min(92vw,72rem)] lg:max-w-none lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-2xl lg:border lg:border-white/10"
+        overlayClassName={SHARED_CUT_MODAL_Z}
+        className={`${SHARED_CUT_MODAL_Z} left-0 top-0 h-dvh w-screen max-w-none translate-x-0 translate-y-0 gap-0 rounded-none border-0 bg-black p-0 sm:w-screen sm:p-0 lg:left-[50%] lg:top-[50%] lg:h-[88vh] lg:w-[min(92vw,72rem)] lg:max-w-none lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-2xl lg:border lg:border-white/10`}
       >
         <VisuallyHidden>
           <DialogTitle>Cut {cut ? `de @${cut.username}` : ""}</DialogTitle>
