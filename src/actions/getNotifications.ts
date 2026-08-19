@@ -1,7 +1,7 @@
 "use server";
 
 import { api } from "@/services/api";
-import { getNotificationsProps } from "@/types/getNotificationsProps";
+import type { NotificationProps } from "@/app/feed/types/NotificationProps";
 import { ensureSessionAuth } from "@/lib/server/authTokens";
 
 export const getNotifications = async () => {
@@ -9,7 +9,7 @@ export const getNotifications = async () => {
   if (!session) return [];
 
   try {
-    const response = await api.get<getNotificationsProps>(
+    const response = await api.get<NotificationProps[]>(
       `/api/v1/users/${session.userId}/notifications/`,
       {
         headers: {

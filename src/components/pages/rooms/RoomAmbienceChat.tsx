@@ -26,7 +26,7 @@ import {
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export function ambienceMessageIsSystem(m: RoomAmbienceMessage): boolean {
-  return Boolean(m.is_system || m.author_user_id === 0);
+  return Boolean(m.is_system || m.author_user_id === null);
 }
 
 function ReplyQuote({
@@ -178,7 +178,7 @@ export const AmbienceChatLine = memo(function AmbienceChatLine({
               float ? "text-zinc-300 hover:bg-white/10 hover:text-white" : "",
             )}
             title="Responder"
-            onClick={() => onReply(m)}
+            onClick={() => onReply?.(m)}
           >
             <Reply className="h-3.5 w-3.5" />
           </Button>

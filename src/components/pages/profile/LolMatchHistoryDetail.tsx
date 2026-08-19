@@ -479,7 +479,6 @@ function TeamPanel({
       </div>
       <div
         className={`mt-1 text-sm font-bold ${win ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-500"}`}
-        className={`mt-1 text-sm font-bold ${win ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-500"}`}
       >
         {win ? "Vitória" : "Derrota"}
       </div>

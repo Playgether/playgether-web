@@ -60,8 +60,8 @@ export function GamesCanvasContentTabs({
   const isOwner = Boolean(
     user &&
       profile &&
-      ((typeof user.user_id === "number" &&
-        typeof profile.user_id === "number" &&
+      ((typeof user.user_id === "string" &&
+        typeof profile.user_id === "string" &&
         user.user_id === profile.user_id) ||
         user.username.toLowerCase() === profile.username.toLowerCase())
   );

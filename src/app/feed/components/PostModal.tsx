@@ -85,7 +85,7 @@ export const PostModal = ({
   const [overlayTextExpanded, setOverlayTextExpanded] = useState(false);
   const searchParams = useSearchParams();
   const [mobileCommentsExpanded, setMobileCommentsExpanded] = useState(
-    () => searchParams.get("focus") === "comments",
+    () => searchParams?.get("focus") === "comments",
   );
   const {
     isLgDesktop,
@@ -174,7 +174,7 @@ export const PostModal = ({
   const post = getPostById(postId);
 
   useEffect(() => {
-    setMobileCommentsExpanded(searchParams.get("focus") === "comments");
+    setMobileCommentsExpanded(searchParams?.get("focus") === "comments");
     setOverlayTextExpanded(false);
   }, [searchParams, postId]);
 

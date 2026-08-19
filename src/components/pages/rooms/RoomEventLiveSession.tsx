@@ -1607,7 +1607,7 @@ export function RoomEventLiveSession({ room: _room }: { room: ChatRoom }) {
         eventId={activeEvent.id}
         roundNumber={activeEvent.current_round ?? 1}
         themeText={currentThemeText}
-        deadlineIso={gamePhase === "vote_voting" ? deadlineIso : null}
+        deadlineIso={gamePhase === "vote_voting" ? (deadlineIso ?? null) : null}
         tickToken={tickToken}
         submissions={roundSubmissions}
         myUserId={user?.user_id}

@@ -15,7 +15,11 @@ import { storeRoomExpelledMessage } from "@/lib/roomExpelledStorage";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { useAuthContext } from "./AuthContext";
 import { OnlineUsersChatRoom } from "@/types/OnlineUsersChatRoom";
-import type { RoomMusicClientAction, RoomMusicState } from "@/types/RoomMusic";
+import type {
+  ProviderName,
+  RoomMusicClientAction,
+  RoomMusicState,
+} from "@/types/RoomMusic";
 import type {
   RoomAmbienceClientAction,
   RoomAmbienceMessage,
@@ -26,6 +30,7 @@ import { useRouter } from "next/navigation";
 import { useRoomPermissions } from "@/context/RoomPermissionsContext";
 import {
   buildAuthenticatedWebSocketUrl,
+  getWebSocketBaseUrl,
   requestWebSocketTicket,
 } from "@/lib/websocketAuth";
 
@@ -177,7 +182,7 @@ const ChatHandlerContextProvider = ({
   }, [socketPath]);
 
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
-    `${wsBaseUrl()}/ws/chatroom/${encodedChatroom}?ticket=${ticket}`,
+    `${getWebSocketBaseUrl()}/ws/chatroom/${encodedChatroom}?ticket=${ticket}`,
     {
       share: false,
       shouldReconnect: () => false,
@@ -377,7 +382,7 @@ const ChatHandlerContextProvider = ({
 
           // active_provider — whitelist only known values
           const rawProvider = o.active_provider;
-          const active_provider =
+          const active_provider: ProviderName =
             rawProvider === "spotify" ||
             rawProvider === "deezer" ||
             rawProvider === "youtube"
@@ -622,7 +627,6 @@ const ChatHandlerContextProvider = ({
         is_system:
           Boolean(m.is_system) ||
           m.author_user_id == null ||
-          m.author_user_id === 0 ||
           m.author_user_id === "0",
         reply_to_id:
           typeof m.reply_to_id === "number" && m.reply_to_id > 0

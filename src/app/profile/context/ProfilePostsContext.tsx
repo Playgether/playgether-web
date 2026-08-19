@@ -382,6 +382,14 @@ export function ProfilePostsProvider({
 
   const posts = [...mediaPosts, ...textPosts, ...injectedPosts];
 
+  const handleSave = useCallback((postId: number, saveId: number | null) => {
+    updatePostInLists(postId, (p) => ({
+      ...p,
+      user_already_saved: saveId !== null,
+      user_save_id: saveId,
+    }));
+  }, [updatePostInLists]);
+
   const feedContextValue: FeedContextType = {
     posts,
     feedMode: "following",
@@ -401,6 +409,7 @@ export function ProfilePostsProvider({
     decreaseCommentCount,
     injectPost,
     handleAuthorFollow: () => {},
+    handleSave,
   };
 
   const value: ProfilePostsContextValue = {

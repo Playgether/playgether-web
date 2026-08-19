@@ -16,7 +16,7 @@ export async function GET() {
   } catch {
     return NextResponse.json(
       { authorized: false, error: "Erro interno do servidor" },
-      { status },
+      { status: 500 },
     );
   }
 }

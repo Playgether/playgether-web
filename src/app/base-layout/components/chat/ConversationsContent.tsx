@@ -822,7 +822,7 @@ export function ConversationsContent({
                       <div className="flex items-center space-x-3">
                         <ConversationAvatar
                           name={item.name}
-                          avatar={item.avatar || undefined}
+                          avatar={typeof item.avatar === "string" ? item.avatar || undefined : undefined}
                           unread={item.unread}
                           isMuted={item.isMuted}
                         />

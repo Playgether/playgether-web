@@ -72,13 +72,13 @@ function ModerationDurationSubmenu({
 }
 
 type KickConfirmState = {
-  userId: number;
+  userId: string;
   memberName: string;
   durationSeconds: number | null;
 };
 
 type MuteConfirmState = {
-  userId: number;
+  userId: string;
   memberName: string;
   durationSeconds: number | null;
 };
@@ -120,7 +120,7 @@ export function RoomMemberModerationMenu({
   triggerClassName,
 }: {
   roomSlug: string;
-  userId: number;
+  userId: string;
   memberName: string;
   canKick: boolean;
   canMute: boolean;
@@ -282,7 +282,7 @@ export function RoomMessageActionsMenu({
 }: {
   roomSlug: string;
   messageId: number;
-  authorId?: number | null;
+  authorId?: string | null;
   authorName: string;
   canDelete: boolean;
   canKickAuthor: boolean;

@@ -53,7 +53,7 @@ export function VoteBestVotingOverlay({
   deadlineIso: string | null;
   tickToken: number;
   submissions: RoomEventSubmission[];
-  myUserId?: number;
+  myUserId?: string;
   myVoteSubmissionId?: number | null;
   canVote: boolean;
   isOrganizer: boolean;

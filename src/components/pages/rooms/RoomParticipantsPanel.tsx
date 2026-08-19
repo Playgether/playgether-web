@@ -102,7 +102,7 @@ export default function RoomParticipantsPanel({
                   className="h-10 w-10 ring-2 ring-border/60 transition-all group-hover:ring-primary/30"
                 />
                 <PresenceStatusDot
-                  userId={user.id}
+                  userId={String(user.id)}
                   sizeClass="h-3 w-3"
                   borderClass="border-2 border-card"
                   allowPicker={
@@ -125,7 +125,7 @@ export default function RoomParticipantsPanel({
               canModerateMember(snapshot, room.owner, selfId, user.id) ? (
                 <RoomMemberModerationMenu
                   roomSlug={room.slug}
-                  userId={user.id}
+                  userId={String(user.id)}
                   memberName={user.fullname}
                   canKick={canKick}
                   canMute={canMute}

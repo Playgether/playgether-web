@@ -43,7 +43,7 @@ const UserContextMock = ({ children }) => {
   const mockUser: UserProps = {
     first_name: "Henry",
     last_name: "Johnson",
-    user_id: 1,
+    user_id: "1",
     username: "henry_johnson",
   };
 

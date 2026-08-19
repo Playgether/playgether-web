@@ -53,13 +53,13 @@ function newFullRaritySet(): Set<RarityLevel> {
 }
 
 function isProfileOwner(
-  user: { username?: string; user_id?: number } | null,
+  user: { username?: string; user_id?: string } | null,
   profile: getProfileByUsernameProps | null,
 ): boolean {
   if (!user || !profile) return false;
   if (
-    typeof user.user_id === "number" &&
-    typeof profile.user_id === "number" &&
+    typeof user.user_id === "string" &&
+    typeof profile.user_id === "string" &&
     user.user_id === profile.user_id
   ) {
     return true;

@@ -109,7 +109,7 @@ export async function deleteRoomRole(roomSlug: string, roleId: number) {
 export async function assignRoomRole(
   roomSlug: string,
   roleId: number,
-  userId: number,
+  userId: string,
 ) {
   const headers = await bearerHeaders();
   if ("error" in headers) return { ok: false as const, error: headers.error };
@@ -129,7 +129,7 @@ export async function assignRoomRole(
 export async function unassignRoomRole(
   roomSlug: string,
   roleId: number,
-  userId: number,
+  userId: string,
 ) {
   const headers = await bearerHeaders();
   if ("error" in headers) return { ok: false as const, error: headers.error };
@@ -166,7 +166,7 @@ export async function reorderRoomRoles(roomSlug: string, order: number[]) {
 
 export async function kickRoomMember(
   roomSlug: string,
-  userId: number,
+  userId: string,
   options?: {
     reason?: string;
     durationSeconds?: number | null;
@@ -194,7 +194,7 @@ export async function kickRoomMember(
 
 export async function muteRoomMember(
   roomSlug: string,
-  userId: number,
+  userId: string,
   options?: { reason?: string; durationSeconds?: number | null },
 ) {
   const headers = await bearerHeaders();
@@ -220,7 +220,7 @@ export async function muteRoomMember(
 
 export type RoomActiveSanctionRow = {
   id: number;
-  user_id: number;
+  user_id: string;
   username: string;
   fullname: string;
   profile_photo: string;
@@ -252,7 +252,7 @@ export async function listRoomActiveSanctions(roomSlug: string) {
 
 export async function revokeRoomSanction(
   roomSlug: string,
-  userId: number,
+  userId: string,
   sanctionType: "mute" | "ban" | "ambience_ban",
 ) {
   const headers = await bearerHeaders();

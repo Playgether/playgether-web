@@ -240,7 +240,6 @@ function MediaPostCard({
                 align="end"
                 sideOffset={2}
                 className="min-w-[140px]"
-                onOpenAutoFocus={(e) => e.preventDefault()}
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
               >

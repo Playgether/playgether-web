@@ -10,6 +10,7 @@ import type {
 } from "../types/duo";
 import {
   buildAuthenticatedWebSocketUrl,
+  getWebSocketBaseUrl,
   requestWebSocketTicket,
 } from "@/lib/websocketAuth";
 
@@ -150,7 +151,7 @@ export function useDuoSocket({
           return;
         }
 
-        const base = wsBaseUrl().replace(/\/$/, "");
+        const base = getWebSocketBaseUrl();
         const wsUrl = `${base}/ws/duo/${encodeURIComponent(gameSlug)}/?ticket=${encodeURIComponent(data.ticket)}`;
 
         ws = new WebSocket(wsUrl);

@@ -1,6 +1,6 @@
 "use server";
 
-import { ensureAccessTokenCookie } from "./refreshToken";
+import { ensureAccessTokenCookie } from "@/lib/server/authTokens";
 
 /**
  * Exchanges the current access token for a short-lived, one-time WS ticket.

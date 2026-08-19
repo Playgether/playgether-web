@@ -3,7 +3,7 @@ import brazilianStrings from "react-timeago/lib/language-strings/pt-br";
 import buildFormatter from "react-timeago/lib/formatters/buildFormatter";
 import TimeAgo from "react-timeago";
 
-function DateAndHour({ date }: { date: Date }) {
+function DateAndHour({ date }: { date: Date | string | number }) {
   const formatter = buildFormatter(brazilianStrings);
   return <TimeAgo date={date} formatter={formatter} />;
 }

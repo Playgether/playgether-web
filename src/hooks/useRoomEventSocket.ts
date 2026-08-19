@@ -3,6 +3,7 @@
 import { fetchRoomEventMessages } from "@/actions/roomEventsActions";
 import {
   buildAuthenticatedWebSocketUrl,
+  getWebSocketBaseUrl,
   requestWebSocketTicket,
 } from "@/lib/websocketAuth";
 import type { RoomEventMessage } from "@/types/RoomEvents";
@@ -59,7 +60,7 @@ export function useRoomEventSocket(eventId: number | null) {
       .then((res) => (res.ok ? res.json() : { ticket: null }))
       .then((data: { ticket?: string | null }) => {
         if (cancelled || !data?.ticket) return;
-        const wsUrl = `${wsBaseUrl().replace(/\/$/, "")}/ws/room-events/${eventId}/?ticket=${encodeURIComponent(data.ticket)}`;
+        const wsUrl = `${getWebSocketBaseUrl()}/ws/room-events/${eventId}/?ticket=${encodeURIComponent(data.ticket)}`;
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 

@@ -116,7 +116,6 @@ export function MilestonesTab({
                         <DropdownMenuContent
                           align="end"
                           sideOffset={2}
-                          onOpenAutoFocus={(e) => e.preventDefault()}
                           onClick={(e) => e.stopPropagation()}
                           onPointerDown={(e) => e.stopPropagation()}
                         >

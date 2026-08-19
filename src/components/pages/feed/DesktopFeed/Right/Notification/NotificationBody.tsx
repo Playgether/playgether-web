@@ -5,7 +5,8 @@ import NotificationDate from "./NotificationDate";
 import NotificationText from "./NotificationText";
 import { NotificationWrapper } from "./NotificationWrapper";
 import EmptyData from "@/components/elements/EmptyDataComponent/EmptyData";
-import { useSecureWebSocket } from "@/hooks/useSecureWebSocket";
+import useWebSocket from "react-use-websocket";
+import { getWebSocketBaseUrl } from "@/lib/websocketAuth";
 
 function NotificationBody({
   notificationsParent,
@@ -21,7 +22,7 @@ function NotificationBody({
       .then((res) => (res.ok ? res.json() : { ticket: null }))
       .then((data) => {
         if (!cancelled && data?.ticket) {
-          setWsUrl(`${WS_URL}/ws/notifications/?ticket=${data.ticket}`);
+          setWsUrl(`${getWebSocketBaseUrl()}/ws/notifications/?ticket=${data.ticket}`);
         }
       })
       .catch(() => {});
@@ -30,7 +31,7 @@ function NotificationBody({
     };
   }, []);
 
-  const { lastJsonMessage } = useWebSocket(wsUrl ?? "ws://localhost", {
+  const { lastMessage } = useWebSocket(wsUrl, {
     share: false,
     shouldReconnect: () => !!wsUrl,
   });

@@ -150,10 +150,8 @@ export function GamesCanvasUserProfile({
         onProfileUpdated?.({
           follows:
             action === "follow"
-              ? ([...(profile.follows ?? []), userId] as [])
-              : ((profile.follows ?? []).filter(
-                  (id) => Number(id) !== userId,
-                ) as []),
+              ? [...(profile.follows ?? []), userId]
+              : (profile.follows ?? []).filter((id) => Number(id) !== userId),
         });
       }
     },
