@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Paperclip, Send } from "lucide-react";
+import { Loader2, Paperclip, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/select";
 import { SettingsPageWrapper, SettingsSection } from "../components/SettingsPageWrapper";
 import { cn } from "@/lib/utils";
+import { uploadFeedbackAttachment } from "@/lib/uploadFeedbackAttachment";
+import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 
 const MAX_CHARS = 1000;
 const MIN_CHARS = 10;
@@ -50,20 +52,57 @@ export default function ContactSettingsPage() {
   const [reportSubcategory, setReportSubcategory] = useState<string>("insulto_assedio");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
-  const [attachments, setAttachments] = useState<string[]>([]);
+  const [attachments, setAttachments] = useState<File[]>([]);
   const [attachmentsError, setAttachmentsError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [uploadingLabel, setUploadingLabel] = useState<string | null>(null);
 
   const channelLabel = category === "parcerias" ? "Canal Contato" : "Canal Suporte";
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (message.trim().length < MIN_CHARS) {
       setError(`Escreva pelo menos ${MIN_CHARS} caracteres.`);
       return;
     }
     setError(null);
-    // Envio ainda não conectado ao backend.
+    setLoading(true);
+    try {
+      const attachmentUrls: string[] = [];
+      for (const file of attachments) {
+        setUploadingLabel(`Enviando ${file.name}…`);
+        attachmentUrls.push(await uploadFeedbackAttachment(file));
+      }
+      setUploadingLabel(null);
+
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category,
+          report_subcategory: category === "seguranca" ? reportSubcategory : undefined,
+          subject: subject.trim(),
+          message: message.trim(),
+          attachments: attachmentUrls,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Erro ao enviar mensagem.");
+        return;
+      }
+      CustomToast.success("Mensagem enviada! Nosso time vai te responder por e-mail.");
+      setSubject("");
+      setMessage("");
+      setAttachments([]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha de conexão. Tente novamente.");
+    } finally {
+      setUploadingLabel(null);
+      setLoading(false);
+    }
   }
 
   return (
@@ -209,7 +248,7 @@ export default function ContactSettingsPage() {
                 }
 
                 setAttachmentsError(null);
-                setAttachments(files.map((file) => file.name));
+                setAttachments(files);
               }}
             />
             <Button asChild variant="outline" type="button" className="w-full justify-start gap-2">
@@ -228,7 +267,8 @@ export default function ContactSettingsPage() {
             ) : null}
             {attachments.length > 0 ? (
               <p className="text-xs text-muted-foreground">
-                {attachments.length} arquivo(s) selecionado(s): {attachments.join(", ")}
+                {attachments.length} arquivo(s) selecionado(s):{" "}
+                {attachments.map((file) => file.name).join(", ")}
               </p>
             ) : null}
           </div>
@@ -236,13 +276,23 @@ export default function ContactSettingsPage() {
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
           <div className="flex justify-end pt-1">
-            <Button type="submit" className="rounded-xl gap-2">
-              <Send className="h-4 w-4" />
-              Enviar
+            <Button type="submit" disabled={loading} className="rounded-xl gap-2">
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {uploadingLabel ?? "Enviando…"}
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4" />
+                  Enviar
+                </>
+              )}
             </Button>
           </div>
         </form>
       </SettingsSection>
+      <CustomToaster />
     </SettingsPageWrapper>
   );
 }

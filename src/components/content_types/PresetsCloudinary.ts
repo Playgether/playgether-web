@@ -13,4 +13,6 @@ export enum PresetsCloudinary {
   posts = "posts",
   /** Vídeos de cuts — pasta raiz `cuts`, só vídeo. */
   cuts = "cuts",
+  /** Anexos de feedback e do formulário "Ajuda e contato". */
+  feedback_attachments = "feedback-attachments",
 }

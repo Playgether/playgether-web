@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { uploadFeedbackAttachment } from "@/lib/uploadFeedbackAttachment";
 
 const MAX_CHARS = 1000;
 const MAX_ATTACHMENTS = 3;
@@ -43,9 +44,10 @@ interface FeedbackDialogProps {
 export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
   const [category, setCategory] = useState("sugestao");
   const [message, setMessage] = useState("");
-  const [attachments, setAttachments] = useState<string[]>([]);
+  const [attachments, setAttachments] = useState<File[]>([]);
   const [attachmentsError, setAttachmentsError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [uploadingLabel, setUploadingLabel] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,11 +71,22 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
     setLoading(true);
     setError(null);
     try {
+      const attachmentUrls: string[] = [];
+      for (const file of attachments) {
+        setUploadingLabel(`Enviando ${file.name}…`);
+        attachmentUrls.push(await uploadFeedbackAttachment(file));
+      }
+      setUploadingLabel(null);
+
       const res = await fetch("/api/feedback", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category, message: message.trim() }),
+        body: JSON.stringify({
+          category,
+          message: message.trim(),
+          attachments: attachmentUrls,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -81,9 +94,10 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
       } else {
         setSent(true);
       }
-    } catch {
-      setError("Falha de conexão. Tente novamente.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha de conexão. Tente novamente.");
     } finally {
+      setUploadingLabel(null);
       setLoading(false);
     }
   }
@@ -194,7 +208,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
                     }
 
                     setAttachmentsError(null);
-                    setAttachments(files.map((file) => file.name));
+                    setAttachments(files);
                   }}
                 />
                 <Button asChild variant="outline" type="button" className="w-full justify-start gap-2">
@@ -211,7 +225,8 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
                 ) : null}
                 {attachments.length > 0 ? (
                   <p className="text-xs text-muted-foreground">
-                    {attachments.length} arquivo(s) selecionado(s): {attachments.join(", ")}
+                    {attachments.length} arquivo(s) selecionado(s):{" "}
+                    {attachments.map((file) => file.name).join(", ")}
                   </p>
                 ) : null}
               </div>
@@ -227,7 +242,10 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
               </DialogClose>
               <Button onClick={handleSubmit} disabled={loading}>
                 {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {uploadingLabel ?? "Enviando…"}
+                  </span>
                 ) : (
                   "Enviar"
                 )}
