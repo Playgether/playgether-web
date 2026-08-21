@@ -4,6 +4,12 @@ import { createContext, useState, useContext, useEffect, useCallback } from "rea
 import { useAuthContext } from "./AuthContext";
 import { apiFetch } from "@/services/apiFetch";
 import { useNotifications } from "@/app/feed/hooks/useNotificationsWebSocket";
+import { CustomToast } from "@/components/ui/customSonner";
+import {
+  emitDuoInviteChanged,
+  emitDuoOpenChat,
+} from "@/lib/duoInviteEvents";
+import type { NotificationProps } from "@/app/feed/types/NotificationProps";
 
 export interface NotificationItem {
   id: number;
@@ -14,7 +20,12 @@ export interface NotificationItem {
   object_id: number;
   content_type: number;
   action_url?: string | null;
-  actors: { name: string; username: string; profile_photo: string | null }[];
+  actors: {
+    name: string;
+    username: string;
+    profile_photo: string | null;
+    user_id?: number | string;
+  }[];
 }
 
 type NotificationsContextProps = {
@@ -31,6 +42,8 @@ type NotificationsContextProps = {
 const NotificationContext = createContext<NotificationsContextProps>(
   {} as NotificationsContextProps,
 );
+
+const DUO_DEFAULT_URL = "/duo?step=results&tab=requests";
 
 const NotificationsContextProvider = ({
   children,
@@ -64,8 +77,49 @@ const NotificationsContextProvider = ({
     void refetch({ silent: true });
   }, [refetch]);
 
+  const handleLiveNotification = useCallback(
+    (notification: NotificationProps) => {
+      refetchSilent();
+      if (notification.notification_type !== "app" || notification.actors.length === 0) {
+        return;
+      }
+      const msg = notification.message || "";
+      const duoUrl = notification.action_url || DUO_DEFAULT_URL;
+      const actor = notification.actors[0];
+
+      if (msg.includes("te chamou para jogar")) {
+        emitDuoInviteChanged();
+        CustomToast.info(msg, {
+          description: "Responda na aba Solicitações do Duo Finder.",
+          link: { label: "Abrir Duo", href: duoUrl },
+        });
+        return;
+      }
+      if (msg.includes("aceitou seu convite de duo")) {
+        emitDuoInviteChanged();
+        CustomToast.success(msg, {
+          description: "O chat foi liberado — combinem a partida.",
+          link: { label: "Abrir Duo", href: duoUrl },
+          action: actor?.user_id
+            ? {
+                label: "Enviar mensagem",
+                onClick: () =>
+                  emitDuoOpenChat({
+                    partnerUserId: actor.user_id!,
+                    partnerUsername: actor.username,
+                    partnerName: actor.name,
+                    partnerAvatar: actor.profile_photo,
+                  }),
+              }
+            : undefined,
+        });
+      }
+    },
+    [refetchSilent],
+  );
+
   useNotifications({
-    onNewNotification: refetchSilent,
+    onNewNotification: handleLiveNotification,
     onNotificationRemoved: refetchSilent,
   });
 

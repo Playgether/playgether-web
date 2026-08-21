@@ -5,6 +5,7 @@ import { getMatches } from "../services/duoApi";
 import type {
   DuoMatch,
   GamePreferences,
+  WsInviteUpdateMsg,
   WsMessage,
   WsQueueStatus,
 } from "../types/duo";
@@ -16,6 +17,7 @@ import {
 interface UseDuoSocketOptions {
   gameSlug: string;
   enabled?: boolean;
+  onInviteUpdate?: (msg: WsInviteUpdateMsg) => void;
 }
 
 interface DuoSocketState {
@@ -38,13 +40,22 @@ interface DuoSocketActions {
   refreshMatches: () => void;
   /** Mantém o backend ciente de que o usuário está em /duo resultados (evita notificação in-app duplicada). */
   pulseDuoResultsPresence: () => void;
+  /** Optimistic local patch after sending an invite from MatchCard. */
+  patchMatchInvite: (
+    matchId: number,
+    patch: Pick<DuoMatch, "invite_status" | "invite_direction" | "outgoing_invite_status">,
+  ) => void;
 }
 
 export function useDuoSocket({
   gameSlug,
   enabled = true,
+  onInviteUpdate,
 }: UseDuoSocketOptions): DuoSocketState & DuoSocketActions {
   const wsRef = useRef<WebSocket | null>(null);
+  const onInviteUpdateRef = useRef(onInviteUpdate);
+  onInviteUpdateRef.current = onInviteUpdate;
+
   const [state, setState] = useState<DuoSocketState>({
     connected: false,
     queueStatus: null,
@@ -69,6 +80,24 @@ export function useDuoSocket({
       })
       .catch(() => {});
   }, [gameSlug]);
+
+  const patchMatchInvite = useCallback(
+    (
+      matchId: number,
+      patch: Pick<
+        DuoMatch,
+        "invite_status" | "invite_direction" | "outgoing_invite_status"
+      >,
+    ) => {
+      setState((s) => ({
+        ...s,
+        matches: s.matches.map((m) =>
+          m.id === matchId ? { ...m, ...patch } : m,
+        ),
+      }));
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!enabled || !gameSlug) return;
@@ -130,6 +159,30 @@ export function useDuoSocket({
             matches: dedupeMatches([...s.matches, ...msg.matches]),
           }));
           break;
+
+        case "duo_invite_update": {
+          const active = msg.status === "pending" || msg.status === "accepted";
+          setState((s) => ({
+            ...s,
+            matches: s.matches.map((m) =>
+              m.id === msg.match_id
+                ? {
+                    ...m,
+                    outgoing_invite_status:
+                      msg.direction === "received"
+                        ? m.outgoing_invite_status
+                        : msg.status,
+                    invite_status: active ? msg.status : null,
+                    invite_direction: active
+                      ? (msg.direction ?? m.invite_direction ?? null)
+                      : null,
+                  }
+                : m,
+            ),
+          }));
+          onInviteUpdateRef.current?.(msg);
+          break;
+        }
 
         case "error":
           setState((s) => ({ ...s, error: msg.message }));
@@ -217,6 +270,7 @@ export function useDuoSocket({
     updatePreferences,
     refreshMatches,
     pulseDuoResultsPresence,
+    patchMatchInvite,
   };
 }
 

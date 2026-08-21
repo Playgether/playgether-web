@@ -1,6 +1,6 @@
 "use client";
 
-import { Send, Smile, Megaphone, X } from "lucide-react";
+import { Send, Smile, Megaphone, X, Swords } from "lucide-react";
 import React, { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -9,6 +9,7 @@ import { CHAT_EMOJI_CATEGORIES, searchChatEmojis } from "@/lib/chatEmojis";
 import { cn } from "@/lib/utils";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import type { MegaphoneReplyDraft } from "@/context/ConversationsWidgetContext";
+import type { DuoReplyDraft } from "@/lib/duoFinderMessage";
 
 // ── Emoji Picker ─────────────────────────────────────────────────────────────
 
@@ -145,6 +146,47 @@ function MegaphoneReplyBanner({
   );
 }
 
+function DuoReplyBanner({
+  reply,
+  onDismiss,
+}: {
+  reply: DuoReplyDraft;
+  onDismiss: () => void;
+}) {
+  return (
+    <div className="mb-2 flex items-start gap-2.5 rounded-xl border border-primary/20 bg-primary/[0.06] px-2.5 py-2">
+      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-primary shadow-sm">
+        <Swords className="h-3.5 w-3.5 text-white" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="mb-0.5 flex items-center gap-2">
+          <ProfileAvatar
+            displayName={reply.partnerName}
+            username={reply.partnerUsername}
+            profilePhoto={reply.partnerAvatar}
+            sizeClass="h-5 w-5"
+            fallbackTextClassName="text-[9px]"
+          />
+          <p className="truncate text-xs font-medium text-foreground">
+            Duo Finder · {reply.gameName}
+          </p>
+        </div>
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          {reply.matchPercent}% de compatibilidade com @{reply.partnerUsername}
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={onDismiss}
+        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+        aria-label="Cancelar mensagem do duo"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
 // ── InputMessage ──────────────────────────────────────────────────────────────
 
 const InputMessage = forwardRef<
@@ -156,6 +198,8 @@ const InputMessage = forwardRef<
     disabled?: boolean;
     megaphoneReply?: MegaphoneReplyDraft | null;
     onDismissMegaphoneReply?: () => void;
+    duoReply?: DuoReplyDraft | null;
+    onDismissDuoReply?: () => void;
   }
 >(function InputMessage(
   {
@@ -165,6 +209,8 @@ const InputMessage = forwardRef<
     disabled,
     megaphoneReply,
     onDismissMegaphoneReply,
+    duoReply,
+    onDismissDuoReply,
   },
   ref
 ) {
@@ -236,7 +282,9 @@ const InputMessage = forwardRef<
 
   return (
     <div className="border-t border-border/50 p-3 sm:p-4">
-      {megaphoneReply ? (
+      {duoReply ? (
+        <DuoReplyBanner reply={duoReply} onDismiss={() => onDismissDuoReply?.()} />
+      ) : megaphoneReply ? (
         <MegaphoneReplyBanner
           reply={megaphoneReply}
           onDismiss={() => onDismissMegaphoneReply?.()}
@@ -279,7 +327,9 @@ const InputMessage = forwardRef<
           onKeyUp={syncSelection}
           onFocus={syncSelection}
           placeholder={
-            megaphoneReply
+            duoReply
+              ? "Escreva sua mensagem do duo..."
+              : megaphoneReply
               ? "Escreva sua resposta..."
               : "Digite sua mensagem..."
           }

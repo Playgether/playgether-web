@@ -12,6 +12,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { MentionTextarea } from "@/components/mentions/MentionTextarea";
+import {
+  EmojiPickerButton,
+  useEmojiInsert,
+} from "@/components/emoji/EmojiPickerButton";
 import { createCut } from "@/actions/getCuts";
 import { Cut } from "@/types/Cut";
 import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
@@ -71,6 +75,15 @@ export function CreateCutDialog({ open, onOpenChange, onCreated }: CreateCutDial
   const skipCleanupRef = useRef(false);
   const isWidgetOpenRef = useRef(false);
   const allowUploadClickRef = useRef(false);
+  const captionRef = useRef<HTMLTextAreaElement>(null);
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const setCaptionClamped = (next: string) => setCaption(next.slice(0, MAX_CHARS));
+  const { insertEmoji, syncSelection, restoreFocus } = useEmojiInsert(
+    captionRef,
+    caption,
+    setCaptionClamped,
+    MAX_CHARS,
+  );
 
   useEffect(() => {
     if (!open) {
@@ -316,15 +329,29 @@ export function CreateCutDialog({ open, onOpenChange, onCreated }: CreateCutDial
               )}
 
               <MentionTextarea
+                ref={captionRef}
                 placeholder="Adicione uma legenda…"
                 value={caption}
                 onChange={(next) => setCaption(next.slice(0, MAX_CHARS))}
+                onSelect={syncSelection}
+                onClick={syncSelection}
+                onKeyUp={syncSelection}
                 rows={3}
                 className="resize-none"
               />
-              <p className="text-right text-xs text-muted-foreground">
-                {caption.length}/{MAX_CHARS}
-              </p>
+              <div className="flex items-center justify-between">
+                <EmojiPickerButton
+                  open={emojiOpen}
+                  onOpenChange={setEmojiOpen}
+                  onBeforeOpen={syncSelection}
+                  onPick={insertEmoji}
+                  onClosed={restoreFocus}
+                  disabled={isPending}
+                />
+                <p className="text-right text-xs text-muted-foreground">
+                  {caption.length}/{MAX_CHARS}
+                </p>
+              </div>
 
               {error ? <p className="text-sm text-destructive">{error}</p> : null}
 

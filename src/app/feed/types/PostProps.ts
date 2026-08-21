@@ -26,6 +26,7 @@ export interface PostProps {
   is_own?: boolean;
   isOwn?: boolean;
   comments_disabled?: boolean;
+  can_comment?: boolean;
   highlighted_achievements?: HighlightedAchievementPublic[];
   user_repost_id?: number | null;
   user_already_saved?: boolean;

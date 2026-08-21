@@ -1,5 +1,6 @@
 import { apiFetch } from "@/services/apiFetch";
 import type {
+  DuoInvite,
   DuoMatch,
   DuoQueue,
   GamePreferences,
@@ -69,6 +70,60 @@ export async function getMatches(game_slug?: string): Promise<DuoMatch[]> {
   });
   if (!res.ok) throw new Error("Failed to fetch duo matches");
   return res.json();
+}
+
+export async function sendDuoInvite(matchId: number): Promise<{ detail: string }> {
+  const res = await apiFetch(`${BASE}/matches/${matchId}/invite`, {
+    method: "POST",
+    credentials: "include",
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { detail?: string }).detail || "Não foi possível enviar o convite.");
+  }
+  return body as { detail: string };
+}
+
+export async function getDuoInvites(options?: {
+  game_slug?: string;
+  direction?: "received" | "sent" | "all";
+  status?: "pending" | "accepted" | "declined" | "all";
+}): Promise<DuoInvite[]> {
+  const params = new URLSearchParams();
+  if (options?.game_slug) params.set("game_slug", options.game_slug);
+  if (options?.direction) params.set("direction", options.direction);
+  if (options?.status) params.set("status", options.status);
+  const qs = params.toString();
+  const res = await apiFetch(`${BASE}/invites${qs ? `?${qs}` : ""}`, {
+    method: "GET",
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Failed to fetch duo invites");
+  return res.json();
+}
+
+export async function acceptDuoInvite(inviteId: number): Promise<DuoInvite> {
+  const res = await apiFetch(`${BASE}/invites/${inviteId}/accept`, {
+    method: "POST",
+    credentials: "include",
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { detail?: string }).detail || "Não foi possível aceitar o convite.");
+  }
+  return body as DuoInvite;
+}
+
+export async function declineDuoInvite(inviteId: number): Promise<{ detail: string }> {
+  const res = await apiFetch(`${BASE}/invites/${inviteId}/decline`, {
+    method: "POST",
+    credentials: "include",
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((body as { detail?: string }).detail || "Não foi possível recusar o convite.");
+  }
+  return body as { detail: string };
 }
 
 // ─── Schema ───────────────────────────────────────────────────────────────────

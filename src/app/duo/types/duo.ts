@@ -156,6 +156,27 @@ export interface DuoMatch {
   score_breakdown?: DuoMatchScoreBreakdown | null;
   created_at: string;
   partner: MatchPartner;
+  /** Latest invite you sent for this match, if any. */
+  outgoing_invite_status?: "pending" | "accepted" | "declined" | null;
+  /** Pending/accepted invite involving you (sent or received). */
+  invite_status?: "pending" | "accepted" | "declined" | null;
+  invite_direction?: "sent" | "received" | null;
+}
+
+export interface DuoInvite {
+  id: number;
+  match_id: number;
+  status: "pending" | "accepted" | "declined";
+  direction?: "sent" | "received" | null;
+  game_name: string;
+  game_slug: string;
+  score: number;
+  created_at: string;
+  updated_at: string;
+  responded_at: string | null;
+  partner: MatchPartner;
+  /** Set when accept unlocks the DM thread. */
+  conversation_id?: string | null;
 }
 
 // ─── WebSocket messages ───────────────────────────────────────────────────────
@@ -189,6 +210,15 @@ export interface WsExistingMatchesMsg {
   matches: DuoMatch[];
 }
 
+export interface WsInviteUpdateMsg {
+  type: "duo_invite_update";
+  match_id: number;
+  status: "pending" | "accepted" | "declined";
+  conversation_id?: string;
+  invite_id?: number;
+  direction?: "sent" | "received";
+}
+
 export interface WsErrorMsg {
   type: "error";
   message: string;
@@ -198,6 +228,7 @@ export type WsMessage =
   | WsQueueStatusMsg
   | WsMatchMsg
   | WsExistingMatchesMsg
+  | WsInviteUpdateMsg
   | WsErrorMsg;
 
 // ─── Flow state shared across steps ──────────────────────────────────────────

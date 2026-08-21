@@ -4,17 +4,33 @@ import { useCallback } from "react";
 import { useSecureWebSocket } from "./useSecureWebSocket";
 import type { DMMessage } from "@/services/directMessages";
 
+export type DMConversationStatusEvent = {
+  type: "request_accepted";
+  conversation_id: string;
+  status: "active" | "pending";
+  is_incoming_request?: boolean;
+};
+
 interface UseDMWebSocketOptions {
   conversationId: string | null;
   onNewMessage?: (message: DMMessage) => void;
+  onStatusEvent?: (event: DMConversationStatusEvent) => void;
 }
 
-export function useDMWebSocket({ conversationId, onNewMessage }: UseDMWebSocketOptions) {
+export function useDMWebSocket({
+  conversationId,
+  onNewMessage,
+  onStatusEvent,
+}: UseDMWebSocketOptions) {
   const { sendMessage, isConnected } = useSecureWebSocket({
     url: conversationId ? `/ws/dm/${conversationId}/` : "",
     onMessage: (data) => {
       if (data.type === "new_message") {
         onNewMessage?.(data as DMMessage);
+        return;
+      }
+      if (data.type === "request_accepted") {
+        onStatusEvent?.(data as DMConversationStatusEvent);
       }
     },
   });

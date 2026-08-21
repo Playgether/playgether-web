@@ -222,6 +222,18 @@ export function GamesCanvasUserProfile({
     }
   };
 
+  const handleStartMessage = useCallback(async () => {
+    if (!profile?.user_id) return;
+    const result = await startConversation(String(profile.user_id));
+    if (!result.ok) {
+      CustomToast.error(result.error, {
+        duration: CustomToastProps.defaultDuration,
+      });
+      return;
+    }
+    openWithConversation(result.conversation.id);
+  }, [profile?.user_id, openWithConversation]);
+
   const profileCardBioText = profile?.bio ?? "";
   const profileCardBioLineCount = profileCardBioText
     .replace(/\r\n/g, "\n")
@@ -347,13 +359,7 @@ export function GamesCanvasUserProfile({
                       variant="outline"
                       size="icon"
                       className="h-6 w-6 border-border"
-                      onClick={async () => {
-                        if (!profile?.user_id) return;
-                        const conv = await startConversation(
-                          String(profile.user_id),
-                        );
-                        if (conv) openWithConversation(conv.id);
-                      }}
+                      onClick={handleStartMessage}
                       title="Mensagem"
                     >
                       <MessageCircle className="h-3 w-3" />
@@ -600,13 +606,7 @@ export function GamesCanvasUserProfile({
                   variant="outline"
                   size="sm"
                   className="h-7 flex-1 border-border text-[11px] hover:border-primary/40 hover:bg-primary/10"
-                  onClick={async () => {
-                    if (!profile?.user_id) return;
-                    const conv = await startConversation(
-                      String(profile.user_id),
-                    );
-                    if (conv) openWithConversation(conv.id);
-                  }}
+                  onClick={handleStartMessage}
                 >
                   <MessageCircle className="mr-0.5 h-3 w-3 shrink-0" />
                   Msg
@@ -817,13 +817,7 @@ export function GamesCanvasUserProfile({
                         variant="outline"
                         size="sm"
                         className="flex-1 min-w-0 border-border hover:bg-primary/10 hover:border-primary/40"
-                        onClick={async () => {
-                          if (!profile?.user_id) return;
-                          const conv = await startConversation(
-                            String(profile.user_id),
-                          );
-                          if (conv) openWithConversation(conv.id);
-                        }}
+                        onClick={handleStartMessage}
                       >
                         <MessageCircle className="h-4 w-4 mr-1 shrink-0" />
                         <span className="truncate">Mensagem</span>

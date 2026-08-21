@@ -22,8 +22,8 @@ export interface UserPreferences {
   show_following: boolean;
   show_online_status: boolean;
   who_can_see_posts: "everyone" | "followers" | "nobody";
-  who_can_message: "everyone" | "followers" | "nobody";
-  who_can_comment: "everyone" | "followers" | "nobody";
+  who_can_message: "everyone" | "friends" | "nobody";
+  who_can_comment: "everyone" | "friends" | "nobody";
   who_can_tag: "everyone" | "friends" | "nobody";
   updated_at: string;
 }

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,6 +8,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { MentionTextarea } from "@/components/mentions/MentionTextarea";
+import {
+  EmojiPickerButton,
+  useEmojiInsert,
+} from "@/components/emoji/EmojiPickerButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ImagePlay, X, Send, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -38,6 +42,9 @@ export const CreatePostModal = () => {
   const [uploadedFiles, setUploadedFiles] = useState<PostMediaProps[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [widgetKey, setWidgetKey] = useState(0);
+  const contentRef = useRef<HTMLTextAreaElement>(null);
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const { insertEmoji, syncSelection, restoreFocus } = useEmojiInsert(contentRef, content, setContent);
   const [isWidgetOpen, setIsWidgetOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const validatePostVideoDuration = useMemo(
@@ -290,12 +297,29 @@ export const CreatePostModal = () => {
             </div>
 
             {/* Content Input */}
-            <MentionTextarea
-              placeholder="O que está acontecendo?"
-              value={content}
-              onChange={setContent}
-              className="min-h-32 resize-none border-border/50 bg-muted/60 focus:border-primary/50 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary/50 focus-visible:ring-offset-0"
-            />
+            <div className="relative">
+              <MentionTextarea
+                ref={contentRef}
+                placeholder="O que está acontecendo?"
+                value={content}
+                onChange={setContent}
+                onSelect={syncSelection}
+                onClick={syncSelection}
+                onKeyUp={syncSelection}
+                className="min-h-32 resize-none border-border/50 bg-muted/60 pb-12 pl-3 pr-3 focus:border-primary/50 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary/50 focus-visible:ring-offset-0"
+              />
+              <div className="absolute bottom-2 left-2 z-10">
+                <EmojiPickerButton
+                  open={emojiOpen}
+                  onOpenChange={setEmojiOpen}
+                  onBeforeOpen={syncSelection}
+                  onPick={insertEmoji}
+                  onClosed={restoreFocus}
+                  disabled={isSubmitting}
+                  buttonClassName="h-8 w-8 hover:bg-muted/80"
+                />
+              </div>
+            </div>
 
             {/* Media Preview */}
             {uploadedFiles.length > 0 && (

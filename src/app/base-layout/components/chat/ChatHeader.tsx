@@ -25,12 +25,15 @@ import {
   ArrowLeft,
   LogOut,
   MoreHorizontal,
+  ShieldAlert,
+  ShieldCheck,
   Trash2,
   UserX,
   Volume2,
   VolumeX,
 } from "lucide-react";
 import { ConversationInterface } from "../../types/chat/ConversationInterface";
+import type { KeyTrustStatus } from "@/lib/e2eKeyTrust";
 
 type RestrictedUser = { username: string };
 
@@ -87,6 +90,9 @@ export default function ChatHeader({
   onToggleMuteConversation,
   onDeleteConversation,
   onBlockUser,
+  keyTrustStatus,
+  onViewSafetyCode,
+  onConfirmKeyTrust,
 }: {
   selectedConversation: ConversationInterface | null;
   onBack?: () => void;
@@ -94,6 +100,9 @@ export default function ChatHeader({
   onToggleMuteConversation?: () => void | Promise<void>;
   onDeleteConversation?: () => void | Promise<void>;
   onBlockUser?: () => void | Promise<void>;
+  keyTrustStatus?: KeyTrustStatus | null;
+  onViewSafetyCode?: () => void;
+  onConfirmKeyTrust?: () => void;
 }) {
   const username = selectedConversation?.username;
   const isPrivate = selectedConversation?.type === "private";
@@ -284,6 +293,36 @@ export default function ChatHeader({
                   </>
                 )}
               </DropdownMenuItem>
+
+              {isPrivate && onViewSafetyCode ? (
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    onViewSafetyCode();
+                  }}
+                  className="flex items-center gap-2 hover:bg-muted/50"
+                >
+                  {keyTrustStatus === "changed" ? (
+                    <ShieldAlert className="h-4 w-4 text-amber-500" />
+                  ) : (
+                    <ShieldCheck className="h-4 w-4 text-primary" />
+                  )}
+                  Código de segurança
+                </DropdownMenuItem>
+              ) : null}
+
+              {isPrivate && keyTrustStatus === "changed" && onConfirmKeyTrust ? (
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    onConfirmKeyTrust();
+                  }}
+                  className="flex items-center gap-2 hover:bg-muted/50"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  Confiar na nova chave
+                </DropdownMenuItem>
+              ) : null}
 
               {isPrivate && username && !isBlocked ? (
                 <DropdownMenuItem

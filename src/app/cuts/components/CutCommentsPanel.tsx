@@ -7,6 +7,10 @@ import { Cut } from "@/types/Cut";
 import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { MentionTextarea } from "@/components/mentions/MentionTextarea";
+import {
+  EmojiPickerButton,
+  useEmojiInsert,
+} from "@/components/emoji/EmojiPickerButton";
 import { MentionText } from "@/components/mentions/MentionText";
 import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
 import type { HighlightedAchievementPublic } from "@/types/highlightedAchievements";
@@ -108,6 +112,7 @@ export function CutCommentsPanel({
   const { user } = useAuthContext();
   const currentUsername = user?.username;
   const [commentsDisabled, setCommentsDisabled] = useState(cut.comments_disabled);
+  const canComment = cut.can_comment !== false && !commentsDisabled;
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const [isUpdatingComment, setIsUpdatingComment] = useState(false);
@@ -421,7 +426,7 @@ export function CutCommentsPanel({
 
   const handleSendReply = async (commentId: string) => {
     const content = (replyTextByComment[commentId] ?? "").trim();
-    if (!isAuthenticated || !content || commentsDisabled) return;
+    if (!isAuthenticated || !content || !canComment) return;
     setReplyingCommentId(commentId);
     try {
       const response = await fetch("/api/comments", {
@@ -476,7 +481,7 @@ export function CutCommentsPanel({
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleCreateComment = useCallback(async (content: string) => {
-    if (!isAuthenticated || commentsDisabled) return false;
+    if (!isAuthenticated || !canComment) return false;
     try {
       const res = await fetch(`/api/cuts/${cut.id}/comments`, {
         method: "POST",
@@ -513,7 +518,7 @@ export function CutCommentsPanel({
       // ignore
     }
     return false;
-  }, [cut.id, commentsDisabled, isAuthenticated, onCommentsCountChange, queryClient, queryKey]);
+  }, [canComment, cut.id, isAuthenticated, onCommentsCountChange, queryClient, queryKey]);
 
   const body = (
     <>
@@ -569,7 +574,7 @@ export function CutCommentsPanel({
                       {` (${c.quantity_comment})`}
                     </button>
                   )}
-                  {isAuthenticated && !commentsDisabled && (
+                  {isAuthenticated && canComment && (
                     <button
                       type="button"
                       onClick={() => {
@@ -585,38 +590,15 @@ export function CutCommentsPanel({
 
                 {expandedReplies[c.id] && (
                   <div className="ml-11 space-y-3">
-                    {isAuthenticated && !commentsDisabled && replyComposerOpenByComment[c.id] && (
-                      <div className="flex items-center gap-2">
-                        <MentionTextarea
-                          value={replyTextByComment[c.id] ?? ""}
-                          onChange={(value) =>
-                            setReplyTextByComment((prev) => ({ ...prev, [c.id]: value }))
-                          }
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                              e.preventDefault();
-                              void handleSendReply(c.id);
-                            }
-                          }}
-                          placeholder="Responder comentário…"
-                          rows={1}
-                          dropdownSide="top"
-                          className="min-h-0 flex-1 rounded-full bg-white/10 px-4 py-2 text-sm text-white placeholder:text-white/40 outline-none focus-visible:ring-1 focus-visible:ring-primary/50 focus-visible:ring-offset-0 resize-none border-0"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => void handleSendReply(c.id)}
-                          disabled={!replyTextByComment[c.id]?.trim() || replyingCommentId === c.id}
-                          className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white disabled:opacity-40"
-                          aria-label="Enviar resposta"
-                        >
-                          {replyingCommentId === c.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Send className="h-4 w-4" />
-                          )}
-                        </button>
-                      </div>
+                    {isAuthenticated && canComment && replyComposerOpenByComment[c.id] && (
+                      <ReplyComposer
+                        value={replyTextByComment[c.id] ?? ""}
+                        onChange={(value) =>
+                          setReplyTextByComment((prev) => ({ ...prev, [c.id]: value }))
+                        }
+                        onSubmit={() => void handleSendReply(c.id)}
+                        sending={replyingCommentId === c.id}
+                      />
                     )}
 
                     {loadingRepliesByComment[c.id] ? (
@@ -689,6 +671,10 @@ export function CutCommentsPanel({
       {commentsDisabled ? (
         <div className="border-t border-white/10 px-4 py-3 text-center text-sm text-white/50">
           Comentários desativados pelo autor.
+        </div>
+      ) : !canComment ? (
+        <div className="border-t border-white/10 px-4 py-3 text-center text-sm text-white/50">
+          Você não tem permissão para comentar nesta publicação.
         </div>
       ) : isAuthenticated ? (
         <NewCommentComposer onSubmit={handleCreateComment} />
@@ -882,10 +868,72 @@ const CommentRow = memo(function CommentRow({
   );
 });
 
+function ReplyComposer({
+  value,
+  onChange,
+  onSubmit,
+  sending,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  onSubmit: () => void;
+  sending: boolean;
+}) {
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const { insertEmoji, syncSelection, restoreFocus } = useEmojiInsert(inputRef, value, onChange);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <EmojiPickerButton
+          open={emojiOpen}
+          onOpenChange={setEmojiOpen}
+          onBeforeOpen={syncSelection}
+          onPick={insertEmoji}
+          onClosed={restoreFocus}
+          disabled={sending}
+          buttonClassName="text-white/70 hover:text-white hover:bg-white/10"
+          panelClassName="bg-zinc-900"
+        />
+        <MentionTextarea
+          ref={inputRef}
+          value={value}
+          onChange={onChange}
+          onSelect={syncSelection}
+          onClick={syncSelection}
+          onKeyUp={syncSelection}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              onSubmit();
+            }
+          }}
+          placeholder="Responder comentário…"
+          rows={1}
+          dropdownSide="top"
+          className="min-h-0 flex-1 rounded-full bg-white/10 px-4 py-2 text-sm text-white placeholder:text-white/40 outline-none focus-visible:ring-1 focus-visible:ring-primary/50 focus-visible:ring-offset-0 resize-none border-0"
+        />
+        <button
+          type="button"
+          onClick={onSubmit}
+          disabled={!value.trim() || sending}
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white disabled:opacity-40"
+          aria-label="Enviar resposta"
+        >
+          {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function NewCommentComposer({ onSubmit }: { onSubmit: (content: string) => Promise<boolean> }) {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [emojiOpen, setEmojiOpen] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const { insertEmoji, syncSelection, restoreFocus } = useEmojiInsert(inputRef, text, setText);
 
   const handleSend = useCallback(async () => {
     const content = text.trim();
@@ -893,33 +941,51 @@ function NewCommentComposer({ onSubmit }: { onSubmit: (content: string) => Promi
     setSending(true);
     try {
       const ok = await onSubmit(content);
-      if (ok) setText("");
+      if (ok) {
+        setText("");
+        setEmojiOpen(false);
+      }
     } finally {
       setSending(false);
     }
   }, [onSubmit, text]);
 
   return (
-    <div className="flex items-center gap-2 border-t border-white/10 px-4 py-3">
-      <MentionTextarea
-        ref={inputRef}
-        value={text}
-        onChange={setText}
-        onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void handleSend(); } }}
-        placeholder="Adicionar comentário…"
-        rows={1}
-        dropdownSide="top"
-        className="min-h-0 flex-1 rounded-full bg-white/10 px-4 py-2 text-sm text-white placeholder:text-white/40 outline-none focus-visible:ring-1 focus-visible:ring-primary/50 focus-visible:ring-offset-0 resize-none border-0"
-      />
-      <button
-        type="button"
-        onClick={() => void handleSend()}
-        disabled={!text.trim() || sending}
-        aria-label="Enviar"
-        className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white disabled:opacity-40"
-      >
-        {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-      </button>
+    <div className="flex flex-col gap-2 border-t border-white/10 px-4 py-3">
+      <div className="flex items-center gap-2">
+        <EmojiPickerButton
+          open={emojiOpen}
+          onOpenChange={setEmojiOpen}
+          onBeforeOpen={syncSelection}
+          onPick={insertEmoji}
+          onClosed={restoreFocus}
+          disabled={sending}
+          buttonClassName="text-white/70 hover:text-white hover:bg-white/10"
+          panelClassName="bg-zinc-900"
+        />
+        <MentionTextarea
+          ref={inputRef}
+          value={text}
+          onChange={setText}
+          onSelect={syncSelection}
+          onClick={syncSelection}
+          onKeyUp={syncSelection}
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void handleSend(); } }}
+          placeholder="Adicionar comentário…"
+          rows={1}
+          dropdownSide="top"
+          className="min-h-0 flex-1 rounded-full bg-white/10 px-4 py-2 text-sm text-white placeholder:text-white/40 outline-none focus-visible:ring-1 focus-visible:ring-primary/50 focus-visible:ring-offset-0 resize-none border-0"
+        />
+        <button
+          type="button"
+          onClick={() => void handleSend()}
+          disabled={!text.trim() || sending}
+          aria-label="Enviar"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white disabled:opacity-40"
+        >
+          {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+        </button>
+      </div>
     </div>
   );
 }

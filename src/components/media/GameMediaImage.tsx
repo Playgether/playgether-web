@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
 import { cn } from "@/lib/utils";
@@ -35,12 +35,21 @@ export function GameMediaImage({
   fallback = null,
 }: GameMediaImageProps) {
   const resolved = resolveGameMediaUrl(src, SIZE_WIDTH[size]);
+  const imgRef = useRef<HTMLImageElement | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    setLoaded(false);
     setFailed(false);
+
+    const img = imgRef.current;
+    // Cache do browser: a imagem já pode estar completa sem novo onLoad
+    if (img?.complete && img.naturalWidth > 0) {
+      setLoaded(true);
+      return;
+    }
+
+    setLoaded(false);
   }, [resolved]);
 
   if (!resolved || failed) return <>{fallback}</>;
@@ -53,6 +62,7 @@ export function GameMediaImage({
         </div>
       ) : null}
       <img
+        ref={imgRef}
         src={resolved}
         alt={alt}
         decoding="async"

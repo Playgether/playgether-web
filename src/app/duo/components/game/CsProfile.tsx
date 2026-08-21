@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { Crosshair, Clock, CrosshairIcon, Target, UserCog, Zap } from "lucide-react";
+import { Crosshair, Clock, CrosshairIcon, Info, Target, UserCog, Zap } from "lucide-react";
+import { GameMediaImage } from "@/components/media/GameMediaImage";
 import { PREMIER_RANGES, premierRangeChipClass } from "../../constants/csPremier";
 import type { CsStats } from "../../types/duo";
 
@@ -47,7 +48,10 @@ function normalizeCsWeapons(weapons: string[]): string[] {
 }
 
 interface CsProfileProps {
-  stats: CsStats;
+  gameIcon?: string;
+  gameName?: string;
+  stats?: CsStats | null;
+  selfDeclared?: boolean;
   selectedRoles: string[];
   selectedWeapons: string[];
   ownRange: string;
@@ -57,7 +61,10 @@ interface CsProfileProps {
 }
 
 export function CsProfile({
+  gameIcon,
+  gameName = "Counter-Strike 2",
   stats,
+  selfDeclared = false,
   selectedRoles,
   selectedWeapons,
   ownRange,
@@ -134,7 +141,27 @@ export function CsProfile({
 
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          {stats.avatar ? (
+          {selfDeclared ? (
+            <>
+              {gameIcon ? (
+                <GameMediaImage
+                  src={gameIcon}
+                  alt=""
+                  size="icon"
+                  className="h-16 w-16 shrink-0 rounded-2xl border-2 border-primary/25 bg-background/80 shadow-md ring-2 ring-primary/20"
+                  spinnerClassName="h-5 w-5"
+                />
+              ) : (
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-primary text-primary-foreground shadow-glow-primary ring-2 ring-primary/20">
+                  <Crosshair className="h-7 w-7" />
+                </div>
+              )}
+              <div>
+                <p className="text-lg font-bold text-card-foreground sm:text-xl">{gameName}</p>
+                <p className="text-sm text-muted-foreground">Perfil de duo informado por você</p>
+              </div>
+            </>
+          ) : stats?.avatar ? (
             <img
               src={stats.avatar}
               alt={stats.nickname ?? "Avatar"}
@@ -142,18 +169,31 @@ export function CsProfile({
             />
           ) : (
             <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-primary text-2xl font-bold text-primary-foreground shadow-glow-primary ring-2 ring-primary/20">
-              {stats.nickname?.[0]?.toUpperCase() ?? "?"}
+              {stats?.nickname?.[0]?.toUpperCase() ?? "?"}
             </div>
           )}
-          <div>
-            <p className="text-lg font-bold text-card-foreground sm:text-xl">
-              {stats.nickname ?? "Steam User"}
-            </p>
-            <p className="text-sm text-muted-foreground">Counter-Strike 2</p>
-          </div>
+          {!selfDeclared ? (
+            <div>
+              <p className="text-lg font-bold text-card-foreground sm:text-xl">
+                {stats?.nickname ?? "Steam User"}
+              </p>
+              <p className="text-sm text-muted-foreground">Counter-Strike 2</p>
+            </div>
+          ) : null}
         </div>
       </div>
 
+      {selfDeclared ? (
+        <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-amber-500/25 bg-amber-500/[0.07] px-3.5 py-3 text-sm text-amber-100/90">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+          <p>
+            A faixa Premier, funções e armas não vêm da Steam. Informe o que você joga
+            para os outros encontrarem um duo compatível.
+          </p>
+        </div>
+      ) : null}
+
+      {!selfDeclared && stats ? (
       <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
         <div className="rounded-xl border border-border/40 bg-gradient-to-b from-primary/12 to-transparent px-2 py-3 text-center">
           <Target className="mx-auto mb-1 h-3.5 w-3.5 text-muted-foreground" />
@@ -175,6 +215,7 @@ export function CsProfile({
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:text-xs">Horas</p>
         </div>
       </div>
+      ) : null}
 
       <div className="mt-6 space-y-6">
         <div>

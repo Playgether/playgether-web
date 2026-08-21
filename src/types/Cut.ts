@@ -12,6 +12,7 @@ export interface Cut {
   likes_count: number;
   comments_count: number;
   comments_disabled: boolean;
+  can_comment?: boolean;
   timestamp: string;
   created_by_user: number;
   username: string;

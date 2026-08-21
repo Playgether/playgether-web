@@ -29,7 +29,7 @@ const AUDIENCE_OPTIONS = [
   { value: "nobody", label: "Ninguém" },
 ];
 
-const TAG_AUDIENCE_OPTIONS = [
+const FRIENDS_AUDIENCE_OPTIONS = [
   { value: "everyone", label: "Todos" },
   { value: "friends", label: "Apenas amigos" },
   { value: "nobody", label: "Ninguém" },
@@ -351,17 +351,26 @@ export default function PrivacySettingsPage() {
         >
           <SettingsSelectRow
             label="Quem pode me enviar mensagem"
-            description="Controla quem tem permissão para iniciar conversas com você."
-            value={prefs?.who_can_message ?? "everyone"}
-            options={AUDIENCE_OPTIONS}
+            description="Controla quem tem permissão para iniciar conversas com você. Amigos são quem você segue e te segue de volta."
+            value={
+              // Legacy who_can_message used "followers"; treat as friends.
+              (prefs?.who_can_message as string) === "followers"
+                ? "friends"
+                : (prefs?.who_can_message ?? "everyone")
+            }
+            options={FRIENDS_AUDIENCE_OPTIONS}
             onValueChange={(v) => update({ who_can_message: v as UserPreferences["who_can_message"] })}
             loading={loading}
           />
           <SettingsSelectRow
-            label="Quem pode comentar meus posts"
-            description="Controla quem pode deixar comentários nos seus posts."
-            value={prefs?.who_can_comment ?? "everyone"}
-            options={AUDIENCE_OPTIONS}
+            label="Quem pode comentar meus posts e cuts"
+            description="Controla quem pode deixar comentários nos seus posts e cuts. Amigos são quem você segue e te segue de volta."
+            value={
+              (prefs?.who_can_comment as string) === "followers"
+                ? "friends"
+                : (prefs?.who_can_comment ?? "everyone")
+            }
+            options={FRIENDS_AUDIENCE_OPTIONS}
             onValueChange={(v) => update({ who_can_comment: v as UserPreferences["who_can_comment"] })}
             loading={loading}
           />
@@ -373,7 +382,7 @@ export default function PrivacySettingsPage() {
                 ? "friends"
                 : (prefs?.who_can_tag ?? "everyone")
             }
-            options={TAG_AUDIENCE_OPTIONS}
+            options={FRIENDS_AUDIENCE_OPTIONS}
             onValueChange={(v) => update({ who_can_tag: v as UserPreferences["who_can_tag"] })}
             loading={loading}
           />

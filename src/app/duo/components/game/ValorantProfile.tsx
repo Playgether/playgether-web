@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { Crown, Info, Shield, Swords, Trophy } from "lucide-react";
+import { Crown, Shield, Swords, Trophy } from "lucide-react";
+import { GameMediaImage } from "@/components/media/GameMediaImage";
+import { RiotDisclaimer } from "@/components/riot/RiotDisclaimer";
 import { LolRankEmblemFrame } from "@/components/lol/LolRankEmblemFrame";
 import { ValorantRoleIcon } from "@/components/valorant/ValorantRoleIcon";
 import { valorantTierEmblemUrl } from "@/lib/valorantRankEmblem";
@@ -22,6 +24,8 @@ function normalizeValRoles(roles: string[]): string[] {
 }
 
 interface ValorantProfileProps {
+  gameIcon?: string;
+  gameName?: string;
   ownElo: string;
   selectedRoles: string[];
   onEloChange: (elo: string) => void;
@@ -29,6 +33,8 @@ interface ValorantProfileProps {
 }
 
 export function ValorantProfile({
+  gameIcon,
+  gameName = "VALORANT",
   ownElo,
   selectedRoles,
   onEloChange,
@@ -69,11 +75,21 @@ export function ValorantProfile({
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-primary text-primary-foreground shadow-glow-primary ring-2 ring-primary/20">
-            <Swords className="h-7 w-7" />
-          </div>
+          {gameIcon ? (
+            <GameMediaImage
+              src={gameIcon}
+              alt=""
+              size="icon"
+              className="h-16 w-16 shrink-0 rounded-2xl border-2 border-primary/25 bg-background/80 shadow-md ring-2 ring-primary/20"
+              spinnerClassName="h-5 w-5"
+            />
+          ) : (
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-primary text-primary-foreground shadow-glow-primary ring-2 ring-primary/20">
+              <Swords className="h-7 w-7" />
+            </div>
+          )}
           <div>
-            <p className="text-lg font-bold text-card-foreground sm:text-xl">VALORANT</p>
+            <p className="text-lg font-bold text-card-foreground sm:text-xl">{gameName}</p>
             <p className="text-sm text-muted-foreground">Perfil de duo informado por você</p>
           </div>
         </div>
@@ -92,14 +108,6 @@ export function ValorantProfile({
             <span className={`font-semibold ${rankColor}`}>{ownElo}</span>
           </div>
         ) : null}
-      </div>
-
-      <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-amber-500/25 bg-amber-500/[0.07] px-3.5 py-3 text-sm text-amber-100/90">
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-        <p>
-          O elo e as funções não vêm da Riot. Informe o que você joga para os outros
-          encontrarem um duo compatível.
-        </p>
       </div>
 
       <div className="mt-6 space-y-6">
@@ -184,6 +192,8 @@ export function ValorantProfile({
           </div>
         </div>
       </div>
+
+      <RiotDisclaimer className="mt-6" />
     </div>
   );
 }

@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { Megaphone } from "lucide-react";
+import { Megaphone, Swords } from "lucide-react";
 import { MessageInterface } from "../../types/chat/MessageInterface";
 import { SharedCutCard } from "./SharedCutCard";
 import { SharedCutModal } from "./SharedCutModal";
 import { cn } from "@/lib/utils";
+import { parseDuoFinderMessage } from "@/lib/duoFinderMessage";
 
 const MEGAPHONE_REPLY_RE =
   /^Respondendo ao alto-falante de @([^\s:]+):\s*[\n\r]*[“"]([\s\S]*?)[”"]\s*([\s\S]*)$/;
@@ -84,6 +85,46 @@ function MegaphoneReplyBubble({
   );
 }
 
+function DuoFinderReplyBubble({
+  parsed,
+  isOwn,
+  timestamp,
+}: {
+  parsed: NonNullable<ReturnType<typeof parseDuoFinderMessage>>;
+  isOwn: boolean;
+  timestamp: string;
+}) {
+  return (
+    <div className="space-y-2.5">
+      <div
+        className={cn(
+          "inline-flex max-w-full items-center gap-1.5 rounded-full px-2.5 py-1",
+          isOwn ? "bg-white/15 text-white" : "bg-primary/15 text-foreground",
+        )}
+      >
+        <span
+          className={cn(
+            "flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
+            isOwn ? "bg-white/20" : "bg-gradient-primary",
+          )}
+        >
+          <Swords className="h-3 w-3 text-white" />
+        </span>
+        <span className="truncate text-[11px] font-medium leading-none">
+          Duo Finder · {parsed.gameLabel}
+          {parsed.matchPercent != null ? ` · ${parsed.matchPercent}%` : ""}
+        </span>
+      </div>
+
+      {parsed.reply ? (
+        <p className="text-sm leading-relaxed whitespace-pre-wrap">{parsed.reply}</p>
+      ) : null}
+
+      <span className="block text-xs opacity-70">{timestamp}</span>
+    </div>
+  );
+}
+
 export default function ChatMessages({
   messages,
 }: {
@@ -100,9 +141,13 @@ export default function ChatMessages({
         aria-atomic="false"
       >
         {messages.map((message) => {
-          const megaphoneReply = message.sharedContent
+          const duoReply = message.sharedContent
             ? null
-            : parseMegaphoneReply(message.content);
+            : parseDuoFinderMessage(message.content);
+          const megaphoneReply =
+            duoReply || message.sharedContent
+              ? null
+              : parseMegaphoneReply(message.content);
 
           return (
             <div
@@ -118,6 +163,21 @@ export default function ChatMessages({
                   <span className="mt-1 block text-xs opacity-70">
                     {message.timestamp}
                   </span>
+                </div>
+              ) : duoReply ? (
+                <div
+                  className={cn(
+                    "max-w-[75%] overflow-hidden rounded-2xl p-3 shadow-sm",
+                    message.isOwn
+                      ? "bg-gradient-primary text-white"
+                      : "border border-border/60 bg-muted/80",
+                  )}
+                >
+                  <DuoFinderReplyBubble
+                    parsed={duoReply}
+                    isOwn={message.isOwn}
+                    timestamp={message.timestamp}
+                  />
                 </div>
               ) : (
                 <div
