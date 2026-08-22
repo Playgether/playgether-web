@@ -5,7 +5,8 @@ import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { startConversation } from "@/services/directMessages";
 import { useConversationsWidget } from "@/context/ConversationsWidgetContext";
-import { CustomToast, CustomToastProps } from "@/components/ui/customSonner";
+import { CustomToast } from "@/components/ui/customSonner";
+import { CustomToastProps } from "@/error/custom-toaster/enum";
 
 interface FriendMessageButtonProps {
   userId: string | number;
