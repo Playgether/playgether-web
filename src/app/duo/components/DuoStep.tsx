@@ -10,6 +10,7 @@ import {
   getGameSchema,
   getGameStats,
   getGames,
+  leaveQueue,
 } from "../services/duoApi";
 import {
   clearDuoDraft,
@@ -22,6 +23,15 @@ import { RoleSelection } from "./steps/RoleSelection";
 import { EloFilter } from "./steps/EloFilter";
 import { MatchResults } from "./steps/MatchResults";
 import { QueueManagementStep } from "./steps/QueueManagementStep";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export type DuoStep =
   | "game"
@@ -116,6 +126,12 @@ export default function DuoSteps({
 
   const [shared, setShared] = useState<SharedState>(emptyShared);
   const [activeQueueForGame, setActiveQueueForGame] = useState<DuoQueue | null>(null);
+  const [queueSwitchPrompt, setQueueSwitchPrompt] = useState<{
+    targetGame: Game;
+    activeQueue: DuoQueue;
+    activeGame: Game;
+  } | null>(null);
+  const [queueSwitchBusy, setQueueSwitchBusy] = useState(false);
   const [resolvingGameSelection, setResolvingGameSelection] = useState(
     () => Boolean(gameFromQuery)
   );
@@ -228,6 +244,34 @@ export default function DuoSteps({
         const existing = queues.find(
           (q) => (q.game_slug || "").toLowerCase() === gameFromQuery
         );
+        // Global single-queue: if URL game differs from the active queue, open that queue instead.
+        const otherActive =
+          !existing && queues.length > 0 ? queues[0] : null;
+        if (otherActive) {
+          const otherSlug = (otherActive.game_slug || "").toLowerCase();
+          const otherGame = (games as Game[]).find(
+            (g) => g.acronym.toLowerCase() === otherSlug
+          );
+          if (otherGame) {
+            const prefs = {
+              ...(otherActive.preferences as Partial<GamePreferences>),
+            };
+            selectedGameSlugRef.current = otherSlug;
+            preferencesRef.current = prefs;
+            saveDuoDraft(otherSlug, prefs);
+            hydratedSlugRef.current = otherSlug;
+            setShared({
+              selectedGame: otherGame,
+              stats: null,
+              schema: null,
+              preferences: prefs,
+            });
+            setActiveQueueForGame(otherActive);
+            changeStep("manage-queue", otherSlug);
+            return;
+          }
+        }
+
         const draft = loadDuoDraft(gameFromQuery);
         const preferences: Partial<GamePreferences> = {
           ...(draft?.preferences ?? {}),
@@ -310,36 +354,73 @@ export default function DuoSteps({
       void (async () => {
         setResolvingGameSelection(true);
         const slug = game.acronym.toLowerCase();
-        selectedGameSlugRef.current = slug;
-        hydratedSlugRef.current = slug;
-        preferencesRef.current = {};
-        updateShared({
-          selectedGame: game,
-          preferences: {},
-          stats: null,
-          schema: null,
-        });
         try {
-          const queues = await getActiveQueues();
+          const [queues, games] = await Promise.all([
+            getActiveQueues(),
+            getGames().catch(() => [] as Game[]),
+          ]);
           const existing = queues.find(
             (q) => (q.game_slug || "").toLowerCase() === slug
           );
           if (existing) {
+            selectedGameSlugRef.current = slug;
+            hydratedSlugRef.current = slug;
             const prefs = {
               ...(existing.preferences as Partial<GamePreferences>),
             };
             preferencesRef.current = prefs;
             saveDuoDraft(slug, prefs);
             setActiveQueueForGame(existing);
-            setShared((s) => ({ ...s, preferences: prefs }));
+            updateShared({
+              selectedGame: game,
+              preferences: prefs,
+              stats: null,
+              schema: null,
+            });
             changeStep("manage-queue", slug);
-          } else {
-            setActiveQueueForGame(null);
-            saveDuoDraft(slug, {});
-            changeStep("verify", slug);
+            return;
           }
-        } catch {
+
+          const otherQueue = queues[0];
+          if (otherQueue) {
+            const otherSlug = (otherQueue.game_slug || "").toLowerCase();
+            const otherGame =
+              (games as Game[]).find(
+                (g) => g.acronym.toLowerCase() === otherSlug
+              ) ?? null;
+            if (otherGame) {
+              setQueueSwitchPrompt({
+                targetGame: game,
+                activeQueue: otherQueue,
+                activeGame: otherGame,
+              });
+              return;
+            }
+          }
+
+          selectedGameSlugRef.current = slug;
+          hydratedSlugRef.current = slug;
+          preferencesRef.current = {};
           setActiveQueueForGame(null);
+          saveDuoDraft(slug, {});
+          updateShared({
+            selectedGame: game,
+            preferences: {},
+            stats: null,
+            schema: null,
+          });
+          changeStep("verify", slug);
+        } catch {
+          selectedGameSlugRef.current = slug;
+          hydratedSlugRef.current = slug;
+          preferencesRef.current = {};
+          setActiveQueueForGame(null);
+          updateShared({
+            selectedGame: game,
+            preferences: {},
+            stats: null,
+            schema: null,
+          });
           changeStep("verify", slug);
         } finally {
           setResolvingGameSelection(false);
@@ -348,6 +429,58 @@ export default function DuoSteps({
     },
     [changeStep, updateShared]
   );
+
+  const stayOnActiveQueue = useCallback(() => {
+    const prompt = queueSwitchPrompt;
+    if (!prompt) return;
+    const { activeQueue, activeGame } = prompt;
+    const otherSlug = activeGame.acronym.toLowerCase();
+    const prefs = {
+      ...(activeQueue.preferences as Partial<GamePreferences>),
+    };
+    selectedGameSlugRef.current = otherSlug;
+    hydratedSlugRef.current = otherSlug;
+    preferencesRef.current = prefs;
+    saveDuoDraft(otherSlug, prefs);
+    setActiveQueueForGame(activeQueue);
+    updateShared({
+      selectedGame: activeGame,
+      preferences: prefs,
+      stats: null,
+      schema: null,
+    });
+    setQueueSwitchPrompt(null);
+    changeStep("manage-queue", otherSlug);
+  }, [changeStep, queueSwitchPrompt, updateShared]);
+
+  const switchToTargetGame = useCallback(() => {
+    const prompt = queueSwitchPrompt;
+    if (!prompt) return;
+    void (async () => {
+      setQueueSwitchBusy(true);
+      try {
+        await leaveQueue(prompt.activeQueue.id);
+        const slug = prompt.targetGame.acronym.toLowerCase();
+        selectedGameSlugRef.current = slug;
+        hydratedSlugRef.current = slug;
+        preferencesRef.current = {};
+        setActiveQueueForGame(null);
+        saveDuoDraft(slug, {});
+        updateShared({
+          selectedGame: prompt.targetGame,
+          preferences: {},
+          stats: null,
+          schema: null,
+        });
+        setQueueSwitchPrompt(null);
+        changeStep("verify", slug);
+      } catch {
+        setQueueSwitchPrompt(null);
+      } finally {
+        setQueueSwitchBusy(false);
+      }
+    })();
+  }, [changeStep, queueSwitchPrompt, updateShared]);
 
   const gameSelectionStep = <GameSelection onSelect={selectGame} />;
 
@@ -367,7 +500,6 @@ export default function DuoSteps({
             game={shared.selectedGame}
             queue={activeQueueForGame}
             onBack={resetToGameList}
-            onQueueUpdated={(q) => setActiveQueueForGame(q)}
             onLeftQueue={resetToGameList}
             onEditPreferences={() => {
               const prefs = {
@@ -504,6 +636,58 @@ export default function DuoSteps({
         </div>
       ) : null}
       <div className="lg:ml-20">{renderStep()}</div>
+
+      <Dialog
+        open={queueSwitchPrompt !== null}
+        onOpenChange={(open) => {
+          if (!open && !queueSwitchBusy) setQueueSwitchPrompt(null);
+        }}
+      >
+        <DialogContent
+          className="z-[100001]"
+          overlayClassName="z-[100000]"
+        >
+          <DialogHeader>
+            <DialogTitle>Trocar de fila?</DialogTitle>
+            <DialogDescription>
+              {queueSwitchPrompt ? (
+                <>
+                  Você já está na fila de{" "}
+                  <strong className="text-foreground">
+                    {queueSwitchPrompt.activeQueue.game_name ||
+                      queueSwitchPrompt.activeGame.name}
+                  </strong>
+                  . Se entrar em{" "}
+                  <strong className="text-foreground">
+                    {queueSwitchPrompt.targetGame.name}
+                  </strong>
+                  , a fila atual será encerrada (incluindo convites pendentes
+                  daquele jogo).
+                </>
+              ) : null}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={queueSwitchBusy}
+              onClick={stayOnActiveQueue}
+            >
+              Ficar na fila atual
+            </Button>
+            <Button
+              type="button"
+              disabled={queueSwitchBusy}
+              onClick={switchToTargetGame}
+            >
+              {queueSwitchBusy
+                ? "Trocando…"
+                : `Encerrar e buscar em ${queueSwitchPrompt?.targetGame.name ?? "outro jogo"}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

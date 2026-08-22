@@ -329,6 +329,13 @@ export default function PrivacySettingsPage() {
             onCheckedChange={(v) => update({ show_online_status: v })}
             loading={loading}
           />
+          <SettingsToggleRow
+            label="Enviar confirmações de leitura"
+            description="Se desativado, outras pessoas não saberão quando você leu. Você também não verá quando leram suas mensagens em conversas privadas."
+            checked={prefs?.show_read_receipts ?? true}
+            onCheckedChange={(v) => update({ show_read_receipts: v })}
+            loading={loading}
+          />
         </SettingsSection>
 
         <SettingsSection

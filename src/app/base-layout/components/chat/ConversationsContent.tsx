@@ -18,7 +18,8 @@ import NoConversationSelected from "./NoConversationSelected";
 import { KeySafetyDialog } from "./KeySafetyDialog";
 import { useE2ECrypto } from "@/context/E2ECryptoContext";
 import { useAuthContext } from "@/context/AuthContext";
-import { useDMWebSocket } from "@/hooks/useDMWebSocket";
+import { useUserPreferences } from "@/context/UserPreferencesContext";
+import { useDMWebSocket, type DMMessageStatusEvent } from "@/hooks/useDMWebSocket";
 import { useDMNotifications } from "@/hooks/useDMNotifications";
 import { useDMUnread } from "@/context/DMUnreadContext";
 import {
@@ -30,13 +31,17 @@ import {
   getUserPublicKey,
   leaveGroup,
   markConversationRead,
+  markMessagesDelivered,
   muteConversation,
   startConversation,
   type DMConversation,
   type DMMessage,
 } from "@/services/directMessages";
 import type { ConversationInterface } from "../../types/chat/ConversationInterface";
-import type { MessageInterface } from "../../types/chat/MessageInterface";
+import type {
+  MessageDeliveryStatus,
+  MessageInterface,
+} from "../../types/chat/MessageInterface";
 import { resolvePlaygetherMediaUrl } from "@/lib/resolvePlaygetherMediaUrl";
 import { CustomToast } from "@/components/ui/customSonner";
 import {
@@ -66,6 +71,26 @@ interface ConversationsContentProps {
   forceDuoReply?: DuoReplyDraft;
 }
 
+function resolveDeliveryStatus(
+  msg: Pick<DMMessage, "is_read" | "delivered_at">,
+  isOwn: boolean,
+  showDeliveryStatus: boolean,
+  showReadReceipts: boolean,
+): MessageDeliveryStatus | undefined {
+  if (!isOwn || !showDeliveryStatus) return undefined;
+  if (showReadReceipts && msg.is_read) return "read";
+  if (msg.delivered_at) return "delivered";
+  return "sent";
+}
+
+function shouldShowDeliveryStatus(
+  conv: Pick<DMConversation, "type" | "status"> | null | undefined,
+): boolean {
+  if (!conv) return false;
+  if (conv.type === "group") return true;
+  return conv.status !== "pending";
+}
+
 async function dmMessageToUi(
   msg: DMMessage,
   userId: string | undefined,
@@ -76,6 +101,8 @@ async function dmMessageToUi(
     isSender: boolean,
     encryptedKeySender: string,
   ) => Promise<string | null>,
+  showDeliveryStatus: boolean,
+  showReadReceipts: boolean,
 ): Promise<MessageInterface> {
   const isSender = msg.sender_id === userId;
 
@@ -104,6 +131,12 @@ async function dmMessageToUi(
       minute: "2-digit",
     }),
     isOwn: isSender,
+    deliveryStatus: resolveDeliveryStatus(
+      msg,
+      isSender,
+      showDeliveryStatus,
+      showReadReceipts,
+    ),
   };
 }
 
@@ -132,12 +165,15 @@ function toConversationInterface(
   }
 
   const other = dm.other_participant;
+  const canViewProfile = other?.can_view_profile !== false;
   return {
     id: dm.id,
     name: other
       ? `${other.first_name} ${other.last_name}`.trim() || other.username
       : "?",
-    avatar: resolvePlaygetherMediaUrl(other?.profile_photo) || "",
+    avatar: canViewProfile
+      ? resolvePlaygetherMediaUrl(other?.profile_photo) || ""
+      : "",
     lastMessage: dm.last_message ? (decryptedPreview ?? "🔒") : "",
     timestamp: dm.last_message
       ? new Date(dm.last_message.timestamp).toLocaleTimeString("pt-BR", {
@@ -151,6 +187,8 @@ function toConversationInterface(
     isMuted: Boolean(dm.is_muted),
     hasLeft: Boolean(dm.has_left),
     canMessage: dm.can_message !== false,
+    canViewProfile,
+    canMessageReason: dm.can_message_reason ?? null,
   };
 }
 
@@ -338,6 +376,8 @@ export function ConversationsContent({
   forceDuoReply,
 }: ConversationsContentProps) {
   const { user } = useAuthContext();
+  const { prefs } = useUserPreferences();
+  const userSharesReceipts = prefs?.show_read_receipts ?? true;
   const { isReady, needsUnlock, encryptForUser, decrypt } = useE2ECrypto();
   const { markRead, refresh: refreshUnread } = useDMUnread();
 
@@ -384,6 +424,8 @@ export function ConversationsContent({
   const [groupSearching, setGroupSearching] = useState(false);
   const [creatingGroup, setCreatingGroup] = useState(false);
   const [acceptingRequest, setAcceptingRequest] = useState(false);
+  const [excludingRequest, setExcludingRequest] = useState(false);
+  const [blockingRequest, setBlockingRequest] = useState(false);
   const [activeTab, setActiveTab] = useState("private");
   const [peerKeyTrust, setPeerKeyTrust] = useState<KeyTrustResult | null>(null);
   const [safetyDialogOpen, setSafetyDialogOpen] = useState(false);
@@ -393,6 +435,9 @@ export function ConversationsContent({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const prevForceSelectRef = useRef<string | undefined>(undefined);
   const selectedIdRef = useRef<string | null>(null);
+  const showDeliveryRef = useRef(false);
+  const showReadReceiptsRef = useRef(true);
+  const historyVersionRef = useRef(0);
   const rawMessagesRef = useRef<DMMessage[]>([]);
   rawMessagesRef.current = rawMessages;
 
@@ -464,6 +509,8 @@ export function ConversationsContent({
   const selectConversation = useCallback(
     async (conv: DMConversation) => {
       selectedIdRef.current = conv.id;
+      showDeliveryRef.current = shouldShowDeliveryStatus(conv);
+      showReadReceiptsRef.current = userSharesReceipts;
       setSelectedConversation(conv);
       setMessages([]);
       setRawMessages([]);
@@ -494,7 +541,42 @@ export function ConversationsContent({
       if (unreadBefore > 0) markRead(unreadBefore);
       else void refreshUnread();
     },
-    [markRead, refreshUnread],
+    [markRead, refreshUnread, user?.user_id, userSharesReceipts],
+  );
+
+  useEffect(() => {
+    showDeliveryRef.current = shouldShowDeliveryStatus(selectedConversation);
+    showReadReceiptsRef.current = userSharesReceipts;
+  }, [selectedConversation?.status, selectedConversation?.type, userSharesReceipts]);
+
+  const refreshMessagesForConversation = useCallback(
+    async (convId: string, showDeliveryStatus = showDeliveryRef.current) => {
+      const { results } = await getMessages(convId);
+      if (selectedIdRef.current !== convId) return;
+
+      const sorted = [...results].reverse();
+      for (const msg of sorted) {
+        seenIdsRef.current.add(msg.id);
+      }
+      setRawMessages(sorted);
+
+      const decrypted: MessageInterface[] = [];
+      for (const msg of sorted) {
+        decrypted.push(
+          await dmMessageToUi(
+            msg,
+            user?.user_id,
+            decrypt,
+            showDeliveryStatus,
+            showReadReceiptsRef.current,
+          ),
+        );
+        if (selectedIdRef.current !== convId) return;
+      }
+      setMessages(decrypted);
+      historyVersionRef.current += 1;
+    },
+    [decrypt, user?.user_id],
   );
 
   // Decrypt loaded history when keys are ready (avoids "não foi possível decifrar"
@@ -508,15 +590,30 @@ export function ConversationsContent({
 
     let cancelled = false;
     const conversationId = selectedConversation.id;
-    const snapshot = rawMessagesRef.current;
+    const versionAtStart = historyVersionRef.current;
 
     void (async () => {
+      const showDeliveryStatus = shouldShowDeliveryStatus(selectedConversation);
       const decrypted: MessageInterface[] = [];
-      for (const msg of snapshot) {
-        decrypted.push(await dmMessageToUi(msg, user?.user_id, decrypt));
+      for (const msg of rawMessagesRef.current) {
+        decrypted.push(
+          await dmMessageToUi(
+            msg,
+            user?.user_id,
+            decrypt,
+            showDeliveryStatus,
+            userSharesReceipts,
+          ),
+        );
         if (cancelled || selectedIdRef.current !== conversationId) return;
       }
-      if (cancelled || selectedIdRef.current !== conversationId) return;
+      if (
+        cancelled ||
+        selectedIdRef.current !== conversationId ||
+        historyVersionRef.current !== versionAtStart
+      ) {
+        return;
+      }
       setMessages(decrypted);
       setLoadingMessages(false);
     })();
@@ -529,6 +626,8 @@ export function ConversationsContent({
     isReady,
     selectedConversation?.id,
     selectedConversation?.type,
+    selectedConversation?.status,
+    userSharesReceipts,
     decrypt,
     user?.user_id,
   ]);
@@ -631,20 +730,46 @@ export function ConversationsContent({
     selectConversation,
   ]);
 
-  const markConversationUnlocked = useCallback((convId: string) => {
-    const patch = {
-      status: "active" as const,
-      is_incoming_request: false,
-    };
-    setConversations((prev) =>
-      sortConversations(
-        prev.map((c) => (c.id === convId ? { ...c, ...patch } : c)),
-      ),
-    );
-    setSelectedConversation((prev) =>
-      prev?.id === convId ? { ...prev, ...patch } : prev,
-    );
-  }, []);
+  const markConversationUnlocked = useCallback(
+    (convId: string) => {
+      const patch = {
+        status: "active" as const,
+        is_incoming_request: false,
+      };
+      showDeliveryRef.current = shouldShowDeliveryStatus({
+        type: "private",
+        status: "active",
+      });
+      showReadReceiptsRef.current = userSharesReceipts;
+      setConversations((prev) =>
+        sortConversations(
+          prev.map((c) => (c.id === convId ? { ...c, ...patch } : c)),
+        ),
+      );
+      setSelectedConversation((prev) =>
+        prev?.id === convId ? { ...prev, ...patch } : prev,
+      );
+      if (showReadReceiptsRef.current) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.isOwn ? { ...m, deliveryStatus: "read" as const } : m,
+          ),
+        );
+      } else {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.isOwn && m.deliveryStatus !== "sent"
+              ? { ...m, deliveryStatus: "delivered" as const }
+              : m,
+          ),
+        );
+      }
+      if (selectedIdRef.current === convId) {
+        void refreshMessagesForConversation(convId, true);
+      }
+    },
+    [refreshMessagesForConversation, userSharesReceipts],
+  );
 
   // ── WebSocket: receive new messages ──────────────────────────────────────
 
@@ -654,7 +779,14 @@ export function ConversationsContent({
       seenIdsRef.current.add(msg.id);
 
       const isSender = msg.sender_id === user?.user_id;
-      const ui = await dmMessageToUi(msg, user?.user_id, decrypt);
+      let unlockedConversation = false;
+      const ui = await dmMessageToUi(
+        msg,
+        user?.user_id,
+        decrypt,
+        showDeliveryRef.current,
+        showReadReceiptsRef.current,
+      );
       const displayText = ui.content;
 
       setMessages((prev) => [...prev, ui]);
@@ -675,6 +807,9 @@ export function ConversationsContent({
               !c.is_incoming_request
                 ? { status: "active" as const, is_incoming_request: false }
                 : null;
+            if (unlocked) {
+              unlockedConversation = true;
+            }
             return {
               ...c,
               ...unlocked,
@@ -687,7 +822,9 @@ export function ConversationsContent({
         ),
       );
 
-      if (!isSender && msg.conversation_id) {
+      if (unlockedConversation && msg.conversation_id) {
+        markConversationUnlocked(msg.conversation_id);
+      } else if (!isSender && msg.conversation_id) {
         setSelectedConversation((prev) => {
           if (!prev || prev.id !== msg.conversation_id) return prev;
           if (prev.status !== "pending" || prev.is_incoming_request) return prev;
@@ -705,28 +842,181 @@ export function ConversationsContent({
           [msg.conversation_id!]: { messageId: msg.id, text: displayText },
         }));
       }
-      // Marca como lida no servidor enquanto a conversa está aberta
+
       if (!isSender && msg.conversation_id) {
         void markConversationRead(msg.conversation_id);
       }
+
+      if (!isSender && msg.conversation_id) {
+        setConversations((prev) => {
+          const conv = prev.find((c) => c.id === msg.conversation_id);
+          if (conv?.status === "active") {
+            void markMessagesDelivered(msg.conversation_id!, [msg.id]);
+          }
+          return prev;
+        });
+      }
     },
-    [decrypt, user],
+    [decrypt, user?.user_id, markConversationUnlocked],
   );
 
+  const handleMessageStatus = useCallback((event: DMMessageStatusEvent) => {
+    if (!showDeliveryRef.current) return;
+    setRawMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== event.message_id) return m;
+        return {
+          ...m,
+          delivered_at: event.delivered_at ?? m.delivered_at,
+          is_read:
+            showReadReceiptsRef.current && event.is_read != null
+              ? event.is_read
+              : m.is_read,
+        };
+      }),
+    );
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== event.message_id || !m.isOwn) return m;
+        let deliveryStatus: MessageDeliveryStatus = "sent";
+        if (showReadReceiptsRef.current && event.is_read) deliveryStatus = "read";
+        else if (event.delivered_at || m.deliveryStatus === "delivered" || m.deliveryStatus === "read") {
+          deliveryStatus = "delivered";
+        }
+        return { ...m, deliveryStatus };
+      }),
+    );
+  }, []);
+
+  const applyBlockedByOther = useCallback((conversationId: string, reason?: string | null) => {
+    const patch = (conv: DMConversation): DMConversation => {
+      if (conv.id !== conversationId || conv.type !== "private") return conv;
+      const other = conv.other_participant;
+      return {
+        ...conv,
+        can_message: false,
+        can_message_reason:
+          reason ??
+          "Você não pode enviar mensagens para este usuário devido às configurações de privacidade dele.",
+        other_participant: other
+          ? {
+              ...other,
+              profile_photo: null,
+              can_view_profile: false,
+            }
+          : other,
+      };
+    };
+
+    setConversations((prev) => prev.map(patch));
+    setSelectedConversation((prev) => (prev ? patch(prev) : prev));
+  }, []);
+
+  const applyUnblockedByOther = useCallback(
+    (
+      conversationId: string,
+      {
+        can_message = true,
+        can_message_reason = null,
+        other_participant_profile_photo = null,
+        can_view_profile = true,
+      }: {
+        can_message?: boolean;
+        can_message_reason?: string | null;
+        other_participant_profile_photo?: string | null;
+        can_view_profile?: boolean;
+      },
+    ) => {
+      const patch = (conv: DMConversation): DMConversation => {
+        if (conv.id !== conversationId || conv.type !== "private") return conv;
+        const other = conv.other_participant;
+        return {
+          ...conv,
+          can_message,
+          can_message_reason,
+          other_participant: other
+            ? {
+                ...other,
+                profile_photo:
+                  other_participant_profile_photo ?? other.profile_photo,
+                can_view_profile,
+              }
+            : other,
+        };
+      };
+
+      setConversations((prev) => prev.map(patch));
+      setSelectedConversation((prev) => (prev ? patch(prev) : prev));
+    },
+    [],
+  );
+
+  const syncConversationsFromServer = useCallback((conversationId: string) => {
+    void getConversations().then((data) => {
+      setConversations((prev) => {
+        const byId = new Map(prev.map((c) => [c.id, c]));
+        return sortConversations(
+          data.map((c) => {
+            const local = byId.get(c.id);
+            if (!local) return c;
+            return {
+              ...c,
+              unread_count: local.unread_count ?? c.unread_count,
+            };
+          }),
+        );
+      });
+      setSelectedConversation((prev) => {
+        if (!prev || prev.id !== conversationId) return prev;
+        const updated = data.find((c) => c.id === prev.id);
+        return updated ? { ...prev, ...updated } : prev;
+      });
+    });
+  }, []);
+
   const handleConversationStatusEvent = useCallback(
-    (event: { conversation_id: string; status?: string }) => {
+    (event: {
+      type?: string;
+      conversation_id: string;
+      status?: string;
+      can_message?: boolean;
+      can_message_reason?: string | null;
+      other_participant_profile_photo?: string | null;
+      can_view_profile?: boolean;
+    }) => {
       if (!event.conversation_id) return;
-      if (event.status === "active") {
+      if (event.type === "user_blocked") {
+        applyBlockedByOther(event.conversation_id, event.can_message_reason);
+        syncConversationsFromServer(event.conversation_id);
+        return;
+      }
+      if (event.type === "user_unblocked") {
+        applyUnblockedByOther(event.conversation_id, {
+          can_message: event.can_message,
+          can_message_reason: event.can_message_reason,
+          other_participant_profile_photo: event.other_participant_profile_photo,
+          can_view_profile: event.can_view_profile,
+        });
+        syncConversationsFromServer(event.conversation_id);
+        return;
+      }
+      if (event.status === "active" || event.type === "request_accepted") {
         markConversationUnlocked(event.conversation_id);
       }
     },
-    [markConversationUnlocked],
+    [
+      applyBlockedByOther,
+      applyUnblockedByOther,
+      syncConversationsFromServer,
+      markConversationUnlocked,
+    ],
   );
 
   const { sendEncryptedMessage, sendGroupMessage } = useDMWebSocket({
     conversationId: selectedConversation?.id ?? null,
     onNewMessage: handleNewMessage,
     onStatusEvent: handleConversationStatusEvent,
+    onMessageStatus: handleMessageStatus,
   });
 
   useDMNotifications({
@@ -738,25 +1028,23 @@ export function ConversationsContent({
           void markConversationRead(convId);
         }
 
-        // Atualiza o numerozinho na lista imediatamente (só se não estiver aberta)
-        if (!isOpen) {
-          setConversations((prev) => {
-            if (!prev.some((c) => c.id === convId)) return prev;
-            return sortConversations(
-              prev.map((c) =>
-                c.id === convId
-                  ? {
-                      ...c,
-                      unread_count: (c.unread_count ?? 0) + 1,
-                      updated_at: new Date().toISOString(),
-                    }
-                  : c,
-              ),
-            );
-          });
-        }
+        setConversations((prev) => {
+          if (isOpen || !prev.some((c) => c.id === convId)) {
+            return prev;
+          }
+          return sortConversations(
+            prev.map((c) =>
+              c.id === convId
+                ? {
+                    ...c,
+                    unread_count: (c.unread_count ?? 0) + 1,
+                    updated_at: new Date().toISOString(),
+                  }
+                : c,
+            ),
+          );
+        });
 
-        // Sincroniza status / preview / conversas novas (também com a aberta)
         void getConversations().then((data) => {
           const selectedId = selectedIdRef.current;
           setConversations((prev) => {
@@ -919,6 +1207,14 @@ export function ConversationsContent({
     [loadConversations, selectConversation],
   );
 
+  const clearSelectedConversation = useCallback(() => {
+    selectedIdRef.current = null;
+    setSelectedConversation(null);
+    setRawMessages([]);
+    setHistoryConvId(null);
+    setMessages([]);
+  }, []);
+
   const handleAcceptMessageRequest = useCallback(async () => {
     const convId = selectedConversation?.id;
     if (!convId || acceptingRequest) return;
@@ -926,6 +1222,7 @@ export function ConversationsContent({
     try {
       const updated = await acceptMessageRequest(convId);
       if (!updated) return;
+      markConversationUnlocked(convId);
       setSelectedConversation(updated);
       setConversations((prev) =>
         sortConversations(
@@ -936,15 +1233,52 @@ export function ConversationsContent({
     } finally {
       setAcceptingRequest(false);
     }
-  }, [selectedConversation?.id, acceptingRequest]);
+  }, [selectedConversation?.id, acceptingRequest, markConversationUnlocked]);
 
-  const clearSelectedConversation = useCallback(() => {
-    selectedIdRef.current = null;
-    setSelectedConversation(null);
-    setRawMessages([]);
-    setHistoryConvId(null);
-    setMessages([]);
-  }, []);
+  const handleExcludeMessageRequest = useCallback(async () => {
+    const convId = selectedConversation?.id;
+    if (!convId || excludingRequest) return;
+    setExcludingRequest(true);
+    try {
+      const ok = await deleteConversation(convId);
+      if (!ok) {
+        CustomToast.error("Não foi possível excluir a solicitação.");
+        return;
+      }
+      setConversations((prev) => prev.filter((c) => c.id !== convId));
+      clearSelectedConversation();
+      setActiveTab("private");
+      CustomToast.neutral("Solicitação excluída.");
+    } finally {
+      setExcludingRequest(false);
+    }
+  }, [selectedConversation?.id, excludingRequest, clearSelectedConversation]);
+
+  const handleBlockMessageRequest = useCallback(async () => {
+    const username = selectedConversation?.other_participant?.username;
+    const convId = selectedConversation?.id;
+    if (!username || !convId || blockingRequest) return;
+    setBlockingRequest(true);
+    try {
+      const res = await fetch(`/api/profiles/${username}/block`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        CustomToast.error("Não foi possível bloquear este usuário.");
+        return;
+      }
+      await deleteConversation(convId);
+      setConversations((prev) => prev.filter((c) => c.id !== convId));
+      clearSelectedConversation();
+      setActiveTab("private");
+      CustomToast.success("Usuário bloqueado.");
+    } catch {
+      CustomToast.error("Não foi possível bloquear este usuário.");
+    } finally {
+      setBlockingRequest(false);
+    }
+  }, [selectedConversation, blockingRequest, clearSelectedConversation]);
 
   const handleDeleteConversation = useCallback(
     async (convId: string, e?: React.MouseEvent) => {
@@ -1135,11 +1469,6 @@ export function ConversationsContent({
     selectedConversation?.type === "private" &&
     selectedConversation.is_incoming_request;
 
-  const showOutgoingRequest =
-    selectedConversation?.type === "private" &&
-    selectedConversation.status === "pending" &&
-    !selectedConversation.is_incoming_request;
-
   const keyChangedBlocked = peerKeyTrust?.status === "changed";
 
   const e2eBlocked =
@@ -1283,11 +1612,6 @@ export function ConversationsContent({
                     selectedId={selectedConversation?.id}
                     onSelect={selectConversation}
                     onDelete={handleDeleteConversation}
-                    subtitle={
-                      conv.status === "pending" && !conv.is_incoming_request
-                        ? "Aguardando resposta..."
-                        : undefined
-                    }
                   />
                 ))
               )}
@@ -1519,11 +1843,6 @@ export function ConversationsContent({
                   ? peerKeyTrust?.status ?? null
                   : null
               }
-              onViewSafetyCode={
-                selectedConversation.type === "private"
-                  ? () => setSafetyDialogOpen(true)
-                  : undefined
-              }
               onConfirmKeyTrust={
                 keyChangedBlocked ? handleConfirmPeerKeyTrust : undefined
               }
@@ -1576,23 +1895,36 @@ export function ConversationsContent({
                 <p className="text-center text-sm text-muted-foreground mb-3">
                   Este usuário quer enviar uma mensagem para você.
                 </p>
-                <div className="flex gap-2 justify-center">
+                <div className="flex flex-wrap gap-2 justify-center">
                   <button
                     type="button"
                     onClick={() => void handleAcceptMessageRequest()}
-                    disabled={acceptingRequest}
+                    disabled={
+                      acceptingRequest || excludingRequest || blockingRequest
+                    }
                     className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 hover:bg-primary/90 transition-colors"
                   >
                     {acceptingRequest ? "Aceitando..." : "Aceitar"}
                   </button>
                   <button
                     type="button"
-                    onClick={() =>
-                      void handleDeleteConversation(selectedConversation.id)
+                    onClick={() => void handleExcludeMessageRequest()}
+                    disabled={
+                      acceptingRequest || excludingRequest || blockingRequest
                     }
-                    className="px-4 py-2 rounded-lg border border-border/50 text-sm text-muted-foreground hover:bg-muted/60 transition-colors"
+                    className="px-4 py-2 rounded-lg border border-border/50 text-sm text-muted-foreground hover:bg-muted/60 transition-colors disabled:opacity-50"
                   >
-                    Recusar
+                    {excludingRequest ? "Excluindo..." : "Excluir"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleBlockMessageRequest()}
+                    disabled={
+                      acceptingRequest || excludingRequest || blockingRequest
+                    }
+                    className="px-4 py-2 rounded-lg border border-destructive/40 text-sm text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+                  >
+                    {blockingRequest ? "Bloqueando..." : "Bloquear"}
                   </button>
                 </div>
               </div>
@@ -1608,12 +1940,6 @@ export function ConversationsContent({
               </div>
             ) : (
               <>
-                {showOutgoingRequest ? (
-                  <div className="border-t border-border/50 bg-amber-500/10 px-4 py-2 text-center text-xs text-muted-foreground">
-                    Sua mensagem será enviada como solicitação. A pessoa precisa
-                    aceitar para responder.
-                  </div>
-                ) : null}
                 <InputMessage
                   ref={inputRef}
                   onInput={setMessageInput}

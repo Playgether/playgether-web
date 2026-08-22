@@ -25,7 +25,6 @@ import {
   ArrowLeft,
   LogOut,
   MoreHorizontal,
-  ShieldAlert,
   ShieldCheck,
   Trash2,
   UserX,
@@ -91,7 +90,6 @@ export default function ChatHeader({
   onDeleteConversation,
   onBlockUser,
   keyTrustStatus,
-  onViewSafetyCode,
   onConfirmKeyTrust,
 }: {
   selectedConversation: ConversationInterface | null;
@@ -101,7 +99,6 @@ export default function ChatHeader({
   onDeleteConversation?: () => void | Promise<void>;
   onBlockUser?: () => void | Promise<void>;
   keyTrustStatus?: KeyTrustStatus | null;
-  onViewSafetyCode?: () => void;
   onConfirmKeyTrust?: () => void;
 }) {
   const username = selectedConversation?.username;
@@ -163,7 +160,10 @@ export default function ChatHeader({
       .map((n) => n[0]?.toUpperCase() ?? "")
       .join("") || "?";
 
-  const profileHref = isPrivate && username ? `/profile/${username}` : null;
+  const profileHref =
+    isPrivate && username && selectedConversation?.canViewProfile !== false
+      ? `/profile/${username}`
+      : null;
   const avatarSrc = typeof avatar === "string" ? avatar : avatar.src;
 
   const profileContent = (
@@ -293,23 +293,6 @@ export default function ChatHeader({
                   </>
                 )}
               </DropdownMenuItem>
-
-              {isPrivate && onViewSafetyCode ? (
-                <DropdownMenuItem
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    onViewSafetyCode();
-                  }}
-                  className="flex items-center gap-2 hover:bg-muted/50"
-                >
-                  {keyTrustStatus === "changed" ? (
-                    <ShieldAlert className="h-4 w-4 text-amber-500" />
-                  ) : (
-                    <ShieldCheck className="h-4 w-4 text-primary" />
-                  )}
-                  Código de segurança
-                </DropdownMenuItem>
-              ) : null}
 
               {isPrivate && keyTrustStatus === "changed" && onConfirmKeyTrust ? (
                 <DropdownMenuItem

@@ -89,8 +89,13 @@ export function GameVerification({
     if (!p || typeof p !== "object") return;
     if (slug === "lol") {
       if (typeof p.main_role === "string" && p.main_role) setLolMainRole(p.main_role);
-      if (typeof p.secondary_role === "string" && p.secondary_role)
-        setLolSecondaryRole(p.secondary_role);
+      if (typeof p.secondary_role === "string" && p.secondary_role) {
+        const main =
+          typeof p.main_role === "string" ? p.main_role : undefined;
+        if (!main || p.secondary_role !== main) {
+          setLolSecondaryRole(p.secondary_role);
+        }
+      }
       if (typeof p.own_elo === "string" && p.own_elo) setLolOwnElo(p.own_elo);
     }
     if (slug === "cs2") {

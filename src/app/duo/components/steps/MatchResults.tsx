@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   MessageSquare,
-  RefreshCw,
   Trophy,
   Users,
   Gamepad2,
@@ -38,10 +37,12 @@ import { useDuoSocket } from "../../hooks/useDuoSocket";
 import { useLiveExpiryLabel } from "../../hooks/useLiveExpiryLabel";
 import {
   acceptDuoInvite,
+  cancelDuoInvite,
   declineDuoInvite,
   getActiveQueues,
   getDuoInvites,
   sendDuoInvite,
+  undoDeclineDuoInvite,
 } from "../../services/duoApi";
 import { usePresenceContext } from "@/context/PresenceContext";
 import { startConversation } from "@/services/directMessages";
@@ -71,10 +72,14 @@ import { collapseSelection } from "../../utils/collapseSelectionDisplay";
 import { DUO_INVITE_CHANGED_EVENT } from "@/lib/duoInviteEvents";
 
 type FilterMode = "all" | "online" | "requests";
-type RequestsSubTab = "received" | "sent" | "completed";
+type RequestsSubTab = "received" | "sent" | "completed" | "declined";
 
 function isInviteInMatches(match: DuoMatch) {
-  return match.invite_status === "pending" || match.invite_status === "accepted";
+  return (
+    match.invite_status === "pending" ||
+    match.invite_status === "accepted" ||
+    match.invite_status === "declined"
+  );
 }
 
 interface MatchResultsProps {
@@ -173,7 +178,7 @@ export function MatchResults({
   const loadInvites = async (options?: { quiet?: boolean }) => {
     setInvitesLoading(true);
     try {
-      const [received, sent, completed] = await Promise.all([
+      const [received, sent, completed, declined] = await Promise.all([
         getDuoInvites({
           game_slug: slug,
           direction: "received",
@@ -189,9 +194,14 @@ export function MatchResults({
           direction: "all",
           status: "accepted",
         }),
+        getDuoInvites({
+          game_slug: slug,
+          direction: "received",
+          status: "declined",
+        }),
       ]);
       const byId = new Map<number, DuoInvite>();
-      for (const row of [...received, ...sent, ...completed]) {
+      for (const row of [...received, ...sent, ...completed, ...declined]) {
         byId.set(row.id, row);
       }
       setInvites([...byId.values()]);
@@ -208,13 +218,11 @@ export function MatchResults({
     connected,
     queueStatus,
     expiresAt,
-    isNearExpiry,
     evictionReason,
     matches,
     error,
     startSearch,
     leaveQueue,
-    renewQueue,
     pulseDuoResultsPresence,
     patchMatchInvite,
   } = useDuoSocket({
@@ -362,6 +370,9 @@ export function MatchResults({
     (i) => i.status === "pending" && i.direction === "sent",
   );
   const completedInvites = invites.filter((i) => i.status === "accepted");
+  const declinedInvites = invites.filter(
+    (i) => i.status === "declined" && i.direction === "received",
+  );
   const pendingReceivedCount = receivedInvites.length;
 
   const requestsForSubTab =
@@ -369,7 +380,9 @@ export function MatchResults({
       ? receivedInvites
       : requestsSubTab === "sent"
         ? sentInvites
-        : completedInvites;
+        : requestsSubTab === "declined"
+          ? declinedInvites
+          : completedInvites;
 
   const availableMatches = matches.filter((m) => !isInviteInMatches(m));
 
@@ -452,17 +465,6 @@ export function MatchResults({
                 <SlidersHorizontal className="mr-1 h-3 w-3" />
                 Mudar filtros
               </Button>
-              {isNearExpiry && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 flex-1 text-xs border-yellow-500/50 text-yellow-400 hover:bg-yellow-500/10 sm:flex-none"
-                  onClick={renewQueue}
-                >
-                  <RefreshCw className="mr-1 h-3 w-3" />
-                  Renovar
-                </Button>
-              )}
               <Button
                 size="sm"
                 variant="ghost"
@@ -556,25 +558,34 @@ export function MatchResults({
                     count: sentInvites.length,
                   },
                   {
+                    id: "declined" as const,
+                    label: "Recusadas",
+                    count: declinedInvites.length,
+                  },
+                  {
                     id: "completed" as const,
                     label: "Concluídas",
                     count: completedInvites.length,
                   },
                 ] as const
-              ).map(({ id, label, count }) => (
+              ).map((tab) => (
                 <button
-                  key={id}
+                  key={tab.id}
                   type="button"
-                  onClick={() => setRequestsSubTab(id)}
+                  onClick={() => setRequestsSubTab(tab.id)}
                   className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                    requestsSubTab === id
+                    requestsSubTab === tab.id
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted/60 text-muted-foreground hover:text-card-foreground"
                   }`}
                 >
-                  {label}
-                  {count > 0 ? (
-                    <span className="ml-1.5 tabular-nums opacity-80">{count}</span>
+                  {tab.label}
+                  {tab.id === "sent" ? (
+                    <span className="ml-1.5 tabular-nums opacity-80">
+                      {tab.count}/15
+                    </span>
+                  ) : tab.count > 0 ? (
+                    <span className="ml-1.5 tabular-nums opacity-80">{tab.count}</span>
                   ) : null}
                 </button>
               ))}
@@ -596,7 +607,9 @@ export function MatchResults({
                     ? "Nenhuma solicitação recebida. Quando alguém te chamar para duo, aparece aqui."
                     : requestsSubTab === "sent"
                       ? "Você ainda não enviou solicitações pendentes."
-                      : "Nenhum duo concluído ainda. Aceites aparecem aqui com o chat liberado."}
+                      : requestsSubTab === "declined"
+                        ? "Nenhuma solicitação recusada. Elas ficam aqui até sua fila acabar."
+                        : "Nenhum duo concluído ainda. Aceites aparecem aqui com o chat liberado."}
                 </p>
               </div>
             ) : (
@@ -609,9 +622,11 @@ export function MatchResults({
                     variant={
                       invite.status === "accepted"
                         ? "completed"
-                        : invite.direction === "sent"
-                          ? "sent"
-                          : "received"
+                        : invite.status === "declined"
+                          ? "declined"
+                          : invite.direction === "sent"
+                            ? "sent"
+                            : "received"
                     }
                     onResolved={(id) =>
                       setInvites((prev) => prev.filter((row) => row.id !== id))
@@ -622,6 +637,25 @@ export function MatchResults({
                         return [...without, { ...updated, status: "accepted" as const }];
                       });
                       setRequestsSubTab("completed");
+                    }}
+                    onUndeclined={(restored) => {
+                      setInvites((prev) => prev.filter((row) => row.id !== restored.id));
+                      patchMatchInvite(restored.match_id, {
+                        invite_status: null,
+                        invite_direction: null,
+                        outgoing_invite_status: null,
+                      });
+                      setResultsTab("all");
+                    }}
+                    onDeclined={(id) => {
+                      setInvites((prev) =>
+                        prev.map((row) =>
+                          row.id === id
+                            ? { ...row, status: "declined" as const, direction: "received" }
+                            : row,
+                        ),
+                      );
+                      setRequestsSubTab("declined");
                     }}
                   />
                 ))}
@@ -1084,16 +1118,27 @@ function InviteRequestCard({
   variant,
   onResolved,
   onAccepted,
+  onUndeclined,
+  onDeclined,
 }: {
   invite: DuoInvite;
   index: number;
-  variant: "received" | "sent" | "completed";
+  variant: "received" | "sent" | "completed" | "declined";
   onResolved: (inviteId: number) => void;
   onAccepted?: (invite: DuoInvite) => void;
+  onUndeclined?: (restored: {
+    id: number;
+    match_id: number;
+    status: "cancelled";
+    direction: "received";
+  }) => void;
+  onDeclined?: (inviteId: number) => void;
 }) {
   const partner = invite.partner;
   const { openWithConversation } = useConversationsWidget();
-  const [busy, setBusy] = useState<"accept" | "decline" | "chat" | null>(null);
+  const [busy, setBusy] = useState<
+    "accept" | "decline" | "cancel" | "chat" | "undo" | null
+  >(null);
 
   const displayName = partner.first_name
     ? `${partner.first_name} ${partner.last_name}`.trim()
@@ -1147,7 +1192,9 @@ function InviteRequestCard({
       ? "Duo aceito"
       : variant === "sent"
         ? "Aguardando resposta"
-        : "Quer jogar duo agora";
+        : variant === "declined"
+          ? "Recusado — some quando a fila acabar"
+          : "Quer jogar duo agora";
 
   return (
     <div
@@ -1211,11 +1258,50 @@ function InviteRequestCard({
       ) : variant === "sent" ? (
         <div className="flex gap-3">
           <Button
-            className="flex-1 bg-muted/50 text-muted-foreground"
-            disabled
+            variant="outline"
+            className="flex-1 border-border text-muted-foreground hover:text-destructive hover:border-destructive/40"
+            disabled={busy !== null}
+            onClick={async () => {
+              setBusy("cancel");
+              try {
+                await cancelDuoInvite(invite.id);
+                CustomToast.info("Convite cancelado.");
+                onResolved(invite.id);
+              } catch (error) {
+                CustomToast.error(
+                  error instanceof Error ? error.message : "Não foi possível cancelar.",
+                );
+              } finally {
+                setBusy(null);
+              }
+            }}
           >
-            <UserPlus className="w-4 h-4 mr-2" />
-            Convite enviado
+            <X className="w-4 h-4 mr-2" />
+            {busy === "cancel" ? "Cancelando..." : "Cancelar convite"}
+          </Button>
+        </div>
+      ) : variant === "declined" ? (
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            className="flex-1 border-border"
+            disabled={busy !== null}
+            onClick={async () => {
+              setBusy("undo");
+              try {
+                const restored = await undoDeclineDuoInvite(invite.id);
+                CustomToast.info("Recusa desfeita. A pessoa voltou para a lista de duos.");
+                onUndeclined?.(restored);
+              } catch (error) {
+                CustomToast.error(
+                  error instanceof Error ? error.message : "Não foi possível desfazer.",
+                );
+              } finally {
+                setBusy(null);
+              }
+            }}
+          >
+            {busy === "undo" ? "Desfazendo..." : "Desfazer recusa"}
           </Button>
         </div>
       ) : (
@@ -1250,7 +1336,7 @@ function InviteRequestCard({
               try {
                 await declineDuoInvite(invite.id);
                 CustomToast.info("Solicitação recusada.");
-                onResolved(invite.id);
+                onDeclined?.(invite.id);
               } catch (error) {
                 CustomToast.error(
                   error instanceof Error ? error.message : "Não foi possível recusar.",

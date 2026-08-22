@@ -9,6 +9,7 @@ import {
   getPriorityConfig,
   getStatusBadge,
 } from "../../utils/quickMessagesHistoryModalUtils";
+import { formatHistoryTimestamp } from "../../utils/quickMessagesUtils";
 import { QuickMessage } from "../../types/structure/QuickMessage";
 import { useBaseLayoutServerContext } from "../../context/BaseLayoutServerContext";
 
@@ -40,15 +41,17 @@ export const QuickMessagesHistoryModal = ({
             <div className="min-w-0 flex-1">
               {components.QuickMessagesHistoryModalHeader}
             </div>
-            {onCreate ? (
+            {onCreate && historyMessages.length > 0 ? (
               <Button
                 type="button"
                 size="sm"
                 onClick={onCreate}
-                className="shrink-0 bg-gradient-primary text-white"
+                className="inline-flex w-auto shrink-0 bg-gradient-primary px-2.5 text-white"
               >
-                <Plus className="mr-1.5 h-4 w-4" />
-                Criar
+                <span className="inline-flex items-center gap-1">
+                  <Plus className="h-4 w-4" />
+                  Criar
+                </span>
               </Button>
             ) : null}
           </div>
@@ -63,16 +66,18 @@ export const QuickMessagesHistoryModal = ({
           ) : historyMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-4 py-12">
               <p className="text-center text-sm text-muted-foreground">
-                Nenhuma mensagem no histórico ainda.
+                Nenhuma mensagem no alto-falante hoje.
               </p>
               {onCreate ? (
                 <Button
                   type="button"
                   onClick={onCreate}
-                  className="bg-gradient-primary text-white"
+                  className="inline-flex w-auto bg-gradient-primary px-3 text-white"
                 >
-                  <Plus className="mr-1.5 h-4 w-4" />
-                  Criar mensagem
+                  <span className="inline-flex items-center gap-1">
+                    <Plus className="h-4 w-4" />
+                    Criar mensagem
+                  </span>
                 </Button>
               ) : null}
             </div>
@@ -129,7 +134,7 @@ export const QuickMessagesHistoryModal = ({
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground sm:text-sm">
                           {icons.Clock}
-                          <span>{message.timestamp}</span>
+                          <span>{formatHistoryTimestamp(message.timestamp)}</span>
                         </div>
                         {getPriorityConfig(message.priority).badge}
                       </div>

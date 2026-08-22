@@ -54,15 +54,15 @@ export function ActiveRoomsCard() {
   }, [authSessionResolved, user]);
 
   return (
-    <Card className="border-border/50 bg-card backdrop-blur-sm transition-all duration-300 hover:border-primary/40 hover:shadow-glow-primary/30">
-      <CardHeader className="pb-3">
+    <Card className="flex max-h-[calc(100dvh-var(--layout-header-height)-3.5rem)] min-w-0 w-full flex-col overflow-hidden border-border/50 bg-card backdrop-blur-sm transition-all duration-300 hover:border-primary/40 hover:shadow-glow-primary/30">
+      <CardHeader className="shrink-0 pb-3">
         <CardTitle className="flex items-center gap-2 text-lg font-bold">
           <DoorOpen className="h-5 w-5 text-neon-green" />
           <span>Salas ativas</span>
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent className="custom-scrollbar min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain">
         {loading ? (
           <LoadingComponent text="Carregando salas..." showText={false} />
         ) : rooms.length === 0 ? (

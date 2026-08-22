@@ -78,7 +78,7 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
     );
 
   function handleSearch() {
-    if (selectedEloValues.length === 0) return;
+    if (selectedEloValues.length === 0 || selectedTimes.length === 0) return;
 
     const note = duoNote.trim().slice(0, DUO_NOTE_MAX);
     const base: Partial<GamePreferences> = {
@@ -100,7 +100,7 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
     : (csSchema?.premier_ranges ?? []);
   const selectedEloValues = usesEloTiers ? selectedElos : selectedRanges;
   const toggleEloFn = usesEloTiers ? toggleElo : toggleRange;
-  const canSearch = selectedEloValues.length > 0;
+  const canSearch = selectedEloValues.length > 0 && selectedTimes.length > 0;
   const allSelected = isFullSelection(selectedEloValues, eloOptions);
   const anyLabel = isCs ? "Qualquer range" : "Qualquer elo";
 
@@ -215,7 +215,11 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
               </span>
               <div>
                 <h3 className="text-base font-semibold text-card-foreground">Horário</h3>
-                <p className="text-xs text-muted-foreground">Quando você costuma jogar?</p>
+                <p className="text-xs text-muted-foreground">
+                  {selectedTimes.length === 0
+                    ? "Obrigatório — selecione ao menos um horário."
+                    : "Quando você costuma jogar?"}
+                </p>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">

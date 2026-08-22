@@ -5,6 +5,8 @@ export interface DMParticipant {
   last_name: string;
   public_key: string | null;
   profile_photo: string | null;
+  /** False when this participant blocked the viewer. */
+  can_view_profile?: boolean;
 }
 
 export interface DMMessage {
@@ -20,13 +22,14 @@ export interface DMMessage {
   encrypted_key_sender?: string;
   iv?: string;
   timestamp: string;
+  delivered_at?: string | null;
   is_read: boolean;
 }
 
 export interface DMConversation {
   id: string;
   type: "private" | "group";
-  status?: "active" | "pending";
+  status?: "active" | "pending" | "declined";
   name: string;
   other_participant: DMParticipant | null;
   participants: DMParticipant[] | null;
@@ -152,6 +155,21 @@ export async function getMessages(
 export async function markConversationRead(conversationId: string): Promise<void> {
   try {
     await apiFetch(`/api/dm/conversations/${conversationId}/read`, { method: "POST" });
+  } catch {
+    // ignore
+  }
+}
+
+export async function markMessagesDelivered(
+  conversationId: string,
+  messageIds?: string[],
+): Promise<void> {
+  try {
+    await apiFetch(`/api/dm/conversations/${conversationId}/deliver`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(messageIds?.length ? { message_ids: messageIds } : {}),
+    });
   } catch {
     // ignore
   }

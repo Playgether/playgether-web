@@ -3,23 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useLiveExpiryLabel } from "../../hooks/useLiveExpiryLabel";
-import {
-  ArrowLeft,
-  Clock,
-  ListRestart,
-  LogOut,
-  Pencil,
-  Users,
-} from "lucide-react";
+import { ArrowLeft, Clock, LogOut, Pencil, Users } from "lucide-react";
 import type { Game } from "../../types/duo";
 import type { DuoQueue } from "../../types/duo";
-import { getActiveQueues, leaveQueue, renewQueue } from "../../services/duoApi";
+import { getActiveQueues, leaveQueue } from "../../services/duoApi";
 
 interface QueueManagementStepProps {
   game: Game;
   queue: DuoQueue;
   onBack: () => void;
-  onQueueUpdated: (queue: DuoQueue) => void;
   onLeftQueue: () => void;
   onEditPreferences: () => void;
   /** Acesso rápido à tela de resultados com as preferências atuais da fila. */
@@ -32,18 +24,15 @@ export function QueueManagementStep({
   game,
   queue,
   onBack,
-  onQueueUpdated,
   onLeftQueue,
   onEditPreferences,
   onGoToSearch,
   onQueueTtlExpired,
 }: QueueManagementStepProps) {
-  const [busy, setBusy] = useState<"renew" | "leave" | null>(null);
+  const [busy, setBusy] = useState<"leave" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const liveRemaining = useLiveExpiryLabel(queue.expires_at);
   const ttlNavigateRef = useRef(false);
-
-  const canRenew = queue.is_near_expiry;
 
   useEffect(() => {
     if (!onQueueTtlExpired || !queue.expires_at) return;
@@ -75,19 +64,6 @@ export function QueueManagementStep({
       window.clearInterval(id);
     };
   }, [onQueueTtlExpired, queue.expires_at, queue.id, game.acronym]);
-
-  async function handleRenew() {
-    setError(null);
-    setBusy("renew");
-    try {
-      const updated = await renewQueue(queue.id);
-      onQueueUpdated(updated);
-    } catch (e: any) {
-      setError(e?.message || "Não foi possível renovar.");
-    } finally {
-      setBusy(null);
-    }
-  }
 
   async function handleLeave() {
     setError(null);
@@ -144,23 +120,6 @@ export function QueueManagementStep({
           ) : null}
 
           <div className="flex flex-col gap-3">
-            {canRenew ? (
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/10"
-                disabled={busy !== null}
-                onClick={handleRenew}
-              >
-                <ListRestart className="w-4 h-4 mr-2" />
-                {busy === "renew" ? "Renovando…" : "Renovar tempo na fila"}
-              </Button>
-            ) : (
-              <p className="text-xs text-muted-foreground text-center -my-1">
-                Renovação disponível quando restarem menos de 5 horas.
-              </p>
-            )}
-
             <Button
               type="button"
               variant="outline"
@@ -197,9 +156,7 @@ export function QueueManagementStep({
 
           <p className="text-[11px] text-muted-foreground mt-6 leading-relaxed">
             Em <strong className="text-card-foreground font-medium">Editar preferências</strong>, avance
-            até o fim do fluxo para voltar à busca. O tempo na fila só é{" "}
-            <strong className="text-card-foreground font-medium">reiniciado</strong> se você alterar
-            alguma preferência em relação ao que estava salvo.
+            até o fim do fluxo para voltar à busca.
           </p>
         </div>
       </div>

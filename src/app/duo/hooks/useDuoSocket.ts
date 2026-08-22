@@ -161,7 +161,10 @@ export function useDuoSocket({
           break;
 
         case "duo_invite_update": {
-          const active = msg.status === "pending" || msg.status === "accepted";
+          const active =
+            msg.status === "pending" ||
+            msg.status === "accepted" ||
+            msg.status === "declined";
           setState((s) => ({
             ...s,
             matches: s.matches.map((m) =>

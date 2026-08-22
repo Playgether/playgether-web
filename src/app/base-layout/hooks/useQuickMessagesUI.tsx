@@ -5,6 +5,7 @@ import { QuickMessage } from "../types/structure/QuickMessage";
 import {
   needsAnimation,
   calculateAnimationDuration,
+  isSameLocalCalendarDay,
 } from "../utils/quickMessagesUtils";
 import { useLiveGlobalMessages } from "./useLiveGlobalMessages";
 import {
@@ -21,20 +22,6 @@ interface UIState {
 }
 
 const HISTORY_LIMIT = 50;
-
-function formatHistoryTimestamp(iso: string): string {
-  if (!iso) return "";
-  try {
-    return new Date(iso).toLocaleString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return iso;
-  }
-}
 
 export const useQuickMessagesUI = (maxConcurrent = 3) => {
   const {
@@ -63,10 +50,8 @@ export const useQuickMessagesUI = (maxConcurrent = 3) => {
     setHistoryMessages((prev) => {
       const map = new Map<string, QuickMessage>();
       [...incoming, ...prev].forEach((m) => {
-        map.set(m.id, {
-          ...m,
-          timestamp: formatHistoryTimestamp(m.timestamp),
-        });
+        if (!isSameLocalCalendarDay(m.timestamp)) return;
+        map.set(m.id, m);
       });
       return Array.from(map.values()).slice(0, HISTORY_LIMIT);
     });
@@ -84,11 +69,11 @@ export const useQuickMessagesUI = (maxConcurrent = 3) => {
       prev.forEach((m) => map.set(m.id, m));
 
       activeMessages.forEach((msg) => {
+        if (!isSameLocalCalendarDay(msg.timestamp)) return;
         map.set(msg.id, {
           ...msg,
           status: "active",
           timeRemaining: `${messageTimers[msg.id] ?? 0}s`,
-          timestamp: formatHistoryTimestamp(msg.timestamp),
         });
       });
 
@@ -102,7 +87,9 @@ export const useQuickMessagesUI = (maxConcurrent = 3) => {
         }
       }
 
-      return Array.from(map.values()).slice(0, HISTORY_LIMIT);
+      return Array.from(map.values())
+        .filter((m) => isSameLocalCalendarDay(m.timestamp))
+        .slice(0, HISTORY_LIMIT);
     });
   }, [activeMessages, messageTimers]);
 
@@ -192,6 +179,14 @@ export const useQuickMessagesUI = (maxConcurrent = 3) => {
     [animationData]
   );
 
+  const todaysHistoryMessages = useMemo(
+    () =>
+      historyMessages
+        .filter((m) => isSameLocalCalendarDay(m.timestamp))
+        .slice(0, HISTORY_LIMIT),
+    [historyMessages]
+  );
+
   return useMemo(
     () => ({
       activeMessages,
@@ -202,7 +197,7 @@ export const useQuickMessagesUI = (maxConcurrent = 3) => {
       composeOpen: uiState.composeOpen,
       selectedMessage: selectedWithLiveTimer,
       messageRefs,
-      historyMessages,
+      historyMessages: todaysHistoryMessages,
       historyLoading,
       setHistoryOpen,
       setMessageModalOpen,
@@ -221,7 +216,7 @@ export const useQuickMessagesUI = (maxConcurrent = 3) => {
       uiState.messageModalOpen,
       uiState.composeOpen,
       selectedWithLiveTimer,
-      historyMessages,
+      todaysHistoryMessages,
       historyLoading,
       setHistoryOpen,
       setMessageModalOpen,

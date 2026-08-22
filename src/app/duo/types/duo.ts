@@ -157,16 +157,16 @@ export interface DuoMatch {
   created_at: string;
   partner: MatchPartner;
   /** Latest invite you sent for this match, if any. */
-  outgoing_invite_status?: "pending" | "accepted" | "declined" | null;
+  outgoing_invite_status?: "pending" | "accepted" | "declined" | "cancelled" | null;
   /** Pending/accepted invite involving you (sent or received). */
-  invite_status?: "pending" | "accepted" | "declined" | null;
+  invite_status?: "pending" | "accepted" | "declined" | "cancelled" | null;
   invite_direction?: "sent" | "received" | null;
 }
 
 export interface DuoInvite {
   id: number;
   match_id: number;
-  status: "pending" | "accepted" | "declined";
+  status: "pending" | "accepted" | "declined" | "cancelled";
   direction?: "sent" | "received" | null;
   game_name: string;
   game_slug: string;
@@ -213,7 +213,7 @@ export interface WsExistingMatchesMsg {
 export interface WsInviteUpdateMsg {
   type: "duo_invite_update";
   match_id: number;
-  status: "pending" | "accepted" | "declined";
+  status: "pending" | "accepted" | "declined" | "cancelled";
   conversation_id?: string;
   invite_id?: number;
   direction?: "sent" | "received";

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Megaphone, Swords } from "lucide-react";
+import { Check, CheckCheck, Megaphone, Swords } from "lucide-react";
 import { MessageInterface } from "../../types/chat/MessageInterface";
 import { SharedCutCard } from "./SharedCutCard";
 import { SharedCutModal } from "./SharedCutModal";
@@ -32,11 +32,9 @@ function parseMegaphoneReply(content: string): ParsedMegaphoneReply | null {
 function MegaphoneReplyBubble({
   parsed,
   isOwn,
-  timestamp,
 }: {
   parsed: ParsedMegaphoneReply;
   isOwn: boolean;
-  timestamp: string;
 }) {
   return (
     <div className="space-y-2">
@@ -45,20 +43,20 @@ function MegaphoneReplyBubble({
           "rounded-md border-l-2 px-2.5 py-1.5",
           isOwn
             ? "border-white/50 bg-white/15"
-            : "border-primary/50 bg-background/60"
+            : "border-primary/50 bg-background/60",
         )}
       >
         <div className="mb-1 flex items-center gap-1.5">
           <Megaphone
             className={cn(
               "h-3 w-3 shrink-0",
-              isOwn ? "text-white/90" : "text-primary"
+              isOwn ? "text-white/90" : "text-primary",
             )}
           />
           <span
             className={cn(
               "truncate text-[11px] font-medium",
-              isOwn ? "text-white/90" : "text-foreground"
+              isOwn ? "text-white/90" : "text-foreground",
             )}
           >
             Alto-falante de @{parsed.authorUsername}
@@ -67,7 +65,7 @@ function MegaphoneReplyBubble({
         <p
           className={cn(
             "text-xs leading-relaxed",
-            isOwn ? "text-white/75" : "text-muted-foreground"
+            isOwn ? "text-white/75" : "text-muted-foreground",
           )}
         >
           “{parsed.quote}”
@@ -75,12 +73,10 @@ function MegaphoneReplyBubble({
       </div>
 
       {parsed.reply ? (
-        <p className="text-sm leading-relaxed whitespace-pre-wrap">
+        <p className="whitespace-pre-wrap text-sm leading-relaxed">
           {parsed.reply}
         </p>
       ) : null}
-
-      <span className="mt-1 block text-xs opacity-70">{timestamp}</span>
     </div>
   );
 }
@@ -88,11 +84,9 @@ function MegaphoneReplyBubble({
 function DuoFinderReplyBubble({
   parsed,
   isOwn,
-  timestamp,
 }: {
   parsed: NonNullable<ReturnType<typeof parseDuoFinderMessage>>;
   isOwn: boolean;
-  timestamp: string;
 }) {
   return (
     <div className="space-y-2.5">
@@ -117,11 +111,76 @@ function DuoFinderReplyBubble({
       </div>
 
       {parsed.reply ? (
-        <p className="text-sm leading-relaxed whitespace-pre-wrap">{parsed.reply}</p>
+        <p className="whitespace-pre-wrap text-sm leading-relaxed">
+          {parsed.reply}
+        </p>
       ) : null}
-
-      <span className="block text-xs opacity-70">{timestamp}</span>
     </div>
+  );
+}
+
+function MessageMeta({
+  timestamp,
+  deliveryStatus,
+  isOwn,
+}: {
+  timestamp: string;
+  deliveryStatus?: MessageInterface["deliveryStatus"];
+  isOwn: boolean;
+}) {
+  return (
+    <span className="mt-1 flex items-center justify-end gap-1 text-xs opacity-70">
+      <span>{timestamp}</span>
+      {isOwn && deliveryStatus ? (
+        <span
+          className="inline-flex shrink-0"
+          title={
+            deliveryStatus === "read"
+              ? "Lida"
+              : deliveryStatus === "delivered"
+                ? "Entregue"
+                : "Enviada"
+          }
+          aria-label={
+            deliveryStatus === "read"
+              ? "Lida"
+              : deliveryStatus === "delivered"
+                ? "Entregue"
+                : "Enviada"
+          }
+        >
+          {deliveryStatus === "sent" ? (
+            <Check className="h-3.5 w-3.5" />
+          ) : (
+            <CheckCheck
+              className={cn(
+                "h-3.5 w-3.5",
+                deliveryStatus === "read" ? "text-sky-300" : undefined,
+              )}
+            />
+          )}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+function renderMessageBody(message: MessageInterface) {
+  const duoReply = parseDuoFinderMessage(message.content);
+  const megaphoneReply = duoReply ? null : parseMegaphoneReply(message.content);
+
+  if (duoReply) {
+    return <DuoFinderReplyBubble parsed={duoReply} isOwn={message.isOwn} />;
+  }
+
+  if (megaphoneReply) {
+    return (
+      <MegaphoneReplyBubble parsed={megaphoneReply} isOwn={message.isOwn} />
+    );
+  }
+
+  return (
+    <p className="whitespace-pre-wrap text-sm">{message.content}</p>
   );
 }
 
@@ -144,69 +203,55 @@ export default function ChatMessages({
           const duoReply = message.sharedContent
             ? null
             : parseDuoFinderMessage(message.content);
-          const megaphoneReply =
-            duoReply || message.sharedContent
-              ? null
-              : parseMegaphoneReply(message.content);
+          const isDuoReply = Boolean(duoReply);
+          const isSharedCut = Boolean(message.sharedContent);
 
           return (
             <div
               key={message.id}
               className={`flex ${message.isOwn ? "justify-end" : "justify-start"}`}
             >
-              {message.sharedContent ? (
-                <div className="max-w-[70%]">
+              <div
+                className={cn(
+                  isSharedCut && "max-w-[70%]",
+                  isDuoReply &&
+                    "max-w-[75%] overflow-hidden rounded-2xl p-3 shadow-sm",
+                  !isSharedCut &&
+                    !isDuoReply &&
+                    "max-w-[70%] rounded-lg p-3",
+                  !isSharedCut &&
+                    (isDuoReply
+                      ? message.isOwn
+                        ? "bg-gradient-primary text-white"
+                        : "border border-border/60 bg-muted/80"
+                      : message.isOwn
+                        ? "bg-gradient-primary text-white"
+                        : "bg-muted"),
+                )}
+              >
+                {message.sharedContent ? (
                   <SharedCutCard
                     content={message.sharedContent}
                     onClick={() => setOpenCutId(message.sharedContent!.id)}
                   />
-                  <span className="mt-1 block text-xs opacity-70">
-                    {message.timestamp}
-                  </span>
-                </div>
-              ) : duoReply ? (
-                <div
-                  className={cn(
-                    "max-w-[75%] overflow-hidden rounded-2xl p-3 shadow-sm",
-                    message.isOwn
-                      ? "bg-gradient-primary text-white"
-                      : "border border-border/60 bg-muted/80",
-                  )}
-                >
-                  <DuoFinderReplyBubble
-                    parsed={duoReply}
-                    isOwn={message.isOwn}
-                    timestamp={message.timestamp}
-                  />
-                </div>
-              ) : (
-                <div
-                  className={`max-w-[70%] rounded-lg p-3 ${
-                    message.isOwn ? "bg-gradient-primary text-white" : "bg-muted"
-                  }`}
-                >
-                  {megaphoneReply ? (
-                    <MegaphoneReplyBubble
-                      parsed={megaphoneReply}
-                      isOwn={message.isOwn}
-                      timestamp={message.timestamp}
-                    />
-                  ) : (
-                    <>
-                      <p className="whitespace-pre-wrap text-sm">{message.content}</p>
-                      <span className="mt-1 block text-xs opacity-70">
-                        {message.timestamp}
-                      </span>
-                    </>
-                  )}
-                </div>
-              )}
+                ) : (
+                  renderMessageBody(message)
+                )}
+                <MessageMeta
+                  timestamp={message.timestamp}
+                  deliveryStatus={message.deliveryStatus}
+                  isOwn={message.isOwn}
+                />
+              </div>
             </div>
           );
         })}
       </div>
 
-      <SharedCutModal cutId={openCutId} onOpenChange={(open) => !open && setOpenCutId(null)} />
+      <SharedCutModal
+        cutId={openCutId}
+        onOpenChange={(open) => !open && setOpenCutId(null)}
+      />
     </>
   );
 }
