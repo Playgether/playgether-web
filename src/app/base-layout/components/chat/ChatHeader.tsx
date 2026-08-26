@@ -25,12 +25,14 @@ import {
   ArrowLeft,
   LogOut,
   MoreHorizontal,
+  ShieldCheck,
   Trash2,
   UserX,
   Volume2,
   VolumeX,
 } from "lucide-react";
 import { ConversationInterface } from "../../types/chat/ConversationInterface";
+import type { KeyTrustStatus } from "@/lib/e2eKeyTrust";
 
 type RestrictedUser = { username: string };
 
@@ -87,6 +89,8 @@ export default function ChatHeader({
   onToggleMuteConversation,
   onDeleteConversation,
   onBlockUser,
+  keyTrustStatus,
+  onConfirmKeyTrust,
 }: {
   selectedConversation: ConversationInterface | null;
   onBack?: () => void;
@@ -94,6 +98,8 @@ export default function ChatHeader({
   onToggleMuteConversation?: () => void | Promise<void>;
   onDeleteConversation?: () => void | Promise<void>;
   onBlockUser?: () => void | Promise<void>;
+  keyTrustStatus?: KeyTrustStatus | null;
+  onConfirmKeyTrust?: () => void;
 }) {
   const username = selectedConversation?.username;
   const isPrivate = selectedConversation?.type === "private";
@@ -154,7 +160,10 @@ export default function ChatHeader({
       .map((n) => n[0]?.toUpperCase() ?? "")
       .join("") || "?";
 
-  const profileHref = isPrivate && username ? `/profile/${username}` : null;
+  const profileHref =
+    isPrivate && username && selectedConversation?.canViewProfile !== false
+      ? `/profile/${username}`
+      : null;
   const avatarSrc = typeof avatar === "string" ? avatar : avatar.src;
 
   const profileContent = (
@@ -284,6 +293,19 @@ export default function ChatHeader({
                   </>
                 )}
               </DropdownMenuItem>
+
+              {isPrivate && keyTrustStatus === "changed" && onConfirmKeyTrust ? (
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    onConfirmKeyTrust();
+                  }}
+                  className="flex items-center gap-2 hover:bg-muted/50"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  Confiar na nova chave
+                </DropdownMenuItem>
+              ) : null}
 
               {isPrivate && username && !isBlocked ? (
                 <DropdownMenuItem

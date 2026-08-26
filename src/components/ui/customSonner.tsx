@@ -1,4 +1,7 @@
+"use client";
+
 import React, { ReactNode } from "react";
+import Link from "next/link";
 import { toast, type ExternalToast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import {
@@ -14,6 +17,7 @@ interface CustomSonnerProps {
   type: string;
   description?: React.ReactNode;
   action?: { label: string; onClick: () => void };
+  link?: { label: string; href: string };
 }
 
 type ToastStyle = {
@@ -22,16 +26,19 @@ type ToastStyle = {
   title: string;
   description: string;
   action: string;
+  link: string;
 };
 
 function getToastStyle(type: string): ToastStyle {
   const base = {
     container:
-      "border border-border/50 bg-background/95 text-foreground shadow-2xl backdrop-blur-xl",
+      "border border-border/60 bg-card text-foreground shadow-none",
     title: "text-sm font-semibold leading-snug",
     description: "mt-1 text-xs leading-relaxed text-muted-foreground",
     action:
       "w-full rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90",
+    link:
+      "w-full rounded-lg border border-border/70 bg-transparent px-3 py-2 text-center text-sm font-semibold text-primary transition-colors hover:bg-primary/10",
   };
 
   switch (type) {
@@ -90,10 +97,21 @@ function getIcon(type: string): ReactNode {
   }
 }
 
-const CustomSonner = ({ message, type, description, action }: CustomSonnerProps) => {
+const CustomSonner = ({
+  message,
+  type,
+  description,
+  action,
+  link,
+  toastId,
+}: CustomSonnerProps & { toastId?: string | number }) => {
   const styles = getToastStyle(type);
   const icon = getIcon(type);
-  const hasFooter = Boolean(action);
+  const hasFooter = Boolean(action || link);
+
+  const dismiss = () => {
+    if (toastId !== undefined) toast.dismiss(toastId);
+  };
 
   return (
     <div
@@ -113,11 +131,27 @@ const CustomSonner = ({ message, type, description, action }: CustomSonnerProps)
       </div>
 
       {hasFooter ? (
-        <div className="border-t border-border/50 px-4 py-3">
+        <div className="flex flex-col gap-2 border-t border-border/50 px-4 py-3">
           {action ? (
-            <button type="button" onClick={action.onClick} className={styles.action}>
+            <button
+              type="button"
+              onClick={() => {
+                action.onClick();
+                dismiss();
+              }}
+              className={styles.action}
+            >
               {action.label}
             </button>
+          ) : null}
+          {link ? (
+            <Link
+              href={link.href}
+              onClick={dismiss}
+              className={styles.link}
+            >
+              {link.label}
+            </Link>
           ) : null}
         </div>
       ) : null}
@@ -129,12 +163,18 @@ type ToastOptions = {
   description?: React.ReactNode;
   duration?: number;
   action?: { label: string; onClick: () => void };
+  link?: { label: string; href: string };
   id?: string | number;
   [key: string]: unknown;
 };
 
 const loadingToastOptions = (options: ToastOptions = {}): ExternalToast => {
-  const { description: _description, action: _action, ...toastOptions } = options;
+  const {
+    description: _description,
+    action: _action,
+    link: _link,
+    ...toastOptions
+  } = options;
   return {
     ...toastOptions,
     duration: Infinity,
@@ -143,44 +183,54 @@ const loadingToastOptions = (options: ToastOptions = {}): ExternalToast => {
 
 /** Props handled inside CustomSonner — must not be forwarded to Sonner (avoids duplicate UI). */
 const getSonnerPassthroughOptions = (options: ToastOptions = {}): ExternalToast => {
-  const { description: _description, action: _action, ...toastOptions } = options;
+  const {
+    description: _description,
+    action: _action,
+    link: _link,
+    ...toastOptions
+  } = options;
   return {
     ...toastOptions,
     unstyled: true,
+    // Keep Sonner wrapper invisible + clipped so its square box doesn't peek past rounded-xl
+    className:
+      "!m-0 !border-none !bg-transparent !p-0 !shadow-none !outline-none !ring-0 rounded-xl overflow-hidden",
   };
 };
 
+function showCustomToast(
+  type: string,
+  message: React.ReactNode,
+  options: ToastOptions = {},
+) {
+  return toast.custom(
+    (t) => (
+      <CustomSonner
+        message={message}
+        type={type}
+        description={options.description}
+        action={options.action}
+        link={options.link}
+        toastId={t}
+      />
+    ),
+    getSonnerPassthroughOptions(options),
+  );
+}
+
 export const CustomToast = {
   default: (message: React.ReactNode, options: ToastOptions = {}) =>
-    toast.custom(
-      () => <CustomSonner message={message} type="default" {...options} />,
-      getSonnerPassthroughOptions(options),
-    ),
+    showCustomToast("default", message, options),
   success: (message: React.ReactNode, options: ToastOptions = {}) =>
-    toast.custom(
-      () => <CustomSonner message={message} type="success" {...options} />,
-      getSonnerPassthroughOptions(options),
-    ),
+    showCustomToast("success", message, options),
   error: (message: React.ReactNode, options: ToastOptions = {}) =>
-    toast.custom(
-      () => <CustomSonner message={message} type="error" {...options} />,
-      getSonnerPassthroughOptions(options),
-    ),
+    showCustomToast("error", message, options),
   info: (message: React.ReactNode, options: ToastOptions = {}) =>
-    toast.custom(
-      () => <CustomSonner message={message} type="info" {...options} />,
-      getSonnerPassthroughOptions(options),
-    ),
+    showCustomToast("info", message, options),
   warning: (message: React.ReactNode, options: ToastOptions = {}) =>
-    toast.custom(
-      () => <CustomSonner message={message} type="warning" {...options} />,
-      getSonnerPassthroughOptions(options),
-    ),
+    showCustomToast("warning", message, options),
   neutral: (message: React.ReactNode, options: ToastOptions = {}) =>
-    toast.custom(
-      () => <CustomSonner message={message} type="neutral" {...options} />,
-      getSonnerPassthroughOptions(options),
-    ),
+    showCustomToast("neutral", message, options),
   loading: (message: React.ReactNode, options: ToastOptions = {}) =>
     toast.loading(message, loadingToastOptions(options)),
   dismiss: (toastId?: string | number) => toast.dismiss(toastId),

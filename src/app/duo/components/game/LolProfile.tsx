@@ -34,11 +34,13 @@ function LaneRolePicker({
   hint,
   value,
   onChange,
+  disabledRoles = [],
 }: {
   label: string;
   hint: string;
   value: string;
   onChange: (role: string) => void;
+  disabledRoles?: string[];
 }) {
   return (
     <div>
@@ -48,15 +50,24 @@ function LaneRolePicker({
         <ul className="divide-y divide-border/40" role="list">
           {LOL_ROLES.map((role) => {
             const isSelected = value === role;
+            const isDisabled = disabledRoles.includes(role);
             return (
               <li key={role}>
                 <button
                   type="button"
                   role="radio"
                   aria-checked={isSelected}
-                  onClick={() => onChange(role)}
+                  aria-disabled={isDisabled}
+                  disabled={isDisabled}
+                  onClick={() => {
+                    if (!isDisabled) onChange(role);
+                  }}
                   className={`flex w-full items-center gap-4 px-4 py-3.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40 ${
-                    isSelected ? "bg-primary/[0.07]" : "hover:bg-muted/60 active:bg-muted/40"
+                    isDisabled
+                      ? "cursor-not-allowed opacity-40"
+                      : isSelected
+                        ? "bg-primary/[0.07]"
+                        : "hover:bg-muted/60 active:bg-muted/40"
                   }`}
                 >
                   <span
@@ -76,6 +87,11 @@ function LaneRolePicker({
                     }`}
                   >
                     {role}
+                    {isDisabled ? (
+                      <span className="ml-2 text-[11px] font-normal text-muted-foreground">
+                        (principal)
+                      </span>
+                    ) : null}
                   </span>
                 </button>
               </li>
@@ -186,13 +202,17 @@ export function LolProfile({
             label="Lane principal"
             hint="Toque na lane para selecionar."
             value={mainRole}
-            onChange={onMainRoleChange}
+            onChange={(role) => {
+              onMainRoleChange(role);
+              if (secondaryRole === role) onSecondaryRoleChange("");
+            }}
           />
           <LaneRolePicker
             label="Lane secundária"
-            hint="Mesmo estilo do passo de funções do parceiro."
+            hint="Não pode ser a mesma da lane principal."
             value={secondaryRole}
             onChange={onSecondaryRoleChange}
+            disabledRoles={mainRole ? [mainRole] : []}
           />
         </div>
       </div>

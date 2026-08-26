@@ -138,11 +138,15 @@ export const QuickMessagesFooter = () => {
     }
     setReplying(true);
     try {
-      const conv = await startConversation(String(selectedMessage.user.id));
-      if (!conv) {
-        CustomToast.error("Não foi possível abrir a conversa.");
+      const result = await startConversation(String(selectedMessage.user.id), {
+        source: "megaphone",
+        globalMessageId: selectedMessage.id,
+      });
+      if (!result.ok) {
+        CustomToast.error(result.error);
         return;
       }
+      const conv = result.conversation;
       const quote = selectedMessage.fullContent || selectedMessage.message;
       const author =
         selectedMessage.user.username || selectedMessage.user.name;

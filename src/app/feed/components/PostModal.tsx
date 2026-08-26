@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,10 @@ import { deleteCommentAction } from "@/actions/deleteComment";
 import { PostsCommentsProps } from "@/services/getComments";
 import { useQueryClient } from "@tanstack/react-query";
 import { MentionTextarea } from "@/components/mentions/MentionTextarea";
+import {
+  EmojiPickerButton,
+  useEmojiInsert,
+} from "@/components/emoji/EmojiPickerButton";
 import { MentionText } from "@/components/mentions/MentionText";
 import { updateCommentAction } from "@/actions/updateComment";
 import { CommentContentType } from "@/components/content_types/CommentContentType";
@@ -107,6 +111,15 @@ export const PostModal = ({
     postId,
   );
   const [newComment, setNewComment] = useState("");
+  const newCommentRef = useRef<HTMLTextAreaElement>(null);
+  const replyContentRef = useRef<HTMLTextAreaElement>(null);
+  const [commentEmojiOpen, setCommentEmojiOpen] = useState(false);
+  const [replyEmojiOpen, setReplyEmojiOpen] = useState(false);
+  const {
+    insertEmoji: insertCommentEmoji,
+    syncSelection: syncCommentSelection,
+    restoreFocus: restoreCommentFocus,
+  } = useEmojiInsert(newCommentRef, newComment, setNewComment);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [deleteCommentModalOpen, setDeleteCommentModalOpen] = useState(false);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
@@ -126,6 +139,11 @@ export const PostModal = ({
     null,
   );
   const [replyContent, setReplyContent] = useState("");
+  const {
+    insertEmoji: insertReplyEmoji,
+    syncSelection: syncReplySelection,
+    restoreFocus: restoreReplyFocus,
+  } = useEmojiInsert(replyContentRef, replyContent, setReplyContent);
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
   const [commentsDisabled, setCommentsDisabled] = useState(false);
   const [isReposting, setIsReposting] = useState(false);
@@ -173,6 +191,7 @@ export const PostModal = ({
   const queryClient = useQueryClient();
 
   const post = getPostById(postId);
+  const canComment = post?.can_comment !== false && !commentsDisabled;
 
   useEffect(() => {
     setMobileCommentsExpanded(searchParams?.get("focus") === "comments");
@@ -400,7 +419,7 @@ export const PostModal = ({
       onRequireAuth?.();
       return;
     }
-    if (!replyContent.trim() || !post) return;
+    if (!canComment || !replyContent.trim() || !post) return;
     setIsSubmittingReply(true);
 
     const replyData = {
@@ -487,7 +506,7 @@ export const PostModal = ({
       onRequireAuth?.();
       return;
     }
-    if (!newComment.trim() || !post) return;
+    if (!canComment || !newComment.trim() || !post) return;
     setIsSubmittingComment(true);
     const newCommentData = {
       comment: newComment,
@@ -530,7 +549,10 @@ export const PostModal = ({
           body: JSON.stringify({ comments_disabled: newState }),
         });
         if (res.ok) {
-          handlePostUpdate({ ...post, comments_disabled: newState }, post.id);
+          handlePostUpdate(
+            { ...post, comments_disabled: newState, can_comment: !newState },
+            post.id,
+          );
           CustomToast.neutral(newState ? "Comentários desativados." : "Comentários ativados.");
         } else {
           setCommentsDisabled(!newState);
@@ -1113,8 +1135,8 @@ export const PostModal = ({
                 hasMedia
                   ? cn(
                       "overflow-y-auto",
-                      // Texto expandido: ocupa mais da coluna; recolhido: fica compacto
-                      showFullText ? "max-h-[75%]" : "max-h-[45%]",
+                      // Recolhido: só o necessário. Expandido: mais espaço para o texto.
+                      showFullText ? "max-h-[55%]" : "max-h-none",
                     )
                   : cn(
                       "lg:w-1/2 lg:overflow-y-auto lg:border-r lg:border-border/50",
@@ -1138,14 +1160,14 @@ export const PostModal = ({
                   </Button>
                 ) : null}
               </div>
-              <div className="p-4 pb-2 lg:p-6">
+              <div className="px-4 py-3 lg:px-5 lg:py-3">
               <div className={cn("mb-2", !fullPage ? "pr-16 lg:pr-20" : "pr-11")}>
                 <div className="flex items-center space-x-3 min-w-0">
                   <ProfileAvatar
                     displayName={post.name}
                     username={post.username}
                     profilePhoto={post.profile_photo}
-                    sizeClass="h-10 w-10 lg:h-12 lg:w-12"
+                    sizeClass="h-10 w-10 lg:h-11 lg:w-11"
                     ringClass="ring-2 ring-primary/30"
                     fallbackTextClassName="text-sm"
                   />
@@ -1178,7 +1200,7 @@ export const PostModal = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => setShowFullText((s) => !s)}
-                        className="text-primary hover:text-primary/80 px-3 py-1.5 rounded-md hover:bg-primary/10 -ml-2 mb-2"
+                        className="-ml-2 mb-0 h-8 rounded-md px-2 py-1 text-primary hover:bg-primary/10 hover:text-primary/80"
                       >
                         {showFullText ? (
                           <>
@@ -1193,13 +1215,13 @@ export const PostModal = ({
                         )}
                       </Button>
                       {showFullText ? (
-                        <p className="text-foreground leading-relaxed whitespace-pre-wrap">
+                        <p className="mt-1.5 text-foreground leading-relaxed whitespace-pre-wrap">
                           <MentionText text={post.comment} />
                         </p>
                       ) : null}
                     </>
                   ) : (
-                    <p className="px-3 text-foreground leading-relaxed whitespace-pre-wrap">
+                    <p className="px-1 text-foreground leading-relaxed whitespace-pre-wrap">
                       <MentionText text={post.comment} />
                     </p>
                   )}
@@ -1207,7 +1229,7 @@ export const PostModal = ({
               )}
 
               {/* Post Actions */}
-              <PostPropertiers.Root className="">
+              <PostPropertiers.Root className="mt-1 space-x-4">
                 <PostPropertiers.Like
                   quantitylikesNumber={post.quantity_likes}
                   clicked={post.user_already_like}
@@ -1456,10 +1478,12 @@ export const PostModal = ({
                                 <Button
                                   variant="ghost"
                                   size="sm"
+                                  disabled={!canComment}
                                   onClick={() =>
-                                    requireAuthOr(() =>
-                                      setReplyingToCommentId(comment.id),
-                                    )
+                                    requireAuthOr(() => {
+                                      if (!canComment) return;
+                                      setReplyingToCommentId(comment.id);
+                                    })
                                   }
                                   className="text-xs text-muted-foreground hover:text-primary p-2 h-auto"
                                 >
@@ -1468,7 +1492,7 @@ export const PostModal = ({
                               </div>
 
                               {/* Input de resposta - MANTIDO COMO ESTAVA */}
-                              {replyingToCommentId === comment.id && (
+                              {replyingToCommentId === comment.id && canComment && (
                                 <form
                                   onSubmit={(e) => {
                                     e.preventDefault();
@@ -1477,14 +1501,27 @@ export const PostModal = ({
                                   className="mt-3 space-y-2"
                                 >
                                   <MentionTextarea
+                                    ref={replyContentRef}
                                     value={replyContent}
                                     onChange={setReplyContent}
+                                    onSelect={syncReplySelection}
+                                    onClick={syncReplySelection}
+                                    onKeyUp={syncReplySelection}
                                     onKeyDown={(e) => handleKeyDown(e, () => handleReply(comment.id))}
                                     placeholder="Escreva uma resposta..."
                                     className="min-h-[80px] text-sm bg-muted/50 border-border/50 w-full"
                                     autoFocus
                                   />
-                                  <div className="flex gap-2 justify-end">
+                                  <div className="flex gap-2 justify-between">
+                                    <EmojiPickerButton
+                                      open={replyEmojiOpen}
+                                      onOpenChange={setReplyEmojiOpen}
+                                      onBeforeOpen={syncReplySelection}
+                                      onPick={insertReplyEmoji}
+                                      onClosed={restoreReplyFocus}
+                                      disabled={isSubmittingReply}
+                                    />
+                                    <div className="flex gap-2 justify-end">
                                     <Button
                                       type="submit"
                                       size="sm"
@@ -1505,10 +1542,12 @@ export const PostModal = ({
                                       onClick={() => {
                                         setReplyingToCommentId(null);
                                         setReplyContent("");
+                                        setReplyEmojiOpen(false);
                                       }}
                                     >
                                       Cancelar
                                     </Button>
+                                    </div>
                                   </div>
                                 </form>
                               )}
@@ -1759,6 +1798,10 @@ export const PostModal = ({
                     Entre para comentar...
                   </Button>
                 </div>
+              ) : !canComment ? (
+                <div className="shrink-0 border-t border-border/50 p-4 text-center text-sm text-muted-foreground">
+                  Você não tem permissão para comentar nesta publicação.
+                </div>
               ) : (
               <form
                 onSubmit={(e) => {
@@ -1767,25 +1810,42 @@ export const PostModal = ({
                 }}
                 className="sticky bottom-0 w-full shrink-0 border-t border-border/50 bg-card p-3 lg:p-4"
               >
-                <div className="relative">
+                <div className="relative w-full">
                   <MentionTextarea
+                    ref={newCommentRef}
                     value={newComment}
                     onChange={setNewComment}
+                    onSelect={syncCommentSelection}
+                    onClick={syncCommentSelection}
+                    onKeyUp={syncCommentSelection}
                     onKeyDown={(e) => handleKeyDown(e, handleComment)}
                     placeholder="Adicione um comentário..."
-                    className="flex-1 bg-muted/50 border-border/50 w-full pr-24 resize-none"
+                    className="min-h-10 w-full resize-none bg-muted/50 border-border/50 py-2.5 pl-10 pr-24"
                     rows={1}
+                    autoGrow
+                    maxGrowHeightPx={140}
                     dropdownSide="top"
                   />
-                  {newComment.trim() && (
+                  <div className="absolute bottom-1 left-1 z-10">
+                    <EmojiPickerButton
+                      open={commentEmojiOpen}
+                      onOpenChange={setCommentEmojiOpen}
+                      onBeforeOpen={syncCommentSelection}
+                      onPick={insertCommentEmoji}
+                      onClosed={restoreCommentFocus}
+                      disabled={isSubmittingComment}
+                      buttonClassName="h-8 w-8 hover:bg-transparent"
+                    />
+                  </div>
+                  {newComment.trim() ? (
                     <Button
                       type="submit"
                       disabled={isSubmittingComment}
-                      className="absolute bottom-2 right-2 bg-gradient-primary hover:shadow-glow-primary/30 px-3 py-1 h-8"
+                      className="absolute bottom-1.5 right-1.5 h-8 bg-gradient-primary px-3 py-1 hover:shadow-glow-primary/30"
                     >
                       {isSubmittingComment ? (
                         <span className="flex items-center gap-1">
-                          <span className="animate-spin h-4 w-4 border-2 border-t-transparent border-primary rounded-full" />
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                           Enviando...
                         </span>
                       ) : (
@@ -1795,7 +1855,7 @@ export const PostModal = ({
                         </span>
                       )}
                     </Button>
-                  )}
+                  ) : null}
                 </div>
               </form>
               )}

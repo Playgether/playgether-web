@@ -159,6 +159,7 @@ function AchievementChipBody({
           reducedMotion={reducedMotion}
           staticBorder={false}
           variant="chip"
+          chipShape="circle"
           contentClassName="relative z-10 flex h-4 w-4 items-center justify-center rounded-full p-0"
         >
           <span
@@ -404,15 +405,15 @@ export function HighlightedAchievementBadges({
   return (
     <TooltipProvider delayDuration={200}>
       <div
-        className={cn("relative z-20 min-w-0 max-w-full", className)}
+        className={cn("relative z-20 min-w-0 max-w-full bg-transparent", className)}
         aria-label="Conquistas em destaque"
       >
         <div
           className={cn(
-            "flex w-full max-w-full items-center py-0.5",
+            "flex max-w-full items-center bg-transparent",
             resolvedIconOnly
-              ? "flex-nowrap gap-[2px] overflow-x-auto scrollbar-none"
-              : "flex-wrap gap-1 overflow-visible",
+              ? "w-fit flex-nowrap gap-[2px] overflow-visible"
+              : "w-full flex-wrap gap-1 overflow-visible",
           )}
         >
           <BadgesRow

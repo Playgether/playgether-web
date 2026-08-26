@@ -1,16 +1,31 @@
 "use client";
 
 import { useMemo, useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Heart, MessageCircle, Settings, UserPlus } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Heart,
+  MessageCircle,
+  MoreHorizontal,
+  Settings,
+  UserPlus,
+  UserX,
+} from "lucide-react";
 import type { getProfileByUsernameProps } from "@/services/getProfileByUsername";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { useAuthContext } from "@/context/AuthContext";
 import { ProfileEditModal } from "./modals/ProfileEditModal";
 import { FollowListModal } from "./modals/FollowListModal";
+import { ConfirmationModal } from "./modals/ConfirmationModal";
 import { followProfile } from "@/services/followProfile";
 import { unfollowProfile } from "@/services/unfollowProfile";
 import { postLike } from "@/services/postLike";
@@ -40,6 +55,7 @@ export function GamesCanvasUserProfile({
 }) {
   const { user, authSessionResolved } = useAuthContext();
   const { openWithConversation } = useConversationsWidget();
+  const router = useRouter();
   const isOwner =
     !!user &&
     !!profile &&
@@ -55,6 +71,8 @@ export function GamesCanvasUserProfile({
   const [followListModal, setFollowListModal] = useState<
     "followers" | "following" | null
   >(null);
+  const [isBlockConfirmOpen, setIsBlockConfirmOpen] = useState(false);
+  const [isBlocking, setIsBlocking] = useState(false);
 
   useEffect(() => {
     setBioExpanded(false);
@@ -220,6 +238,87 @@ export function GamesCanvasUserProfile({
     }
   };
 
+  const handleStartMessage = useCallback(async () => {
+    if (!profile?.user_id) return;
+    const result = await startConversation(String(profile.user_id));
+    if (!result.ok) {
+      CustomToast.error(result.error, {
+        duration: CustomToastProps.defaultDuration,
+      });
+      return;
+    }
+    openWithConversation(result.conversation.id);
+  }, [profile?.user_id, openWithConversation]);
+
+  const handleBlockUser = useCallback(async () => {
+    const username = profile?.username;
+    if (!username) return;
+    setIsBlocking(true);
+    try {
+      const res = await fetch(`/api/profiles/${username}/block`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("block failed");
+      setIsBlockConfirmOpen(false);
+      CustomToast.info("Usuário bloqueado. Você não verá mais posts dele.", {
+        duration: CustomToastProps.defaultDuration,
+      });
+      router.push("/feed");
+    } catch {
+      CustomToast.error("Erro ao bloquear usuário.", {
+        duration: CustomToastProps.defaultDuration,
+      });
+    } finally {
+      setIsBlocking(false);
+    }
+  }, [profile?.username, router]);
+
+  const showProfileMenu = authSessionResolved && !isOwner && !!profile?.username;
+
+  const profileMoreMenu = ({
+    triggerClassName,
+    wrapperClassName,
+    iconClassName = "h-4 w-4",
+  }: {
+    triggerClassName: string;
+    wrapperClassName?: string;
+    iconClassName?: string;
+  }) =>
+    showProfileMenu ? (
+      <div className={wrapperClassName}>
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className={triggerClassName}
+              aria-label="Mais opções"
+              disabled={isBlocking}
+            >
+              <MoreHorizontal className={iconClassName} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="border border-border/50 bg-background/95 backdrop-blur-xl"
+          >
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault();
+                setIsBlockConfirmOpen(true);
+              }}
+              className="flex items-center gap-2 text-red-500 hover:bg-red-500/10 hover:text-red-600"
+            >
+              <UserX className="h-4 w-4" />
+              Bloquear conta
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    ) : null;
+
   const profileCardBioText = profile?.bio ?? "";
   const profileCardBioLineCount = profileCardBioText
     .replace(/\r\n/g, "\n")
@@ -257,6 +356,20 @@ export function GamesCanvasUserProfile({
           onWidgetOpenChange={() => {}}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={isBlockConfirmOpen}
+        onClose={() => {
+          if (!isBlocking) setIsBlockConfirmOpen(false);
+        }}
+        onConfirm={handleBlockUser}
+        title="Bloquear usuário?"
+        description="Tem certeza que deseja bloquear este usuário? Vocês não poderão mais interagir."
+        confirmText="Bloquear"
+        confirmingText="Bloqueando..."
+        destructive
+        isConfirming={isBlocking}
+      />
     </>
   );
 
@@ -345,17 +458,16 @@ export function GamesCanvasUserProfile({
                       variant="outline"
                       size="icon"
                       className="h-6 w-6 border-border"
-                      onClick={async () => {
-                        if (!profile?.user_id) return;
-                        const conv = await startConversation(
-                          String(profile.user_id),
-                        );
-                        if (conv) openWithConversation(conv.id);
-                      }}
+                      onClick={handleStartMessage}
                       title="Mensagem"
                     >
                       <MessageCircle className="h-3 w-3" />
                     </Button>
+                    {profileMoreMenu({
+                      triggerClassName:
+                        "h-6 w-6 border-0 bg-card/70 text-card-foreground shadow-none backdrop-blur-sm hover:bg-card hover:text-primary",
+                      iconClassName: "h-3 w-3",
+                    })}
                   </>
                 )}
               </div>
@@ -466,6 +578,12 @@ export function GamesCanvasUserProfile({
               <Settings className="h-3.5 w-3.5" />
             </Button>
           )}
+          {profileMoreMenu({
+            wrapperClassName: "absolute right-2 top-2",
+            triggerClassName:
+              "h-7 w-7 border border-border/50 bg-card/80 text-card-foreground shadow-md backdrop-blur-md hover:bg-card hover:text-primary",
+            iconClassName: "h-3.5 w-3.5",
+          })}
         </div>
 
         <div className="px-3 pb-3 pt-0">
@@ -598,13 +716,7 @@ export function GamesCanvasUserProfile({
                   variant="outline"
                   size="sm"
                   className="h-7 flex-1 border-border text-[11px] hover:border-primary/40 hover:bg-primary/10"
-                  onClick={async () => {
-                    if (!profile?.user_id) return;
-                    const conv = await startConversation(
-                      String(profile.user_id),
-                    );
-                    if (conv) openWithConversation(conv.id);
-                  }}
+                  onClick={handleStartMessage}
                 >
                   <MessageCircle className="mr-0.5 h-3 w-3 shrink-0" />
                   Msg
@@ -666,6 +778,11 @@ export function GamesCanvasUserProfile({
                 <Settings className="h-4 w-4" />
               </Button>
             )}
+            {profileMoreMenu({
+              wrapperClassName: "absolute top-2 right-2",
+              triggerClassName:
+                "bg-card/80 backdrop-blur-md border border-border/50 text-card-foreground hover:bg-card hover:text-primary shadow-md",
+            })}
           </div>
 
           <CardContent className="p-0">
@@ -815,13 +932,7 @@ export function GamesCanvasUserProfile({
                         variant="outline"
                         size="sm"
                         className="flex-1 min-w-0 border-border hover:bg-primary/10 hover:border-primary/40"
-                        onClick={async () => {
-                          if (!profile?.user_id) return;
-                          const conv = await startConversation(
-                            String(profile.user_id),
-                          );
-                          if (conv) openWithConversation(conv.id);
-                        }}
+                        onClick={handleStartMessage}
                       >
                         <MessageCircle className="h-4 w-4 mr-1 shrink-0" />
                         <span className="truncate">Mensagem</span>

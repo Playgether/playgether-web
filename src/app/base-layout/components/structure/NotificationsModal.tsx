@@ -9,16 +9,14 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { X, CheckCheck, Trash2, Bell, Swords } from "lucide-react";
+import { CheckCheck, Trash2, Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { notificationConfig } from "../../config/notifications/NotificationConfig";
-import { NotificationMessageText } from "../../config/notifications/NotificationMessageText";
 import { useBaseLayoutServerContext } from "../../context/BaseLayoutServerContext";
 import {
   useNotificationContext,
   type NotificationItem,
 } from "@/context/NotificationsContext";
+import { NotificationListItem } from "@/components/notifications/NotificationListItem";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -39,13 +37,6 @@ function timeAgo(timestamp: string) {
   }
 }
 
-function isDuoNotification(notification: NotificationItem) {
-  return (
-    notification.notification_type === "duo" ||
-    notification.actors[0]?.username === "duo"
-  );
-}
-
 export const NotificationsModal = ({
   open,
   onOpenChange,
@@ -53,7 +44,6 @@ export const NotificationsModal = ({
   const router = useRouter();
   const { BaseLayout } = useBaseLayoutServerContext();
   const components = BaseLayout.ServerNotificationsModal.components;
-  const icons = BaseLayout.ServerNotificationsModal.icons;
 
   const {
     notifications,
@@ -96,7 +86,6 @@ export const NotificationsModal = ({
           navigateTo(href);
         }}
       >
-        {/* Header */}
         <DialogHeader className="px-4 sm:px-5 pt-5 pb-3 pr-12 border-b border-border/50 text-left">
           <DialogTitle className="text-lg sm:text-xl font-bold flex min-w-0 items-center gap-2">
             {components.NotificationsTitle}
@@ -132,7 +121,6 @@ export const NotificationsModal = ({
           ) : null}
         </DialogHeader>
 
-        {/* Body */}
         <ScrollArea className="h-[min(60dvh,420px)]">
           <div className="px-3 py-3 space-y-2">
             {loading ? (
@@ -142,97 +130,17 @@ export const NotificationsModal = ({
             ) : notifications.length === 0 ? (
               <EmptyNotifications />
             ) : (
-              notifications.map((notification, index) => {
-                const isDuo = isDuoNotification(notification);
-                const actor = isDuo ? null : notification.actors[0];
-                const typeKey = isDuo ? "duo" : notification.notification_type;
-                const typeIcon =
-                  notificationConfig[typeKey]?.icon ??
-                  notificationConfig["default"].icon;
-                const clickable = Boolean(notification.action_url);
-
-                return (
-                  <div
-                    key={notification.id}
-                    role={clickable ? "link" : "button"}
-                    tabIndex={0}
-                    onPointerEnter={() => handleMarkAsRead(notification)}
-                    onFocus={() => handleMarkAsRead(notification)}
-                    onClick={() => handleNotificationClick(notification)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        handleNotificationClick(notification);
-                      }
-                    }}
-                    className={`flex min-w-0 items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl transition-all duration-300 group animate-slide-up
-                      ${clickable ? "cursor-pointer" : "cursor-default"}
-                      ${notification.is_read
-                        ? "bg-muted/50 hover:bg-muted/70"
-                        : "bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/30 hover:from-primary/15 hover:to-secondary/15"
-                      }`}
-                    style={{ animationDelay: `${index * 60}ms` }}
-                  >
-                    {/* Avatar + type icon */}
-                    <div className="relative shrink-0">
-                      {isDuo ? (
-                        <div className="w-10 h-10 rounded-full ring-2 ring-primary/30 bg-gradient-primary flex items-center justify-center">
-                          <Swords className="w-5 h-5 text-white" />
-                        </div>
-                      ) : actor ? (
-                        <Avatar className="w-10 h-10 ring-2 ring-primary/30">
-                          <AvatarImage src={actor.profile_photo ?? undefined} alt={actor.name} />
-                          <AvatarFallback className="bg-gradient-primary text-white text-sm">
-                            {actor.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                          </AvatarFallback>
-                        </Avatar>
-                      ) : (
-                        icons.Star
-                      )}
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-card rounded-full flex items-center justify-center border border-border">
-                        {typeIcon}
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0 overflow-hidden">
-                      <p className="text-sm text-foreground leading-snug break-words">
-                        {isDuo ? (
-                          <span className="font-semibold text-primary">Duo </span>
-                        ) : actor ? (
-                          <span className="font-semibold text-primary">
-                            {actor.name}{" "}
-                          </span>
-                        ) : null}
-                        <NotificationMessageText text={notification.message} />
-                      </p>
-                      <span className="text-xs text-muted-foreground mt-0.5 block">
-                        {timeAgo(notification.timestamp)}
-                      </span>
-                    </div>
-
-                    {/* Right: unread dot + delete */}
-                    <div className="flex shrink-0 flex-col items-center gap-2">
-                      {!notification.is_read ? (
-                        <div className="w-2 h-2 bg-gradient-primary rounded-full animate-glow-pulse" />
-                      ) : (
-                        <div className="h-2 w-2" />
-                      )}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void deleteNotification(notification.id);
-                        }}
-                        aria-label="Excluir notificação"
-                        className="rounded p-1 text-muted-foreground transition-colors hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })
+              notifications.map((notification, index) => (
+                <NotificationListItem
+                  key={notification.id}
+                  notification={notification}
+                  index={index}
+                  timeLabel={timeAgo(notification.timestamp)}
+                  onMarkAsRead={handleMarkAsRead}
+                  onClick={handleNotificationClick}
+                  onDelete={(n) => void deleteNotification(n.id)}
+                />
+              ))
             )}
           </div>
         </ScrollArea>

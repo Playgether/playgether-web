@@ -20,6 +20,7 @@ export function ConfirmationModal({
   confirmText,
   destructive,
   isConfirming,
+  confirmingText = "Excluindo...",
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -29,6 +30,7 @@ export function ConfirmationModal({
   confirmText: string;
   destructive?: boolean;
   isConfirming?: boolean;
+  confirmingText?: string;
 }) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => (open ? null : onClose())}>
@@ -49,7 +51,7 @@ export function ConfirmationModal({
             {isConfirming ? (
               <span className="flex items-center gap-2">
                 <LoadingComponent showText={false} className="h-4 w-4" />
-                Excluindo...
+                {confirmingText}
               </span>
             ) : (
               confirmText

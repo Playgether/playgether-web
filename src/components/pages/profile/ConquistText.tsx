@@ -269,6 +269,8 @@ export type RarityAchievementChromeProps = {
   staticBorder: boolean;
   /** Chip compacto (ex.: destaques no header): `rounded-md`, borda 1px. */
   variant?: "card" | "chip";
+  /** Ícone só: chrome circular para não vazar fundo retangular atrás do selo. */
+  chipShape?: "rounded" | "circle";
   unlockOverlay?: React.ReactNode;
   contentClassName?: string;
   className?: string;
@@ -283,6 +285,7 @@ export function RarityAchievementChrome({
   reducedMotion,
   staticBorder,
   variant = "card",
+  chipShape = "rounded",
   unlockOverlay,
   contentClassName = "relative z-10 p-4",
   className,
@@ -292,6 +295,14 @@ export function RarityAchievementChrome({
   const isAnimated = !reducedMotion && config.animationIntensity !== "none";
   const showBorder = config.hasAnimatedBorder && isAnimated;
   const isChip = variant === "chip";
+  const chipRadius =
+    isChip && chipShape === "circle" ? "rounded-full" : isChip ? "rounded-md" : "rounded-xl";
+  const chipInnerRadius =
+    isChip && chipShape === "circle"
+      ? "rounded-full"
+      : isChip
+        ? "rounded-[calc(var(--radius)-2px)]"
+        : null;
 
   const particles = useMemo<ParticleData[]>(
     () =>
@@ -343,7 +354,7 @@ export function RarityAchievementChrome({
         <div
           className={cn(
             "absolute inset-0 pointer-events-none z-0",
-            isChip ? "rounded-md" : "rounded-xl",
+            chipRadius,
           )}
           style={{ background: config.staticBorderColor }}
           aria-hidden
@@ -370,7 +381,7 @@ export function RarityAchievementChrome({
 
   return (
     <motion.div
-      className={cn(isChip ? "rounded-md" : "rounded-xl", className)}
+      className={cn(chipRadius, className)}
       animate={{ boxShadow: glowShadow }}
       transition={{ duration: 0.4, ease: "easeOut" }}
       style={{ willChange: "box-shadow" }}
@@ -378,7 +389,7 @@ export function RarityAchievementChrome({
       <div
         className={cn(
           "relative overflow-hidden",
-          isChip ? "rounded-md" : "rounded-xl",
+          chipRadius,
         )}
         style={
           isChip
@@ -404,7 +415,7 @@ export function RarityAchievementChrome({
           className={cn(
             "relative z-[2] overflow-visible",
             isChip
-              ? "rounded-[calc(var(--radius)-2px)] overflow-hidden"
+              ? cn(chipInnerRadius, "overflow-hidden")
               : "col-start-1 row-start-1 min-h-0 min-w-0",
           )}
           style={{
@@ -457,7 +468,7 @@ export function RarityAchievementChrome({
               isExpanded={isExpanded}
               clipClassName={
                 isChip
-                  ? "rounded-[calc(var(--radius)-2px)]"
+                  ? (chipInnerRadius ?? "rounded-[calc(var(--radius)-2px)]")
                   : ringInsetPx === 1.5
                     ? "rounded-[calc(var(--radius)-1.5px)]"
                     : "rounded-[calc(var(--radius)-1px)]"

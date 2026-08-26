@@ -11,6 +11,7 @@ import { lolTierEmblemUrl } from "@/lib/lolRankedEmblem";
 import { valorantTierEmblemUrl } from "@/lib/valorantRankEmblem";
 import { LolRankEmblemFrame } from "@/components/lol/LolRankEmblemFrame";
 import { premierRangeStyle } from "../../constants/csPremier";
+import { isFullSelection } from "../../utils/collapseSelectionDisplay";
 import { isValorantDuoSlug } from "../../utils/isValorantGame";
 
 const PLAY_TIMES = [
@@ -77,6 +78,8 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
     );
 
   function handleSearch() {
+    if (selectedEloValues.length === 0 || selectedTimes.length === 0) return;
+
     const note = duoNote.trim().slice(0, DUO_NOTE_MAX);
     const base: Partial<GamePreferences> = {
       play_times: selectedTimes,
@@ -97,6 +100,9 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
     : (csSchema?.premier_ranges ?? []);
   const selectedEloValues = usesEloTiers ? selectedElos : selectedRanges;
   const toggleEloFn = usesEloTiers ? toggleElo : toggleRange;
+  const canSearch = selectedEloValues.length > 0 && selectedTimes.length > 0;
+  const allSelected = isFullSelection(selectedEloValues, eloOptions);
+  const anyLabel = isCs ? "Qualquer range" : "Qualquer elo";
 
   return (
     <div className="min-h-layout-main w-full max-w-full flex items-center justify-center px-4 py-10 sm:px-6">
@@ -131,8 +137,10 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
                 <h3 className="text-base font-semibold text-card-foreground">{eloLabel}</h3>
                 <p className="text-xs text-muted-foreground">
                   {selectedEloValues.length === 0
-                    ? `Qualquer ${isCs ? "range" : "elo"} será considerado.`
-                    : `${selectedEloValues.length} opção(ões) selecionada(s).`}
+                    ? `Obrigatório — selecione ao menos um ${isCs ? "range" : "elo"}.`
+                    : allSelected
+                      ? `${anyLabel} — todos selecionados.`
+                      : `${selectedEloValues.length} opção(ões) selecionada(s).`}
                 </p>
               </div>
             </div>
@@ -140,9 +148,11 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
             <Popover>
               <PopoverTrigger className="flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-border/80 bg-input/40 px-4 text-left text-sm font-medium text-card-foreground shadow-sm transition-colors hover:border-primary/40 hover:bg-input/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
                 <span className="truncate">
-                  {selectedEloValues.length > 0
-                    ? `${selectedEloValues.length} selecionado(s)`
-                    : `Selecionar ${isCs ? "ranges" : "elos"}`}
+                  {allSelected
+                    ? anyLabel
+                    : selectedEloValues.length > 0
+                      ? `${selectedEloValues.length} selecionado(s)`
+                      : `Selecionar ${isCs ? "ranges" : "elos"}`}
                 </span>
                 <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
               </PopoverTrigger>
@@ -205,7 +215,11 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
               </span>
               <div>
                 <h3 className="text-base font-semibold text-card-foreground">Horário</h3>
-                <p className="text-xs text-muted-foreground">Quando você costuma jogar?</p>
+                <p className="text-xs text-muted-foreground">
+                  {selectedTimes.length === 0
+                    ? "Obrigatório — selecione ao menos um horário."
+                    : "Quando você costuma jogar?"}
+                </p>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -272,7 +286,8 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
           </Button>
           <Button
             onClick={handleSearch}
-            className="order-1 h-12 rounded-xl bg-gradient-primary px-12 font-semibold text-primary-foreground shadow-lg shadow-primary/15 transition-all duration-300 hover:scale-[1.02] hover:shadow-glow-primary sm:order-2 sm:min-w-[12rem]"
+            disabled={!canSearch}
+            className="order-1 h-12 rounded-xl bg-gradient-primary px-12 font-semibold text-primary-foreground shadow-lg shadow-primary/15 transition-all duration-300 hover:scale-[1.02] hover:shadow-glow-primary disabled:pointer-events-none disabled:opacity-45 sm:order-2 sm:min-w-[12rem]"
           >
             Buscar duo
           </Button>

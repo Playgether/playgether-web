@@ -36,11 +36,23 @@ type MentionTextareaProps = Omit<
   value: string;
   onChange: (value: string) => void;
   dropdownSide?: "top" | "bottom";
+  /** Grows with content (Shift+Enter / wrapping) up to maxGrowHeightPx. */
+  autoGrow?: boolean;
+  maxGrowHeightPx?: number;
 };
 
 export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaProps>(
   function MentionTextarea(
-    { value, onChange, onKeyDown, dropdownSide = "bottom", className, ...props },
+    {
+      value,
+      onChange,
+      onKeyDown,
+      dropdownSide = "bottom",
+      className,
+      autoGrow = false,
+      maxGrowHeightPx = 140,
+      ...props
+    },
     ref,
   ) {
     const innerRef = useRef<HTMLTextAreaElement>(null);
@@ -138,6 +150,15 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
       requestAnimationFrame(updateDropdownPosition);
     };
 
+    useEffect(() => {
+      if (!autoGrow) return;
+      const el = innerRef.current;
+      if (!el) return;
+      el.style.height = "0px";
+      el.style.height = `${Math.min(el.scrollHeight, maxGrowHeightPx)}px`;
+      el.style.overflowY = el.scrollHeight > maxGrowHeightPx ? "auto" : "hidden";
+    }, [autoGrow, maxGrowHeightPx, value]);
+
     const open = mention != null;
 
     useEffect(() => {
@@ -217,7 +238,10 @@ export const MentionTextarea = forwardRef<HTMLTextAreaElement, MentionTextareaPr
           aria-expanded={open}
           aria-controls={open ? listId : undefined}
           aria-autocomplete="list"
-          className={className}
+          className={cn(
+            autoGrow && "min-h-0 overflow-hidden",
+            className,
+          )}
         />
         {open && dropdownPosition && typeof document !== "undefined"
           ? createPortal(

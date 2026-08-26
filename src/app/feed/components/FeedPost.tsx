@@ -55,7 +55,10 @@ export const FeedPost = ({ post }) => {
           body: JSON.stringify({ comments_disabled: newState }),
         });
         if (res.ok) {
-          handlePostUpdate({ ...post, comments_disabled: newState }, post.id);
+          handlePostUpdate(
+            { ...post, comments_disabled: newState, can_comment: !newState },
+            post.id,
+          );
           CustomToast.neutral(newState ? "Comentários desativados." : "Comentários ativados.");
         } else {
           CustomToast.error("Erro ao alterar configuração de comentários.");
