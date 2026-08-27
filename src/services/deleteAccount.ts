@@ -7,7 +7,7 @@ interface DeleteAccountParams {
 }
 
 export async function deleteAccount(params: DeleteAccountParams): Promise<void> {
-  const resp = await apiFetch("/api/v1/users/delete-account/", {
+  const resp = await apiFetch("/api/users/delete-account/", {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
