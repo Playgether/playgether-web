@@ -10,7 +10,7 @@ export function PublicLegalDocument({
   documentType,
   fallbackTitle,
 }: {
-  documentType: "terms" | "privacy";
+  documentType: "terms";
   fallbackTitle: string;
 }) {
   const [document, setDocument] = useState<LegalDocumentData | null>(null);

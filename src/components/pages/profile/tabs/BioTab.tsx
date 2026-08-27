@@ -15,7 +15,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Edit, MessageCircle, MoreVertical, Plus, Trash2 } from "lucide-react";
-import { Gamepad2Icon, ChartNoAxesColumn } from "lucide-react";
+import { Gamepad2Icon, ChartNoAxesColumn, HelpCircle } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { getProfileByUsernameProps } from "@/services/getProfileByUsername";
 import { ApiResponseComments } from "@/context/CommentsContext";
 import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
@@ -200,6 +206,26 @@ export function BioTab({
 
   const gamesToShow = useMemo(() => connectedGames.slice(0, 3), [connectedGames]);
 
+  // Soma direto dos jogos conectados (mesma fonte dos cards individuais acima) —
+  // profile.hours_played/matches_played é um acumulador legado que pode divergir
+  // da realidade, então a UI não depende dele.
+  const totalHours = useMemo(
+    () =>
+      Object.values(gameStats).reduce(
+        (sum, stat) => sum + (stat.hours ?? 0),
+        0,
+      ),
+    [gameStats],
+  );
+  const totalMatches = useMemo(
+    () =>
+      Object.values(gameStats).reduce(
+        (sum, stat) => sum + (stat.matches ?? 0),
+        0,
+      ),
+    [gameStats],
+  );
+
   const formatHours = (hours: number | null | undefined) => {
     if (hours == null) return "--";
     return Number(hours).toLocaleString("pt-BR", { maximumFractionDigits: 1 });
@@ -292,15 +318,33 @@ export function BioTab({
           </h4>
           <div className="grid grid-cols-1 gap-3">
             <div className="flex items-center justify-between p-3 bg-card/50 rounded-lg border border-border">
-              <span className="text-muted-foreground">Horas totais</span>
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                Horas totais
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        className="text-muted-foreground/70 hover:text-muted-foreground"
+                        aria-label="O que é Horas totais?"
+                      >
+                        <HelpCircle className="h-3.5 w-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-[220px]">
+                      Soma das horas jogadas em todos os jogos conectados ao perfil.
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </span>
               <span className="font-semibold text-card-foreground">
-                {(profile?.hours_played ?? 0).toLocaleString("pt-BR")}h
+                {gamesLoading ? "--" : formatHours(totalHours)}h
               </span>
             </div>
             <div className="flex items-center justify-between p-3 bg-card/50 rounded-lg border border-border">
               <span className="text-muted-foreground">Partidas totais</span>
               <span className="font-semibold text-card-foreground">
-                {(profile?.matches_played ?? 0).toLocaleString("pt-BR")}
+                {gamesLoading ? "--" : formatMatches(totalMatches)}
               </span>
             </div>
           </div>

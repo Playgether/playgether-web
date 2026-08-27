@@ -7,6 +7,8 @@ const PUBLIC_ROUTES = [
   "/reset-password",
   "/terms",
   "/privacy",
+  "/community",
+  "/cookies",
 ];
 const AUTH_ENTRY_ROUTES = ["/", "/about", "/forgot-password", "/reset-password"];
 
