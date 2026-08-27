@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
-import { Loader2, Camera, Trash2, Mail, Eye, EyeOff, Lock, AtSign, Clock } from "lucide-react";
+import { Loader2, Camera, Trash2, Mail, Eye, EyeOff, Lock, AtSign, Clock, AlertTriangle } from "lucide-react";
 import { CldUploadWidget } from "next-cloudinary";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
@@ -28,12 +28,23 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { TwoFAVerifyModal } from "@/components/ui/TwoFAVerifyModal";
+import { deleteAccount } from "@/services/deleteAccount";
 import type { MeResponse } from "@/app/api/users/me/route";
 
 export default function AccountSettingsPage() {
   const { profile, fetchProfile } = useProfileContext();
-  const { user } = useAuthContext();
+  const { user, logout } = useAuthContext();
 
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
@@ -63,6 +74,13 @@ export default function AccountSettingsPage() {
   // 2FA gates for each sensitive action
   const [emailNeedsTotp, setEmailNeedsTotp] = useState(false);
   const [usernameNeedsTotp, setUsernameNeedsTotp] = useState(false);
+
+  // Delete account flow
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleteNeedsTotp, setDeleteNeedsTotp] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -219,6 +237,26 @@ export default function AccountSettingsPage() {
     }
   };
 
+  const handleDeleteAccount = async (totpCode?: string) => {
+    setDeletingAccount(true);
+    try {
+      await deleteAccount({
+        currentPassword: deletePassword,
+        confirmation: deleteConfirmText,
+        totpCode,
+      });
+      await logout();
+    } catch (err: any) {
+      if (err?.requires_2fa) {
+        setDeleteNeedsTotp(true);
+        return;
+      }
+      CustomToast.error(err?.message ?? "Não foi possível excluir a conta.");
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
+
   const currentPhoto = removePhoto ? null : (newPhoto ?? profile?.profile_photo ?? null);
   const currentBanner = removeBanner ? null : (newBanner ?? profile?.profile_banner ?? null);
   const bannerSrc = currentBanner ? resolveGameMediaUrl(currentBanner) : null;
@@ -254,6 +292,16 @@ export default function AccountSettingsPage() {
         title="Confirmar mudança de username"
         description="Informe o código 2FA para confirmar a alteração de username."
         onConfirm={async (code) => { setUsernameNeedsTotp(false); await handleChangeUsername(code); }}
+      />
+      <TwoFAVerifyModal
+        open={deleteNeedsTotp}
+        onOpenChange={setDeleteNeedsTotp}
+        title="Confirmar exclusão de conta"
+        description="Informe o código 2FA para confirmar a exclusão da conta."
+        onConfirm={async (code) => {
+          setDeleteNeedsTotp(false);
+          await handleDeleteAccount(code);
+        }}
       />
 
       {/* Email change modal */}
@@ -381,6 +429,79 @@ export default function AccountSettingsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete account confirmation */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={(open) => {
+        setDeleteConfirmOpen(open);
+        if (!open) {
+          setDeletePassword("");
+          setDeleteConfirmText("");
+        }
+      }}>
+        <AlertDialogContent className="bg-card border-border/50">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-destructive" />
+              </div>
+              <AlertDialogTitle>Excluir sua conta?</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-sm text-muted-foreground leading-relaxed">
+              Isso é definitivo. Seu perfil, posts, cuts e comentários somem
+              imediatamente para todo mundo, inclusive você. Por obrigação legal,
+              seus dados ficam retidos internamente por até 90 dias antes de
+              serem apagados de vez — depois disso, não há como recuperar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-3 pt-1">
+            {isSocialAccount ? null : (
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Senha atual</Label>
+                <Input
+                  type="password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="bg-background/50 border-border/50"
+                />
+              </div>
+            )}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">
+                Digite EXCLUIR para confirmar
+              </Label>
+              <Input
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="EXCLUIR"
+                className="bg-background/50 border-border/50"
+              />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={
+                deletingAccount ||
+                deleteConfirmText.trim().toUpperCase() !== "EXCLUIR" ||
+                (!isSocialAccount && !deletePassword)
+              }
+              onClick={async (e) => {
+                e.preventDefault();
+                await handleDeleteAccount();
+                setDeleteConfirmOpen(false);
+              }}
+              className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deletingAccount ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Excluindo...</>
+              ) : (
+                "Excluir conta"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <SettingsPageWrapper
         title="Conta"
@@ -584,6 +705,32 @@ export default function AccountSettingsPage() {
             {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</> : "Salvar alterações"}
           </Button>
         </div>
+
+        {/* Danger zone */}
+        <SettingsSection title="Zona de risco">
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 space-y-3">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-medium text-sm text-foreground">Excluir conta</p>
+                <p className="text-sm text-muted-foreground">
+                  Sua conta e todo o seu conteúdo somem imediatamente da Playgether.
+                  Por obrigação legal, os dados ficam retidos internamente por até
+                  90 dias antes de serem apagados de vez. Essa ação é definitiva —
+                  não é possível recuperar a conta depois de confirmada.
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-destructive border-destructive/30 hover:bg-destructive/10"
+              onClick={() => setDeleteConfirmOpen(true)}
+            >
+              Excluir conta
+            </Button>
+          </div>
+        </SettingsSection>
       </SettingsPageWrapper>
     </>
   );
