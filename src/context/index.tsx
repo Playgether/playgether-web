@@ -11,6 +11,7 @@ import { TermsProvider } from "./TermsContext";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { TermsAcceptanceModal } from "@/components/terms/TermsAcceptanceModal";
 import { AxiosTermsInterceptor } from "@/components/terms/AxiosTermsInterceptor";
+import { CookieConsentBanner } from "@/components/cookies/CookieConsentBanner";
 
 export const AppProvider = ({ children } : { children: React.ReactNode }) => {
     // Stable across re-renders (ThemeProvider hydrate, etc.) — recreating
@@ -34,6 +35,7 @@ export const AppProvider = ({ children } : { children: React.ReactNode }) => {
         <TermsProvider>
             <AxiosTermsInterceptor />
             <TermsAcceptanceModal />
+            <CookieConsentBanner />
             <QueryClientProvider client={queryClient}>
                 <ProfileContextProvider>
                     <NotificationsContextProvider>
