@@ -139,7 +139,7 @@ type Story = StoryObj<CommentSectionLogicInterface>;
 export const Primary: Story = {
   // render: CommentsSection,
   args: {
-    postId: 1,
+    postId: "1",
   },
   decorators: [
     (Story, args) => {

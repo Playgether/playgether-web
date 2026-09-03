@@ -382,7 +382,7 @@ export function ProfilePostsProvider({
 
   const posts = [...mediaPosts, ...textPosts, ...injectedPosts];
 
-  const handleSave = useCallback((postId: number, saveId: number | null) => {
+  const handleSave = useCallback((postId: string, saveId: number | null) => {
     updatePostInLists(postId, (p) => ({
       ...p,
       user_already_saved: saveId !== null,
@@ -410,7 +410,6 @@ export function ProfilePostsProvider({
     decreaseCommentCount,
     injectPost,
     handleAuthorFollow: () => {},
-    handleSave,
   };
 
   const value: ProfilePostsContextValue = {

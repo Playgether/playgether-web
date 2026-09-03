@@ -16,6 +16,6 @@ type Story = StoryObj<CommentProps>;
 
 export const Primary:Story = {
     args:{
-        id: 1
+        id: "1"
     }
 }

@@ -3,7 +3,7 @@ import FormComment from "../../../../../layouts/Forms/FormComment/FormComment"
 
 export interface CommentProps {
     /** Este prop recebe o id do que esta sendo comentado, e este id é repassado para os componentes filhos, para que o comentário seja adicionado corretamente. */
-    id: number
+    id: string
 }
 
 /** Este componente é o componente mais alto nível da aba de adição de comentários, ele implementa FormComment, que por sua vez, implementa FormCommentImplementation, ou seja

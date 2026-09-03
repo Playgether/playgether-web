@@ -57,8 +57,8 @@ interface BioTabProps {
   nextPage: string | null;
   isLoadingMore: boolean;
   onAddCommentClick: () => void;
-  onEditComment: (commentId: number, newContent: string) => void;
-  onDeleteComment: (commentId: number) => void;
+  onEditComment: (commentId: string, newContent: string) => void;
+  onDeleteComment: (commentId: string) => void;
   onLoadMore: () => void;
   openConfirmModal: (type: string, data: any) => void;
   setEditingComment: (comment: any) => void;

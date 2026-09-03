@@ -32,7 +32,7 @@ const VirtualizedComments = ({ post_id }: { post_id: string }) => {
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const handleExpandComment = (commentId: number) => {
+  const handleExpandComment = (commentId: string) => {
     if (!expandedComments[commentId]) {
       openAnswers(commentId);
     }

@@ -18,7 +18,7 @@ const CommentsSection = ({ post_id }: { post_id: string }) => {
   const [expandedComments, setExpandedComments] = useState({});
   const { comments } = useCommentsContext();
 
-  const handleExpandComment = (commentId: number) => {
+  const handleExpandComment = (commentId: string) => {
     setExpandedComments((prevExpandedComments) => ({
       ...prevExpandedComments,
       [commentId]: !prevExpandedComments[commentId],

@@ -128,6 +128,7 @@ export function BookmarkButton({ item, contentType = "post", size = "sm", onSave
           body: JSON.stringify({ content_type: contentType, object_id: item.id }),
         });
         if (res.ok) {
+          const data = await res.json();
           setInCollections((prev) => new Set(prev).add(col.id));
           if (!isSaved) {
             setIsSaved(true);

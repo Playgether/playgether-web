@@ -48,14 +48,14 @@ const PostsExtend = ({
           {resourceObject?.has_post_media ? (
             <CommentsContextProvider
               response={{ data: [], next_page: null, previous_page: null }}
-              postId={0}
+              postId="0"
             >
               <PostsExtendHasPostMedia />
             </CommentsContextProvider>
           ) : (
             <CommentsContextProvider
               response={{ data: [], next_page: null, previous_page: null }}
-              postId={0}
+              postId="0"
             >
               <PostsExtendHasNoPostMedia />
             </CommentsContextProvider>

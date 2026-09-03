@@ -342,7 +342,7 @@ function PrivateConversationRow({
       <div className="flex items-center space-x-3">
         <ConversationAvatar
           name={item.name}
-          avatar={item.avatar || undefined}
+          avatar={(typeof item.avatar === "string" ? item.avatar : item.avatar.src) || undefined}
           unread={item.unread}
           isMuted={item.isMuted}
         />
@@ -1123,13 +1123,14 @@ export function ConversationsContent({
         selectedConversation.other_participant.id,
       );
       if (recipientKey) {
+        const resolvedKey = recipientKey;
         setSelectedConversation((prev) =>
           prev && prev.other_participant
             ? {
                 ...prev,
                 other_participant: {
                   ...prev.other_participant,
-                  public_key: recipientKey,
+                  public_key: resolvedKey,
                 },
               }
             : prev,

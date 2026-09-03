@@ -385,7 +385,8 @@ export default function PrivacySettingsPage() {
             label="Quem pode mencionar você"
             description="Controla quem pode te mencionar com @ em posts e comentários."
             value={
-              prefs?.who_can_tag === "followers"
+              // Legacy who_can_tag used "followers"; treat as friends.
+              (prefs?.who_can_tag as string) === "followers"
                 ? "friends"
                 : (prefs?.who_can_tag ?? "everyone")
             }

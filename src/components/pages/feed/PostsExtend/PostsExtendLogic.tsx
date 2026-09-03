@@ -10,7 +10,7 @@ import { useParams } from "next/navigation";
 function PostsExtendLogic() {
   const { resourceObject } = useMiddleFeedContext();
   const params = useParams();
-  const postId = Number(params?.postId) || 0;
+  const postId = (params?.postId as string) || "";
 
   if (!resourceObject) {
     return null;

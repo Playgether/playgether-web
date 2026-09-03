@@ -21,7 +21,7 @@ const mockLikes: PostLikes[] = [
     created_by_user_photo:
       "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTl8fG1hbiUyMHByb2ZpbGV8ZW58MHx8MHx8fDA%3D",
     timestamp: new Date("2024-05-29T10:30:00Z"),
-    object_id: 1,
+    object_id: "1",
     user: 2,
   },
   {
@@ -31,7 +31,7 @@ const mockLikes: PostLikes[] = [
     created_by_user_photo:
       "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cHJvZmlsZSUyMHBpY3xlbnwwfHwwfHx8MA%3D%3D",
     timestamp: new Date("2024-05-29T10:30:00Z"),
-    object_id: 1,
+    object_id: "1",
     user: 3,
   },
 ];
@@ -86,7 +86,7 @@ const mockPost: FeedProps = {
   created_by_user: 1,
   created_by_user_name: "Lia Mensen",
   has_post_media: true,
-  id: 1,
+  id: "1",
   quantity_comment: 2,
   quantity_likes: 2,
   quantity_reposts: 0,

@@ -12,6 +12,7 @@ import { AnswerComment } from "../AnswerComment/AnswerComment";
 import { PostsCommentsProps } from "../../../../../../services/getComments";
 import { useCommentsContext } from "../../../../../../context/CommentsContext";
 import { MentionText } from "@/components/mentions/MentionText";
+import { BorderLine } from "@/components/pages/feed/DesktopFeed/MultUseComponents/BorderLine/BorderLine";
 
 export interface CommentsProps {
   /** Esta prop recebe um comentário específico que é do tipo PostsCommentsProps */

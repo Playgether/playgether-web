@@ -11,7 +11,6 @@ import type {
 } from "../types/duo";
 import {
   buildAuthenticatedWebSocketUrl,
-  getWebSocketBaseUrl,
   requestWebSocketTicket,
 } from "@/lib/websocketAuth";
 
@@ -199,17 +198,6 @@ export function useDuoSocket({
       .then(({ ticket }) => {
         if (cancelled) return;
         const wsUrl = buildAuthenticatedWebSocketUrl(socketPath, ticket);
-        if (!data?.ticket) {
-          setState((s) => ({
-            ...s,
-            error: "Faça login para usar o Duo Finder.",
-            connected: false,
-          }));
-          return;
-        }
-
-        const base = getWebSocketBaseUrl();
-        const wsUrl = `${base}/ws/duo/${encodeURIComponent(gameSlug)}/?ticket=${encodeURIComponent(data.ticket)}`;
 
         ws = new WebSocket(wsUrl);
         wsRef.current = ws;

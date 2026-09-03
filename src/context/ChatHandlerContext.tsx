@@ -30,7 +30,6 @@ import { useRouter } from "next/navigation";
 import { useRoomPermissions } from "@/context/RoomPermissionsContext";
 import {
   buildAuthenticatedWebSocketUrl,
-  getWebSocketBaseUrl,
   requestWebSocketTicket,
 } from "@/lib/websocketAuth";
 
@@ -180,7 +179,7 @@ const ChatHandlerContextProvider = ({
   }, [socketPath]);
 
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
-    `${getWebSocketBaseUrl()}/ws/chatroom/${encodedChatroom}?ticket=${ticket}`,
+    socketUrl,
     {
       share: false,
       shouldReconnect: () => false,

@@ -2650,7 +2650,7 @@ export default function RoomAmbiencePanel({
                         key={m.id}
                         m={m}
                         variant="float"
-                        roomOwnerId={room.owner}
+                        roomOwnerId={roomOwnerId}
                         isPinned={roomAmbience.pinned_message_id === m.id}
                         onReply={handleReply}
                         onPin={canPinWatchpartyMessages ? handlePin : undefined}
@@ -3053,7 +3053,7 @@ export default function RoomAmbiencePanel({
                   <AmbienceChatLine
                     key={m.id}
                     m={m}
-                    roomOwnerId={room.owner}
+                    roomOwnerId={roomOwnerId}
                     isPinned={roomAmbience.pinned_message_id === m.id}
                     onReply={handleReply}
                     onPin={canPinWatchpartyMessages ? handlePin : undefined}

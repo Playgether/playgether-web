@@ -228,7 +228,7 @@ export const PostModal = ({
   const handleDeleteCommentModal = (
     action?: boolean,
     comment?: PostsCommentsProps,
-    parentId?: number,
+    parentId?: string,
   ) => {
     if (comment) {
       setSelectedComment(comment);
@@ -286,7 +286,7 @@ export const PostModal = ({
     }
   };
 
-  const handleLoadMoreReplies = async (commentId: number) => {
+  const handleLoadMoreReplies = async (commentId: string) => {
     setLoadingMoreReplies((prev) => {
       const next = new Set(prev);
       next.add(commentId);
@@ -364,14 +364,14 @@ export const PostModal = ({
     }
   };
 
-  const onClickLikeComment = (commentId: number) => {
+  const onClickLikeComment = (commentId: string) => {
     requireAuthOr(() => {
       handleLikeAny(commentId);
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
     });
   };
 
-  const onClickLikeReply = (replyId: number, parentId: number) => {
+  const onClickLikeReply = (replyId: string, parentId: string) => {
     requireAuthOr(() => {
       handleLikeAny(replyId, parentId);
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
@@ -384,7 +384,7 @@ export const PostModal = ({
   };
 
   const handleUpdateComment = async (
-    commentId: number,
+    commentId: string,
     content_type: string,
     comment: string,
     object_id: string | number,
@@ -400,7 +400,7 @@ export const PostModal = ({
         comment_id: commentId,
       });
       if (isReplie) {
-        editAnswerComment(object_id, commentId, response);
+        editAnswerComment(String(object_id), commentId, response);
       } else {
         editComment(response);
       }
@@ -414,7 +414,7 @@ export const PostModal = ({
     }
   };
 
-  const handleReply = async (commentId: number) => {
+  const handleReply = async (commentId: string) => {
     if (isGuest) {
       onRequireAuth?.();
       return;
@@ -471,7 +471,7 @@ export const PostModal = ({
   const isRepliesLoading = (id: string) => loadingReplies.has(id);
   const isLoadingMoreReplies = (id: string) => loadingMoreReplies.has(id);
 
-  const toggleReplies = async (commentId: number) => {
+  const toggleReplies = async (commentId: string) => {
     if (!isRepliesOpen(commentId)) {
       setLoadingReplies((prev) => {
         const next = new Set(prev);

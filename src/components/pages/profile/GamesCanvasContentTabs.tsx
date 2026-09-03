@@ -349,7 +349,7 @@ export function GamesCanvasContentTabs({
     }
   };
 
-  const handleEditComment = async (commentId: number, newContent: string) => {
+  const handleEditComment = async (commentId: string, newContent: string) => {
     if (!profile || !newContent.trim() || isEditCommentSubmitting) return;
     setIsEditCommentSubmitting(true);
     try {
@@ -379,7 +379,7 @@ export function GamesCanvasContentTabs({
     }
   };
 
-  const handleDeleteComment = async (commentId: number) => {
+  const handleDeleteComment = async (commentId: string) => {
     const wasUserComment = comments.some(
       (c: any) => c.id === commentId && c.user_username === user?.username
     );

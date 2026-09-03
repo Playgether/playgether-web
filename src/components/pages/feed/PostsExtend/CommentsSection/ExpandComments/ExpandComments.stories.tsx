@@ -59,7 +59,7 @@ const CommentOfCommentComponent = (args) => {
     <div>
       {mockCommentsOfComments.map((comment) => (
         <div key={comment.id}>
-          <ExpandedComments answer={comment} comment_id={1} key={comment.id} />
+          <ExpandedComments answer={comment} comment_id="1" key={comment.id} />
         </div>
       ))}
     </div>
