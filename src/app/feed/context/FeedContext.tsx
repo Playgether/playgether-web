@@ -160,7 +160,7 @@ export const FeedProvider = ({
     [globalCreatePost],
   );
 
-  const handleSave = useCallback((postId: number, saveId: number | null) => {
+  const handleSave = useCallback((postId: string, saveId: number | null) => {
     setPosts((prev) =>
       prev.map((p) => {
         if (p.id !== postId) return p;
@@ -169,7 +169,7 @@ export const FeedProvider = ({
     );
   }, []);
 
-  const handleRepost = useCallback((postId: number, repostId: number | null) => {
+  const handleRepost = useCallback((postId: string, repostId: number | null) => {
     setPosts((prev) =>
       prev.map((p) => {
         if (p.id !== postId) return p;
@@ -189,7 +189,7 @@ export const FeedProvider = ({
     );
   }, []);
 
-  const getPostById = (postId: number) => {
+  const getPostById = (postId: string) => {
     return posts.find((p) => p.id === postId);
   };
 
@@ -200,7 +200,7 @@ export const FeedProvider = ({
     });
   }, []);
 
-  const increaseCommentCount = (postId: number) => {
+  const increaseCommentCount = (postId: string) => {
     setPosts((prev) =>
       prev.map((p) =>
         p.id === postId
@@ -210,7 +210,7 @@ export const FeedProvider = ({
     );
   };
 
-  const decreaseCommentCount = (postId: number) => {
+  const decreaseCommentCount = (postId: string) => {
     setPosts((prev) =>
       prev.map((p) =>
         p.id === postId
@@ -220,7 +220,7 @@ export const FeedProvider = ({
     );
   };
 
-  const handleLike = (postId: number) => {
+  const handleLike = (postId: string) => {
     setPosts((prev) =>
       prev.map((p) =>
         p.id === postId
@@ -237,7 +237,7 @@ export const FeedProvider = ({
   };
 
   const handlePostUpdate = useCallback(
-    (updatedPost: PostProps | null, postId: number) => {
+    (updatedPost: PostProps | null, postId: string) => {
       if (updatedPost === null) {
         setPosts((prev) =>
           prev.map((p) =>
@@ -261,7 +261,7 @@ export const FeedProvider = ({
   );
 
   const handleAuthorFollow = useCallback(
-    (postId: number, following = true) => {
+    (postId: string, following = true) => {
       setPosts((prev) =>
         prev.map((p) =>
           p.id === postId ? { ...p, user_already_follow: following } : p,

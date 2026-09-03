@@ -13,8 +13,8 @@ import { getFeed } from "@/actions/getFeed";
 
 type FeedContextProps = {
   feed: FeedProps[] | undefined;
-  alterCommentQuantity: (post_id: number) => void;
-  subtractCommentQuantity: (post_id: number) => void;
+  alterCommentQuantity: (post_id: string) => void;
+  subtractCommentQuantity: (post_id: string) => void;
   fetchNextPage: (options?: FetchNextPageOptions | undefined) => Promise<
     InfiniteQueryObserverResult<
       InfiniteData<
@@ -52,7 +52,7 @@ const FeedContextProvider = ({ children }: { children: React.ReactNode }) => {
       initialPageParam: null,
     });
 
-  const alterCommentQuantity = (post_id: number) => {
+  const alterCommentQuantity = (post_id: string) => {
     if (!feed) return;
 
     const postIndex = feed.findIndex((post) => post.id === post_id);
@@ -67,7 +67,7 @@ const FeedContextProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const subtractCommentQuantity = (post_id: number) => {
+  const subtractCommentQuantity = (post_id: string) => {
     if (!feed) return;
 
     const postIndex = feed.findIndex((post) => post.id === post_id);

@@ -13,6 +13,8 @@ import { useAuthContext } from "@/context/AuthContext";
 import { useProfileContext } from "@/context/ProfileContext";
 import { subscribeFriendsListInvalidate } from "@/lib/friendsListEvents";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
+import { FriendsModal } from "@/app/base-layout/components/friends/FriendsModal";
+import { FriendMessageButton } from "@/app/base-layout/components/friends/FriendMessageButton";
 
 type FriendApi = {
   id: number;
@@ -22,6 +24,8 @@ type FriendApi = {
   profile_photo: string | null;
   presence: { status: string; last_seen: string | null };
 };
+
+const FRIENDS_PREVIEW = 5;
 
 const getStatusLabel = (status: string) => {
   switch (status) {
@@ -64,9 +68,9 @@ export const OnlineFriends = () => {
   const presenceCtx = useContext(PresenceContext);
   const [friends, setFriends] = useState<FriendApi[]>([]);
   const [query, setQuery] = useState("");
-  const [showAll, setShowAll] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [listReady, setListReady] = useState(() => !user?.user_id);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const load = useCallback(async (opts?: { soft?: boolean }) => {
     setLoadError(null);
@@ -141,136 +145,136 @@ export const OnlineFriends = () => {
       );
     }
     return list;
-  }, [friends, query, presenceCtx]);
+  }, [friends, query, presenceCtx, user?.user_id]);
 
-  const slice = showAll ? visibleFriends : visibleFriends.slice(0, 8);
-
+  const slice = visibleFriends.slice(0, FRIENDS_PREVIEW);
   const showFriendsSkeleton = Boolean(user?.user_id) && !listReady && !loadError;
 
   return (
-    <Card className="bg-card border-border/50 backdrop-blur-sm animate-fade-up hover:shadow-glow-primary/30 hover:scale-[1.02] hover:border-primary/40 ">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-lg font-bold">Amigos online</CardTitle>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Pesquisar"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            disabled={showFriendsSkeleton}
-            className="pl-10 bg-muted/60 border-border/50 focus:ring-2 focus:ring-primary/30"
-          />
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-3">
-        {loadError ? (
-          <p className="text-xs text-destructive">{loadError}</p>
-        ) : null}
-
-        {showFriendsSkeleton ? (
-          <div className="min-h-[220px] flex flex-col items-center justify-center py-8">
-            <LoadingComponent
-              text="Carregando amigos..."
-              showText
-              className="text-muted-foreground"
+    <>
+      <Card className="flex max-h-[calc(100dvh-var(--layout-header-height)-3.5rem)] min-w-0 w-full flex-col overflow-hidden border-border/50 bg-card backdrop-blur-sm animate-fade-up hover:shadow-glow-primary/30 hover:border-primary/40 transition-all duration-300">
+        <CardHeader className="shrink-0 pb-4">
+          <CardTitle className="text-lg font-bold">Amigos online</CardTitle>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Pesquisar"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              disabled={showFriendsSkeleton}
+              className="border-border/50 bg-muted/60 pl-10 focus:ring-2 focus:ring-primary/30"
             />
           </div>
-        ) : (
-          <>
-            {user?.user_id != null ? (
-              <div className="flex items-center gap-3 pb-3 mb-1 border-b border-border/50">
-                <div className="relative shrink-0">
-                  <ProfileAvatar
-                    displayName={
-                      `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() ||
-                      user.username
-                    }
-                    username={user.username}
-                    profilePhoto={profile?.profile_photo}
-                    sizeClass="h-10 w-10"
-                    fallbackTextClassName="text-sm"
-                  />
-                  <PresenceStatusDot
-                    userId={user.user_id}
-                    allowPicker
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-muted-foreground">Seu status</p>
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {getStatusLabel(
-                      presenceCtx?.getSelfPresenceDisplay().status ??
-                        "offline",
-                    )}
-                  </p>
-                </div>
-              </div>
-            ) : null}
+        </CardHeader>
 
-            {slice.map((friend) => {
-              const st = friendPresenceStatus(friend, presenceCtx ?? null);
+        <CardContent className="space-y-3">
+          {loadError ? (
+            <p className="text-xs text-destructive">{loadError}</p>
+          ) : null}
 
-              return (
-                <div
-                  key={friend.user_id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => router.push(`/profile/${friend.username}`)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter")
-                      router.push(`/profile/${friend.username}`);
-                  }}
-                  className="flex items-center space-x-3 p-3 rounded-xl bg-muted/60 hover:bg-muted/80 transition-all duration-200 cursor-pointer group"
-                >
+          {showFriendsSkeleton ? (
+            <div className="flex min-h-[220px] flex-col items-center justify-center py-8">
+              <LoadingComponent
+                text="Carregando amigos..."
+                showText
+                className="text-muted-foreground"
+              />
+            </div>
+          ) : (
+            <>
+              {user?.user_id != null ? (
+                <div className="mb-1 flex items-center gap-3 border-b border-border/50 pb-3">
                   <div className="relative shrink-0">
                     <ProfileAvatar
-                      displayName={friend.name}
-                      username={friend.username}
-                      profilePhoto={friend.profile_photo}
+                      displayName={
+                        `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() ||
+                        user.username
+                      }
+                      username={user.username}
+                      profilePhoto={profile?.profile_photo}
                       sizeClass="h-10 w-10"
                       fallbackTextClassName="text-sm"
                     />
-                    <PresenceStatusDot userId={friend.user_id} />
+                    <PresenceStatusDot userId={user.user_id} allowPicker />
                   </div>
-
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-foreground truncate group-hover:text-primary transition-colors">
-                      {friend.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {getStatusLabel(st)}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-muted-foreground">Seu status</p>
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {getStatusLabel(
+                        presenceCtx?.getSelfPresenceDisplay().status ??
+                          "offline",
+                      )}
                     </p>
                   </div>
                 </div>
-              );
-            })}
+              ) : null}
 
-            {!loadError && friends.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                Nenhum amigo ainda. Quando houver follow mútuo, aparece aqui.
-              </p>
-            ) : null}
-            {!loadError && friends.length > 0 && visibleFriends.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                Nenhum amigo online no momento.
-              </p>
-            ) : null}
+              {slice.map((friend) => {
+                const st = friendPresenceStatus(friend, presenceCtx ?? null);
 
-            {visibleFriends.length > 8 ? (
-              <div className="pt-2">
+                return (
+                  <div
+                    key={friend.user_id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => router.push(`/profile/${friend.username}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter")
+                        router.push(`/profile/${friend.username}`);
+                    }}
+                    className="group flex cursor-pointer items-center space-x-3 rounded-xl bg-muted/60 p-3 transition-all duration-200 hover:bg-muted/80"
+                  >
+                    <div className="relative shrink-0">
+                      <ProfileAvatar
+                        displayName={friend.name}
+                        username={friend.username}
+                        profilePhoto={friend.profile_photo}
+                        sizeClass="h-10 w-10"
+                        fallbackTextClassName="text-sm"
+                      />
+                      <PresenceStatusDot userId={friend.user_id} />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-foreground transition-colors group-hover:text-primary">
+                        {friend.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {getStatusLabel(st)}
+                      </p>
+                    </div>
+
+                    <FriendMessageButton userId={friend.user_id} />
+                  </div>
+                );
+              })}
+
+              {!loadError && friends.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  Nenhum amigo ainda. Quando houver follow mútuo, aparece aqui.
+                </p>
+              ) : null}
+              {!loadError && friends.length > 0 && visibleFriends.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  Nenhum amigo online no momento.
+                </p>
+              ) : null}
+
+              {user?.user_id != null && !loadError ? (
                 <button
                   type="button"
-                  onClick={() => setShowAll(!showAll)}
-                  className="w-full text-sm text-primary hover:text-primary/80 font-medium transition-colors"
+                  onClick={() => setModalOpen(true)}
+                  className="block w-full pt-1 text-center text-xs font-medium text-primary hover:underline"
                 >
-                  {showAll ? "Mostrar menos" : "Ver todos"}
+                  Ver todos os amigos
                 </button>
-              </div>
-            ) : null}
-          </>
-        )}
-      </CardContent>
-    </Card>
+              ) : null}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <FriendsModal open={modalOpen} onOpenChange={setModalOpen} />
+    </>
   );
 };

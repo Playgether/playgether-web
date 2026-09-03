@@ -1,16 +1,5 @@
-import type { Metadata } from "next";
-import { PublicLegalDocument } from "@/components/legal/PublicLegalDocument";
-
-export const metadata: Metadata = {
-  title: "Política de Privacidade | Playgether",
-  description: "Política de Privacidade vigente da Playgether.",
-};
+import { redirect } from "next/navigation";
 
 export default function PrivacyPage() {
-  return (
-    <PublicLegalDocument
-      documentType="privacy"
-      fallbackTitle="Política de Privacidade"
-    />
-  );
+  redirect("/terms?doc=privacy");
 }

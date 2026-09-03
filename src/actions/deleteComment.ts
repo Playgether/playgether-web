@@ -2,7 +2,7 @@
 import { api } from "@/services/api";
 import { cookies } from "next/headers";
 
-export const deleteCommentAction = async (id: number) => {
+export const deleteCommentAction = async (id: string) => {
   const accessToken = (await cookies()).get("accessToken")?.value;
   try {
     await api.delete(`/api/v1/comments/${id}/`, {

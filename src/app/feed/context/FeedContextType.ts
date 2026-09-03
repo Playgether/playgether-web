@@ -13,12 +13,12 @@ export interface FeedContextType {
   isFeedLoading: boolean;
   createPostOpen: boolean;
   handlePostCreated: (newPost: PostProps) => void;
-  handleRepost: (postId: number, repostId: number | null) => void;
-  handleSave: (postId: number, saveId: number | null) => void;
-  handlePostUpdate: (updatedPost: PostProps | null, postId: number) => void;
+  handleRepost: (postId: string, repostId: number | null) => void;
+  handleSave: (postId: string, saveId: number | null) => void;
+  handlePostUpdate: (updatedPost: PostProps | null, postId: string) => void;
   handleCreatePostModal: (argument: boolean) => void;
-  getPostById: (postId: number) => PostProps | undefined;
-  handleLike: (postId: number) => void;
+  getPostById: (postId: string) => PostProps | undefined;
+  handleLike: (postId: string) => void;
   fetchNextPage: (options?: FetchNextPageOptions | undefined) => Promise<
     InfiniteQueryObserverResult<
       InfiniteData<
@@ -33,8 +33,8 @@ export interface FeedContextType {
   >;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
-  increaseCommentCount: (postId: number) => void;
-  decreaseCommentCount: (postId: number) => void;
+  increaseCommentCount: (postId: string) => void;
+  decreaseCommentCount: (postId: string) => void;
   injectPost: (post: PostProps) => void;
-  handleAuthorFollow: (postId: number, following?: boolean) => void;
+  handleAuthorFollow: (postId: string, following?: boolean) => void;
 }

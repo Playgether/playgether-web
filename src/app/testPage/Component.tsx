@@ -1,15 +1,38 @@
 "use client";
 import DefaultButton from "@/components/elements/DefaultButton/DefaultButton";
 import { useAuthContext } from "@/context/AuthContext";
+import {
+  buildAuthenticatedWebSocketUrl,
+  requestWebSocketTicket,
+} from "@/lib/websocketAuth";
 import React, { useEffect, useState, useRef } from "react";
-import useWebSocket, { ReadyState } from "react-use-websocket";
+import useWebSocket from "react-use-websocket";
 
-function Component({ chatroom, token }) {
-  const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(
-    `ws://192.168.18.8:8000/ws/chatroom/${chatroom}?token=${token}`,
+function Component({ chatroom }: { chatroom: string }) {
+  const socketPath = `/ws/chatroom/${encodeURIComponent(chatroom)}`;
+  const [socketUrl, setSocketUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    requestWebSocketTicket(socketPath)
+      .then(({ ticket }) => {
+        if (!cancelled) {
+          setSocketUrl(buildAuthenticatedWebSocketUrl(socketPath, ticket));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setSocketUrl(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [socketPath]);
+
+  const { sendJsonMessage, lastJsonMessage } = useWebSocket(
+    socketUrl,
     {
       share: false,
-      shouldReconnect: () => true,
+      shouldReconnect: () => false,
     },
   );
 

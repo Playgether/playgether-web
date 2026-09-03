@@ -41,7 +41,7 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
     glowBase: "none",
     glowHover: "none",
     glowExpanded: "none",
-    cardBg: "linear-gradient(135deg, rgba(24,24,27,0.9), rgba(39,39,42,0.85))",
+    cardBg: "linear-gradient(135deg, rgba(24,24,27,0.97), rgba(39,39,42,0.95))",
     borderGradient: "",
     staticBorderColor: "rgba(113, 113, 122, 0.4)",
     textColor: "text-zinc-400",
@@ -64,7 +64,7 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
     glowBase: "0 0 12px rgba(99, 102, 241, 0.1)",
     glowHover: "0 0 22px rgba(99, 102, 241, 0.28)",
     glowExpanded: "0 0 28px rgba(99, 102, 241, 0.35)",
-    cardBg: "linear-gradient(135deg, rgba(30,27,75,0.5), rgba(17,24,39,0.8))",
+    cardBg: "linear-gradient(135deg, rgba(30,27,75,0.92), rgba(17,24,39,0.96))",
     borderGradient: "",
     staticBorderColor: "rgba(99, 102, 241, 0.35)",
     textColor: "text-indigo-400",
@@ -87,7 +87,7 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
     glowBase: "0 0 16px rgba(59, 130, 246, 0.22)",
     glowHover: "0 0 34px rgba(59, 130, 246, 0.5), 0 0 10px rgba(34, 211, 238, 0.2)",
     glowExpanded: "0 0 40px rgba(59, 130, 246, 0.55), 0 0 15px rgba(34, 211, 238, 0.3)",
-    cardBg: "linear-gradient(135deg, rgba(23,37,84,0.65), rgba(7,89,133,0.35))",
+    cardBg: "linear-gradient(135deg, rgba(23,37,84,0.94), rgba(7,89,133,0.88))",
     borderGradient:
       "linear-gradient(90deg, #1d4ed8, #22d3ee, #0891b2, #1d4ed8)",
     staticBorderColor: "rgba(96, 165, 250, 0.5)",
@@ -112,7 +112,7 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
     glowHover: "0 0 45px rgba(139, 92, 246, 0.6), 0 0 18px rgba(196, 181, 253, 0.3)",
     glowExpanded:
       "0 0 52px rgba(139, 92, 246, 0.65), 0 0 24px rgba(196, 181, 253, 0.4)",
-    cardBg: "linear-gradient(135deg, rgba(46,16,101,0.7), rgba(88,28,135,0.45))",
+    cardBg: "linear-gradient(135deg, rgba(46,16,101,0.95), rgba(88,28,135,0.9))",
     borderGradient:
       "linear-gradient(90deg, #6d28d9, #a855f7, #c4b5fd, #a855f7, #6d28d9)",
     staticBorderColor: "rgba(167, 139, 250, 0.6)",
@@ -137,7 +137,7 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
     glowHover: "0 0 56px rgba(168, 85, 247, 0.7), 0 0 22px rgba(236, 72, 153, 0.35)",
     glowExpanded:
       "0 0 64px rgba(168, 85, 247, 0.75), 0 0 28px rgba(236, 72, 153, 0.45)",
-    cardBg: "linear-gradient(135deg, rgba(59,7,100,0.75), rgba(131,24,67,0.45))",
+    cardBg: "linear-gradient(135deg, rgba(59,7,100,0.96), rgba(131,24,67,0.92))",
     borderGradient:
       "conic-gradient(from 0deg, #9333ea, #ec4899, #a855f7, #f472b6, #9333ea)",
     staticBorderColor: "rgba(192, 132, 252, 0.7)",
@@ -164,7 +164,7 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
       "0 0 60px rgba(239, 68, 68, 0.7), 0 0 32px rgba(168, 85, 247, 0.45)",
     glowExpanded:
       "0 0 70px rgba(239, 68, 68, 0.75), 0 0 40px rgba(168, 85, 247, 0.55)",
-    cardBg: "linear-gradient(135deg, rgba(69,10,10,0.8), rgba(59,7,100,0.55))",
+    cardBg: "linear-gradient(135deg, rgba(69,10,10,0.96), rgba(59,7,100,0.92))",
     borderGradient:
       "conic-gradient(from 0deg, #dc2626, #9333ea, #f97316, #9333ea, #dc2626)",
     staticBorderColor: "rgba(239, 68, 68, 0.6)",
@@ -191,7 +191,7 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
       "0 0 70px rgba(251, 191, 36, 0.8), 0 0 35px rgba(245, 158, 11, 0.55)",
     glowExpanded:
       "0 0 80px rgba(251, 191, 36, 0.85), 0 0 45px rgba(245, 158, 11, 0.65)",
-    cardBg: "linear-gradient(135deg, rgba(66,32,6,0.85), rgba(120,53,15,0.55))",
+    cardBg: "linear-gradient(135deg, rgba(66,32,6,0.97), rgba(120,53,15,0.94))",
     borderGradient:
       "conic-gradient(from 22deg, #b45309, #fbbf24, #fde68a, #fbbf24, #b45309, #fbbf24, #fde68a, #fbbf24, #b45309)",
     staticBorderColor: "rgba(251, 191, 36, 0.7)",
@@ -221,7 +221,7 @@ export const rarityConfig: Record<RarityLevel, RarityConfig> = {
     glowExpanded:
       "0 0 105px rgba(167, 139, 250, 0.9), 0 0 70px rgba(59, 130, 246, 0.65), 0 0 45px rgba(236, 72, 153, 0.55)",
     cardBg:
-      "linear-gradient(135deg, rgba(46,16,101,0.9), rgba(23,37,84,0.75), rgba(76,5,55,0.65))",
+      "linear-gradient(135deg, rgba(46,16,101,0.97), rgba(23,37,84,0.95), rgba(76,5,55,0.93))",
     borderGradient:
       "conic-gradient(from 22deg, #7c3aed, #3b82f6, #ec4899, #06b6d4, #a855f7, #7c3aed, #3b82f6, #ec4899, #06b6d4, #a855f7, #7c3aed)",
     staticBorderColor: "rgba(196, 181, 253, 0.8)",

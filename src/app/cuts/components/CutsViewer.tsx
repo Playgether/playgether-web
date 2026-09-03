@@ -67,6 +67,65 @@ export function CutsViewer({ initialCuts, initialNext, isAuthenticated }: CutsVi
   };
 
   const closeComments = useCallback(() => setCommentsCut(null), []);
+  const handleCommentsCountChange = useCallback((cutId: string, delta: number) => {
+    if (delta === 0) return;
+    setCuts((prev) =>
+      prev.map((item) =>
+        item.id === cutId
+          ? { ...item, comments_count: Math.max(0, item.comments_count + delta) }
+          : item,
+      ),
+    );
+    setCommentsCut((prev) =>
+      prev && prev.id === cutId
+        ? { ...prev, comments_count: Math.max(0, prev.comments_count + delta) }
+        : prev,
+    );
+  }, []);
+
+  const handleCutUpdate = useCallback((updated: Cut) => {
+    setCuts((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+    setCommentsCut((prev) => (prev?.id === updated.id ? updated : prev));
+  }, []);
+
+  const handleDeleteCut = useCallback((cutId: string) => {
+    setCuts((prev) => {
+      const idx = prev.findIndex((c) => c.id === cutId);
+      if (idx === -1) return prev;
+
+      setActiveIndex((current) => {
+        if (idx < current) return current - 1;
+        if (idx === current && current >= prev.length - 1) return Math.max(0, current - 1);
+        return current;
+      });
+
+      return prev.filter((c) => c.id !== cutId);
+    });
+    setCommentsCut((prev) => (prev?.id === cutId ? null : prev));
+  }, []);
+
+  const activeCutId = cuts[activeIndex]?.id;
+  const activeCut = cuts[activeIndex] ?? null;
+
+  useEffect(() => {
+    if (commentsCut == null) return;
+    if (activeCut == null) {
+      setCommentsCut(null);
+      return;
+    }
+    if (commentsCut.id !== activeCut.id) {
+      setCommentsCut(activeCut);
+    }
+  }, [activeCut, commentsCut]);
+
+  useEffect(() => {
+    if (activeCutId == null || typeof window === "undefined") return;
+    const next = `/cuts/${activeCutId}`;
+    const path = window.location.pathname;
+    if (path === next) return;
+    if (path !== "/cuts" && !/^\/cuts\/[^/]+$/.test(path)) return;
+    window.history.replaceState(window.history.state, "", next);
+  }, [activeCutId]);
 
   if (cuts.length === 0) {
     return (
@@ -105,6 +164,8 @@ export function CutsViewer({ initialCuts, initialNext, isAuthenticated }: CutsVi
                 isAuthenticated={isAuthenticated}
                 onOpenComments={setCommentsCut}
                 commentsActive={commentsCut?.id === cut.id}
+                onDeleted={handleDeleteCut}
+                onCutUpdate={handleCutUpdate}
               />
             </div>
           ))}
@@ -180,6 +241,7 @@ export function CutsViewer({ initialCuts, initialNext, isAuthenticated }: CutsVi
             isAuthenticated={isAuthenticated}
             onClose={closeComments}
             variant="side"
+            onCommentsCountChange={handleCommentsCountChange}
           />
         </div>
       )}
@@ -191,6 +253,7 @@ export function CutsViewer({ initialCuts, initialNext, isAuthenticated }: CutsVi
           isAuthenticated={isAuthenticated}
           onClose={closeComments}
           variant="sheet"
+          onCommentsCountChange={handleCommentsCountChange}
         />
       )}
     </div>

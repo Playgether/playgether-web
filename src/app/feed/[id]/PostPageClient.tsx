@@ -9,7 +9,7 @@ import Cadastro from "@/components/pages/index/Cadastro";
 import type { PostProps } from "@/app/feed/types/PostProps";
 
 interface PostPageClientProps {
-  postId: number;
+  postId: string;
   post: PostProps;
   isGuest?: boolean;
 }

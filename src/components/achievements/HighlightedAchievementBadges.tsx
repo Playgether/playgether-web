@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   rarityConfig,
@@ -28,24 +28,22 @@ const RARITY_SET = new Set<string>(Object.keys(rarityConfig));
 const PREVIEW_CONTENT_CLASS =
   "z-[500] max-w-xs border-0 bg-transparent p-0 shadow-none overflow-visible text-left";
 
-/**
- * Estágios de truncamento do título (mais longo → mais curto).
- * `0` = só ícone.
- */
-const TITLE_STAGES = [18, 14, 10, 7, 5, 0] as const;
+const DEFAULT_TITLE_MAX_CHARS = 18;
 
-function BadgesRow({
+const BadgesRow = memo(function BadgesRow({
   list,
   compact,
   iconOnly,
   titleMaxChars,
   overflow,
+  showOverflowCounter,
 }: {
   list: HighlightedAchievementPublic[];
   compact: boolean;
   iconOnly: boolean;
   titleMaxChars: number;
   overflow: number;
+  showOverflowCounter: boolean;
 }) {
   return (
     <>
@@ -58,7 +56,7 @@ function BadgesRow({
           titleMaxChars={titleMaxChars}
         />
       ))}
-      {overflow > 0 ? (
+      {showOverflowCounter && overflow > 0 ? (
         <span
           className="shrink-0 rounded-full bg-muted/80 px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground"
           title={`${overflow} conquista${overflow === 1 ? "" : "s"} a mais`}
@@ -68,7 +66,7 @@ function BadgesRow({
       ) : null}
     </>
   );
-}
+});
 
 function normalizeRarity(r: string): RarityLevel {
   return (RARITY_SET.has(r) ? r : "common") as RarityLevel;
@@ -125,14 +123,14 @@ function AchievementChipBody({
       alt=""
       className={cn(
         "shrink-0 object-contain",
-        iconOnly ? "h-3.5 w-3.5" : compact ? "h-3 w-3" : "h-3.5 w-3.5",
+        iconOnly ? "h-2 w-2" : compact ? "h-3 w-3" : "h-3.5 w-3.5",
       )}
     />
   ) : (
     <span
       className={cn(
         "leading-none shrink-0",
-        iconOnly ? "text-xs" : compact ? "text-[10px]" : "text-[11px]",
+        iconOnly ? "text-[8px]" : compact ? "text-[10px]" : "text-[11px]",
       )}
       aria-hidden
     >
@@ -161,9 +159,12 @@ function AchievementChipBody({
           reducedMotion={reducedMotion}
           staticBorder={false}
           variant="chip"
-          contentClassName="relative z-10 flex h-6 w-6 items-center justify-center rounded-full p-0"
+          chipShape="circle"
+          contentClassName="relative z-10 flex h-4 w-4 items-center justify-center rounded-full p-0"
         >
-          <span className={cn("flex items-center justify-center", cfg.textColor)}>
+          <span
+            className={cn("flex items-center justify-center", cfg.textColor)}
+          >
             {iconNode}
           </span>
         </RarityAchievementChrome>
@@ -340,7 +341,7 @@ function AchievementHighlightChipHover({
   );
 }
 
-function AchievementHighlightChip({
+const AchievementHighlightChip = memo(function AchievementHighlightChip({
   achievement,
   className,
   compact = false,
@@ -376,125 +377,52 @@ function AchievementHighlightChip({
       titleMaxChars={titleMaxChars}
     />
   );
-}
+});
 
 export function HighlightedAchievementBadges({
   achievements,
   className,
   max = 3,
   compact = false,
-  iconOnly,
-  adaptive = true,
+  iconOnly = true,
+  showOverflowCounter = false,
 }: {
   achievements?: HighlightedAchievementPublic[] | null;
   className?: string;
   max?: number;
   compact?: boolean;
   iconOnly?: boolean;
-  adaptive?: boolean;
+  showOverflowCounter?: boolean;
 }) {
   const all = achievements ?? [];
-  const list = all.slice(0, max);
+  const list = useMemo(() => all.slice(0, max), [all, max]);
   const overflow = all.length - list.length;
-  const listKey = list.map((a) => a.id).join(",");
-  const containerRef = useRef<HTMLDivElement>(null);
-  const measureRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const [titleMaxChars, setTitleMaxChars] = useState<number>(TITLE_STAGES[0]);
-
-  const forcedIconOnly = iconOnly === true;
-  const resolvedIconOnly =
-    forcedIconOnly || (adaptive && titleMaxChars === 0);
+  const resolvedIconOnly = iconOnly;
   const resolvedCompact = compact || resolvedIconOnly;
-  const resolvedTitleMax =
-    titleMaxChars > 0 ? titleMaxChars : TITLE_STAGES[0];
-
-  useLayoutEffect(() => {
-    if (!adaptive || iconOnly != null || list.length === 0) {
-      setTitleMaxChars(iconOnly ? 0 : TITLE_STAGES[0]);
-      return;
-    }
-
-    const container = containerRef.current;
-    if (!container) return;
-
-    const updateLayout = () => {
-      // Usa a largura do pai para evitar feedback loop
-      // (container encolhe quando cai em ícone → sempre escolhe ícone).
-      const parent = container.parentElement;
-      const available = Math.max(
-        container.clientWidth,
-        parent?.clientWidth ?? 0,
-      );
-      if (available <= 0) return;
-
-      let chosen: number = 0;
-      for (let i = 0; i < TITLE_STAGES.length; i++) {
-        const stage = TITLE_STAGES[i];
-        const el = measureRefs.current[i];
-        if (!el) continue;
-        if (el.scrollWidth <= available + 1) {
-          chosen = stage;
-          break;
-        }
-      }
-      setTitleMaxChars((prev) => (prev === chosen ? prev : chosen));
-    };
-
-    updateLayout();
-
-    const observer = new ResizeObserver(updateLayout);
-    observer.observe(container);
-    if (container.parentElement) observer.observe(container.parentElement);
-    return () => observer.disconnect();
-  }, [adaptive, iconOnly, listKey, max, compact]);
 
   if (list.length === 0) return null;
 
   return (
     <TooltipProvider delayDuration={200}>
       <div
-        ref={containerRef}
-        className={cn("relative z-20 min-w-0 max-w-full", className)}
+        className={cn("relative z-20 min-w-0 max-w-full bg-transparent", className)}
         aria-label="Conquistas em destaque"
       >
-        {/* Clip evita scroll horizontal pelo w-max das medições */}
-        {adaptive && iconOnly == null ? (
-          <div
-            className="pointer-events-none absolute inset-0 overflow-hidden"
-            aria-hidden
-          >
-            {TITLE_STAGES.map((stage, idx) => (
-              <div
-                key={stage}
-                ref={(el) => {
-                  measureRefs.current[idx] = el;
-                }}
-                className="absolute left-0 top-0 flex w-max flex-nowrap gap-1 opacity-0"
-              >
-                <BadgesRow
-                  list={list}
-                  compact={compact}
-                  iconOnly={stage === 0}
-                  titleMaxChars={stage === 0 ? TITLE_STAGES[0] : stage}
-                  overflow={overflow}
-                />
-              </div>
-            ))}
-          </div>
-        ) : null}
-
         <div
           className={cn(
-            "flex w-full max-w-full items-center overflow-hidden",
-            resolvedIconOnly ? "flex-nowrap gap-0.5" : "flex-nowrap gap-1",
+            "flex max-w-full items-center bg-transparent",
+            resolvedIconOnly
+              ? "w-fit flex-nowrap gap-[2px] overflow-visible"
+              : "w-full flex-wrap gap-1 overflow-visible",
           )}
         >
           <BadgesRow
             list={list}
             compact={resolvedCompact}
             iconOnly={resolvedIconOnly}
-            titleMaxChars={resolvedTitleMax}
+            titleMaxChars={DEFAULT_TITLE_MAX_CHARS}
             overflow={overflow}
+            showOverflowCounter={showOverflowCounter}
           />
         </div>
       </div>

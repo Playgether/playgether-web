@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { api } from "@/services/api";
-import { ensureSessionAuth } from "@/actions/refreshToken";
+import { ensureSessionAuth } from "@/lib/server/authTokens";
 
 export async function GET() {
   const session = await ensureSessionAuth();

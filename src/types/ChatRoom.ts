@@ -1,4 +1,14 @@
 import { ChatRules } from "./ChatRules";
+import type { AmbientPeriodKey } from "@/app/utils/roomAmbientPeriod";
+
+export type RoomAmbientMode = "schedule" | "fixed";
+
+export type RoomAmbientSettings = Partial<
+  Record<AmbientPeriodKey, string>
+> & {
+  mode?: RoomAmbientMode;
+  fixed?: string;
+};
 
 export interface ChatRoom {
   id: number;
@@ -18,8 +28,8 @@ export interface ChatRoom {
   owner_username: string;
   rules: ChatRules[];
   is_favorited: boolean;
-  /** public_id Cloudinary por período (manhã, tarde, etc.) */
-  ambient_images?: Record<string, string>;
+  /** Ambientação fixa ou public_id Cloudinary por período. */
+  ambient_images?: RoomAmbientSettings;
 }
 
 export interface ChatRoomPagination {

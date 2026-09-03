@@ -1,59 +1,36 @@
 "use client";
-import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
+import { GameMediaImage } from "@/components/media/GameMediaImage";
 
 type Props = {
   title: string;
   description?: string | null;
-  cover?: string | null;
   logo?: string | null;
 };
-
-function toMediaUrl(value?: string | null): string {
-  if (!value) return "";
-  if (value.startsWith("http")) return value;
-  if (value.startsWith("/")) return value;
-  return getCloudinaryUrl(value);
-}
 
 export function GameHoverCardContent({
   title,
   description,
-  cover,
   logo,
 }: Props) {
-  const coverUrl = toMediaUrl(cover);
-  const logoUrl = toMediaUrl(logo);
-
-  const hasCover = !!coverUrl;
-  const hasLogo = !!logoUrl;
+  const hasLogo = Boolean(logo);
 
   return (
-    <div className="space-y-3 text-left max-h-64 overflow-y-auto pr-1">
-      {/* {hasCover ? (
-        <img
-          src={coverUrl}
-          alt={`${title} cover`}
-          className="w-full h-24 object-contain rounded-md bg-card/50"
-        />
-      ) : (
-        <div className="w-full h-24 rounded-md bg-card/50 border border-border">
-          <p>No Banner</p>
-        </div>
-      )} */}
-
+    <div className="max-h-64 overflow-y-auto pr-1 text-left">
       <div className="flex items-start gap-3">
         {hasLogo ? (
-          <img
-            src={logoUrl}
+          <GameMediaImage
+            src={logo}
             alt={`${title} logo`}
-            className="w-12 h-12 rounded-md object-contain bg-card/50 border border-border"
+            size="icon"
+            className="h-12 w-12 shrink-0 rounded-md border border-border bg-card/50"
+            spinnerClassName="h-4 w-4"
           />
         ) : (
-          <div className="w-12 h-12 rounded-md bg-card/50 border border-border" />
+          <div className="h-12 w-12 shrink-0 rounded-md border border-border bg-card/50" />
         )}
 
         <div className="min-w-0">
-          <div className="font-semibold truncate">{title}</div>
+          <div className="truncate font-semibold">{title}</div>
           {description ? (
             <p className="text-sm text-muted-foreground">{description}</p>
           ) : null}

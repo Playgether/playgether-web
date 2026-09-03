@@ -33,6 +33,19 @@ async function handleSessionExpiredOnClient(): Promise<void> {
   window.location.href = "/";
 }
 
+/** Status codes that must not include a body (Fetch `Response` constructor). */
+const NULL_BODY_STATUSES = new Set([101, 103, 204, 205, 304]);
+
+function responseFromAxios(status: number, data: unknown, contentType?: string) {
+  const body = NULL_BODY_STATUSES.has(status) ? null : ((data as BodyInit | null | undefined) ?? "");
+  return new Response(body, {
+    status,
+    headers: {
+      ...(contentType && body !== null ? { "content-type": contentType } : {}),
+    },
+  });
+}
+
 /**
  * Wrapper com a interface "fetch-like" que:
  * - não sobrescreve `window.fetch`;
@@ -67,16 +80,6 @@ export async function apiFetch(
       responseType: "text",
     });
 
-  const buildResponse = (axiosResp: Awaited<ReturnType<typeof runAxios>>) => {
-    const contentType = axiosResp.headers?.["content-type"];
-    return new Response(axiosResp.data ?? "", {
-      status: axiosResp.status,
-      headers: {
-        ...(contentType ? { "content-type": contentType } : {}),
-      },
-    });
-  };
-
   try {
     let axiosResp = await runAxios();
 
@@ -95,7 +98,11 @@ export async function apiFetch(
       }
     }
 
-    const response = buildResponse(axiosResp);
+    const response = responseFromAxios(
+      axiosResp.status,
+      axiosResp.data,
+      axiosResp.headers?.["content-type"]
+    );
 
     if (response.status === 403) {
       try {
@@ -113,13 +120,11 @@ export async function apiFetch(
     return response;
   } catch (err: any) {
     if (err?.response?.status) {
-      const contentType = err.response.headers?.["content-type"];
-      return new Response(err.response.data ?? "", {
-        status: err.response.status,
-        headers: {
-          ...(contentType ? { "content-type": contentType } : {}),
-        },
-      });
+      return responseFromAxios(
+        err.response.status,
+        err.response.data,
+        err.response.headers?.["content-type"]
+      );
     }
     throw err;
   }

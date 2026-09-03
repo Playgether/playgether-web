@@ -16,10 +16,12 @@ export default function GamesCanvasProfile({
   initialComments: ApiResponseComments;
 }) {
   const [profile, setProfile] = useState<getProfileByUsernameProps | null>(
-    initialProfile
+    initialProfile,
   );
 
-  const handleProfileUpdated = (updated: Partial<getProfileByUsernameProps>) => {
+  const handleProfileUpdated = (
+    updated: Partial<getProfileByUsernameProps>,
+  ) => {
     setProfile((prev) => (prev ? { ...prev, ...updated } : prev));
   };
 

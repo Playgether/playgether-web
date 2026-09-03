@@ -2,6 +2,9 @@
 
 import { createContext, useCallback, useContext, useState } from "react";
 import React from "react";
+import type { DuoReplyDraft } from "@/lib/duoFinderMessage";
+
+export type { DuoReplyDraft };
 
 export type MegaphoneReplyDraft = {
   authorUsername: string;
@@ -13,12 +16,14 @@ export type MegaphoneReplyDraft = {
 export type OpenConversationOptions = {
   draft?: string;
   megaphoneReply?: MegaphoneReplyDraft;
+  duoReply?: DuoReplyDraft;
 };
 
 interface ConversationsWidgetContextType {
   pendingConvId: string | null;
   pendingDraft: string | null;
   pendingMegaphoneReply: MegaphoneReplyDraft | null;
+  pendingDuoReply: DuoReplyDraft | null;
   openWithConversation: (
     conversationId: string,
     options?: OpenConversationOptions
@@ -38,12 +43,14 @@ export function ConversationsWidgetProvider({
   const [pendingDraft, setPendingDraft] = useState<string | null>(null);
   const [pendingMegaphoneReply, setPendingMegaphoneReply] =
     useState<MegaphoneReplyDraft | null>(null);
+  const [pendingDuoReply, setPendingDuoReply] = useState<DuoReplyDraft | null>(null);
 
   const openWithConversation = useCallback(
     (conversationId: string, options?: OpenConversationOptions) => {
       setPendingConvId(conversationId);
       setPendingDraft(options?.draft ?? null);
       setPendingMegaphoneReply(options?.megaphoneReply ?? null);
+      setPendingDuoReply(options?.duoReply ?? null);
     },
     []
   );
@@ -52,6 +59,7 @@ export function ConversationsWidgetProvider({
     setPendingConvId(null);
     setPendingDraft(null);
     setPendingMegaphoneReply(null);
+    setPendingDuoReply(null);
   }, []);
 
   return (
@@ -60,6 +68,7 @@ export function ConversationsWidgetProvider({
         pendingConvId,
         pendingDraft,
         pendingMegaphoneReply,
+        pendingDuoReply,
         openWithConversation,
         clearPending,
       }}

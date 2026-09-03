@@ -138,11 +138,15 @@ export const QuickMessagesFooter = () => {
     }
     setReplying(true);
     try {
-      const conv = await startConversation(String(selectedMessage.user.id));
-      if (!conv) {
-        CustomToast.error("Não foi possível abrir a conversa.");
+      const result = await startConversation(String(selectedMessage.user.id), {
+        source: "megaphone",
+        globalMessageId: selectedMessage.id,
+      });
+      if (!result.ok) {
+        CustomToast.error(result.error);
         return;
       }
+      const conv = result.conversation;
       const quote = selectedMessage.fullContent || selectedMessage.message;
       const author =
         selectedMessage.user.username || selectedMessage.user.name;
@@ -218,15 +222,13 @@ export const QuickMessagesFooter = () => {
           <button
             type="button"
             onClick={() => setHistoryOpen(true)}
-            className="relative flex min-w-0 flex-1 items-center gap-2"
+            className="flex min-w-0 flex-1 items-center gap-2"
           >
-            <div className="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-secondary">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-secondary">
               <Megaphone className="h-3.5 w-3.5 text-white" />
             </div>
-            <span className="relative z-10 shrink-0 text-xs font-bold">
-              Alto-falante
-            </span>
-            <span className="pointer-events-none absolute inset-x-0 text-center text-xs text-muted-foreground">
+            <span className="shrink-0 text-xs font-bold">Alto-falante</span>
+            <span className="min-w-0 flex-1 truncate text-left text-xs text-muted-foreground">
               Não há mensagens no momento
             </span>
           </button>

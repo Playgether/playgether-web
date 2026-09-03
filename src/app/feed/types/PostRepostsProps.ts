@@ -3,7 +3,7 @@ export interface PostReposts {
   created_by_user_name: string;
   created_by_user_photo: string;
   timestamp: Date;
-  object_id: number;
+  object_id: string;
   content_type: string;
   user: number;
   comment: string;

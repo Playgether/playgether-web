@@ -3,20 +3,25 @@
 import { useTermsContext } from "@/context/TermsContext";
 
 type Props = {
+  documentType?: string;
   children?: React.ReactNode;
   className?: string;
 };
 
 /**
- * Link que abre o modal de visualização dos termos.
- * Usado no footer, login, etc.
+ * Link que abre o modal de visualização de um documento legal
+ * (terms, privacy, community, cookies). Usado no footer, login, etc.
  */
-export function TermsLink({ children = "Termos de Serviço", className }: Props) {
+export function TermsLink({
+  documentType = "terms",
+  children = "Termos de Serviço",
+  className,
+}: Props) {
   const { openViewModal } = useTermsContext();
   return (
     <button
       type="button"
-      onClick={() => openViewModal("terms")}
+      onClick={() => openViewModal(documentType)}
       className={className}
     >
       {children}

@@ -7,7 +7,7 @@ export interface PostPropertiersPostsAnswerProps {
   /** Esta prop recebe true caso o usuário logado já tenha curtido este post ou false para caso não tenha */
   user_already_like: boolean;
   /** Esta prop recebe o object_id do post (o id do post no banco) */
-  object_id: number;
+  object_id: string | number;
 }
 /** Este é o componente responsável por criar as propriedades das respostas dos comentários dos posts em PostExpand (ele utiliza o Composite) */
 const PostPropertiersPostsAnswer = ({

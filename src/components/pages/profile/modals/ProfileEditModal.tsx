@@ -18,6 +18,11 @@ import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import { CustomToastProps } from "@/error/custom-toaster/enum";
 import { patchProfile, PROFILE_BIO_MAX_LENGTH } from "@/services/patchProfile";
 import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
+import {
+  BYTES_8_MB,
+  BYTES_10_MB,
+  CLOUDINARY_IMAGE_FORMATS,
+} from "@/app/utils/cloudinaryUploadConfig";
 import type { getProfileByUsernameProps } from "@/services/getProfileByUsername";
 import { useAuthContext } from "@/context/AuthContext";
 import axios from "axios";
@@ -100,13 +105,26 @@ export function ProfileEditModal({
         duration: CustomToastProps.defaultDuration,
       });
     } catch (err: any) {
+      let persistedDespiteError = false;
       try {
         await axios.post("/api/signed-delete-posts/", {
           public_id: publicId,
           resource_type: "image",
         });
       } catch (delErr) {
-        console.error("Erro ao remover mídia órfã:", delErr);
+        persistedDespiteError =
+          axios.isAxiosError(delErr) && delErr.response?.status === 409;
+        if (!persistedDespiteError) {
+          console.error("Erro ao remover mídia órfã:", delErr);
+        }
+      }
+      if (persistedDespiteError) {
+        onProfileUpdated({ profile_photo: publicId });
+        setOldProfilePhotoPublicId(publicId);
+        CustomToast.success("Foto de perfil atualizada!", {
+          duration: CustomToastProps.defaultDuration,
+        });
+        return;
       }
       setNewProfilePhoto(null);
       CustomToast.error("Erro ao salvar foto", {
@@ -190,13 +208,26 @@ export function ProfileEditModal({
         duration: CustomToastProps.defaultDuration,
       });
     } catch (err: any) {
+      let persistedDespiteError = false;
       try {
         await axios.post("/api/signed-delete-posts/", {
           public_id: publicId,
           resource_type: "image",
         });
       } catch (delErr) {
-        console.error("Erro ao remover mídia órfã:", delErr);
+        persistedDespiteError =
+          axios.isAxiosError(delErr) && delErr.response?.status === 409;
+        if (!persistedDespiteError) {
+          console.error("Erro ao remover mídia órfã:", delErr);
+        }
+      }
+      if (persistedDespiteError) {
+        onProfileUpdated({ profile_banner: publicId });
+        setOldProfileBannerPublicId(publicId);
+        CustomToast.success("Banner atualizado!", {
+          duration: CustomToastProps.defaultDuration,
+        });
+        return;
       }
       setNewProfileBanner(null);
       CustomToast.error("Erro ao salvar banner", {
@@ -364,13 +395,17 @@ export function ProfileEditModal({
                   signatureEndpoint="/api/signed-profile-banner"
                   options={{
                     uploadPreset: PresetsCloudinary.profile_banners,
+                    sources: ["local"],
                     multiple: false,
                     tags: [user?.username ?? "user", "profile", "banner"],
                     singleUploadAutoClose: true,
                     cropping: true,
                     croppingAspectRatio: 3,
+                    croppingCoordinatesMode: "custom",
                     language: "pt-br",
-                    clientAllowedFormats: ["image"],
+                    clientAllowedFormats: [...CLOUDINARY_IMAGE_FORMATS],
+                    maxImageFileSize: BYTES_10_MB,
+                    resourceType: "image",
                   }}
                   onSuccess={handleBannerUploadSuccess}
                   onError={handleBannerUploadError}
@@ -426,6 +461,7 @@ export function ProfileEditModal({
                   signatureEndpoint="/api/signed-profile"
                   options={{
                     uploadPreset: PresetsCloudinary.profile_image,
+                    sources: ["local"],
                     multiple: false,
                     tags: [
                       user?.username ?? "user",
@@ -436,8 +472,11 @@ export function ProfileEditModal({
                     singleUploadAutoClose: true,
                     cropping: true,
                     croppingAspectRatio: 1,
+                    croppingCoordinatesMode: "custom",
                     language: "pt-br",
-                    clientAllowedFormats: ["image"],
+                    clientAllowedFormats: [...CLOUDINARY_IMAGE_FORMATS],
+                    maxImageFileSize: BYTES_8_MB,
+                    resourceType: "image",
                   }}
                   onSuccess={handleUploadSuccess}
                   onError={handleUploadError}

@@ -21,7 +21,7 @@ import { ProfileTabSearchBar } from "./ProfileTabSearchBar";
 interface MediaTabProps {
   profile: getProfileByUsernameProps | null;
   isOwner?: boolean;
-  onPostClick: (postId: number) => void;
+  onPostClick: (postId: string) => void;
   onDeletePost?: (post: PostProps) => void;
 }
 
@@ -188,6 +188,7 @@ function MediaPostCard({
             <div className="relative w-full h-full bg-muted">
               <VideoComponent
                 media_id={firstMedia.media_file}
+                allowFullscreen={false}
                 className="object-cover w-full h-full"
                 preload="metadata"
               />

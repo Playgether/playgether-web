@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,14 @@ import { CustomToast } from "@/components/ui/customSonner";
 import { CustomToastProps } from "@/error/custom-toaster/enum";
 import { deletePostFile } from "@/services/cloudinary_requests/deletePostFile";
 import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
+import {
+  BYTES_5_MB,
+  BYTES_50_MB,
+  CLOUDINARY_IMAGE_AND_VIDEO_FORMATS,
+  createVideoDurationPreBatchValidator,
+  MILESTONE_VIDEO_MAX_DURATION_SEC,
+  videoExceedsMaxDuration,
+} from "@/app/utils/cloudinaryUploadConfig";
 import type { MilestoneMediaInput } from "@/actions/milestones";
 import type {
   ProfileMilestone,
@@ -43,7 +51,7 @@ export function MilestoneModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: MilestoneFormData) => Promise<void>;
+  onSubmit: (data: MilestoneFormData) => Promise<boolean>;
   milestone: ProfileMilestone | null;
   mode: "add" | "edit";
   profileId: number;
@@ -55,6 +63,22 @@ export function MilestoneModal({
   const [uploadedFiles, setUploadedFiles] = useState<MilestoneMediaInput[]>([]);
   const [widgetKey, setWidgetKey] = useState(0);
   const [isWidgetOpen, setIsWidgetOpen] = useState(false);
+  const persistedPublicIds = new Set(
+    (milestone?.medias ?? []).map((media) => media.public_id),
+  );
+  const validateMilestoneVideoDuration = useMemo(
+    () =>
+      createVideoDurationPreBatchValidator({
+        maxDurationSec: MILESTONE_VIDEO_MAX_DURATION_SEC,
+        onError: (message) => {
+          CustomToast.error("Vídeo inválido", {
+            description: message,
+            duration: CustomToastProps.defaultDuration,
+          });
+        },
+      }),
+    [],
+  );
 
   const handleWidgetOpen = () => {
     setIsWidgetOpen(true);
@@ -88,6 +112,16 @@ export function MilestoneModal({
   }, [isOpen, milestone]);
 
   const handleUploadSuccess = (result: any) => {
+    const info = result?.info;
+    if (videoExceedsMaxDuration(info, MILESTONE_VIDEO_MAX_DURATION_SEC)) {
+      deletePostFile(info.public_id, "", "video").catch(console.error);
+      CustomToast.error("Vídeo muito longo", {
+        description: `Vídeos devem ter no máximo ${MILESTONE_VIDEO_MAX_DURATION_SEC} segundos.`,
+        duration: CustomToastProps.defaultDuration,
+      });
+      return;
+    }
+
     setUploadedFiles((prev) => {
       if (prev.length >= 3) return prev;
       return [
@@ -111,7 +145,9 @@ export function MilestoneModal({
 
   const removeMedia = (index: number) => {
     const media = uploadedFiles[index];
-    deletePostFile(media.public_id, "", media.media_type).catch(console.error);
+    if (!persistedPublicIds.has(media.public_id)) {
+      deletePostFile(media.public_id, "", media.media_type).catch(console.error);
+    }
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
@@ -128,12 +164,13 @@ export function MilestoneModal({
       });
       return;
     }
-    await onSubmit({
+    const saved = await onSubmit({
       title: title.trim(),
       description: description.trim() || "",
       date,
       medias: uploadedFiles,
     });
+    if (!saved) return;
     setTitle("");
     setDescription("");
     setDate("");
@@ -143,8 +180,10 @@ export function MilestoneModal({
 
   const handleCloseModal = (open: boolean) => {
     if (!open) {
-      if (mode === "add" && uploadedFiles.length > 0) {
-        uploadedFiles.forEach((m) => {
+      if (uploadedFiles.length > 0) {
+        uploadedFiles
+          .filter((media) => !persistedPublicIds.has(media.public_id))
+          .forEach((m) => {
           deletePostFile(m.public_id, "", m.media_type).catch(console.error);
         });
         setUploadedFiles([]);
@@ -244,13 +283,16 @@ export function MilestoneModal({
                     signatureEndpoint="/api/signed-milestones"
                     uploadPreset={PresetsCloudinary.profile_milestones}
                     options={{
-                      detection: "unidet",
                       sources: ["local"],
                       maxFiles: 3 - uploadedFiles.length,
                       multiple: true,
-                      clientAllowedFormats: ["image", "video"],
-                      maxImageFileSize: 5000000,
-                      maxVideoFileSize: 50000000,
+                      resourceType: "auto",
+                      clientAllowedFormats: [
+                        ...CLOUDINARY_IMAGE_AND_VIDEO_FORMATS,
+                      ],
+                      maxImageFileSize: BYTES_5_MB,
+                      maxVideoFileSize: BYTES_50_MB,
+                      preBatch: validateMilestoneVideoDuration,
                       language: "pt-br",
                       showCompletedButton: true,
                     }}
@@ -280,7 +322,10 @@ export function MilestoneModal({
               </div>
             </div>
             <DialogFooter className="shrink-0 border-t border-border px-6 py-4">
-              <Button variant="outline" onClick={onClose}>
+              <Button
+                variant="outline"
+                onClick={() => handleCloseModal(false)}
+              >
                 Cancelar
               </Button>
               <Button

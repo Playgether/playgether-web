@@ -63,6 +63,10 @@ const ProfileAndUsername = ({
             <HighlightedAchievementBadges
               achievements={highlightedAchievements}
               className="max-w-full"
+              compact={compact}
+              iconOnly
+              max={compact ? 3 : 3}
+              showOverflowCounter={false}
             />
           </div>
           {timestamp ? (

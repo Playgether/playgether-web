@@ -16,7 +16,7 @@ import { HtmlHTMLAttributes } from "react";
 import { useFeedContext } from "../../../../../../context/FeedContext";
 
 interface EditCommentProps extends commentProps {
-  id: number;
+  id: string;
 }
 
 interface RestProps extends HtmlHTMLAttributes<HTMLDivElement> {}
@@ -30,7 +30,7 @@ const EditComment = ({
   post_id,
   ...rest
 }: {
-  post_id: number;
+  post_id: string;
   Comment: EditCommentProps;
   handleEditClick: (value: boolean) => void;
   isEditing: boolean;

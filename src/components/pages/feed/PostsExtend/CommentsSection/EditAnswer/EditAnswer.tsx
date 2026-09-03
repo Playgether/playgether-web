@@ -15,7 +15,7 @@ import { twJoin } from "tailwind-merge";
 import { HtmlHTMLAttributes } from "react";
 
 interface EditCommentProps extends commentProps {
-  id: number;
+  id: string;
 }
 
 interface RestProps extends HtmlHTMLAttributes<HTMLDivElement> {}
@@ -29,7 +29,7 @@ const EditAnswer = ({
   comment_id,
   ...rest
 }: {
-  comment_id: number;
+  comment_id: string;
   Answer: EditCommentProps;
   handleEditClick: (value: boolean) => void;
   isEditing: boolean;

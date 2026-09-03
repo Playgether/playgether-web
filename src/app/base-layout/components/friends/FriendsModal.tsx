@@ -13,6 +13,7 @@ import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 import { useAuthContext } from "@/context/AuthContext";
 import { subscribeFriendsListInvalidate } from "@/lib/friendsListEvents";
+import { FriendMessageButton } from "./FriendMessageButton";
 
 type FriendApi = {
   id: number;
@@ -108,6 +109,8 @@ export function FriendsModal({ open, onOpenChange }: FriendsModalProps) {
     onOpenChange(false);
   };
 
+  const handleClose = useCallback(() => onOpenChange(false), [onOpenChange]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg sm:max-w-xl p-0 bg-background/95 backdrop-blur-xl border border-primary/20 gap-0 max-h-[90vh] flex flex-col">
@@ -163,6 +166,7 @@ export function FriendsModal({ open, onOpenChange }: FriendsModalProps) {
                     friends={online}
                     presenceCtx={presenceCtx ?? null}
                     onNavigate={handleNavigate}
+                    onMessageSuccess={handleClose}
                   />
                 )}
                 {offline.length > 0 && (
@@ -171,6 +175,7 @@ export function FriendsModal({ open, onOpenChange }: FriendsModalProps) {
                     friends={offline}
                     presenceCtx={presenceCtx ?? null}
                     onNavigate={handleNavigate}
+                    onMessageSuccess={handleClose}
                     muted
                   />
                 )}
@@ -188,12 +193,14 @@ function FriendSection({
   friends,
   presenceCtx,
   onNavigate,
+  onMessageSuccess,
   muted = false,
 }: {
   title: string;
   friends: FriendApi[];
   presenceCtx: React.ContextType<typeof PresenceContext>;
   onNavigate: (username: string) => void;
+  onMessageSuccess: () => void;
   muted?: boolean;
 }) {
   return (
@@ -211,6 +218,7 @@ function FriendSection({
               status={status}
               muted={muted}
               onNavigate={onNavigate}
+              onMessageSuccess={onMessageSuccess}
             />
           );
         })}
@@ -224,11 +232,13 @@ function FriendRow({
   status,
   muted,
   onNavigate,
+  onMessageSuccess,
 }: {
   friend: FriendApi;
   status: string;
   muted: boolean;
   onNavigate: (username: string) => void;
+  onMessageSuccess: () => void;
 }) {
   return (
     <div
@@ -261,6 +271,11 @@ function FriendRow({
           @{friend.username} · {getStatusLabel(status)}
         </p>
       </div>
+
+      <FriendMessageButton
+        userId={friend.user_id}
+        onSuccess={onMessageSuccess}
+      />
     </div>
   );
 }

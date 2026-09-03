@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Search, X, Clock, Gamepad2, MessageSquare, Hash, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
+import { GameMediaImage } from "@/components/media/GameMediaImage";
 import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
 import {
   searchGlobal,
@@ -438,14 +439,19 @@ export function GlobalSearchDropdown({
 // ─── icon helpers ─────────────────────────────────────────────────────────────
 
 function GameIcon({ icon, name }: { icon: string | null; name: string }) {
-  const src = icon ? resolveGameMediaUrl(icon) : null;
   return (
-    <div className="w-8 h-8 rounded-lg bg-muted overflow-hidden shrink-0 flex items-center justify-center">
-      {src ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt={name} className="w-full h-full object-cover" />
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
+      {icon ? (
+        <GameMediaImage
+          src={icon}
+          alt={name}
+          size="icon"
+          objectFit="cover"
+          className="h-full w-full"
+          spinnerClassName="h-3.5 w-3.5"
+        />
       ) : (
-        <Gamepad2 className="w-4 h-4 text-muted-foreground" />
+        <Gamepad2 className="h-4 w-4 text-muted-foreground" />
       )}
     </div>
   );

@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { MentionTextarea } from "@/components/mentions/MentionTextarea";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 
 export function AddCommentModal({
@@ -40,9 +40,9 @@ export function AddCommentModal({
             Escreva um comentário para o perfil.
           </DialogDescription>
         </DialogHeader>
-        <Textarea
+        <MentionTextarea
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={setValue}
           onKeyDown={(e) => handleKeyDown(e, () => { if (value.trim() && !isSubmitting) onSubmit(value); })}
           placeholder="Seu comentário..."
         />

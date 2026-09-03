@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,8 +22,19 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { uploadFeedbackAttachment } from "@/lib/uploadFeedbackAttachment";
 
 const MAX_CHARS = 1000;
+const MAX_ATTACHMENTS = 3;
+const MAX_FILE_SIZE_BYTES = 8 * 1024 * 1024;
+const MAX_VIDEO_FILE_SIZE_BYTES = 25 * 1024 * 1024;
+const ALLOWED_ATTACHMENT_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+  "video/mp4",
+];
 
 interface FeedbackDialogProps {
   open: boolean;
@@ -33,7 +44,10 @@ interface FeedbackDialogProps {
 export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
   const [category, setCategory] = useState("sugestao");
   const [message, setMessage] = useState("");
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [attachmentsError, setAttachmentsError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [uploadingLabel, setUploadingLabel] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,6 +56,8 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
       setSent(false);
       setError(null);
       setMessage("");
+      setAttachments([]);
+      setAttachmentsError(null);
       setCategory("sugestao");
     }
     onOpenChange(value);
@@ -55,11 +71,22 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
     setLoading(true);
     setError(null);
     try {
+      const attachmentUrls: string[] = [];
+      for (const file of attachments) {
+        setUploadingLabel(`Enviando ${file.name}…`);
+        attachmentUrls.push(await uploadFeedbackAttachment(file));
+      }
+      setUploadingLabel(null);
+
       const res = await fetch("/api/feedback", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category, message: message.trim() }),
+        body: JSON.stringify({
+          category,
+          message: message.trim(),
+          attachments: attachmentUrls,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -67,9 +94,10 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
       } else {
         setSent(true);
       }
-    } catch {
-      setError("Falha de conexão. Tente novamente.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha de conexão. Tente novamente.");
     } finally {
+      setUploadingLabel(null);
       setLoading(false);
     }
   }
@@ -140,6 +168,69 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
                 </p>
               </div>
 
+              <div className="space-y-1.5">
+                <Label htmlFor="fb-attachments">Anexos</Label>
+                <input
+                  id="fb-attachments"
+                  type="file"
+                  multiple
+                  accept=".jpg,.jpeg,.png,.webp,.pdf,.mp4"
+                  className="hidden"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files ?? []);
+                    if (files.length > MAX_ATTACHMENTS) {
+                      setAttachments([]);
+                      setAttachmentsError(`Selecione no máximo ${MAX_ATTACHMENTS} arquivos.`);
+                      return;
+                    }
+
+                    const hasInvalidType = files.some(
+                      (file) => !ALLOWED_ATTACHMENT_TYPES.includes(file.type),
+                    );
+                    if (hasInvalidType) {
+                      setAttachments([]);
+                      setAttachmentsError("Formatos aceitos: JPG, PNG, WEBP, PDF e MP4.");
+                      return;
+                    }
+
+                    const hasLargeFile = files.some(
+                      (file) =>
+                        file.type === "video/mp4"
+                          ? file.size > MAX_VIDEO_FILE_SIZE_BYTES
+                          : file.size > MAX_FILE_SIZE_BYTES,
+                    );
+                    if (hasLargeFile) {
+                      setAttachments([]);
+                      setAttachmentsError(
+                        "Imagens/PDF até 8 MB por arquivo; MP4 até 25 MB.",
+                      );
+                      return;
+                    }
+
+                    setAttachmentsError(null);
+                    setAttachments(files);
+                  }}
+                />
+                <Button asChild variant="outline" type="button" className="w-full justify-start gap-2">
+                  <label htmlFor="fb-attachments" className="cursor-pointer">
+                    <Paperclip className="h-4 w-4" />
+                    Anexar arquivos
+                  </label>
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Opcional. Até 3 arquivos (JPG, PNG, WEBP, PDF ou MP4). Imagens/PDF até 8 MB; MP4 até 25 MB.
+                </p>
+                {attachmentsError ? (
+                  <p className="text-xs text-destructive">{attachmentsError}</p>
+                ) : null}
+                {attachments.length > 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    {attachments.length} arquivo(s) selecionado(s):{" "}
+                    {attachments.map((file) => file.name).join(", ")}
+                  </p>
+                ) : null}
+              </div>
+
               {error && <p className="text-sm text-destructive">{error}</p>}
             </div>
 
@@ -151,7 +242,10 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
               </DialogClose>
               <Button onClick={handleSubmit} disabled={loading}>
                 {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {uploadingLabel ?? "Enviando…"}
+                  </span>
                 ) : (
                   "Enviar"
                 )}

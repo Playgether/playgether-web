@@ -255,6 +255,16 @@ All colors MUST be HSL.
 }
 
 @layer components {
+  /* Custom Sonner toasts: kill wrapper bg so square corners don't peek past rounded-xl */
+  [data-sonner-toast][data-styled="false"] {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    overflow: hidden;
+    border-radius: 0.75rem;
+  }
+
   /* Responsive Gradient utilities */
   .gradient-primary {
     background: var(--gradient-primary);
@@ -625,6 +635,14 @@ All colors MUST be HSL.
 
   .video-container:hover .custom-video-controls {
     opacity: 1;
+  }
+
+  /*
+   * `controlsList="nofullscreen"` bloqueia a ação, mas o Chromium pode manter
+   * o botão desabilitado visível. Esta classe também remove o botão da UI.
+   */
+  .video-controls-no-fullscreen::-webkit-media-controls-fullscreen-button {
+    display: none !important;
   }
 
   /* Better contrast class */

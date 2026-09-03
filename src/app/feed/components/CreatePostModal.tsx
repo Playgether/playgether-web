@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -7,7 +7,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { MentionTextarea } from "@/components/mentions/MentionTextarea";
+import {
+  EmojiPickerButton,
+  useEmojiInsert,
+} from "@/components/emoji/EmojiPickerButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ImagePlay, X, Send, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -23,15 +27,39 @@ import {
 } from "@/error/custom-toaster/enum";
 import { deletePostFile } from "@/services/cloudinary_requests/deletePostFile";
 import { createPost, PostMediaProps } from "@/actions/createPost";
+import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
+import {
+  BYTES_5_MB,
+  BYTES_50_MB,
+  CLOUDINARY_IMAGE_AND_VIDEO_FORMATS,
+  createVideoDurationPreBatchValidator,
+  POST_VIDEO_MAX_DURATION_SEC,
+  videoExceedsMaxDuration,
+} from "@/app/utils/cloudinaryUploadConfig";
 
 export const CreatePostModal = () => {
   const [content, setContent] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<PostMediaProps[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [widgetKey, setWidgetKey] = useState(0);
+  const contentRef = useRef<HTMLTextAreaElement>(null);
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const { insertEmoji, syncSelection, restoreFocus } = useEmojiInsert(contentRef, content, setContent);
   const [isWidgetOpen, setIsWidgetOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-
+  const validatePostVideoDuration = useMemo(
+    () =>
+      createVideoDurationPreBatchValidator({
+        maxDurationSec: POST_VIDEO_MAX_DURATION_SEC,
+        onError: (message) => {
+          CustomToast.error("Vídeo inválido", {
+            description: message,
+            duration: CustomToastProps.defaultDuration,
+          });
+        },
+      }),
+    [],
+  );
   const createPostContext = useCreatePostContext();
   const { user } = useAuthContext();
   const { profile } = useProfileContext();
@@ -60,6 +88,15 @@ export const CreatePostModal = () => {
       return;
     }
 
+    if (videoExceedsMaxDuration(info, POST_VIDEO_MAX_DURATION_SEC)) {
+      deletePostFile(info.public_id, "", "video").catch(console.error);
+      CustomToast.error("Vídeo muito longo", {
+        description: `Vídeos devem ter no máximo ${POST_VIDEO_MAX_DURATION_SEC} segundos.`,
+        duration: CustomToastProps.defaultDuration,
+      });
+      return;
+    }
+
     setUploadedFiles((prevFiles) => [
       ...prevFiles,
       {
@@ -83,6 +120,19 @@ export const CreatePostModal = () => {
       duration: CustomToastProps.defaultDuration,
     });
     setWidgetKey((prevCount) => prevCount + 1);
+
+    // Evita mídia órfã no Cloudinary se o lote falhar no meio
+    setUploadedFiles((prev) => {
+      for (const media of prev) {
+        if (!media.media_file) continue;
+        deletePostFile(
+          media.media_file,
+          media.media_folder,
+          media.media_type,
+        ).catch((err) => console.error("Erro ao deletar mídia:", err));
+      }
+      return [];
+    });
   };
 
   const removeMedia = (index: number) => {
@@ -97,6 +147,20 @@ export const CreatePostModal = () => {
     });
 
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const queueMediaCleanup = async (medias: typeof uploadedFiles) => {
+    await Promise.allSettled(
+      medias
+        .filter((media) => Boolean(media.media_file))
+        .map((media) =>
+          deletePostFile(
+            media.media_file,
+            media.media_folder,
+            media.media_type,
+          ),
+        ),
+    );
   };
 
   const handleSubmit = async () => {
@@ -138,14 +202,7 @@ export const CreatePostModal = () => {
       }
     } catch (error) {
       if (uploadedFiles.length > 0) {
-        for (const media of uploadedFiles) {
-          if (!media.media_file) continue;
-          await deletePostFile(
-            media.media_file,
-            media.media_folder,
-            media.media_type,
-          );
-        }
+        await queueMediaCleanup(uploadedFiles);
         setUploadedFiles([]);
       }
 
@@ -168,13 +225,7 @@ export const CreatePostModal = () => {
     }
 
     if (!open && uploadedFiles.length > 0) {
-      for (const media of uploadedFiles) {
-        await deletePostFile(
-          media.media_file,
-          media.media_folder,
-          media.media_type,
-        );
-      }
+      await queueMediaCleanup(uploadedFiles);
       setUploadedFiles([]);
     }
 
@@ -246,12 +297,29 @@ export const CreatePostModal = () => {
             </div>
 
             {/* Content Input */}
-            <Textarea
-              placeholder="O que está acontecendo?"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="min-h-32 resize-none border-border/50 bg-muted/60 focus:border-primary/50 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary/50 focus-visible:ring-offset-0"
-            />
+            <div className="relative">
+              <MentionTextarea
+                ref={contentRef}
+                placeholder="O que está acontecendo?"
+                value={content}
+                onChange={setContent}
+                onSelect={syncSelection}
+                onClick={syncSelection}
+                onKeyUp={syncSelection}
+                className="min-h-32 resize-none border-border/50 bg-muted/60 pb-12 pl-3 pr-3 focus:border-primary/50 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary/50 focus-visible:ring-offset-0"
+              />
+              <div className="absolute bottom-2 left-2 z-10">
+                <EmojiPickerButton
+                  open={emojiOpen}
+                  onOpenChange={setEmojiOpen}
+                  onBeforeOpen={syncSelection}
+                  onPick={insertEmoji}
+                  onClosed={restoreFocus}
+                  disabled={isSubmitting}
+                  buttonClassName="h-8 w-8 hover:bg-muted/80"
+                />
+              </div>
+            </div>
 
             {/* Media Preview */}
             {uploadedFiles.length > 0 && (
@@ -295,8 +363,6 @@ export const CreatePostModal = () => {
                   signatureEndpoint="/api/signed-posts"
                   options={{
                     sources: ["local"],
-                    maxImageWidth: 8000,
-                    maxImageHeight: 8000,
                     maxFiles: 5 - uploadedFiles.length,
                     tags: [
                       user?.username || "user",
@@ -304,9 +370,14 @@ export const CreatePostModal = () => {
                       "post",
                       "user",
                     ],
-                    detection: "unidet",
-                    maxImageFileSize: 5000000,
-                    maxVideoFileSize: 50000000,
+                    uploadPreset: PresetsCloudinary.posts,
+                    resourceType: "auto",
+                    clientAllowedFormats: [
+                      ...CLOUDINARY_IMAGE_AND_VIDEO_FORMATS,
+                    ],
+                    maxImageFileSize: BYTES_5_MB,
+                    maxVideoFileSize: BYTES_50_MB,
+                    preBatch: validatePostVideoDuration,
                     language: "pt-br",
                     showCompletedButton: true,
                     multiple: true,

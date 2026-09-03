@@ -1,10 +1,20 @@
 import { CldUploadWidget } from "next-cloudinary";
 import { GoFileMedia } from "react-icons/go";
 import { useAuthContext } from "../../../../../../../context/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PostMediaProps } from "../../../../../../../services/postPost";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
 import { CustomToastProps } from "@/error/custom-toaster/enum";
+import { deletePostFile } from "@/services/cloudinary_requests/deletePostFile";
+import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
+import {
+  BYTES_5_MB,
+  BYTES_50_MB,
+  CLOUDINARY_IMAGE_AND_VIDEO_FORMATS,
+  createVideoDurationPreBatchValidator,
+  POST_VIDEO_MAX_DURATION_SEC,
+  videoExceedsMaxDuration,
+} from "@/app/utils/cloudinaryUploadConfig";
 
 const Step3 = ({
   setUploadedFiles,
@@ -13,13 +23,34 @@ const Step3 = ({
   uploadedFiles,
   returnFirstStep,
 }) => {
-  // const { user } = ();
   const [widgetKey, setWidgetKey] = useState(0);
   const [activeUploads, setActiveUploads] = useState(0);
   const { user } = useAuthContext();
+  const validatePostVideoDuration = useMemo(
+    () =>
+      createVideoDurationPreBatchValidator({
+        maxDurationSec: POST_VIDEO_MAX_DURATION_SEC,
+        onError: (message) => {
+          CustomToast.error("Vídeo inválido", {
+            description: message,
+            duration: CustomToastProps.defaultDuration,
+          });
+        },
+      }),
+    [],
+  );
 
   const handleUploadSuccess = async (result) => {
-    console.log(result);
+    if (videoExceedsMaxDuration(result?.info, POST_VIDEO_MAX_DURATION_SEC)) {
+      deletePostFile(result.info.public_id, "", "video").catch(console.error);
+      CustomToast.error("Vídeo muito longo", {
+        description: `Vídeos devem ter no máximo ${POST_VIDEO_MAX_DURATION_SEC} segundos.`,
+        duration: CustomToastProps.defaultDuration,
+      });
+      setActiveUploads((prevCount) => prevCount - 1);
+      return;
+    }
+
     await setUploadedFiles((prevFiles: PostMediaProps[]) => [
       ...prevFiles,
       {
@@ -43,7 +74,18 @@ const Step3 = ({
       duration: CustomToastProps.defaultDuration,
     });
     setWidgetKey((prevCount) => prevCount + 1);
-    setUploadedFiles([]);
+
+    setUploadedFiles((prevFiles: PostMediaProps[]) => {
+      for (const media of prevFiles) {
+        if (!media.media_file) continue;
+        deletePostFile(
+          media.media_file,
+          media.media_folder,
+          media.media_type,
+        ).catch((err) => console.error("Erro ao deletar mídia:", err));
+      }
+      return [];
+    });
   };
 
   const handleOnAbort = () => {
@@ -80,7 +122,7 @@ const Step3 = ({
         <p className="text-xs">Envie até 5 fotos ou vídeos.</p>
         <p className="text-xs">Fotos podem ter no máximo 5mb e vídeos 50mb.</p>
         <p className="text-xs">
-          Videos maiores do que 30seg serão cortados para esta duração.
+          Vídeos devem ter no máximo {POST_VIDEO_MAX_DURATION_SEC} segundos.
         </p>
       </div>
       <div className="w-full flex justify-center pt-2">
@@ -89,15 +131,19 @@ const Step3 = ({
           signatureEndpoint="/api/signed-posts"
           options={{
             sources: ["local"],
-            maxImageWidth: 8000,
-            maxImageHeight: 8000,
             maxFiles: 5,
             tags: [`${user?.username}`, getCurrentDate(), "post", "user"],
-            detection: "unidet",
-            maxImageFileSize: 5000000,
-            maxVideoFileSize: 50000000,
+            uploadPreset: PresetsCloudinary.posts,
+            resourceType: "auto",
+            clientAllowedFormats: [
+              ...CLOUDINARY_IMAGE_AND_VIDEO_FORMATS,
+            ],
+            maxImageFileSize: BYTES_5_MB,
+            maxVideoFileSize: BYTES_50_MB,
+            preBatch: validatePostVideoDuration,
             language: "pt-br",
             showCompletedButton: true,
+            multiple: true,
           }}
           onUploadAdded={handleUploadStart}
           onSuccess={handleUploadSuccess}

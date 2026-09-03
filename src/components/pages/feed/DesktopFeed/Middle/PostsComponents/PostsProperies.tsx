@@ -6,7 +6,7 @@ type PostProperies = {
   quantity_comment: number;
   quantity_reposts: number;
   user_already_like: boolean;
-  object_id: number;
+  object_id: string | number;
 };
 const PostProperies = ({
   quantity_likes,

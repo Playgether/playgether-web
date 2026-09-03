@@ -16,8 +16,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Cut } from "@/types/Cut";
-import { getCloudinaryVideoUrl, getCloudinaryVideoThumbnail } from "@/app/utils/getCloudinaryVideo";
+import { getCloudinaryCutVideoUrl } from "@/app/utils/getCloudinaryVideo";
 import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
+import { MentionText } from "@/components/mentions/MentionText";
 import { CutOptionsMenu } from "./CutOptionsMenu";
 import { CutShareDialog } from "./CutShareDialog";
 import { BookmarkButton } from "@/components/ui/BookmarkButton";
@@ -50,11 +51,13 @@ interface CutCardProps {
   isAuthenticated?: boolean;
   onOpenComments: (cut: Cut) => void;
   commentsActive?: boolean;
+  onDeleted?: (cutId: string) => void;
+  onCutUpdate?: (cut: Cut) => void;
 }
 
 type Pulse = { type: "play" | "pause" | "like"; key: number };
 
-export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commentsActive }: CutCardProps) {
+export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commentsActive, onDeleted, onCutUpdate }: CutCardProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
 
@@ -100,7 +103,9 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
     if (!video) return;
     const onPlay = () => setPlaying(true);
     const onPause = () => setPlaying(false);
-    const onLoadedMeta = () => setDuration(video.duration || 0);
+    const onLoadedMeta = () => {
+      setDuration(video.duration || 0);
+    };
     const onTimeUpdate = () => {
       if (!isSeeking && video.duration) {
         setProgressPct((video.currentTime / video.duration) * 100);
@@ -247,33 +252,24 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
   }, []);
 
   const avatarSrc = cut.profile_photo ? getCloudinaryUrl(cut.profile_photo) : null;
-  const thumbSrc = cut.video_file ? getCloudinaryVideoThumbnail(cut.video_file) : null;
   const VolumeIcon = muted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
 
   return (
     <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-black">
-      <div className="flex h-full items-center justify-center gap-3 px-2">
-        {/* Video — centralizado, object-contain pra não cortar */}
-        <div className="relative flex h-full w-fit max-w-full items-center justify-center lg:max-w-[420px]">
-          {/* Backdrop desfocado — preenche o espaço vazio de vídeos pequenos/paisagem */}
-          {thumbSrc && (
-            <div className="absolute inset-0 -z-10 overflow-hidden">
-              <Image src={thumbSrc} alt="" fill className="scale-125 object-cover opacity-60 blur-3xl" />
-              <div className="absolute inset-0 bg-black/50" />
-            </div>
-          )}
-
+      <div className="flex h-full w-full items-center justify-center gap-3 lg:px-2">
+        <div
+          className="relative aspect-[9/16] h-full w-auto max-h-full max-w-full min-w-0 overflow-hidden bg-black lg:max-w-[420px]"
+          onClick={handleVideoTap}
+        >
           <video
             ref={videoRef}
-            src={getCloudinaryVideoUrl(cut.video_file)}
-            className="relative h-full max-h-full w-auto max-w-full object-contain"
+            src={getCloudinaryCutVideoUrl(cut.video_file)}
+            className="relative h-full w-full object-cover"
             loop
             playsInline
             preload="metadata"
-            onClick={handleVideoTap}
           />
 
-          {/* Ícone estático enquanto pausado (sem animação, permanece até retomar) */}
           {!playing && !pulse && (
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
               <span className="flex h-16 w-16 items-center justify-center rounded-full bg-black/40">
@@ -282,7 +278,6 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
             </div>
           )}
 
-          {/* Feedback visual central (play/pause/like) */}
           <AnimatePresence>
             {pulse && (
               <motion.div
@@ -302,10 +297,6 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
             )}
           </AnimatePresence>
 
-          {/* Gradient bottom overlay */}
-          <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black/85 to-transparent" />
-
-          {/* Volume — controle do player, ancorado no canto superior direito do vídeo */}
           <div
             className={cn(
               "absolute right-4 top-4 z-20 flex items-center gap-1.5 rounded-full border border-white/10 bg-black/55 py-1.5 pl-1.5 pr-1.5 shadow-lg backdrop-blur-md transition-[padding]",
@@ -313,7 +304,10 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
             )}
             onMouseEnter={() => setShowVolumeSlider(true)}
             onMouseLeave={() => setShowVolumeSlider(false)}
-            onClick={() => setShowVolumeSlider((v) => !v)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowVolumeSlider((v) => !v);
+            }}
           >
             <button
               type="button"
@@ -339,8 +333,12 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
             />
           </div>
 
-          {/* Actions — overlay no mobile/tablet, ficam na coluna ao lado no desktop */}
-          <div className="absolute bottom-6 right-3 z-20 flex flex-col items-center gap-5 lg:hidden">
+          <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black/85 to-transparent" />
+
+          <div
+            className="absolute bottom-6 right-3 z-20 flex flex-col items-center gap-5 lg:hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             <ActionBtn onClick={handleLikeClick} label={liked ? "Descurtir" : "Curtir"} count={likesCount} icon={<Heart className={cn("h-6 w-6 transition-transform active:scale-125", liked ? "fill-red-500 text-red-500" : "text-white")} />} />
             <ActionBtn onClick={() => onOpenComments(cut)} label="Comentários" count={cut.comments_count} icon={<MessageCircle className={cn("h-6 w-6", commentsActive ? "fill-white/20 text-primary" : "text-white")} />} />
             <ActionBtn onClick={() => setShareOpen(true)} label="Compartilhar" icon={<Send className="h-6 w-6 text-white" />} />
@@ -350,12 +348,13 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
               size="lg"
               triggerClassName="h-auto w-auto p-0 text-white hover:text-white hover:bg-transparent active:scale-125 transition-transform"
             />
-            <CutOptionsMenu cut={cut} onShare={() => setShareOpen(true)} />
+            <CutOptionsMenu cut={cut} onShare={() => setShareOpen(true)} onDeleted={onDeleted} onCutUpdate={onCutUpdate} />
           </div>
 
-          {/* Rodapé: barra de progresso SEMPRE acima do bloco de info — nunca sobrepõe avatar/nome/descrição */}
-          <div className="absolute inset-x-3 bottom-3 z-20 flex flex-col gap-2.5 lg:right-4">
-            {/* Barra de progresso — seek por clique/arraste, hover mostra tempo (desktop) */}
+          <div
+            className="absolute inset-x-3 bottom-3 z-20 flex flex-col gap-2.5 lg:right-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div
               ref={barRef}
               onPointerDown={handleBarPointerDown}
@@ -384,7 +383,6 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
               </div>
             </div>
 
-            {/* User info + caption */}
             <div className="pr-14 lg:pr-0">
               <Link
                 href={`/profile/${cut.username}`}
@@ -402,13 +400,14 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
                 <span className="text-sm font-bold text-white drop-shadow">@{cut.username}</span>
               </Link>
               {cut.caption && (
-                <p className="line-clamp-2 text-sm text-white/90 drop-shadow">{cut.caption}</p>
+                <p className="line-clamp-2 text-sm text-white/90 drop-shadow">
+                  <MentionText text={cut.caption} />
+                </p>
               )}
             </div>
           </div>
         </div>
 
-        {/* Actions — coluna ao lado do vídeo, só desktop */}
         <div className="hidden h-full shrink-0 flex-col items-center justify-center gap-6 lg:flex">
           <ActionBtn onClick={handleLikeClick} label={liked ? "Descurtir" : "Curtir"} count={likesCount} icon={<Heart className={cn("h-6 w-6 transition-transform active:scale-125", liked ? "fill-red-500 text-red-500" : "text-white")} />} />
           <ActionBtn onClick={() => onOpenComments(cut)} label="Comentários" count={cut.comments_count} icon={<MessageCircle className={cn("h-6 w-6", commentsActive ? "fill-white/20 text-primary" : "text-white")} />} />
@@ -419,7 +418,7 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
             size="lg"
             triggerClassName="h-auto w-auto p-0 text-white hover:text-white hover:bg-transparent active:scale-125 transition-transform"
           />
-          <CutOptionsMenu cut={cut} onShare={() => setShareOpen(true)} />
+          <CutOptionsMenu cut={cut} onShare={() => setShareOpen(true)} onDeleted={onDeleted} onCutUpdate={onCutUpdate} />
         </div>
       </div>
 

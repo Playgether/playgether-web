@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ChevronRight, Gamepad2, Loader2 } from "lucide-react";
-import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
+import { GameMediaImage } from "@/components/media/GameMediaImage";
 import {
   HoverCard,
   HoverCardContent,
@@ -58,17 +58,16 @@ export function GameSelection({ onSelect }: GameSelectionProps) {
         {!loading && !error && (
           <div className="grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             {games.map((game, index) => {
-              const coverSrc = resolveGameMediaUrl(game.image);
-              const iconSrc = resolveGameMediaUrl(game.icon);
-              const isValorant =
-                game.acronym.toLowerCase() === "valorant" ||
-                game.name.toLowerCase().includes("valorant");
               const titleRow = (
                 <div className="flex min-w-0 flex-1 items-center gap-3">
-                  {iconSrc ? (
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border/50 bg-background/80 shadow-sm">
-                      <img src={iconSrc} alt="" className="h-7 w-7 object-contain" />
-                    </span>
+                  {game.icon ? (
+                    <GameMediaImage
+                      src={game.icon}
+                      alt=""
+                      size="icon"
+                      className="h-10 w-10 shrink-0 rounded-lg border border-border/50 bg-background/80 shadow-sm"
+                      spinnerClassName="h-4 w-4"
+                    />
                   ) : (
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border/50 bg-muted/40">
                       <Gamepad2 className="h-5 w-5 text-muted-foreground" />
@@ -77,16 +76,10 @@ export function GameSelection({ onSelect }: GameSelectionProps) {
                   <h3 className="truncate text-base font-semibold tracking-tight text-card-foreground transition-colors group-hover:text-primary sm:text-lg">
                     {game.name}
                   </h3>
-                  {isValorant ? (
-                    <span className="ml-auto shrink-0 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-500">
-                      Em breve
-                    </span>
-                  ) : (
-                    <ChevronRight
-                      className="ml-auto h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:opacity-80"
-                      aria-hidden
-                    />
-                  )}
+                  <ChevronRight
+                    className="ml-auto h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:opacity-80"
+                    aria-hidden
+                  />
                 </div>
               );
 
@@ -94,14 +87,9 @@ export function GameSelection({ onSelect }: GameSelectionProps) {
                 <button
                   key={game.id}
                   type="button"
-                  aria-label={
-                    isValorant
-                      ? "VALORANT estará disponível em breve"
-                      : `Buscar duo em ${game.name}`
-                  }
-                  disabled={isValorant}
+                  aria-label={`Buscar duo em ${game.name}`}
                   onClick={() => onSelect(game)}
-                  className="group animate-fade-in-scale overflow-hidden rounded-2xl border border-border/55 bg-card/30 text-left shadow-sm outline-none ring-offset-background transition-all duration-200 enabled:hover:-translate-y-0.5 enabled:hover:border-primary/35 enabled:hover:bg-card/45 enabled:hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="group animate-fade-in-scale overflow-hidden rounded-2xl border border-border/55 bg-card/30 text-left shadow-sm outline-none ring-offset-background transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-card/45 hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:ring-offset-2"
                   style={{ animationDelay: `${index * 0.08}s` }}
                 >
                   <div className="relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-b from-muted/60 via-muted/25 to-background">
@@ -110,12 +98,14 @@ export function GameSelection({ onSelect }: GameSelectionProps) {
                       aria-hidden
                     />
                     <div className="relative flex h-full w-full items-center justify-center p-4 sm:p-5">
-                      {coverSrc ? (
-                        <img
-                          src={coverSrc}
+                      {game.image ? (
+                        <GameMediaImage
+                          src={game.image}
                           alt=""
-                          decoding="async"
-                          className="max-h-full max-w-full object-contain drop-shadow-md transition-transform duration-300 group-hover:scale-[1.03]"
+                          size="banner"
+                          className="h-full w-full"
+                          imgClassName="max-h-full max-w-full drop-shadow-md transition-transform duration-300 group-hover:scale-[1.03]"
+                          spinnerClassName="h-6 w-6"
                         />
                       ) : (
                         <Gamepad2 className="h-14 w-14 text-muted-foreground/60" />
@@ -133,7 +123,6 @@ export function GameSelection({ onSelect }: GameSelectionProps) {
                           <GameHoverCardContent
                             title={game.name}
                             description={game.description}
-                            cover={game.image}
                             logo={game.icon}
                           />
                         </HoverCardContent>

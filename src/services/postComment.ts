@@ -1,7 +1,7 @@
 export interface commentProps {
   comment: string;
   content_type: string;
-  object_id: number;
+  object_id: string | number;
 }
 
 import { apiFetch } from "@/services/apiFetch";

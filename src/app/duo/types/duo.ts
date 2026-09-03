@@ -35,7 +35,11 @@ export interface CsStats {
   hours_played: number | null;
 }
 
-export type GameStats = LolStats | CsStats;
+export interface ValorantStats {
+  self_declared: boolean;
+}
+
+export type GameStats = LolStats | CsStats | ValorantStats;
 
 export interface StatsResponse {
   connected: boolean;
@@ -56,7 +60,13 @@ export interface CsSchema {
   play_times: string[];
 }
 
-export type GameSchema = LolSchema | CsSchema;
+export interface ValorantSchema {
+  roles: string[];
+  elo_tiers: string[];
+  play_times: string[];
+}
+
+export type GameSchema = LolSchema | CsSchema | ValorantSchema;
 
 // ─── Preferences (user-filled form data) ─────────────────────────────────────
 
@@ -81,7 +91,16 @@ export interface CsPreferences {
   duo_note?: string;
 }
 
-export type GamePreferences = LolPreferences | CsPreferences;
+export interface ValorantPreferences {
+  own_elo: string;
+  roles: string[];
+  desired_roles: string[];
+  accepted_elo: string[];
+  play_times: string[];
+  duo_note?: string;
+}
+
+export type GamePreferences = LolPreferences | CsPreferences | ValorantPreferences;
 
 // ─── Queue ───────────────────────────────────────────────────────────────────
 
@@ -100,6 +119,12 @@ export interface DuoQueue {
 
 // ─── Match ───────────────────────────────────────────────────────────────────
 
+export interface AccountVerification {
+  connected: boolean;
+  level: "verified" | "linked" | "self_declared" | "none";
+  label: string | null;
+}
+
 export interface MatchPartner {
   user_id: string | number;
   username: string;
@@ -109,6 +134,8 @@ export interface MatchPartner {
   preferences: Partial<GamePreferences>;
   /** Estatísticas do jogo (CS2, LoL, …) vindas do backend. */
   game_stats?: Record<string, unknown> | null;
+  /** Conta do jogo vinculada (Riot, Steam, …). */
+  account_verification?: AccountVerification | null;
   /** Conquistas fixadas no perfil (até 3), para exibir no card do duo. */
   highlighted_achievements?: HighlightedAchievementPublic[];
 }
@@ -129,6 +156,27 @@ export interface DuoMatch {
   score_breakdown?: DuoMatchScoreBreakdown | null;
   created_at: string;
   partner: MatchPartner;
+  /** Latest invite you sent for this match, if any. */
+  outgoing_invite_status?: "pending" | "accepted" | "declined" | "cancelled" | null;
+  /** Pending/accepted invite involving you (sent or received). */
+  invite_status?: "pending" | "accepted" | "declined" | "cancelled" | null;
+  invite_direction?: "sent" | "received" | null;
+}
+
+export interface DuoInvite {
+  id: number;
+  match_id: number;
+  status: "pending" | "accepted" | "declined" | "cancelled";
+  direction?: "sent" | "received" | null;
+  game_name: string;
+  game_slug: string;
+  score: number;
+  created_at: string;
+  updated_at: string;
+  responded_at: string | null;
+  partner: MatchPartner;
+  /** Set when accept unlocks the DM thread. */
+  conversation_id?: string | null;
 }
 
 // ─── WebSocket messages ───────────────────────────────────────────────────────
@@ -162,6 +210,15 @@ export interface WsExistingMatchesMsg {
   matches: DuoMatch[];
 }
 
+export interface WsInviteUpdateMsg {
+  type: "duo_invite_update";
+  match_id: number;
+  status: "pending" | "accepted" | "declined" | "cancelled";
+  conversation_id?: string;
+  invite_id?: number;
+  direction?: "sent" | "received";
+}
+
 export interface WsErrorMsg {
   type: "error";
   message: string;
@@ -171,6 +228,7 @@ export type WsMessage =
   | WsQueueStatusMsg
   | WsMatchMsg
   | WsExistingMatchesMsg
+  | WsInviteUpdateMsg
   | WsErrorMsg;
 
 // ─── Flow state shared across steps ──────────────────────────────────────────

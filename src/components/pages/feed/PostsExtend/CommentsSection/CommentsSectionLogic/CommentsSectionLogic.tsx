@@ -14,7 +14,7 @@ import PostPropertiersPostsExpand from "../../../DesktopFeed/Middle/PostsCompone
 /** Este componente é responsável por gerar toda a lógica de exibição da seção de comentários em PostsExpand, ou seja, fazer map nos comentários, exibir os componente corretos quando não houver
  * comentários ainda, etc...
  */
-const CommentsSection = ({ post_id }: { post_id: number }) => {
+const CommentsSection = ({ post_id }: { post_id: string }) => {
   const [expandedComments, setExpandedComments] = useState({});
   const { comments } = useCommentsContext();
 

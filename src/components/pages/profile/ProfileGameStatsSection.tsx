@@ -60,11 +60,10 @@ import type {
 import { getLolHistory } from "@/services/getLolStats";
 import { LolMatchHistoryDetail } from "@/components/pages/profile/LolMatchHistoryDetail";
 import { LolRankEmblemFrame } from "@/components/lol/LolRankEmblemFrame";
+import { GameMediaImage } from "@/components/media/GameMediaImage";
 import { cn } from "@/lib/utils";
 import {
-  getCs2WeaponIconsMap,
   peekCs2WeaponIconUrl,
-  resolveCs2WeaponIconName,
 } from "@/lib/cs2WeaponIcons";
 import { Info } from "lucide-react";
 
@@ -343,6 +342,8 @@ interface ProfileGameStatsSectionProps {
   isOwner?: boolean;
   onCs2ForceRefresh?: () => void | Promise<void>;
   cs2ForceRefreshLoading?: boolean;
+  onLolForceRefresh?: () => void | Promise<void>;
+  lolForceRefreshLoading?: boolean;
 }
 
 export function ProfileGameStatsSection({
@@ -360,6 +361,8 @@ export function ProfileGameStatsSection({
   isOwner = false,
   onCs2ForceRefresh,
   cs2ForceRefreshLoading = false,
+  onLolForceRefresh,
+  lolForceRefreshLoading = false,
 }: ProfileGameStatsSectionProps) {
   const [statsTab, setStatsTab] = useState("overview");
   const [season, setSeason] = useState("s1");
@@ -408,8 +411,21 @@ export function ProfileGameStatsSection({
   const cs2ForceButtonDisabled =
     cs2ForceRefreshLoading || cs2ForceBlockedByCooldown;
   const cs2ForceCooldownTitle = cs2ForceBlockedByCooldown
-    ? `Atualização disponível em ${Math.ceil(cs2ForceRemainingSeconds / 60)} min. Evite spam de refresh na Steam API.`
-    : "Atualiza imediatamente as estatísticas puxando da Steam.";
+    ? `Forçar atualização disponível em ${Math.ceil(cs2ForceRemainingSeconds / 60)} min.`
+    : "Atualiza imediatamente as estatísticas puxando da Steam (cooldown de 5 min).";
+  const lolForceRemainingSeconds = Math.max(
+    0,
+    Number(lolStatsResponse?.force_refresh?.remaining_seconds ?? 0),
+  );
+  const lolForceBlockedByCooldown =
+    selectedGame === "lol" &&
+    Boolean(lolStatsResponse?.available) &&
+    lolForceRemainingSeconds > 0;
+  const lolForceButtonDisabled =
+    lolForceRefreshLoading || lolForceBlockedByCooldown;
+  const lolForceCooldownTitle = lolForceBlockedByCooldown
+    ? `Forçar atualização disponível em ${Math.ceil(lolForceRemainingSeconds / 60)} min.`
+    : "Atualiza imediatamente as estatísticas puxando da Riot (cooldown de 5 min).";
   const cs2SyncedLabel = formatSyncedAt(cs2Stats?.last_updated);
   const lolSyncedLabel = formatSyncedAt(
     lolStatsResponse?.syncStatus?.lastSyncedAt ??
@@ -712,17 +728,47 @@ export function ProfileGameStatsSection({
         </div>
       )}
 
-      {selectedGame === "lol" && hasLolRiotIdentity && lolSyncedLabel ? (
-        <p className="text-[11px] text-muted-foreground">
-          Última sincronização: {lolSyncedLabel}
-        </p>
+      {selectedGame === "lol" && hasLolRiotIdentity ? (
+        <div className="space-y-1.5 w-fit max-w-full">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground bg-muted/60 rounded-lg px-3 py-2">
+            <Info className="h-3.5 w-3.5 shrink-0" />
+            <span>
+              Atualização automática a cada 30 min · forçar a cada 5 min
+            </span>
+            {isOwner && onLolForceRefresh ? (
+              <div title={lolForceCooldownTitle}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 border-border shrink-0"
+                  disabled={lolForceButtonDisabled}
+                  onClick={() => void onLolForceRefresh()}
+                >
+                  {lolForceRefreshLoading
+                    ? "Atualizando…"
+                    : lolForceBlockedByCooldown
+                      ? `Disponível em ${Math.ceil(lolForceRemainingSeconds / 60)} min`
+                      : "Atualizar da Riot"}
+                </Button>
+              </div>
+            ) : null}
+          </div>
+          {lolSyncedLabel ? (
+            <p className="text-[11px] text-muted-foreground">
+              Última sincronização: {lolSyncedLabel}
+            </p>
+          ) : null}
+        </div>
       ) : null}
 
       {useRealCs2Stats && (
         <div className="space-y-1.5 w-fit max-w-full">
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground bg-muted/60 rounded-lg px-3 py-2">
             <Info className="h-3.5 w-3.5 shrink-0" />
-            <span>Estatísticas atualizadas a cada 30 minutos</span>
+            <span>
+              Atualização automática a cada 30 min · forçar a cada 5 min
+            </span>
             {isOwner && onCs2ForceRefresh ? (
               <div title={cs2ForceCooldownTitle}>
                 <Button
@@ -887,9 +933,6 @@ const CS2_SHARED_WEAPONS = new Set([
   "ZEUS X27",
 ]);
 
-const CS2_MAP_ICON_BASE =
-  "https://raw.githubusercontent.com/MurkyYT/cs2-map-icons/main/images";
-
 /** Arquivo sem extensão (ex.: de_mirage) — ícones completos, não thumbs. */
 const CS2_MAP_ICON_STEM: Record<string, string> = {
   dust2: "de_dust2",
@@ -951,7 +994,22 @@ function isValidMapIconStem(stem: string): boolean {
   return /^(de|cs|ar)_[a-z0-9_]+$/i.test(stem);
 }
 
-function getCs2MapIconUrl(mapName: string): string {
+const CS2_MAP_CLOUDINARY_SLUG: Record<string, string> = {
+  de_dust2: "dust2",
+  de_mirage: "mirage",
+  de_inferno: "inferno",
+  de_overpass: "overpass",
+  de_nuke: "nuke",
+  de_ancient: "ancient",
+  de_anubis: "anubis",
+  de_vertigo: "vertigo",
+  de_train: "train",
+  de_cache: "cache",
+  de_cbble: "cobblestone",
+  cs_office: "office",
+};
+
+function getCs2MapPublicId(mapName: string): string {
   const raw = normalizeMapName(mapName);
   const compact = raw.replace(/_/g, "");
   let stem =
@@ -965,22 +1023,20 @@ function getCs2MapIconUrl(mapName: string): string {
   if (!isValidMapIconStem(stem)) {
     stem = MAP_ICON_FALLBACK_STEM;
   }
-  return `${CS2_MAP_ICON_BASE}/${stem}.png`;
+  const slug = CS2_MAP_CLOUDINARY_SLUG[stem] ?? stem.replace(/^(de|cs|ar)_/, "");
+  return `games/cs2/maps/${slug}`;
 }
 
 function Cs2MapIcon({ mapName }: { mapName: string }) {
-  const fallbackUrl = `${CS2_MAP_ICON_BASE}/${MAP_ICON_FALLBACK_STEM}.png`;
-  const [src, setSrc] = useState(() => getCs2MapIconUrl(mapName));
-
   return (
-    <img
-      src={src}
+    <GameMediaImage
+      src={getCs2MapPublicId(mapName)}
       alt={`Ícone ${mapName}`}
-      className="h-12 w-12 object-contain transition-transform duration-300 ease-out will-change-transform md:group-hover:scale-110"
-      loading="lazy"
-      onError={() => {
-        if (src !== fallbackUrl) setSrc(fallbackUrl);
-      }}
+      size="asset"
+      className="h-12 w-12"
+      imgClassName="transition-transform duration-300 ease-out will-change-transform md:group-hover:scale-110"
+      spinnerClassName="h-4 w-4"
+      fallback={<MapIcon className="h-6 w-6 text-muted-foreground" aria-hidden />}
     />
   );
 }
@@ -1122,34 +1178,15 @@ function Cs2StatBar({
 }
 
 function Cs2WeaponIcon({ name }: { name: string }) {
-  const resolvedName = resolveCs2WeaponIconName(name);
-  const [url, setUrl] = useState<string | null>(() =>
-    peekCs2WeaponIconUrl(name),
-  );
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    if (url) return;
-    let cancelled = false;
-    void getCs2WeaponIconsMap().then((map) => {
-      if (!cancelled) setUrl(map.get(resolvedName) ?? null);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [name, resolvedName, url]);
-
-  if (!url || failed) {
-    return <Crosshair className="h-4 w-4 text-muted-foreground" aria-hidden />;
-  }
-
+  const url = peekCs2WeaponIconUrl(name);
   return (
-    <img
+    <GameMediaImage
       src={url}
       alt=""
-      className="h-full w-full object-contain"
-      loading="lazy"
-      onError={() => setFailed(true)}
+      size="asset"
+      className="h-full w-full"
+      spinnerClassName="h-3.5 w-3.5"
+      fallback={<Crosshair className="h-4 w-4 text-muted-foreground" aria-hidden />}
     />
   );
 }
@@ -1270,10 +1307,6 @@ function formatSyncedAt(iso?: string | null): string | null {
 }
 
 function Cs2Overview({ stats }: { stats: Cs2StatsData }) {
-  useEffect(() => {
-    void getCs2WeaponIconsMap();
-  }, []);
-
   const mergedFromLegacy = mergeCs2WeaponEntries([
     ...(stats.weapons ?? []),
     ...(stats.ctWeaponKills ?? []),
@@ -2986,7 +3019,9 @@ function mapLolMatchesToUi(
     };
 
     const viewerParticipant =
-      match.matchDetail?.participants.find((participant) => participant.isViewer) ?? null;
+      match.matchDetail?.participants.find(
+        (participant) => participant.isViewer,
+      ) ?? null;
     const blueParticipants =
       match.matchDetail?.participants
         .filter((participant) => participant.teamId === 100)
@@ -3267,7 +3302,7 @@ function MatchHistory({
                               <div
                                 className={`rounded-md border px-2 py-1 text-[11px] font-semibold leading-none ${
                                   isLolRemake
-                                    ? "border-zinc-600/70 bg-zinc-900/60 text-zinc-400"
+                                    ? "border-zinc-400/70 bg-zinc-200/70 text-zinc-600 dark:border-zinc-600/70 dark:bg-zinc-900/60 dark:text-zinc-400"
                                     : match.result === "win"
                                       ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200"
                                       : "border-rose-500/40 bg-rose-500/10 text-rose-700 dark:text-rose-200"
@@ -3381,7 +3416,9 @@ function MatchHistory({
                               match.lolPreview?.redParticipants?.length ? (
                                 <div className="mt-1 hidden flex-wrap items-center gap-2 text-[11px] lg:flex">
                                   <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/40 bg-blue-500/10 px-2 py-0.5">
-                                    <span className="text-blue-700 dark:text-blue-200">Azul</span>
+                                    <span className="text-blue-700 dark:text-blue-200">
+                                      Azul
+                                    </span>
                                     <span className="inline-flex items-center gap-1">
                                       {match.lolPreview?.blueParticipants?.map(
                                         (participant, index) => (
@@ -3506,8 +3543,8 @@ function MatchHistory({
                             <div
                               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                                 match.result === "win"
-                                  ? "bg-green-500/20 text-green-400"
-                                  : "bg-red-500/20 text-red-400"
+                                  ? "bg-green-500/20 text-green-700 dark:text-green-400"
+                                  : "bg-red-500/20 text-red-700 dark:text-red-400"
                               }`}
                             >
                               {match.result === "win" ? "V" : "D"}

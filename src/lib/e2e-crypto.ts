@@ -8,6 +8,11 @@
  *     - body encrypted once with AES
  *     - AES key wrapped separately for sender and recipient with their RSA public keys
  *
+ * Session private key cache:
+ *   - Stored in IndexedDB as a non-extractable CryptoKey (not raw JWK).
+ *   - XSS cannot exfiltrate key material; at worst it can use the key in-page.
+ *   - Legacy localStorage JWK (`pgther_privkey_jwk`) is migrated once then deleted.
+ *
  * All values exchanged with the server are base64-encoded.
  */
 
@@ -22,6 +27,11 @@ const AES_KEY_LENGTH = 256;
 const PBKDF2_ITERATIONS = 310_000;
 const IV_LENGTH = 12; // bytes
 
+const LEGACY_LOCAL_KEY = "pgther_privkey_jwk";
+const IDB_NAME = "pgther_e2e";
+const IDB_STORE = "keys";
+const IDB_PRIVKEY_ID = "private";
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function toBase64(buf: ArrayBuffer): string {
@@ -34,6 +44,13 @@ function fromBase64(b64: string): Uint8Array {
 
 function randomBytes(length: number): Uint8Array {
   return crypto.getRandomValues(new Uint8Array(length));
+}
+
+/** Re-import an extractable private key as non-extractable (safe for IDB + memory). */
+async function asNonExtractablePrivateKey(privateKey: CryptoKey): Promise<CryptoKey> {
+  if (!privateKey.extractable) return privateKey;
+  const pkcs8 = await crypto.subtle.exportKey("pkcs8", privateKey);
+  return crypto.subtle.importKey("pkcs8", pkcs8, RSA_PARAMS, false, ["decrypt"]);
 }
 
 // ── Key generation ────────────────────────────────────────────────────────────
@@ -118,7 +135,8 @@ export async function unwrapPrivateKey(
   const iv = combined.slice(0, IV_LENGTH);
   const ciphertext = combined.slice(IV_LENGTH);
   const pkcs8 = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, wrappingKey, ciphertext);
-  return crypto.subtle.importKey("pkcs8", pkcs8, RSA_PARAMS, true, ["decrypt"]);
+  // Non-extractable: key material cannot be exported / stolen as JWK
+  return crypto.subtle.importKey("pkcs8", pkcs8, RSA_PARAMS, false, ["decrypt"]);
 }
 
 // ── Message encryption / decryption ──────────────────────────────────────────
@@ -199,31 +217,125 @@ export async function decryptMessage(
   return new TextDecoder().decode(plainBuf);
 }
 
-// ── Local storage (private key cache, persists while the user is logged in) ──
+// ── IndexedDB session cache (non-extractable CryptoKey) ───────────────────────
 
-const LOCAL_KEY = "pgther_privkey_jwk";
+function openKeyDb(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) {
+        db.createObjectStore(IDB_STORE);
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error ?? new Error("indexedDB open failed"));
+  });
+}
 
-export async function cachePrivateKey(privateKey: CryptoKey): Promise<void> {
-  const jwk = await crypto.subtle.exportKey("jwk", privateKey);
-  localStorage.setItem(LOCAL_KEY, JSON.stringify(jwk));
-  // Notifica o E2ECryptoProvider (mesmo tab) para recarregar a chave imediatamente
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new CustomEvent("pgther-key-cached"));
+function clearLegacyLocalStorageKey(): void {
+  try {
+    localStorage.removeItem(LEGACY_LOCAL_KEY);
+  } catch {
+    // ignore quota / private mode
   }
 }
 
-export async function loadCachedPrivateKey(): Promise<CryptoKey | null> {
+async function migrateLegacyLocalStorageKey(): Promise<CryptoKey | null> {
   try {
-    const raw = localStorage.getItem(LOCAL_KEY);
+    const raw = localStorage.getItem(LEGACY_LOCAL_KEY);
     if (!raw) return null;
     const jwk = JSON.parse(raw);
+    // Re-import as non-extractable and move into IndexedDB
     const key = await crypto.subtle.importKey("jwk", jwk, RSA_PARAMS, false, ["decrypt"]);
+    clearLegacyLocalStorageKey();
+    await putPrivateKeyInIdb(key);
     return key;
+  } catch {
+    clearLegacyLocalStorageKey();
+    return null;
+  }
+}
+
+async function putPrivateKeyInIdb(privateKey: CryptoKey): Promise<void> {
+  const safeKey = await asNonExtractablePrivateKey(privateKey);
+  const db = await openKeyDb();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, "readwrite");
+      tx.objectStore(IDB_STORE).put(safeKey, IDB_PRIVKEY_ID);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error ?? new Error("idb put failed"));
+      tx.onabort = () => reject(tx.error ?? new Error("idb put aborted"));
+    });
+  } finally {
+    db.close();
+  }
+}
+
+async function getPrivateKeyFromIdb(): Promise<CryptoKey | null> {
+  try {
+    const db = await openKeyDb();
+    try {
+      return await new Promise<CryptoKey | null>((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, "readonly");
+        const req = tx.objectStore(IDB_STORE).get(IDB_PRIVKEY_ID);
+        req.onsuccess = () => {
+          const value = req.result;
+          resolve(value instanceof CryptoKey ? value : null);
+        };
+        req.onerror = () => reject(req.error ?? new Error("idb get failed"));
+      });
+    } finally {
+      db.close();
+    }
   } catch {
     return null;
   }
 }
 
+async function deletePrivateKeyFromIdb(): Promise<void> {
+  try {
+    const db = await openKeyDb();
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, "readwrite");
+        tx.objectStore(IDB_STORE).delete(IDB_PRIVKEY_ID);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error ?? new Error("idb delete failed"));
+      });
+    } finally {
+      db.close();
+    }
+  } catch {
+    // ignore
+  }
+}
+
+/**
+ * Persist the private key for the browser session.
+ * Returns a non-extractable CryptoKey suitable for in-memory use.
+ */
+export async function cachePrivateKey(privateKey: CryptoKey): Promise<CryptoKey> {
+  const safeKey = await asNonExtractablePrivateKey(privateKey);
+  await putPrivateKeyInIdb(safeKey);
+  clearLegacyLocalStorageKey();
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("pgther-key-cached"));
+  }
+  return safeKey;
+}
+
+export async function loadCachedPrivateKey(): Promise<CryptoKey | null> {
+  const fromIdb = await getPrivateKeyFromIdb();
+  if (fromIdb) return fromIdb;
+  return migrateLegacyLocalStorageKey();
+}
+
 export function clearCachedPrivateKey(): void {
-  localStorage.removeItem(LOCAL_KEY);
+  clearLegacyLocalStorageKey();
+  void deletePrivateKeyFromIdb();
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("pgther-e2e-clear"));
+  }
 }

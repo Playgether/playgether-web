@@ -1,13 +1,15 @@
 "use client";
 
 import { loadMoreChatRoomMessages } from "@/actions/loadMoreChatRoomMessages";
-import { getAmbientPeriodForNow } from "@/app/utils/roomAmbientPeriod";
 import {
+  getActiveAmbientMediaValue,
+  getRoomAmbientMode,
   parseAmbientMediaValue,
   resolveAmbientAbsoluteUrl,
 } from "@/app/utils/roomAmbientMedia";
 import DateAndHour from "@/components/layouts/DateAndHour/DateAndHour";
 import ProfileImagePost from "@/components/pages/feed/DesktopFeed/Middle/PostsComponents/ProfileImagePost/ProfileImagePost";
+import { RoomMemberIdentity } from "@/components/pages/rooms/RoomMemberIdentity";
 import { useAuthContext } from "@/context/AuthContext";
 import { useChatHandlerContext } from "@/context/ChatHandlerContext";
 import { usePresenceContext } from "@/context/PresenceContext";
@@ -79,6 +81,20 @@ export default function RoomChatMessagesPanel({
   const canDeleteMessages = can("messages.delete");
   const canKickMembers = can("members.kick");
   const canMuteMembers = can("members.mute");
+  const ambientMode = getRoomAmbientMode(room.ambient_images);
+
+  const resolveAuthorAchievements = useCallback(
+    (message: ChatRoomMessages) => {
+      if (message.author_highlighted_achievements?.length) {
+        return message.author_highlighted_achievements;
+      }
+      return (
+        onlineUsers.find((u) => u.username === message.author_username)
+          ?.highlighted_achievements ?? null
+      );
+    },
+    [onlineUsers],
+  );
 
   const resolveAuthorId = useCallback(
     (message: ChatRoomMessages) => {
@@ -99,14 +115,14 @@ export default function RoomChatMessagesPanel({
   const loadingOlderRef = useRef(false);
 
   useEffect(() => {
+    if (ambientMode === "fixed") return;
     const id = window.setInterval(() => setTimeTick((t) => t + 1), 60_000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [ambientMode]);
 
   const ambientBackground = useMemo(() => {
-    const period = getAmbientPeriodForNow();
-    const raw = room.ambient_images?.[period];
-    const parsed = parseAmbientMediaValue(raw ? String(raw) : "");
+    const raw = getActiveAmbientMediaValue(room.ambient_images);
+    const parsed = parseAmbientMediaValue(raw);
     if (!parsed) return null;
     return { parsed, url: resolveAmbientAbsoluteUrl(parsed) };
   }, [room.ambient_images, timeTick]);
@@ -212,7 +228,7 @@ export default function RoomChatMessagesPanel({
         onScroll={handleMessagesScroll}
         ref={messagesDiv}
       >
-        <div className="relative z-10 space-y-3">
+        <div className="relative z-10 space-y-2">
           {loadingOlder ? (
             <div className="flex items-center justify-center gap-2 py-2 text-xs text-muted-foreground">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -249,7 +265,7 @@ export default function RoomChatMessagesPanel({
                   ) : null}
 
                   <div
-                    className={`group flex min-w-0 gap-2 animate-message-fade-in ${
+                    className={`group flex w-full min-w-0 items-start gap-2 animate-message-fade-in ${
                       isMine ? "flex-row-reverse" : ""
                     }`}
                   >
@@ -258,31 +274,54 @@ export default function RoomChatMessagesPanel({
                         username={message.author_username}
                         displayName={message.author_name}
                         link_photo={message.author_profile_photo}
-                        className="mt-1 h-8 w-8 flex-shrink-0 ring-1 ring-border"
+                        className="h-8 w-8 shrink-0 ring-1 ring-border"
                       />
                     ) : null}
 
                     <div
-                      className={`relative min-w-0 max-w-[75%] ${isMine ? "items-end" : ""}`}
+                      className={`flex min-w-0 max-w-[calc(100%-2.5rem)] flex-col ${
+                        isMine ? "ml-auto items-end" : "items-start"
+                      }`}
                     >
                       {!isMine ? (
-                        <div className="mb-0.5 flex flex-col gap-0.5 md:flex-row md:items-center md:gap-2">
-                          <span className="whitespace-nowrap text-sm font-bold text-foreground">
-                            {message.author_name}
-                          </span>
-                        </div>
+                        <RoomMemberIdentity
+                          username={message.author_username}
+                          displayName={message.author_name}
+                          profilePhoto={message.author_profile_photo}
+                          userId={authorId}
+                          roomOwnerId={room.owner}
+                          permissionsSnapshot={snapshot}
+                          highlightedAchievements={resolveAuthorAchievements(
+                            message,
+                          )}
+                          showAvatar={false}
+                          inlineRole
+                          className="mb-0.5 min-w-0"
+                          nameClassName="text-xs font-semibold text-foreground"
+                          roleClassName="text-[10px] text-muted-foreground"
+                          suffix={
+                            <span className="shrink-0 whitespace-nowrap text-[10px] tabular-nums leading-none text-muted-foreground">
+                              · <DateAndHour date={message.created_at} />
+                            </span>
+                          }
+                        />
                       ) : null}
 
                       <div
-                        className={`relative break-words whitespace-pre-wrap rounded-lg px-3 py-2 text-sm backdrop-blur-sm ${
-                          isMine
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-card/75 text-card-foreground"
+                        className={`flex max-w-full items-start gap-0.5 ${
+                          isMine ? "flex-row-reverse" : ""
                         }`}
                       >
                         <div
-                          className={`absolute top-1 ${isMine ? "left-1" : "right-1"}`}
+                          className={`w-fit max-w-[min(100%,36rem)] break-words whitespace-pre-wrap rounded-lg px-3 py-1.5 text-sm leading-snug backdrop-blur-sm ${
+                            isMine
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-card/75 text-card-foreground"
+                          }`}
                         >
+                          {message.body}
+                        </div>
+                        <div className="shrink-0 self-start pt-0.5">
                           <RoomMessageActionsMenu
                             roomSlug={room.slug}
                             messageId={message.id}
@@ -296,15 +335,12 @@ export default function RoomChatMessagesPanel({
                             align={isMine ? "start" : "end"}
                           />
                         </div>
-                        {message.body}
                       </div>
-                      <span
-                        className={`mt-0.5 block text-[10px] text-muted-foreground ${
-                          isMine ? "text-right" : ""
-                        }`}
-                      >
-                        <DateAndHour date={message.created_at} />
-                      </span>
+                      {isMine ? (
+                        <span className="mt-0.5 text-right text-[10px] tabular-nums leading-none text-muted-foreground">
+                          <DateAndHour date={message.created_at} />
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                 </div>

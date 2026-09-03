@@ -21,6 +21,7 @@ import { BaseLayoutServerProvider } from "./BaseLayoutServerContext";
 import { E2ECryptoProvider } from "@/context/E2ECryptoContext";
 import { DMUnreadProvider } from "@/context/DMUnreadContext";
 import { ConversationsWidgetProvider } from "@/context/ConversationsWidgetContext";
+import { DuoInviteToastBridge } from "@/components/duo/DuoInviteToastBridge";
 import NotificationsTitle from "../components/structure/NotificationsTitle";
 import SettingsHeader from "../components/structure/SettingsHeader";
 import { Separator } from "@/components/ui/separator";
@@ -124,6 +125,7 @@ export default function BaseLayoutProvider({
   return (
     <BaseLayoutServerProvider components={BaseLayoutServerComponents}>
       <ConversationsWidgetProvider>
+        <DuoInviteToastBridge />
         <DMUnreadProvider>
           <E2ECryptoProvider>
             {children}

@@ -5,7 +5,7 @@ import { TokenData } from "@/services/updateTokenRequest"
 export interface LikeProps {
     user: number | undefined,
     content_type: string,
-    object_id: number,
+    object_id: string | number,
 }
 
 export const postLike = async (data: LikeProps, authTokens : TokenData | null | undefined) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +25,12 @@ import { DeleteCommentModal } from "../@modal/(..)feed/components/DeleteCommentM
 import { deleteCommentAction } from "@/actions/deleteComment";
 import { PostsCommentsProps } from "@/services/getComments";
 import { useQueryClient } from "@tanstack/react-query";
-import { Textarea } from "@/components/ui/textarea";
+import { MentionTextarea } from "@/components/mentions/MentionTextarea";
+import {
+  EmojiPickerButton,
+  useEmojiInsert,
+} from "@/components/emoji/EmojiPickerButton";
+import { MentionText } from "@/components/mentions/MentionText";
 import { updateCommentAction } from "@/actions/updateComment";
 import { CommentContentType } from "@/components/content_types/CommentContentType";
 import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
@@ -60,6 +65,7 @@ import {
   MOBILE_COMMENTS_HANDLE_HEIGHT,
   useMobileCommentsSheet,
 } from "./useMobileCommentsSheet";
+import { PostMediaLightbox } from "./PostMediaLightbox";
 
 export const PostModal = ({
   postId,
@@ -68,7 +74,7 @@ export const PostModal = ({
   onRequireAuth,
   isGuest = false,
 }: {
-  postId: number;
+  postId: string;
   onClose?: () => void;
   fullPage?: boolean;
   /** Guest shared-link: open login instead of mutating. */
@@ -78,8 +84,8 @@ export const PostModal = ({
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [isCurrentMediaLoaded, setIsCurrentMediaLoaded] = useState(false);
   const [mediaFullscreenOpen, setMediaFullscreenOpen] = useState(false);
-  const [openReplies, setOpenReplies] = useState<Set<number>>(new Set());
-  const [loadingReplies, setLoadingReplies] = useState<Set<number>>(new Set());
+  const [openReplies, setOpenReplies] = useState<Set<string>>(new Set());
+  const [loadingReplies, setLoadingReplies] = useState<Set<string>>(new Set());
   const [showFullText, setShowFullText] = useState(false);
   const [overlayTextExpanded, setOverlayTextExpanded] = useState(false);
   const searchParams = useSearchParams();
@@ -105,25 +111,39 @@ export const PostModal = ({
     postId,
   );
   const [newComment, setNewComment] = useState("");
+  const newCommentRef = useRef<HTMLTextAreaElement>(null);
+  const replyContentRef = useRef<HTMLTextAreaElement>(null);
+  const [commentEmojiOpen, setCommentEmojiOpen] = useState(false);
+  const [replyEmojiOpen, setReplyEmojiOpen] = useState(false);
+  const {
+    insertEmoji: insertCommentEmoji,
+    syncSelection: syncCommentSelection,
+    restoreFocus: restoreCommentFocus,
+  } = useEmojiInsert(newCommentRef, newComment, setNewComment);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [deleteCommentModalOpen, setDeleteCommentModalOpen] = useState(false);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isDeletingComment, setIsDeletingComment] = useState(false);
   const [selectedComment, setSelectedComment] =
     useState<PostsCommentsProps | null>(null);
-  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const [isUpdatingComment, setIsUpdatingComment] = useState(false);
   const [selectedCommentParentId, setSelectedCommentParentId] = useState<
-    number | null
+    string | null
   >(null);
-  const [loadingMoreReplies, setLoadingMoreReplies] = useState<Set<number>>(
+  const [loadingMoreReplies, setLoadingMoreReplies] = useState<Set<string>>(
     new Set(),
   );
-  const [replyingToCommentId, setReplyingToCommentId] = useState<number | null>(
+  const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(
     null,
   );
   const [replyContent, setReplyContent] = useState("");
+  const {
+    insertEmoji: insertReplyEmoji,
+    syncSelection: syncReplySelection,
+    restoreFocus: restoreReplyFocus,
+  } = useEmojiInsert(replyContentRef, replyContent, setReplyContent);
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
   const [commentsDisabled, setCommentsDisabled] = useState(false);
   const [isReposting, setIsReposting] = useState(false);
@@ -171,11 +191,37 @@ export const PostModal = ({
   const queryClient = useQueryClient();
 
   const post = getPostById(postId);
+  const canComment = post?.can_comment !== false && !commentsDisabled;
 
   useEffect(() => {
     setMobileCommentsExpanded(searchParams?.get("focus") === "comments");
     setOverlayTextExpanded(false);
   }, [searchParams, postId]);
+
+  useEffect(() => {
+    setCurrentMediaIndex(0);
+    setIsCurrentMediaLoaded(false);
+    setCommentsDisabled(post?.comments_disabled ?? false);
+    const postHasMedia = Boolean(post?.medias?.length);
+    setShowFullText(!postHasMedia);
+  }, [postId, post?.comments_disabled, post?.medias?.length]);
+
+  useEffect(() => {
+    setIsCurrentMediaLoaded(false);
+  }, [currentMediaIndex]);
+
+  useEffect(() => {
+    queryClient.invalidateQueries({
+      queryKey: ["comments", postId],
+      refetchType: "inactive",
+    });
+  }, [postId, queryClient]);
+
+  const loadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   if (!post) return null;
 
@@ -332,25 +378,6 @@ export const PostModal = ({
     });
   };
 
-  useEffect(() => {
-    setCurrentMediaIndex(0);
-    setIsCurrentMediaLoaded(false);
-    setCommentsDisabled(post?.comments_disabled ?? false);
-    const postHasMedia = Boolean(post?.medias?.length);
-    setShowFullText(!postHasMedia);
-  }, [postId, post?.comments_disabled, post?.medias?.length]);
-
-  useEffect(() => {
-    setIsCurrentMediaLoaded(false);
-  }, [currentMediaIndex]);
-
-  useEffect(() => {
-    queryClient.invalidateQueries({
-      queryKey: ["comments", postId],
-      refetchType: "inactive",
-    });
-  }, [postId, queryClient]);
-
   const handleEditComment = (comment: any) => {
     setEditingCommentId(comment.id);
     setEditingContent(comment.comment);
@@ -360,7 +387,7 @@ export const PostModal = ({
     commentId: number,
     content_type: string,
     comment: string,
-    object_id: number,
+    object_id: string | number,
     isReplie: boolean,
   ) => {
     if (!editingContent.trim()) return;
@@ -392,7 +419,7 @@ export const PostModal = ({
       onRequireAuth?.();
       return;
     }
-    if (!replyContent.trim() || !post) return;
+    if (!canComment || !replyContent.trim() || !post) return;
     setIsSubmittingReply(true);
 
     const replyData = {
@@ -435,20 +462,14 @@ export const PostModal = ({
     }
   };
 
-  const loadMore = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
   const hasMedia = post && post.medias && post.medias.length > 0;
 
   const postShellClassName =
     "bg-card border border-border/50 backdrop-blur-sm shadow-card rounded-2xl overflow-hidden";
 
-  const isRepliesOpen = (id: number) => openReplies.has(id);
-  const isRepliesLoading = (id: number) => loadingReplies.has(id);
-  const isLoadingMoreReplies = (id: number) => loadingMoreReplies.has(id);
+  const isRepliesOpen = (id: string) => openReplies.has(id);
+  const isRepliesLoading = (id: string) => loadingReplies.has(id);
+  const isLoadingMoreReplies = (id: string) => loadingMoreReplies.has(id);
 
   const toggleReplies = async (commentId: number) => {
     if (!isRepliesOpen(commentId)) {
@@ -485,7 +506,7 @@ export const PostModal = ({
       onRequireAuth?.();
       return;
     }
-    if (!newComment.trim() || !post) return;
+    if (!canComment || !newComment.trim() || !post) return;
     setIsSubmittingComment(true);
     const newCommentData = {
       comment: newComment,
@@ -528,7 +549,10 @@ export const PostModal = ({
           body: JSON.stringify({ comments_disabled: newState }),
         });
         if (res.ok) {
-          handlePostUpdate({ ...post, comments_disabled: newState }, post.id);
+          handlePostUpdate(
+            { ...post, comments_disabled: newState, can_comment: !newState },
+            post.id,
+          );
           CustomToast.neutral(newState ? "Comentários desativados." : "Comentários ativados.");
         } else {
           setCommentsDisabled(!newState);
@@ -673,29 +697,28 @@ export const PostModal = ({
           achievements={post.highlighted_achievements}
           className="min-w-0 max-w-full"
           compact
-          adaptive={false}
         />
       </div>
       {post.comment ? (
-        <button
-          type="button"
-          onClick={() => setOverlayTextExpanded((v) => !v)}
-          className="mt-3 w-full text-left"
-        >
+        <div className="mt-3 w-full text-left">
           <p
             className={cn(
               "whitespace-pre-wrap text-sm leading-relaxed text-white/95 drop-shadow-sm",
               !overlayTextExpanded && "line-clamp-3",
             )}
           >
-            {post.comment}
+            <MentionText text={post.comment} />
           </p>
           {post.comment.length > 100 ? (
-            <span className="mt-0.5 text-xs font-medium text-white/70">
+            <button
+              type="button"
+              onClick={() => setOverlayTextExpanded((v) => !v)}
+              className="mt-0.5 text-xs font-medium text-white/70"
+            >
               {overlayTextExpanded ? "ver menos" : "ver mais"}
-            </span>
+            </button>
           ) : null}
-        </button>
+        </div>
       ) : null}
       <div className="mt-3 text-white [&_button]:text-white/90 [&_button:hover]:text-white">
         <PostPropertiers.Root className="">
@@ -801,7 +824,7 @@ export const PostModal = ({
                     </div>
                     {post.comment ? (
                       <p className="mt-4 whitespace-pre-wrap text-[15px] leading-relaxed text-foreground">
-                        {post.comment}
+                        <MentionText text={post.comment} />
                       </p>
                     ) : (
                       <p className="mt-4 text-sm text-muted-foreground">
@@ -901,10 +924,10 @@ export const PostModal = ({
                 className={cn(
                   "relative flex w-full items-center justify-center overflow-hidden bg-black",
                   // Mobile: cabe na viewport deixando espaço pra legenda + handle; pode encolher se faltar altura
-                  "max-lg:mx-auto max-lg:aspect-[4/5] max-lg:max-h-[min(52dvh,100%)] max-lg:min-h-0 max-lg:shrink max-lg:cursor-zoom-in",
+                  "max-lg:mx-auto max-lg:aspect-[4/5] max-lg:max-h-[min(52dvh,100%)] max-lg:min-h-0 max-lg:shrink",
                   "lg:min-h-0 lg:flex-1 lg:cursor-default",
                   post.medias[currentMediaIndex].media_type === "image" &&
-                    "lg:cursor-zoom-in",
+                    "cursor-zoom-in max-lg:cursor-zoom-in lg:cursor-zoom-in",
                 )}
               >
                 {!isCurrentMediaLoaded && (
@@ -919,6 +942,7 @@ export const PostModal = ({
                   <ImageComponent
                     media_id={post.medias[currentMediaIndex].media_file || ""}
                     alt="Post media"
+                    delivery="master"
                     objectFit="contain"
                     objectPosition="center"
                     className={cn(
@@ -930,6 +954,8 @@ export const PostModal = ({
                 ) : (
                   <VideoComponent
                     media_id={post.medias[currentMediaIndex].media_file || ""}
+                    delivery="master"
+                    allowFullscreen={false}
                     className={cn(
                       "max-h-full max-w-full transition-opacity duration-300",
                       isCurrentMediaLoaded ? "opacity-100" : "opacity-0",
@@ -945,7 +971,7 @@ export const PostModal = ({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="absolute bottom-3 right-3 z-20 h-9 w-9 rounded-full bg-black/55 text-white hover:bg-black/75 hover:text-white"
+                    className="absolute right-3 top-3 z-20 h-9 w-9 rounded-full bg-black/55 text-white hover:bg-black/75 hover:text-white"
                     aria-label="Ver mídia em tela cheia"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1109,8 +1135,8 @@ export const PostModal = ({
                 hasMedia
                   ? cn(
                       "overflow-y-auto",
-                      // Texto expandido: ocupa mais da coluna; recolhido: fica compacto
-                      showFullText ? "max-h-[75%]" : "max-h-[45%]",
+                      // Recolhido: só o necessário. Expandido: mais espaço para o texto.
+                      showFullText ? "max-h-[55%]" : "max-h-none",
                     )
                   : cn(
                       "lg:w-1/2 lg:overflow-y-auto lg:border-r lg:border-border/50",
@@ -1134,14 +1160,14 @@ export const PostModal = ({
                   </Button>
                 ) : null}
               </div>
-              <div className="p-4 pb-2 lg:p-6">
+              <div className="px-4 py-3 lg:px-5 lg:py-3">
               <div className={cn("mb-2", !fullPage ? "pr-16 lg:pr-20" : "pr-11")}>
                 <div className="flex items-center space-x-3 min-w-0">
                   <ProfileAvatar
                     displayName={post.name}
                     username={post.username}
                     profilePhoto={post.profile_photo}
-                    sizeClass="h-10 w-10 lg:h-12 lg:w-12"
+                    sizeClass="h-10 w-10 lg:h-11 lg:w-11"
                     ringClass="ring-2 ring-primary/30"
                     fallbackTextClassName="text-sm"
                   />
@@ -1174,7 +1200,7 @@ export const PostModal = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => setShowFullText((s) => !s)}
-                        className="text-primary hover:text-primary/80 px-3 py-1.5 rounded-md hover:bg-primary/10 -ml-2 mb-2"
+                        className="-ml-2 mb-0 h-8 rounded-md px-2 py-1 text-primary hover:bg-primary/10 hover:text-primary/80"
                       >
                         {showFullText ? (
                           <>
@@ -1189,21 +1215,21 @@ export const PostModal = ({
                         )}
                       </Button>
                       {showFullText ? (
-                        <p className="text-foreground leading-relaxed whitespace-pre-wrap">
-                          {post.comment}
+                        <p className="mt-1.5 text-foreground leading-relaxed whitespace-pre-wrap">
+                          <MentionText text={post.comment} />
                         </p>
                       ) : null}
                     </>
                   ) : (
-                    <p className="px-3 text-foreground leading-relaxed whitespace-pre-wrap">
-                      {post.comment}
+                    <p className="px-1 text-foreground leading-relaxed whitespace-pre-wrap">
+                      <MentionText text={post.comment} />
                     </p>
                   )}
                 </div>
               )}
 
               {/* Post Actions */}
-              <PostPropertiers.Root className="">
+              <PostPropertiers.Root className="mt-1 space-x-4">
                 <PostPropertiers.Like
                   quantitylikesNumber={post.quantity_likes}
                   clicked={post.user_already_like}
@@ -1342,6 +1368,10 @@ export const PostModal = ({
                                     <HighlightedAchievementBadges
                                       achievements={comment.highlighted_achievements}
                                       className="max-w-full"
+                                      compact
+                                      iconOnly
+                                      max={3}
+                                      showOverflowCounter={false}
                                     />
                                     <span className="shrink-0 text-xs text-muted-foreground">
                                       <DateAndHour date={comment.timestamp} />
@@ -1375,17 +1405,15 @@ export const PostModal = ({
                               {/* Conteúdo do comentário */}
                               <div className="bg-muted/50 rounded-lg p-3 w-full">
                                 {editingCommentId === comment.id ? (
-                                  <Textarea
+                                  <MentionTextarea
                                     value={editingContent}
-                                    onChange={(e) =>
-                                      setEditingContent(e.target.value)
-                                    }
+                                    onChange={setEditingContent}
                                     className="min-h-[80px] text-sm bg-background border-border/50 w-full"
                                     autoFocus
                                   />
                                 ) : (
                                   <p className="text-sm whitespace-pre-wrap">
-                                    {comment.comment}
+                                    <MentionText text={comment.comment} />
                                   </p>
                                 )}
 
@@ -1450,19 +1478,21 @@ export const PostModal = ({
                                 <Button
                                   variant="ghost"
                                   size="sm"
+                                  disabled={!canComment}
                                   onClick={() =>
-                                    requireAuthOr(() =>
-                                      setReplyingToCommentId(comment.id),
-                                    )
+                                    requireAuthOr(() => {
+                                      if (!canComment) return;
+                                      setReplyingToCommentId(comment.id);
+                                    })
                                   }
-                                  className="text-muted-foreground hover:text-primary"
+                                  className="text-xs text-muted-foreground hover:text-primary p-2 h-auto"
                                 >
                                   {buttons.answer}
                                 </Button>
                               </div>
 
                               {/* Input de resposta - MANTIDO COMO ESTAVA */}
-                              {replyingToCommentId === comment.id && (
+                              {replyingToCommentId === comment.id && canComment && (
                                 <form
                                   onSubmit={(e) => {
                                     e.preventDefault();
@@ -1470,17 +1500,28 @@ export const PostModal = ({
                                   }}
                                   className="mt-3 space-y-2"
                                 >
-                                  <Textarea
+                                  <MentionTextarea
+                                    ref={replyContentRef}
                                     value={replyContent}
-                                    onChange={(e) =>
-                                      setReplyContent(e.target.value)
-                                    }
+                                    onChange={setReplyContent}
+                                    onSelect={syncReplySelection}
+                                    onClick={syncReplySelection}
+                                    onKeyUp={syncReplySelection}
                                     onKeyDown={(e) => handleKeyDown(e, () => handleReply(comment.id))}
                                     placeholder="Escreva uma resposta..."
                                     className="min-h-[80px] text-sm bg-muted/50 border-border/50 w-full"
                                     autoFocus
                                   />
-                                  <div className="flex gap-2 justify-end">
+                                  <div className="flex gap-2 justify-between">
+                                    <EmojiPickerButton
+                                      open={replyEmojiOpen}
+                                      onOpenChange={setReplyEmojiOpen}
+                                      onBeforeOpen={syncReplySelection}
+                                      onPick={insertReplyEmoji}
+                                      onClosed={restoreReplyFocus}
+                                      disabled={isSubmittingReply}
+                                    />
+                                    <div className="flex gap-2 justify-end">
                                     <Button
                                       type="submit"
                                       size="sm"
@@ -1501,10 +1542,12 @@ export const PostModal = ({
                                       onClick={() => {
                                         setReplyingToCommentId(null);
                                         setReplyContent("");
+                                        setReplyEmojiOpen(false);
                                       }}
                                     >
                                       Cancelar
                                     </Button>
+                                    </div>
                                   </div>
                                 </form>
                               )}
@@ -1581,6 +1624,10 @@ export const PostModal = ({
                                                 reply.highlighted_achievements
                                               }
                                               className="max-w-full"
+                                              compact
+                                              iconOnly
+                                              max={3}
+                                              showOverflowCounter={false}
                                             />
                                             <span className="shrink-0 text-xs text-muted-foreground">
                                               <DateAndHour
@@ -1609,17 +1656,15 @@ export const PostModal = ({
                                       {/* Conteúdo da reply */}
                                       <div className="bg-muted/60 rounded-lg p-3">
                                         {editingCommentId === reply.id ? (
-                                          <Textarea
+                                          <MentionTextarea
                                             value={editingContent}
-                                            onChange={(e) =>
-                                              setEditingContent(e.target.value)
-                                            }
+                                            onChange={setEditingContent}
                                             className="min-h-[60px] text-sm bg-background border-border/50 w-full"
                                             autoFocus
                                           />
                                         ) : (
                                           <p className="text-sm break-words whitespace-pre-wrap">
-                                            {reply.comment}
+                                            <MentionText text={reply.comment} />
                                           </p>
                                         )}
 
@@ -1753,6 +1798,10 @@ export const PostModal = ({
                     Entre para comentar...
                   </Button>
                 </div>
+              ) : !canComment ? (
+                <div className="shrink-0 border-t border-border/50 p-4 text-center text-sm text-muted-foreground">
+                  Você não tem permissão para comentar nesta publicação.
+                </div>
               ) : (
               <form
                 onSubmit={(e) => {
@@ -1761,24 +1810,42 @@ export const PostModal = ({
                 }}
                 className="sticky bottom-0 w-full shrink-0 border-t border-border/50 bg-card p-3 lg:p-4"
               >
-                <div className="relative">
-                  <Textarea
+                <div className="relative w-full">
+                  <MentionTextarea
+                    ref={newCommentRef}
                     value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
+                    onChange={setNewComment}
+                    onSelect={syncCommentSelection}
+                    onClick={syncCommentSelection}
+                    onKeyUp={syncCommentSelection}
                     onKeyDown={(e) => handleKeyDown(e, handleComment)}
                     placeholder="Adicione um comentário..."
-                    className="flex-1 bg-muted/50 border-border/50 w-full pr-24 resize-none"
+                    className="min-h-10 w-full resize-none bg-muted/50 border-border/50 py-2.5 pl-10 pr-24"
                     rows={1}
+                    autoGrow
+                    maxGrowHeightPx={140}
+                    dropdownSide="top"
                   />
-                  {newComment.trim() && (
+                  <div className="absolute bottom-1 left-1 z-10">
+                    <EmojiPickerButton
+                      open={commentEmojiOpen}
+                      onOpenChange={setCommentEmojiOpen}
+                      onBeforeOpen={syncCommentSelection}
+                      onPick={insertCommentEmoji}
+                      onClosed={restoreCommentFocus}
+                      disabled={isSubmittingComment}
+                      buttonClassName="h-8 w-8 hover:bg-transparent"
+                    />
+                  </div>
+                  {newComment.trim() ? (
                     <Button
                       type="submit"
                       disabled={isSubmittingComment}
-                      className="absolute bottom-2 right-2 bg-gradient-primary hover:shadow-glow-primary/30 px-3 py-1 h-8"
+                      className="absolute bottom-1.5 right-1.5 h-8 bg-gradient-primary px-3 py-1 hover:shadow-glow-primary/30"
                     >
                       {isSubmittingComment ? (
                         <span className="flex items-center gap-1">
-                          <span className="animate-spin h-4 w-4 border-2 border-t-transparent border-primary rounded-full" />
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                           Enviando...
                         </span>
                       ) : (
@@ -1788,7 +1855,7 @@ export const PostModal = ({
                         </span>
                       )}
                     </Button>
-                  )}
+                  ) : null}
                 </div>
               </form>
               )}
@@ -1830,113 +1897,12 @@ export const PostModal = ({
       />
 
       {hasMedia ? (
-        <Dialog
+        <PostMediaLightbox
+          medias={post.medias}
+          initialIndex={currentMediaIndex}
           open={mediaFullscreenOpen}
           onOpenChange={setMediaFullscreenOpen}
-        >
-          <DialogContent
-            hideCloseButton
-            className={cn(
-              "!fixed !inset-0 !left-0 !top-0 z-[100] flex h-dvh w-screen !max-w-none !translate-x-0 !translate-y-0 flex-col gap-0 rounded-none border-0 bg-black p-0 shadow-none",
-              "data-[state=open]:zoom-in-100 data-[state=closed]:zoom-out-100",
-            )}
-          >
-            <VisuallyHidden>
-              <DialogTitle>Mídia em tela cheia</DialogTitle>
-            </VisuallyHidden>
-            <div className="absolute top-0 right-0 z-20 flex items-center gap-1 p-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 rounded-full text-white hover:bg-white/15 hover:text-white"
-                aria-label="Fechar tela cheia"
-                onClick={() => setMediaFullscreenOpen(false)}
-              >
-                <XIcon className="h-5 w-5" />
-              </Button>
-            </div>
-            <div
-              role="button"
-              tabIndex={0}
-              aria-label="Fechar tela cheia"
-              className="relative flex min-h-0 flex-1 cursor-zoom-out items-center justify-center p-2 sm:p-4 [&_img]:cursor-zoom-out [&_span]:cursor-zoom-out"
-              onClick={() => setMediaFullscreenOpen(false)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  setMediaFullscreenOpen(false);
-                }
-              }}
-            >
-              {post.medias[currentMediaIndex].media_type === "image" ? (
-                <ImageComponent
-                  media_id={post.medias[currentMediaIndex].media_file || ""}
-                  alt="Post media fullscreen"
-                  objectFit="contain"
-                  objectPosition="center"
-                  className="h-full w-full cursor-zoom-out"
-                />
-              ) : (
-                <VideoComponent
-                  media_id={post.medias[currentMediaIndex].media_file || ""}
-                  className="max-h-full max-w-full object-contain"
-                  controls
-                  autoPlay
-                  onClick={(e) => e.stopPropagation()}
-                />
-              )}
-
-              {post.medias.length > 1 ? (
-                <>
-                  {currentMediaIndex > 0 ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute left-2 top-1/2 z-20 h-10 w-10 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 hover:text-white sm:left-4"
-                      aria-label="Mídia anterior"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        prevMedia();
-                      }}
-                    >
-                      <ChevronLeft className="h-5 w-5" />
-                    </Button>
-                  ) : null}
-                  {currentMediaIndex < post.medias.length - 1 ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-2 top-1/2 z-20 h-10 w-10 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 hover:text-white sm:right-4"
-                      aria-label="Próxima mídia"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        nextMedia();
-                      }}
-                    >
-                      <ChevronRight className="h-5 w-5" />
-                    </Button>
-                  ) : null}
-                  <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 space-x-2">
-                    {post.medias.map((_, index) => (
-                      <div
-                        key={index}
-                        className={cn(
-                          "h-2 w-2 rounded-full",
-                          index === currentMediaIndex
-                            ? "bg-white"
-                            : "bg-white/50",
-                        )}
-                      />
-                    ))}
-                  </div>
-                </>
-              ) : null}
-            </div>
-          </DialogContent>
-        </Dialog>
+        />
       ) : null}
     </>
   );

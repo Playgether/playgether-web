@@ -1,7 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
+import {
+  buildAuthenticatedWebSocketUrl,
+  requestWebSocketTicket,
+} from "@/lib/websocketAuth";
 
 interface UseSecureWebSocketOptions {
   url: string;
@@ -27,77 +31,33 @@ export const useSecureWebSocket = (options: UseSecureWebSocketOptions) => {
   } = options;
 
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const [wsTicket, setWsTicket] = useState<string | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [wsBaseUrl, setWsBaseUrl] = useState<string | null>(null);
-  const reconnectCountRef = useRef(0);
 
-  // 1. ✅ Função para construir a URL do WebSocket
-  const getWebSocketBaseUrl = useCallback((): string | null => {
-    // Prioridade: variável de ambiente definida explicitamente
-    if (process.env.NEXT_PUBLIC_WS_URL) {
-      return process.env.NEXT_PUBLIC_WS_URL;
-    }
+  // Troca o access token por um ticket opaco de uso único (TTL 120s) e monta
+  // a URL autenticada do WebSocket — chamado pelo useWebSocket a cada conexão.
+  const getSocketUrl = useCallback(async (): Promise<string> => {
+    if (!url) throw new Error("WebSocket path is required.");
 
-    // Fallback: construção dinâmica (apenas no cliente)
-    if (typeof window !== "undefined") {
-      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-      const host = window.location.hostname;
-      const port = process.env.NEXT_PUBLIC_WS_PORT || "8000";
-      return `${protocol}://${host}:${port}`;
-    }
-
-    return null;
-  }, []);
-
-  // 2. ✅ Troca o access token por um ticket opaco de uso único (TTL 120s)
-  const checkAuthorization = useCallback(async (): Promise<boolean> => {
     try {
-      const response = await fetch("/api/ws/authorize", {
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setIsAuthorized(data.authorized);
-        setWsTicket(data.ticket ?? null);
-
-        if (!data.authorized) {
-          setConnectionError(data.error || "Não autorizado");
-        }
-
-        return data.authorized;
-      } else {
-        setConnectionError("Erro na autorização");
-        return false;
-      }
+      const { ticket } = await requestWebSocketTicket(url);
+      setIsAuthorized(true);
+      setConnectionError(null);
+      return buildAuthenticatedWebSocketUrl(url, ticket);
     } catch {
+      setIsAuthorized(false);
       setConnectionError("Erro ao verificar autorização");
-      return false;
+      throw new Error("WebSocket authorization failed.");
     }
-  }, []);
+  }, [url]);
 
-  // 3. ✅ URL completa do WebSocket (ticket opaco — JWT não vai na URL)
-  const fullWsUrl =
-    wsBaseUrl && isAuthorized && wsTicket && url
-      ? `${wsBaseUrl}${url}${url.includes("?") ? "&" : "?"}ticket=${encodeURIComponent(wsTicket)}`
-      : null;
-
-  // 4. ✅ Hook useWebSocket
   const { sendMessage, lastMessage, readyState, getWebSocket } = useWebSocket(
-    fullWsUrl,
+    getSocketUrl,
     {
-      shouldReconnect: (closeEvent) => {
-        if (reconnectCountRef.current >= reconnectAttempts) {
-          return false;
-        }
-        reconnectCountRef.current++;
-        return shouldReconnect(closeEvent);
-      },
+      shouldReconnect,
       reconnectAttempts,
       reconnectInterval,
-      onOpen: (event) => {
-        reconnectCountRef.current = 0;
+      retryOnError: true,
+      onOpen: () => {
         setConnectionError(null);
         onOpen?.();
       },
@@ -116,26 +76,10 @@ export const useSecureWebSocket = (options: UseSecureWebSocketOptions) => {
           console.error("Erro ao processar mensagem WebSocket:", error);
         }
       },
-    }
+    },
+    Boolean(url),
   );
 
-  // 5. ✅ Efeitos para inicialização
-  useEffect(() => {
-    // Configura a URL base do WebSocket
-    const baseUrl = getWebSocketBaseUrl();
-    if (baseUrl) {
-      setWsBaseUrl(baseUrl);
-    }
-  }, [getWebSocketBaseUrl]);
-
-  useEffect(() => {
-    // Verifica autorização após a URL base estar configurada
-    if (wsBaseUrl) {
-      checkAuthorization();
-    }
-  }, [wsBaseUrl, checkAuthorization]);
-
-  // 6. ✅ Status da conexão
   const connectionStatus = {
     [ReadyState.CONNECTING]: "Conectando",
     [ReadyState.OPEN]: "Conectado",
@@ -144,17 +88,10 @@ export const useSecureWebSocket = (options: UseSecureWebSocketOptions) => {
     [ReadyState.UNINSTANTIATED]: "Não instanciado",
   }[readyState];
 
-  // 7. ✅ Função de reconexão
   const reconnect = useCallback(() => {
-    reconnectCountRef.current = 0;
-    checkAuthorization().then((authorized) => {
-      if (authorized && getWebSocket()) {
-        getWebSocket()?.close();
-      }
-    });
-  }, [checkAuthorization, getWebSocket]);
+    getWebSocket()?.close();
+  }, [getWebSocket]);
 
-  // 8. ✅ Retorno do hook
   return {
     sendMessage,
     lastMessage,
@@ -164,6 +101,5 @@ export const useSecureWebSocket = (options: UseSecureWebSocketOptions) => {
     connectionError,
     reconnect,
     isConnected: readyState === ReadyState.OPEN,
-    wsUrl: fullWsUrl, // Para debugging
   };
 };

@@ -1,5 +1,5 @@
 export interface Cut {
-  id: number;
+  id: string;
   caption: string;
   video_file: string;
   thumbnail: string;
@@ -12,6 +12,7 @@ export interface Cut {
   likes_count: number;
   comments_count: number;
   comments_disabled: boolean;
+  can_comment?: boolean;
   timestamp: string;
   created_by_user: number;
   username: string;

@@ -8,6 +8,7 @@ import {
   REFRESH_TOKEN_MAX_AGE_SEC,
   accessTokenMaxAgeSec,
 } from "@/lib/authCookies";
+import { getClientRequestHeaders } from "@/lib/server/clientRequestMeta";
 
 export async function loginAction(formData: FormData) {
   const user = {
@@ -19,10 +20,14 @@ export async function loginAction(formData: FormData) {
     const cookiesInstance = await cookies();
     const trustedDeviceToken = cookiesInstance.get("trusted_device")?.value;
 
-    const response = await api.post("/api/token/", {
-      ...user,
-      ...(trustedDeviceToken ? { trusted_device_token: trustedDeviceToken } : {}),
-    });
+    const response = await api.post(
+      "/api/token/",
+      {
+        ...user,
+        ...(trustedDeviceToken ? { trusted_device_token: trustedDeviceToken } : {}),
+      },
+      { headers: await getClientRequestHeaders() },
+    );
 
     // 2FA required
     if (response.data.requires_2fa) {
@@ -65,11 +70,15 @@ export async function completeTwoFALogin(
   trustDevice: boolean
 ) {
   try {
-    const response = await api.post("/api/auth/2fa/complete/", {
-      pending_token: pendingToken,
-      code,
-      trust_device: trustDevice,
-    });
+    const response = await api.post(
+      "/api/auth/2fa/complete/",
+      {
+        pending_token: pendingToken,
+        code,
+        trust_device: trustDevice,
+      },
+      { headers: await getClientRequestHeaders() },
+    );
 
     const { access, refresh } = response.data as { access: string; refresh: string };
     const decoded = jwt_decode<{ user_id: string | number; exp?: number }>(access);

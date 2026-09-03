@@ -14,8 +14,8 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
-import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
 import { GameHoverCardContent } from "@/components/pages/profile/components/GameHoverCardContent";
+import { GameMediaImage } from "@/components/media/GameMediaImage";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 
@@ -30,14 +30,6 @@ const steamStatusPromiseByProfileId = new Map<
   number,
   Promise<SteamStatusResponse | null>
 >();
-
-function resolveMediaUrl(value: string | null | undefined): string {
-  if (!value) return "";
-  if (value.startsWith("http")) return value;
-  if (value.startsWith("/")) return value;
-  // Caso típico: `public_id` do Cloudinary.
-  return getCloudinaryUrl(value);
-}
 
 function isSteamGame(game: GameDetails): boolean {
   const platformSlug = (game.platform_slug ?? "").toLowerCase();
@@ -199,7 +191,6 @@ export function GamesLibraryTab({
             const gameIconSrc = steamGame
               ? steamAvatarSrc ?? fallbackIconSrc
               : fallbackIconSrc;
-            const gameIconUrl = resolveMediaUrl(gameIconSrc);
 
             return (
               <Card
@@ -208,14 +199,17 @@ export function GamesLibraryTab({
               >
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4 mb-4">
-                    {gameIconUrl ? (
-                      <img
-                        src={gameIconUrl}
+                    {gameIconSrc ? (
+                      <GameMediaImage
+                        src={gameIconSrc}
                         alt={game.name}
-                        className="w-12 h-12 rounded object-cover"
+                        size="icon"
+                        objectFit="cover"
+                        className="h-12 w-12 rounded"
+                        spinnerClassName="h-4 w-4"
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded bg-card/50" />
+                      <div className="h-12 w-12 rounded bg-card/50" />
                     )}
 
                     <div className="flex-1 space-y-2">
@@ -229,7 +223,6 @@ export function GamesLibraryTab({
                           <GameHoverCardContent
                             title={game.name}
                             description={game.description}
-                            cover={game.image}
                             logo={game.icon}
                           />
                           {game.acronym ? (
@@ -251,7 +244,6 @@ export function GamesLibraryTab({
                             <GameHoverCardContent
                               title={game.company.name}
                               description={game.company.description}
-                              cover={game.company.banner}
                               logo={game.company.logo}
                             />
                           </HoverCardContent>

@@ -1,6 +1,9 @@
 "use client";
 
-import { Crosshair, Clock, CrosshairIcon, Target, UserCog, Zap } from "lucide-react";
+import { useEffect, useMemo } from "react";
+import { Crosshair, Clock, CrosshairIcon, Info, Target, UserCog, Zap } from "lucide-react";
+import { GameMediaImage } from "@/components/media/GameMediaImage";
+import { PREMIER_RANGES, premierRangeChipClass } from "../../constants/csPremier";
 import type { CsStats } from "../../types/duo";
 
 const CS_ROLES = [
@@ -17,13 +20,38 @@ const CS_WEAPONS = [
   "USP-S", "Glock", "MP5-SD", "MP9", "SG 553",
 ] as const;
 
-const PREMIER_RANGES = [
-  "0-4999", "5000-9999", "10000-14999",
-  "15000-19999", "20000-24999", "25000-29999", "30000+",
-] as const;
+const CS_ROLE_SET = new Set<string>(CS_ROLES);
+const CS_WEAPON_SET = new Set<string>(CS_WEAPONS);
+
+function normalizeCsRoles(roles: string[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const role of roles) {
+    if (!CS_ROLE_SET.has(role) || seen.has(role)) continue;
+    seen.add(role);
+    out.push(role);
+    if (out.length >= 2) break;
+  }
+  return out;
+}
+
+function normalizeCsWeapons(weapons: string[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const weapon of weapons) {
+    if (!CS_WEAPON_SET.has(weapon) || seen.has(weapon)) continue;
+    seen.add(weapon);
+    out.push(weapon);
+    if (out.length >= 3) break;
+  }
+  return out;
+}
 
 interface CsProfileProps {
-  stats: CsStats;
+  gameIcon?: string;
+  gameName?: string;
+  stats?: CsStats | null;
+  selfDeclared?: boolean;
   selectedRoles: string[];
   selectedWeapons: string[];
   ownRange: string;
@@ -33,7 +61,10 @@ interface CsProfileProps {
 }
 
 export function CsProfile({
+  gameIcon,
+  gameName = "Counter-Strike 2",
   stats,
+  selfDeclared = false,
   selectedRoles,
   selectedWeapons,
   ownRange,
@@ -41,18 +72,48 @@ export function CsProfile({
   onWeaponsChange,
   onRangeChange,
 }: CsProfileProps) {
-  const toggleRole = (role: string) =>
+  const validSelectedRoles = useMemo(
+    () => normalizeCsRoles(selectedRoles),
+    [selectedRoles],
+  );
+  const validSelectedWeapons = useMemo(
+    () => normalizeCsWeapons(selectedWeapons),
+    [selectedWeapons],
+  );
+
+  useEffect(() => {
+    if (
+      validSelectedRoles.length !== selectedRoles.length ||
+      validSelectedRoles.some((role, index) => role !== selectedRoles[index])
+    ) {
+      onRolesChange(validSelectedRoles);
+    }
+  }, [validSelectedRoles, selectedRoles, onRolesChange]);
+
+  useEffect(() => {
+    if (
+      validSelectedWeapons.length !== selectedWeapons.length ||
+      validSelectedWeapons.some((weapon, index) => weapon !== selectedWeapons[index])
+    ) {
+      onWeaponsChange(validSelectedWeapons);
+    }
+  }, [validSelectedWeapons, selectedWeapons, onWeaponsChange]);
+
+  const toggleRole = (role: string) => {
     onRolesChange(
-      selectedRoles.includes(role)
-        ? selectedRoles.filter((r) => r !== role)
-        : [...selectedRoles, role]
+      validSelectedRoles.includes(role)
+        ? validSelectedRoles.filter((r) => r !== role)
+        : validSelectedRoles.length >= 2
+          ? validSelectedRoles
+          : [...validSelectedRoles, role],
     );
+  };
 
   const toggleWeapon = (weapon: string) => {
-    if (selectedWeapons.includes(weapon)) {
-      onWeaponsChange(selectedWeapons.filter((w) => w !== weapon));
-    } else if (selectedWeapons.length < 3) {
-      onWeaponsChange([...selectedWeapons, weapon]);
+    if (validSelectedWeapons.includes(weapon)) {
+      onWeaponsChange(validSelectedWeapons.filter((w) => w !== weapon));
+    } else if (validSelectedWeapons.length < 3) {
+      onWeaponsChange([...validSelectedWeapons, weapon]);
     }
   };
 
@@ -64,11 +125,7 @@ export function CsProfile({
         key={r}
         aria-pressed={on}
         onClick={() => onRangeChange(r)}
-        className={`rounded-full border px-3 py-2 text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 sm:text-sm ${
-          on
-            ? "border-primary/70 bg-primary/20 text-primary shadow-glow-primary/25"
-            : "border-border/70 bg-background/45 text-muted-foreground hover:border-primary/35 hover:text-card-foreground"
-        }`}
+        className={`rounded-full border px-3 py-2 text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 sm:text-sm ${premierRangeChipClass(r, on)}`}
       >
         {r}
       </button>
@@ -84,7 +141,27 @@ export function CsProfile({
 
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          {stats.avatar ? (
+          {selfDeclared ? (
+            <>
+              {gameIcon ? (
+                <GameMediaImage
+                  src={gameIcon}
+                  alt=""
+                  size="icon"
+                  className="h-16 w-16 shrink-0 rounded-2xl border-2 border-primary/25 bg-background/80 shadow-md ring-2 ring-primary/20"
+                  spinnerClassName="h-5 w-5"
+                />
+              ) : (
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-primary text-primary-foreground shadow-glow-primary ring-2 ring-primary/20">
+                  <Crosshair className="h-7 w-7" />
+                </div>
+              )}
+              <div>
+                <p className="text-lg font-bold text-card-foreground sm:text-xl">{gameName}</p>
+                <p className="text-sm text-muted-foreground">Perfil de duo informado por você</p>
+              </div>
+            </>
+          ) : stats?.avatar ? (
             <img
               src={stats.avatar}
               alt={stats.nickname ?? "Avatar"}
@@ -92,18 +169,31 @@ export function CsProfile({
             />
           ) : (
             <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-primary text-2xl font-bold text-primary-foreground shadow-glow-primary ring-2 ring-primary/20">
-              {stats.nickname?.[0]?.toUpperCase() ?? "?"}
+              {stats?.nickname?.[0]?.toUpperCase() ?? "?"}
             </div>
           )}
-          <div>
-            <p className="text-lg font-bold text-card-foreground sm:text-xl">
-              {stats.nickname ?? "Steam User"}
-            </p>
-            <p className="text-sm text-muted-foreground">Counter-Strike 2</p>
-          </div>
+          {!selfDeclared ? (
+            <div>
+              <p className="text-lg font-bold text-card-foreground sm:text-xl">
+                {stats?.nickname ?? "Steam User"}
+              </p>
+              <p className="text-sm text-muted-foreground">Counter-Strike 2</p>
+            </div>
+          ) : null}
         </div>
       </div>
 
+      {selfDeclared ? (
+        <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-amber-500/25 bg-amber-500/[0.07] px-3.5 py-3 text-sm text-amber-100/90">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+          <p>
+            A faixa Premier, funções e armas não vêm da Steam. Informe o que você joga
+            para os outros encontrarem um duo compatível.
+          </p>
+        </div>
+      ) : null}
+
+      {!selfDeclared && stats ? (
       <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
         <div className="rounded-xl border border-border/40 bg-gradient-to-b from-primary/12 to-transparent px-2 py-3 text-center">
           <Target className="mx-auto mb-1 h-3.5 w-3.5 text-muted-foreground" />
@@ -125,6 +215,7 @@ export function CsProfile({
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:text-xs">Horas</p>
         </div>
       </div>
+      ) : null}
 
       <div className="mt-6 space-y-6">
         <div>
@@ -152,8 +243,8 @@ export function CsProfile({
           </div>
           <div className="flex flex-wrap gap-2">
             {CS_ROLES.map((role) => {
-              const selected = selectedRoles.includes(role);
-              const disabled = !selected && selectedRoles.length >= 2;
+              const selected = validSelectedRoles.includes(role);
+              const disabled = !selected && validSelectedRoles.length >= 2;
               return (
                 <button
                   type="button"
@@ -188,8 +279,8 @@ export function CsProfile({
           </div>
           <div className="flex flex-wrap gap-2">
             {CS_WEAPONS.map((weapon) => {
-              const selected = selectedWeapons.includes(weapon);
-              const disabled = !selected && selectedWeapons.length >= 3;
+              const selected = validSelectedWeapons.includes(weapon);
+              const disabled = !selected && validSelectedWeapons.length >= 3;
               return (
                 <button
                   type="button"

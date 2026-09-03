@@ -13,8 +13,8 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
-import { getCloudinaryUrl } from "@/app/utils/getCloudinaryUrl";
 import { GameHoverCardContent } from "@/components/pages/profile/components/GameHoverCardContent";
+import { GameMediaImage } from "@/components/media/GameMediaImage";
 import { getStatsGames, type StatsGame } from "@/services/getStatsGames";
 import { getCs2Stats, type Cs2StatsResponse } from "@/services/getCs2Stats";
 import {
@@ -27,13 +27,7 @@ import {
   type LolStatsResponse,
   type LolTimeScope,
 } from "@/services/getLolStats";
-
-function resolveMediaUrl(value: string | null | undefined): string {
-  if (!value) return "";
-  if (value.startsWith("http")) return value;
-  if (value.startsWith("/")) return value;
-  return getCloudinaryUrl(value);
-}
+import { syncLolStats } from "@/services/syncLolStats";
 
 const cs2StatsCacheByProfileId = new Map<number, Cs2StatsResponse | null>();
 const cs2StatsPromiseByProfileId = new Map<
@@ -77,6 +71,7 @@ export function GameStatsTab({
   const [steamStatusLoading, setSteamStatusLoading] = useState(false);
   const [lolStats, setLolStats] = useState<LolStatsResponse | null>(null);
   const [lolStatsLoading, setLolStatsLoading] = useState(false);
+  const [lolForceRefreshLoading, setLolForceRefreshLoading] = useState(false);
   const [lolTimeScope, setLolTimeScope] = useState<LolTimeScope>("platform");
   const [lolQueueScope, setLolQueueScope] = useState<LolQueueScope>("ranked_solo");
   const [lolSeasonId, setLolSeasonId] = useState<string | null>(null);
@@ -162,6 +157,53 @@ export function GameStatsTab({
       setCs2StatsLoading(false);
     }
   }, [profile?.id, cs2Stats?.force_refresh?.remaining_seconds]);
+
+  const handleLolForceRefresh = useCallback(async () => {
+    if (!profile?.id) return;
+    const remaining = Number(lolStats?.force_refresh?.remaining_seconds ?? 0);
+    if (remaining > 0) return;
+    const profileId = profile.id;
+    const cacheKeyPrefix = `${profileId}:`;
+    setLolForceRefreshLoading(true);
+    try {
+      const syncResult = await syncLolStats(profileId);
+      if (!syncResult.synced && syncResult.reason === "force_cooldown_active") {
+        setLolStats((prev) =>
+          prev
+            ? {
+                ...prev,
+                force_refresh: syncResult.force_refresh ?? prev.force_refresh,
+              }
+            : prev
+        );
+        return;
+      }
+      for (const key of [...lolStatsCache.keys()]) {
+        if (key.startsWith(cacheKeyPrefix)) lolStatsCache.delete(key);
+      }
+      for (const key of [...lolStatsPromises.keys()]) {
+        if (key.startsWith(cacheKeyPrefix)) lolStatsPromises.delete(key);
+      }
+      const data = await getLolStats(profileId, {
+        timeScope: lolTimeScope,
+        queueScope: lolQueueScope,
+        seasonId: lolSeasonId,
+      });
+      const cacheKey = `${profileId}:${lolTimeScope}:${lolQueueScope}:${lolSeasonId ?? ""}`;
+      lolStatsCache.set(cacheKey, { data, fetchedAt: Date.now() });
+      setLolStats(data);
+    } catch {
+      // keep current stats on failure
+    } finally {
+      setLolForceRefreshLoading(false);
+    }
+  }, [
+    profile?.id,
+    lolStats?.force_refresh?.remaining_seconds,
+    lolTimeScope,
+    lolQueueScope,
+    lolSeasonId,
+  ]);
 
   useEffect(() => {
     if (!profile?.id || selectedGame !== "csgo") {
@@ -367,11 +409,16 @@ export function GameStatsTab({
                 onClick={() => setSelectedGame(slug)}
               >
                 <CardContent className="p-6 text-center space-y-4">
-                  <img
-                    src={resolveMediaUrl(game.icon ?? game.image)}
-                    alt={game.name}
-                    className="w-16 h-16 mx-auto rounded-lg object-cover group-hover:scale-105 transition-transform duration-200"
-                  />
+                  {game.icon || game.image ? (
+                    <GameMediaImage
+                      src={game.icon ?? game.image}
+                      alt={game.name}
+                      size="icon"
+                      objectFit="cover"
+                      className="mx-auto h-16 w-16 rounded-lg transition-transform duration-200 group-hover:scale-105"
+                      spinnerClassName="h-5 w-5"
+                    />
+                  ) : null}
                   <HoverCard>
                     <HoverCardTrigger asChild>
                       <h3 className="font-semibold text-lg cursor-help">{game.name}</h3>
@@ -380,7 +427,6 @@ export function GameStatsTab({
                       <GameHoverCardContent
                         title={game.name}
                         description={game.description}
-                        cover={game.image}
                         logo={game.icon}
                       />
                       {game.acronym ? (
@@ -402,7 +448,6 @@ export function GameStatsTab({
                       <GameHoverCardContent
                         title={game.company.name}
                         description={game.company.description}
-                        cover={game.company.banner}
                         logo={game.company.logo}
                       />
                       </HoverCardContent>
@@ -459,6 +504,8 @@ export function GameStatsTab({
                 isOwner={isOwner}
                 onCs2ForceRefresh={handleCs2ForceRefresh}
                 cs2ForceRefreshLoading={cs2StatsLoading}
+                onLolForceRefresh={handleLolForceRefresh}
+                lolForceRefreshLoading={lolForceRefreshLoading}
                 lolStats={lolStats}
                 lolTimeScope={lolTimeScope}
                 lolQueueScope={lolQueueScope}

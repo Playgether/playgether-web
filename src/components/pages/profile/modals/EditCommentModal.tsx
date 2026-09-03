@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { MentionTextarea } from "@/components/mentions/MentionTextarea";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 
 export function EditCommentModal({
@@ -43,7 +43,7 @@ export function EditCommentModal({
             Atualize o conteúdo do comentário.
           </DialogDescription>
         </DialogHeader>
-        <Textarea value={value} onChange={(e) => setValue(e.target.value)} />
+        <MentionTextarea value={value} onChange={setValue} />
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancelar

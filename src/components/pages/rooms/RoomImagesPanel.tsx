@@ -9,16 +9,31 @@ import {
   AMBIENT_VIDEO_MAX_DURATION_SEC,
   AMBIENT_VIDEO_MAX_LONG_SIDE,
   AMBIENT_VIDEO_MAX_SHORT_SIDE,
+  getRoomAmbientMode,
   parseAmbientMediaValue,
   resolveAmbientAbsoluteUrl,
   storedValueFromUploadResult,
 } from "@/app/utils/roomAmbientMedia";
+import type { AmbientPeriodKey } from "@/app/utils/roomAmbientPeriod";
 import { PresetsCloudinary } from "@/components/content_types/PresetsCloudinary";
+import {
+  BYTES_10_MB,
+  BYTES_100_MB,
+  BYTES_8_MB,
+  CLOUDINARY_IMAGE_AND_VIDEO_FORMATS,
+  CLOUDINARY_IMAGE_FORMATS,
+  unwrapPreBatchBlob,
+  videoExceedsMaxDuration,
+} from "@/app/utils/cloudinaryUploadConfig";
 import ImageComponent from "@/components/layouts/ImageComponent/ImageComponent";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useRoomPermissions } from "@/context/RoomPermissionsContext";
-import { ChatRoom } from "@/types/ChatRoom";
+import {
+  ChatRoom,
+  RoomAmbientMode,
+  RoomAmbientSettings,
+} from "@/types/ChatRoom";
 import { CldUploadWidget } from "next-cloudinary";
 import {
   CloudMoon,
@@ -30,7 +45,7 @@ import {
   Sunrise,
   Trash2,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const PERIODS = [
   { key: "morning" as const, label: "Manhã", Icon: Sunrise },
@@ -39,11 +54,22 @@ const PERIODS = [
   { key: "dawn" as const, label: "Madrugada", Icon: CloudMoon },
 ] as const;
 
-type AmbientKey = (typeof PERIODS)[number]["key"];
+const FIXED_SLOT = {
+  key: "fixed" as const,
+  label: "Fundo fixo",
+  Icon: ImageIcon,
+};
 
-function ambientFromRoom(room: ChatRoom): Record<AmbientKey, string> {
+type AmbientMediaKey = AmbientPeriodKey | "fixed";
+type EditableAmbientSettings = Record<AmbientMediaKey, string> & {
+  mode: RoomAmbientMode;
+};
+
+function ambientFromRoom(room: ChatRoom): EditableAmbientSettings {
   const from = room.ambient_images ?? {};
   return {
+    mode: getRoomAmbientMode(from),
+    fixed: String(from.fixed ?? ""),
     morning: String(from.morning ?? ""),
     afternoon: String(from.afternoon ?? ""),
     night: String(from.night ?? ""),
@@ -53,17 +79,16 @@ function ambientFromRoom(room: ChatRoom): Record<AmbientKey, string> {
 
 interface RoomImagesPanelProps {
   room: ChatRoom;
-  onAmbientImagesUpdated?: (next: Record<string, string>) => void;
+  onAmbientImagesUpdated?: (next: RoomAmbientSettings) => void;
 }
 
 export default function RoomImagesPanel({
   room,
   onAmbientImagesUpdated,
 }: RoomImagesPanelProps) {
-  const [ambientBackgrounds, setAmbientBackgrounds] = useState<
-    Record<AmbientKey, string>
-  >(() => ambientFromRoom(room));
-  const ambientRef = useRef<Record<AmbientKey, string>>(ambientFromRoom(room));
+  const [ambientSettings, setAmbientSettings] =
+    useState<EditableAmbientSettings>(() => ambientFromRoom(room));
+  const ambientRef = useRef<EditableAmbientSettings>(ambientFromRoom(room));
 
   const [expandedImage, setExpandedImage] = useState<{
     url: string;
@@ -78,6 +103,79 @@ export default function RoomImagesPanel({
 
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  const validateAmbientMedia = useMemo(
+    () =>
+      (
+        done: (options?: { cancel?: boolean }) => void,
+        data: { files?: unknown[] },
+      ) => {
+        const entry = data?.files?.[0];
+        const file = unwrapPreBatchBlob(entry);
+        const meta =
+          entry && typeof entry === "object"
+            ? (entry as { type?: string; name?: string })
+            : null;
+        const mime = (file && "type" in file ? file.type : "") || meta?.type || "";
+        const name =
+          (file && "name" in file && typeof (file as File).name === "string"
+            ? (file as File).name
+            : undefined) ||
+          meta?.name ||
+          "";
+        const isVideo =
+          mime.startsWith("video/") ||
+          mime === "video" ||
+          /\.(mp4|mov|webm|m4v)$/i.test(name);
+
+        if (!file) {
+          done();
+          return;
+        }
+        if (!isVideo) {
+          setError(null);
+          done();
+          return;
+        }
+        const objectUrl = URL.createObjectURL(file);
+        const video = document.createElement("video");
+        video.preload = "metadata";
+        video.onloadedmetadata = () => {
+          URL.revokeObjectURL(objectUrl);
+          const w = video.videoWidth;
+          const h = video.videoHeight;
+          const long = Math.max(w, h);
+          const short = Math.min(w, h);
+          if (
+            !Number.isFinite(video.duration) ||
+            video.duration > AMBIENT_VIDEO_MAX_DURATION_SEC + 0.25
+          ) {
+            setError("Vídeo: duração máxima de 3 minutos.");
+            done({ cancel: true });
+            return;
+          }
+          if (
+            long > AMBIENT_VIDEO_MAX_LONG_SIDE ||
+            short > AMBIENT_VIDEO_MAX_SHORT_SIDE
+          ) {
+            setError(
+              "Vídeo: resolução máxima Full HD (1920×1080, qualquer orientação).",
+            );
+            done({ cancel: true });
+            return;
+          }
+          setError(null);
+          done();
+        };
+        video.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          setError("Não foi possível ler o vídeo. Tente outro arquivo.");
+          done({ cancel: true });
+        };
+        video.src = objectUrl;
+      },
+    [],
+  );
 
   /** Evita onSuccess duplicado do widget Cloudinary (mesmo upload). */
   const lastAmbientDedupe = useRef<string | null>(null);
@@ -100,14 +198,14 @@ export default function RoomImagesPanel({
   useEffect(() => {
     const from = ambientFromRoom(room);
     ambientRef.current = from;
-    setAmbientBackgrounds(from);
+    setAmbientSettings(from);
     const b = room.banner ?? "";
     bannerRef.current = b;
     setBannerPublicId(b);
   }, [room.slug]);
 
   const persistAmbientImages = async (
-    next: Record<AmbientKey, string>,
+    next: EditableAmbientSettings,
   ): Promise<boolean> => {
     beginSave();
     setError(null);
@@ -142,13 +240,30 @@ export default function RoomImagesPanel({
     }
   };
 
-  const handleRemoveAmbient = (period: AmbientKey) => {
-    const previousId = ambientRef.current[period];
+  const handleAmbientModeChange = (mode: RoomAmbientMode) => {
+    if (mode === ambientRef.current.mode || !canManage || isSaving) return;
+    const snapshot = { ...ambientRef.current };
+    const next = { ...ambientRef.current, mode };
+    ambientRef.current = next;
+    setAmbientSettings(next);
+    void (async () => {
+      const ok = await persistAmbientImages(next);
+      if (ok) {
+        onAmbientImagesUpdated?.(next);
+      } else {
+        ambientRef.current = snapshot;
+        setAmbientSettings(snapshot);
+      }
+    })();
+  };
+
+  const handleRemoveAmbient = (key: AmbientMediaKey) => {
+    const previousId = ambientRef.current[key];
     if (!previousId || !canManage) return;
     const snapshot = { ...ambientRef.current };
-    const next = { ...ambientRef.current, [period]: "" };
+    const next = { ...ambientRef.current, [key]: "" };
     ambientRef.current = next;
-    setAmbientBackgrounds(next);
+    setAmbientSettings(next);
     void (async () => {
       const ok = await persistAmbientImages(next);
       if (ok) {
@@ -161,39 +276,48 @@ export default function RoomImagesPanel({
         }
       } else {
         ambientRef.current = snapshot;
-        setAmbientBackgrounds(snapshot);
+        setAmbientSettings(snapshot);
       }
     })();
   };
 
   const handleAmbientUploadSuccess = async (
-    period: AmbientKey,
+    key: AmbientMediaKey,
     result: {
       info?: {
         public_id?: string;
         asset_id?: string;
         resource_type?: string;
+        duration?: number;
+        width?: number;
+        height?: number;
       };
     },
   ) => {
     const stored = storedValueFromUploadResult(result?.info ?? {});
     if (!stored || !canManage) return;
 
-    const dedupeKey = `${period}:${stored}:${result?.info?.asset_id ?? ""}`;
+    if (videoExceedsMaxDuration(result?.info, AMBIENT_VIDEO_MAX_DURATION_SEC)) {
+      await deleteCloudinaryRoomAmbientAsset(stored);
+      setError("Vídeo: duração máxima de 3 minutos.");
+      return;
+    }
+
+    const dedupeKey = `${key}:${stored}:${result?.info?.asset_id ?? ""}`;
     if (lastAmbientDedupe.current === dedupeKey) return;
     lastAmbientDedupe.current = dedupeKey;
 
-    const previousId = ambientRef.current[period] || "";
+    const previousId = ambientRef.current[key] || "";
     const snapshot = { ...ambientRef.current };
-    const next = { ...ambientRef.current, [period]: stored };
+    const next = { ...ambientRef.current, [key]: stored };
     ambientRef.current = next;
-    setAmbientBackgrounds(next);
+    setAmbientSettings(next);
 
     const ok = await persistAmbientImages(next);
     if (!ok) {
       await deleteCloudinaryRoomAmbientAsset(stored);
       ambientRef.current = snapshot;
-      setAmbientBackgrounds(snapshot);
+      setAmbientSettings(snapshot);
       return;
     }
 
@@ -283,6 +407,8 @@ export default function RoomImagesPanel({
                     multiple: false,
                     maxFiles: 1,
                     resourceType: "image",
+                    clientAllowedFormats: [...CLOUDINARY_IMAGE_FORMATS],
+                    maxImageFileSize: BYTES_8_MB,
                     language: "pt-br",
                     styles: { zIndex: 200000 },
                   }}
@@ -315,16 +441,51 @@ export default function RoomImagesPanel({
       <div>
         <h3 className="mb-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
           <Sunrise className="h-3.5 w-3.5" />
-          Ambientação por horário
+          Ambientação do chat
         </h3>
+        <div className="mb-3 grid grid-cols-2 gap-1 rounded-lg border border-border/60 bg-muted/40 p-1">
+          {(
+            [
+              ["fixed", "Fundo fixo"],
+              ["schedule", "Por horário"],
+            ] as const
+          ).map(([mode, label]) => {
+            const active = ambientSettings.mode === mode;
+            return (
+              <button
+                key={mode}
+                type="button"
+                aria-pressed={active}
+                disabled={!canManage || isSaving}
+                onClick={() => handleAmbientModeChange(mode)}
+                className={`rounded-md px-3 py-2 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                  active
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
         <p className="mb-2 text-[11px] text-muted-foreground">
+          {ambientSettings.mode === "fixed"
+            ? "Use uma única mídia durante todo o dia. "
+            : "Defina uma mídia diferente para cada período. "}
           Imagem ou vídeo. Vídeo: até {AMBIENT_VIDEO_MAX_DURATION_SEC / 60} min,
-          Full HD ({AMBIENT_VIDEO_MAX_LONG_SIDE}×{AMBIENT_VIDEO_MAX_SHORT_SIDE}
-          px no máximo).
+          Full HD ({AMBIENT_VIDEO_MAX_LONG_SIDE}×
+          {AMBIENT_VIDEO_MAX_SHORT_SIDE}px no máximo).
         </p>
-        <div className="grid grid-cols-2 gap-2">
-          {PERIODS.map((p) => {
-            const rawAmbient = ambientBackgrounds[p.key];
+        <div
+          className={
+            ambientSettings.mode === "fixed"
+              ? "grid max-w-md grid-cols-1 gap-2"
+              : "grid grid-cols-2 gap-2"
+          }
+        >
+          {(ambientSettings.mode === "fixed" ? [FIXED_SLOT] : PERIODS).map((p) => {
+            const rawAmbient = ambientSettings[p.key];
             const parsedAmbient = parseAmbientMediaValue(rawAmbient);
             const hasMedia = !!parsedAmbient;
             return (
@@ -386,61 +547,14 @@ export default function RoomImagesPanel({
                           multiple: false,
                           maxFiles: 1,
                           resourceType: "auto",
-                          clientAllowedFormats: ["image", "video"],
-                          maxVideoFileSize: 100 * 1024 * 1024,
+                          clientAllowedFormats: [
+                            ...CLOUDINARY_IMAGE_AND_VIDEO_FORMATS,
+                          ],
+                          maxImageFileSize: BYTES_10_MB,
+                          maxVideoFileSize: BYTES_100_MB,
                           language: "pt-br",
                           styles: { zIndex: 200000 },
-                          preBatch: (cb, data) => {
-                            const file = data?.files?.[0] as File | undefined;
-                            if (!file) {
-                              cb();
-                              return;
-                            }
-                            if (!file.type?.startsWith("video/")) {
-                              setError(null);
-                              cb();
-                              return;
-                            }
-                            const objectUrl = URL.createObjectURL(file);
-                            const video = document.createElement("video");
-                            video.preload = "metadata";
-                            video.onloadedmetadata = () => {
-                              URL.revokeObjectURL(objectUrl);
-                              const w = video.videoWidth;
-                              const h = video.videoHeight;
-                              const long = Math.max(w, h);
-                              const short = Math.min(w, h);
-                              if (
-                                !Number.isFinite(video.duration) ||
-                                video.duration >
-                                  AMBIENT_VIDEO_MAX_DURATION_SEC + 0.25
-                              ) {
-                                setError("Vídeo: duração máxima de 3 minutos.");
-                                cb({ cancel: true });
-                                return;
-                              }
-                              if (
-                                long > AMBIENT_VIDEO_MAX_LONG_SIDE ||
-                                short > AMBIENT_VIDEO_MAX_SHORT_SIDE
-                              ) {
-                                setError(
-                                  "Vídeo: resolução máxima Full HD (1920×1080, qualquer orientação).",
-                                );
-                                cb({ cancel: true });
-                                return;
-                              }
-                              setError(null);
-                              cb();
-                            };
-                            video.onerror = () => {
-                              URL.revokeObjectURL(objectUrl);
-                              setError(
-                                "Não foi possível ler o vídeo. Tente outro arquivo.",
-                              );
-                              cb({ cancel: true });
-                            };
-                            video.src = objectUrl;
-                          },
+                          preBatch: validateAmbientMedia,
                         }}
                         onSuccess={(result: unknown) =>
                           void handleAmbientUploadSuccess(

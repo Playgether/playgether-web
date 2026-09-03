@@ -2,7 +2,8 @@ import { useState } from "react";
 import { handleKeyDown } from "@/components/layouts/SendOnEnterKey/sendOnEnterKey";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { MentionTextarea } from "@/components/mentions/MentionTextarea";
+import { MentionText } from "@/components/mentions/MentionText";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Send } from "lucide-react";
 
@@ -56,15 +57,17 @@ export const ReplyModal = ({ open, onOpenChange, comment, onSubmitReply }: Reply
                   <span className="font-medium text-sm">{comment.user.name}</span>
                   <span className="text-xs text-muted-foreground">{comment.timestamp}</span>
                 </div>
-                <p className="text-sm text-muted-foreground">{comment.content}</p>
+                <p className="text-sm text-muted-foreground">
+                  <MentionText text={comment.content} />
+                </p>
               </div>
             </div>
             
             {/* Reply Input */}
             <div className="space-y-3">
-              <Textarea
+              <MentionTextarea
                 value={replyContent}
-                onChange={(e) => setReplyContent(e.target.value)}
+                onChange={setReplyContent}
                 onKeyDown={(e) => handleKeyDown(e, handleSubmit)}
                 placeholder="Escreva sua resposta..."
                 className="min-h-[100px] bg-muted/50 border-border/50 resize-none"

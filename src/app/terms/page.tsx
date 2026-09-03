@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { PublicLegalDocument } from "@/components/legal/PublicLegalDocument";
+import { TermsQueryModalOpener } from "@/components/terms/TermsQueryModalOpener";
 
 export const metadata: Metadata = {
   title: "Termos de Uso | Playgether",
@@ -7,5 +9,12 @@ export const metadata: Metadata = {
 };
 
 export default function TermsPage() {
-  return <PublicLegalDocument documentType="terms" fallbackTitle="Termos de Uso" />;
+  return (
+    <>
+      <Suspense fallback={null}>
+        <TermsQueryModalOpener />
+      </Suspense>
+      <PublicLegalDocument documentType="terms" fallbackTitle="Termos de Uso" />
+    </>
+  );
 }

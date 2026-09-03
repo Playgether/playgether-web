@@ -1,7 +1,7 @@
 "use server";
 
 import { api } from "@/services/api";
-import { ensureSessionAuth } from "@/actions/refreshToken";
+import { ensureSessionAuth } from "@/lib/server/authTokens";
 
 export interface PostMediaProps {
   media_file: string;

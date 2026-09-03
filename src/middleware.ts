@@ -7,12 +7,14 @@ const PUBLIC_ROUTES = [
   "/reset-password",
   "/terms",
   "/privacy",
+  "/community",
+  "/cookies",
 ];
 const AUTH_ENTRY_ROUTES = ["/", "/about", "/forgot-password", "/reset-password"];
 
-/** Shared post/cut deep-links and embeds: /feed/123, /cuts/123, /cuts/123/embed. */
+/** Shared post/cut deep-links and embeds: /feed/{publicId}, /cuts/{publicId}, /cuts/{publicId}/embed. */
 function isPublicPostRoute(pathname: string) {
-  return /^\/(feed|cuts)\/\d+(\/embed)?$/.test(pathname);
+  return /^\/(feed|cuts)\/[A-Za-z0-9]{12}(\/embed)?$/.test(pathname);
 }
 
 export function middleware(request: NextRequest) {

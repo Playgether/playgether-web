@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Check, Users } from "lucide-react";
 import type { Game, GamePreferences, GameSchema } from "../../types/duo";
 import { LolLaneRoleIcon } from "@/components/lol/LolLaneRoleIcon";
+import { ValorantRoleIcon } from "@/components/valorant/ValorantRoleIcon";
+import { isValorantDuoSlug } from "../../utils/isValorantGame";
 
 interface RoleSelectionProps {
   game: Game;
@@ -116,6 +118,7 @@ export function RoleSelection({ game, schema, preferences, onNext, onBack }: Rol
                       {isSelected ? <Check className="h-3.5 w-3.5 stroke-[3]" /> : null}
                     </span>
                     {slug === "lol" ? <LolLaneRoleIcon roleLabel={role} /> : null}
+                    {isValorantDuoSlug(slug) ? <ValorantRoleIcon roleLabel={role} /> : null}
                     <span
                       className={`flex-1 text-sm font-medium sm:text-base ${
                         isSelected ? "text-foreground" : "text-card-foreground"

@@ -5,7 +5,7 @@ import NotFoundPages from "@/components/elements/NotFound/NotFoundPages";
 import { getProfileByUsername } from "@/services/getProfileByUsername";
 import GamesCanvasProfile from "@/components/pages/profile/GamesCanvasProfile";
 import { getCommentsServer } from "@/services/getCommentsServer";
-import { ensureAccessTokenCookie } from "@/actions/refreshToken";
+import { ensureAccessTokenCookie } from "@/lib/server/authTokens";
 import { decodeAccessToken } from "@/lib/decodeAccessToken";
 
 export const metadata: Metadata = {

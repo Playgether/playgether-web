@@ -135,10 +135,20 @@ export function CutShareDialog({ cut, open, onOpenChange }: CutShareDialogProps)
       let publicKey = target.publicKey;
 
       if (!conversationId) {
-        const conv = await startConversation(target.userId);
-        if (!conv) continue;
-        conversationId = conv.id;
-        publicKey = conv.other_participant?.public_key ?? publicKey;
+        const result = await startConversation(target.userId);
+        if (!result.ok) {
+          CustomToast.error(result.error);
+          continue;
+        }
+        if (result.conversation.can_message === false) {
+          CustomToast.error(
+            result.conversation.can_message_reason ??
+              "Você não pode enviar mensagens para este usuário.",
+          );
+          continue;
+        }
+        conversationId = result.conversation.id;
+        publicKey = result.conversation.other_participant?.public_key ?? publicKey;
       }
       if (!publicKey) continue;
 

@@ -3,4 +3,5 @@ export enum CommentContentType {
     comment= "comment",
     profile= "profile",
     repost= "repost",
+    cut= "cut",
 }

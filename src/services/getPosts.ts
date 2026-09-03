@@ -2,7 +2,7 @@ import { api } from "./api";
 import { error } from "console";
 
 export interface PostProps {
-    id: number; 
+    id: string; 
     timestamp: number;
     quantity_visualization: number;
     quantity_comment: number;

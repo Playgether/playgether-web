@@ -186,15 +186,15 @@ export function AchievementModal({
                 />
               ) : null}
 
-              <div className="relative z-10 p-6 pt-12">
+              <div className="relative z-10 p-6 pt-12 text-zinc-100">
                 <DialogClose
-                  className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none z-50 p-1"
+                  className="absolute right-4 top-4 rounded-sm text-zinc-200 opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none z-50 p-1"
                   aria-label="Fechar"
                 >
                   <X className="h-4 w-4" />
                 </DialogClose>
                 <DialogHeader className="text-left">
-                  <DialogTitle className="flex items-center gap-2 text-left">
+                  <DialogTitle className="flex items-center gap-2 text-left text-zinc-50">
                     <span>{achievement.icon}</span>
                     {achievement.title}
                   </DialogTitle>
@@ -223,18 +223,15 @@ export function AchievementModal({
                     <span className="font-medium">{achievement.game}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-white/70">
-                      Conquistado em
-                    </span>
-                    <span className="font-medium">{achievement.date}</span>
+                    <span className="text-white/70">Conquistado em</span>
                   </div>
                   {/* Taxa global (%): oculto no lançamento — poucos usuários distorce o número.
                       O backend pode continuar enviando `percentage`; reative quando houver base estável. */}
                   {/* <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">
+                    <span className="text-zinc-400">
                       % dos jogadores
                     </span>
-                    <span className="font-medium">
+                    <span className="font-medium text-zinc-100">
                       {achievement.percentage}%
                     </span>
                   </div> */}

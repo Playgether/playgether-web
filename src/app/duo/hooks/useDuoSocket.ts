@@ -5,19 +5,20 @@ import { getMatches } from "../services/duoApi";
 import type {
   DuoMatch,
   GamePreferences,
+  WsInviteUpdateMsg,
   WsMessage,
   WsQueueStatus,
 } from "../types/duo";
-
-function wsBaseUrl(): string {
-  if (process.env.NEXT_PUBLIC_WS_URL) return process.env.NEXT_PUBLIC_WS_URL;
-  if (typeof window !== "undefined") return `ws://${window.location.host}`;
-  return "ws://localhost:3000";
-}
+import {
+  buildAuthenticatedWebSocketUrl,
+  getWebSocketBaseUrl,
+  requestWebSocketTicket,
+} from "@/lib/websocketAuth";
 
 interface UseDuoSocketOptions {
   gameSlug: string;
   enabled?: boolean;
+  onInviteUpdate?: (msg: WsInviteUpdateMsg) => void;
 }
 
 interface DuoSocketState {
@@ -40,13 +41,22 @@ interface DuoSocketActions {
   refreshMatches: () => void;
   /** Mantém o backend ciente de que o usuário está em /duo resultados (evita notificação in-app duplicada). */
   pulseDuoResultsPresence: () => void;
+  /** Optimistic local patch after sending an invite from MatchCard. */
+  patchMatchInvite: (
+    matchId: number,
+    patch: Pick<DuoMatch, "invite_status" | "invite_direction" | "outgoing_invite_status">,
+  ) => void;
 }
 
 export function useDuoSocket({
   gameSlug,
   enabled = true,
+  onInviteUpdate,
 }: UseDuoSocketOptions): DuoSocketState & DuoSocketActions {
   const wsRef = useRef<WebSocket | null>(null);
+  const onInviteUpdateRef = useRef(onInviteUpdate);
+  onInviteUpdateRef.current = onInviteUpdate;
+
   const [state, setState] = useState<DuoSocketState>({
     connected: false,
     queueStatus: null,
@@ -71,6 +81,24 @@ export function useDuoSocket({
       })
       .catch(() => {});
   }, [gameSlug]);
+
+  const patchMatchInvite = useCallback(
+    (
+      matchId: number,
+      patch: Pick<
+        DuoMatch,
+        "invite_status" | "invite_direction" | "outgoing_invite_status"
+      >,
+    ) => {
+      setState((s) => ({
+        ...s,
+        matches: s.matches.map((m) =>
+          m.id === matchId ? { ...m, ...patch } : m,
+        ),
+      }));
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!enabled || !gameSlug) return;
@@ -105,7 +133,8 @@ export function useDuoSocket({
           setState((s) => ({
             ...s,
             queueStatus: msg.status,
-            expiresAt: msg.status === "evicted" ? null : (msg.expires_at ?? s.expiresAt),
+            expiresAt:
+              msg.status === "evicted" ? null : (msg.expires_at ?? s.expiresAt),
             isNearExpiry: msg.is_near_expiry ?? s.isNearExpiry,
             evictionReason:
               msg.status === "evicted"
@@ -132,16 +161,44 @@ export function useDuoSocket({
           }));
           break;
 
+        case "duo_invite_update": {
+          const active =
+            msg.status === "pending" ||
+            msg.status === "accepted" ||
+            msg.status === "declined";
+          setState((s) => ({
+            ...s,
+            matches: s.matches.map((m) =>
+              m.id === msg.match_id
+                ? {
+                    ...m,
+                    outgoing_invite_status:
+                      msg.direction === "received"
+                        ? m.outgoing_invite_status
+                        : msg.status,
+                    invite_status: active ? msg.status : null,
+                    invite_direction: active
+                      ? (msg.direction ?? m.invite_direction ?? null)
+                      : null,
+                  }
+                : m,
+            ),
+          }));
+          onInviteUpdateRef.current?.(msg);
+          break;
+        }
+
         case "error":
           setState((s) => ({ ...s, error: msg.message }));
           break;
       }
     }
 
-    fetch("/api/notifications-ws-token", { credentials: "include" })
-      .then((res) => (res.ok ? res.json() : { ticket: null }))
-      .then((data: { ticket?: string | null }) => {
+    const socketPath = `/ws/duo/${encodeURIComponent(gameSlug)}/`;
+    requestWebSocketTicket(socketPath)
+      .then(({ ticket }) => {
         if (cancelled) return;
+        const wsUrl = buildAuthenticatedWebSocketUrl(socketPath, ticket);
         if (!data?.ticket) {
           setState((s) => ({
             ...s,
@@ -151,7 +208,7 @@ export function useDuoSocket({
           return;
         }
 
-        const base = wsBaseUrl().replace(/\/$/, "");
+        const base = getWebSocketBaseUrl();
         const wsUrl = `${base}/ws/duo/${encodeURIComponent(gameSlug)}/?ticket=${encodeURIComponent(data.ticket)}`;
 
         ws = new WebSocket(wsUrl);
@@ -180,7 +237,10 @@ export function useDuoSocket({
       })
       .catch(() => {
         if (!cancelled) {
-          setState((s) => ({ ...s, error: "Não foi possível autenticar o WebSocket." }));
+          setState((s) => ({
+            ...s,
+            error: "Não foi possível autenticar o WebSocket.",
+          }));
         }
       });
 
@@ -195,7 +255,7 @@ export function useDuoSocket({
     (preferences: Partial<GamePreferences>) => {
       send({ type: "start_search", preferences });
     },
-    [send]
+    [send],
   );
 
   const leaveQueue = useCallback(() => {
@@ -210,7 +270,7 @@ export function useDuoSocket({
     (preferences: Partial<GamePreferences>) => {
       send({ type: "update_preferences", preferences });
     },
-    [send]
+    [send],
   );
 
   const pulseDuoResultsPresence = useCallback(() => {
@@ -225,6 +285,7 @@ export function useDuoSocket({
     updatePreferences,
     refreshMatches,
     pulseDuoResultsPresence,
+    patchMatchInvite,
   };
 }
 

@@ -56,25 +56,25 @@ interface E2ECryptoContextValue {
   needsUnlock: boolean;
   /** Called at login time — auto-unlocks or generates keys, updates React state. */
   unlockOnLogin: (password: string) => Promise<void>;
-  /** Manual unlock from the lock screen (when localStorage was cleared). */
+  /** Manual unlock from the lock screen (when session key cache was cleared). */
   unlock: (password: string) => Promise<boolean>;
   regenerateKeys: (password: string) => Promise<boolean>;
   encryptForUser: (
     plaintext: string,
-    recipientPublicKeyB64: string
+    recipientPublicKeyB64: string,
   ) => Promise<EncryptedMessage | null>;
   decrypt: (
     encryptedBody: string,
     encryptedKey: string,
     iv: string,
     isSender: boolean,
-    encryptedKeySender: string | undefined
+    encryptedKeySender: string,
   ) => Promise<string | null>;
   clear: () => void;
 }
 
 const E2ECryptoContext = createContext<E2ECryptoContextValue>(
-  {} as E2ECryptoContextValue
+  {} as E2ECryptoContextValue,
 );
 
 export function E2ECryptoProvider({ children }: { children: React.ReactNode }) {
@@ -83,7 +83,9 @@ export function E2ECryptoProvider({ children }: { children: React.ReactNode }) {
   const [isReady, setIsReady] = useState(false);
   const [needsUnlock, setNeedsUnlock] = useState(false);
 
-  // On mount: try localStorage first. No lock screen — auto-unlock happens at login.
+  // On mount: restore non-extractable private key from IndexedDB.
+  // After password login, unlockOnLogin / unlockE2EKeys populates the cache —
+  // the user never types a password again just to read chat.
   useEffect(() => {
     let cancelled = false;
 
@@ -94,18 +96,32 @@ export function E2ECryptoProvider({ children }: { children: React.ReactNode }) {
         privateKeyRef.current = cached;
         setIsReady(true);
         setNeedsUnlock(false);
+      } else if (!privateKeyRef.current) {
+        // No session key yet — login will unlock silently with the password.
+        setNeedsUnlock(true);
+        setIsReady(false);
       }
     };
 
     tryLoad();
 
     // Recarrega quando unlockE2EKeys (login standalone) cacheia a chave no mesmo tab
-    const handleKeyCached = () => { tryLoad(); };
+    const handleKeyCached = () => {
+      tryLoad();
+    };
+    const handleClear = () => {
+      privateKeyRef.current = null;
+      publicKeyRef.current = null;
+      setIsReady(false);
+      setNeedsUnlock(true);
+    };
     window.addEventListener("pgther-key-cached", handleKeyCached);
+    window.addEventListener("pgther-e2e-clear", handleClear);
 
     return () => {
       cancelled = true;
       window.removeEventListener("pgther-key-cached", handleKeyCached);
+      window.removeEventListener("pgther-e2e-clear", handleClear);
     };
   }, []);
 
@@ -124,9 +140,12 @@ export function E2ECryptoProvider({ children }: { children: React.ReactNode }) {
       if (encrypted_private_key && key_salt) {
         // Chaves existem — tenta decifrar com a senha do login
         try {
-          const privateKey = await unwrapPrivateKey(encrypted_private_key, password, key_salt);
-          privateKeyRef.current = privateKey;
-          await cachePrivateKey(privateKey);
+          const privateKey = await unwrapPrivateKey(
+            encrypted_private_key,
+            password,
+            key_salt,
+          );
+          privateKeyRef.current = await cachePrivateKey(privateKey);
           setIsReady(true);
           setNeedsUnlock(false);
         } catch {
@@ -140,15 +159,18 @@ export function E2ECryptoProvider({ children }: { children: React.ReactNode }) {
         const keyPair = await generateKeyPair();
         const exportedPublicKey = await exportPublicKey(keyPair.publicKey);
         const salt = generateSalt();
-        const wrappedPrivateKey = await wrapPrivateKey(keyPair.privateKey, password, salt);
+        const wrappedPrivateKey = await wrapPrivateKey(
+          keyPair.privateKey,
+          password,
+          salt,
+        );
         await uploadKeys({
           public_key: exportedPublicKey,
           encrypted_private_key: wrappedPrivateKey,
           key_salt: salt,
         });
-        privateKeyRef.current = keyPair.privateKey;
         publicKeyRef.current = keyPair.publicKey;
-        await cachePrivateKey(keyPair.privateKey);
+        privateKeyRef.current = await cachePrivateKey(keyPair.privateKey);
         setIsReady(true);
         setNeedsUnlock(false);
       }
@@ -157,14 +179,17 @@ export function E2ECryptoProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  /** Manual unlock: only used when localStorage was cleared (rare fallback). */
+  /** Manual unlock: only used when session key cache was cleared (rare fallback). */
   const unlock = useCallback(async (password: string): Promise<boolean> => {
     try {
       const { encrypted_private_key, key_salt } = await fetchMyKeys();
       if (!encrypted_private_key || !key_salt) return false;
-      const privateKey = await unwrapPrivateKey(encrypted_private_key, password, key_salt);
-      privateKeyRef.current = privateKey;
-      await cachePrivateKey(privateKey);
+      const privateKey = await unwrapPrivateKey(
+        encrypted_private_key,
+        password,
+        key_salt,
+      );
+      privateKeyRef.current = await cachePrivateKey(privateKey);
       setIsReady(true);
       setNeedsUnlock(false);
       return true;
@@ -176,7 +201,7 @@ export function E2ECryptoProvider({ children }: { children: React.ReactNode }) {
   const encryptForUser = useCallback(
     async (
       plaintext: string,
-      recipientPublicKeyB64: string
+      recipientPublicKeyB64: string,
     ): Promise<EncryptedMessage | null> => {
       if (!privateKeyRef.current) return null;
       try {
@@ -193,7 +218,7 @@ export function E2ECryptoProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
     },
-    []
+    [],
   );
 
   const decrypt = useCallback(
@@ -202,41 +227,53 @@ export function E2ECryptoProvider({ children }: { children: React.ReactNode }) {
       encryptedKeyRecipient: string,
       iv: string,
       isSender: boolean,
-      encryptedKeySender: string | undefined
+      encryptedKeySender: string,
     ): Promise<string | null> => {
       if (!privateKeyRef.current) return null;
       const keyToUse = isSender ? encryptedKeySender : encryptedKeyRecipient;
       if (!keyToUse) return null;
       try {
-        return await decryptMessage(encryptedBody, keyToUse, iv, privateKeyRef.current);
+        const keyToUse = isSender ? encryptedKeySender : encryptedKeyRecipient;
+        return await decryptMessage(
+          encryptedBody,
+          keyToUse,
+          iv,
+          privateKeyRef.current,
+        );
       } catch {
         return null;
       }
     },
-    []
+    [],
   );
 
-  const regenerateKeys = useCallback(async (password: string): Promise<boolean> => {
-    try {
-      const keyPair = await generateKeyPair();
-      const exportedPublicKey = await exportPublicKey(keyPair.publicKey);
-      const salt = generateSalt();
-      const wrappedPrivateKey = await wrapPrivateKey(keyPair.privateKey, password, salt);
-      await uploadKeys({
-        public_key: exportedPublicKey,
-        encrypted_private_key: wrappedPrivateKey,
-        key_salt: salt,
-      });
-      privateKeyRef.current = keyPair.privateKey;
-      publicKeyRef.current = keyPair.publicKey;
-      await cachePrivateKey(keyPair.privateKey);
-      setIsReady(true);
-      setNeedsUnlock(false);
-      return true;
-    } catch {
-      return false;
-    }
-  }, []);
+  const regenerateKeys = useCallback(
+    async (password: string): Promise<boolean> => {
+      try {
+        const keyPair = await generateKeyPair();
+        const exportedPublicKey = await exportPublicKey(keyPair.publicKey);
+        const salt = generateSalt();
+        const wrappedPrivateKey = await wrapPrivateKey(
+          keyPair.privateKey,
+          password,
+          salt,
+        );
+        await uploadKeys({
+          public_key: exportedPublicKey,
+          encrypted_private_key: wrappedPrivateKey,
+          key_salt: salt,
+        });
+        publicKeyRef.current = keyPair.publicKey;
+        privateKeyRef.current = await cachePrivateKey(keyPair.privateKey);
+        setIsReady(true);
+        setNeedsUnlock(false);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [],
+  );
 
   const clear = useCallback(() => {
     privateKeyRef.current = null;
@@ -278,7 +315,11 @@ export async function unlockE2EKeys(password: string): Promise<void> {
 
     if (encrypted_private_key && key_salt) {
       try {
-        const privateKey = await unwrapPrivateKey(encrypted_private_key, password, key_salt);
+        const privateKey = await unwrapPrivateKey(
+          encrypted_private_key,
+          password,
+          key_salt,
+        );
         await cachePrivateKey(privateKey);
       } catch {
         // Senha incorreta ou chave corrompida — silencioso
@@ -290,12 +331,20 @@ export async function unlockE2EKeys(password: string): Promise<void> {
     const keyPair = await generateKeyPair();
     const exportedPublicKey = await exportPublicKey(keyPair.publicKey);
     const salt = generateSalt();
-    const wrappedPrivateKey = await wrapPrivateKey(keyPair.privateKey, password, salt);
+    const wrappedPrivateKey = await wrapPrivateKey(
+      keyPair.privateKey,
+      password,
+      salt,
+    );
     const uploadRes = await fetch("/api/users/upload-keys", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ public_key: exportedPublicKey, encrypted_private_key: wrappedPrivateKey, key_salt: salt }),
+      body: JSON.stringify({
+        public_key: exportedPublicKey,
+        encrypted_private_key: wrappedPrivateKey,
+        key_salt: salt,
+      }),
     });
     if (!uploadRes.ok) return;
     await cachePrivateKey(keyPair.privateKey);

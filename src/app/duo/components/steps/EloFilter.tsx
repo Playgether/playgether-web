@@ -6,9 +6,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, Clock, Filter, MessageSquare, Trophy } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import type { Game, GamePreferences, GameSchema, LolSchema, CsSchema } from "../../types/duo";
+import type { Game, GamePreferences, GameSchema, LolSchema, CsSchema, ValorantSchema } from "../../types/duo";
 import { lolTierEmblemUrl } from "@/lib/lolRankedEmblem";
+import { valorantTierEmblemUrl } from "@/lib/valorantRankEmblem";
 import { LolRankEmblemFrame } from "@/components/lol/LolRankEmblemFrame";
+import { premierRangeStyle } from "../../constants/csPremier";
+import { isFullSelection } from "../../utils/collapseSelectionDisplay";
+import { isValorantDuoSlug } from "../../utils/isValorantGame";
 
 const PLAY_TIMES = [
   { id: "morning", label: "Manhã (6h – 12h)" },
@@ -34,9 +38,11 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
   const slug = game.acronym.toLowerCase();
   const isLol = slug === "lol";
   const isCs = slug === "cs2";
+  const isValorant = isValorantDuoSlug(slug);
+  const usesEloTiers = isLol || isValorant;
 
   // LoL: multi-select elo tiers
-  const lolSchema = isLol ? (schema as LolSchema) : null;
+  const lolSchema = usesEloTiers ? (schema as LolSchema | ValorantSchema) : null;
   const [selectedElos, setSelectedElos] = useState<string[]>(
     (preferences as any).accepted_elo ?? []
   );
@@ -72,12 +78,14 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
     );
 
   function handleSearch() {
+    if (selectedEloValues.length === 0 || selectedTimes.length === 0) return;
+
     const note = duoNote.trim().slice(0, DUO_NOTE_MAX);
     const base: Partial<GamePreferences> = {
       play_times: selectedTimes,
       duo_note: note,
     } as Partial<GamePreferences>;
-    if (isLol) {
+    if (usesEloTiers) {
       onNext({ ...base, accepted_elo: selectedElos } as Partial<GamePreferences>);
     } else if (isCs) {
       onNext({ ...base, accepted_ranges: selectedRanges } as Partial<GamePreferences>);
@@ -86,12 +94,15 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
     }
   }
 
-  const eloLabel = isLol ? "Elo" : "Range de Pontos Premier";
-  const eloOptions: string[] = isLol
+  const eloLabel = isCs ? "Range de Pontos Premier" : "Elo";
+  const eloOptions: string[] = usesEloTiers
     ? (lolSchema?.elo_tiers ?? [])
     : (csSchema?.premier_ranges ?? []);
-  const selectedEloValues = isLol ? selectedElos : selectedRanges;
-  const toggleEloFn = isLol ? toggleElo : toggleRange;
+  const selectedEloValues = usesEloTiers ? selectedElos : selectedRanges;
+  const toggleEloFn = usesEloTiers ? toggleElo : toggleRange;
+  const canSearch = selectedEloValues.length > 0 && selectedTimes.length > 0;
+  const allSelected = isFullSelection(selectedEloValues, eloOptions);
+  const anyLabel = isCs ? "Qualquer range" : "Qualquer elo";
 
   return (
     <div className="min-h-layout-main w-full max-w-full flex items-center justify-center px-4 py-10 sm:px-6">
@@ -126,8 +137,10 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
                 <h3 className="text-base font-semibold text-card-foreground">{eloLabel}</h3>
                 <p className="text-xs text-muted-foreground">
                   {selectedEloValues.length === 0
-                    ? `Qualquer ${isLol ? "elo" : "range"} será considerado.`
-                    : `${selectedEloValues.length} opção(ões) selecionada(s).`}
+                    ? `Obrigatório — selecione ao menos um ${isCs ? "range" : "elo"}.`
+                    : allSelected
+                      ? `${anyLabel} — todos selecionados.`
+                      : `${selectedEloValues.length} opção(ões) selecionada(s).`}
                 </p>
               </div>
             </div>
@@ -135,9 +148,11 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
             <Popover>
               <PopoverTrigger className="flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-border/80 bg-input/40 px-4 text-left text-sm font-medium text-card-foreground shadow-sm transition-colors hover:border-primary/40 hover:bg-input/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
                 <span className="truncate">
-                  {selectedEloValues.length > 0
-                    ? `${selectedEloValues.length} selecionado(s)`
-                    : `Selecionar ${isLol ? "elos" : "ranges"}`}
+                  {allSelected
+                    ? anyLabel
+                    : selectedEloValues.length > 0
+                      ? `${selectedEloValues.length} selecionado(s)`
+                      : `Selecionar ${isCs ? "ranges" : "elos"}`}
                 </span>
                 <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
               </PopoverTrigger>
@@ -146,7 +161,12 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
                 className="z-[120] max-h-60 w-[var(--radix-popover-trigger-width)] min-w-[12rem] overflow-y-auto border-border p-2 shadow-lg"
               >
                 {eloOptions.map((opt) => {
-                  const emblem = isLol ? lolTierEmblemUrl(opt) : null;
+                  const emblem = isLol
+                    ? lolTierEmblemUrl(opt)
+                    : isValorant
+                      ? valorantTierEmblemUrl(opt)
+                      : null;
+                  const premierStyle = isCs ? premierRangeStyle(opt) : null;
                   return (
                     <div
                       key={opt}
@@ -162,10 +182,15 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
                           src={emblem}
                           alt={`Elo ${opt}`}
                           frameClass="h-11 w-11"
-                          zoomPercent={182}
+                          zoomPercent={isValorant ? 118 : 182}
+                        />
+                      ) : premierStyle ? (
+                        <span
+                          className={`h-4 w-4 shrink-0 rounded-full ring-2 ring-background ${premierStyle.dot}`}
+                          aria-hidden
                         />
                       ) : null}
-                      <span className="text-sm">{opt}</span>
+                      <span className={`text-sm ${premierStyle ? premierStyle.text : ""}`}>{opt}</span>
                     </div>
                   );
                 })}
@@ -176,7 +201,7 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
               <button
                 type="button"
                 className="mt-3 text-xs font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-primary hover:underline"
-                onClick={() => (isLol ? setSelectedElos([]) : setSelectedRanges([]))}
+                onClick={() => (usesEloTiers ? setSelectedElos([]) : setSelectedRanges([]))}
               >
                 Limpar seleção
               </button>
@@ -190,7 +215,11 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
               </span>
               <div>
                 <h3 className="text-base font-semibold text-card-foreground">Horário</h3>
-                <p className="text-xs text-muted-foreground">Quando você costuma jogar?</p>
+                <p className="text-xs text-muted-foreground">
+                  {selectedTimes.length === 0
+                    ? "Obrigatório — selecione ao menos um horário."
+                    : "Quando você costuma jogar?"}
+                </p>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -257,7 +286,8 @@ export function EloFilter({ game, schema, preferences, onNext, onBack }: EloFilt
           </Button>
           <Button
             onClick={handleSearch}
-            className="order-1 h-12 rounded-xl bg-gradient-primary px-12 font-semibold text-primary-foreground shadow-lg shadow-primary/15 transition-all duration-300 hover:scale-[1.02] hover:shadow-glow-primary sm:order-2 sm:min-w-[12rem]"
+            disabled={!canSearch}
+            className="order-1 h-12 rounded-xl bg-gradient-primary px-12 font-semibold text-primary-foreground shadow-lg shadow-primary/15 transition-all duration-300 hover:scale-[1.02] hover:shadow-glow-primary disabled:pointer-events-none disabled:opacity-45 sm:order-2 sm:min-w-[12rem]"
           >
             Buscar duo
           </Button>
