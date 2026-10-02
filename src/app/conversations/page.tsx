@@ -3,7 +3,7 @@ import BaseLayout from "../base-layout/components/structure/BaseLayout";
 import { ConversationsContent } from "../base-layout/components/chat/ConversationsContent";
 
 export const metadata: Metadata = {
-  title: "Playgether - Conversas",
+  title: "Conversas",
   description: "Suas conversas privadas, de clã e grupos",
 };
 

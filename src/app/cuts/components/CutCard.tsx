@@ -255,7 +255,7 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
   const VolumeIcon = muted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
 
   return (
-    <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-black">
+    <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-white dark:bg-black">
       <div className="flex h-full w-full items-center justify-center gap-3 lg:px-2">
         <div
           className="relative aspect-[9/16] h-full w-auto max-h-full max-w-full min-w-0 overflow-hidden bg-black lg:max-w-[420px]"
@@ -409,16 +409,16 @@ export function CutCard({ cut, isActive, isAuthenticated, onOpenComments, commen
         </div>
 
         <div className="hidden h-full shrink-0 flex-col items-center justify-center gap-6 lg:flex">
-          <ActionBtn onClick={handleLikeClick} label={liked ? "Descurtir" : "Curtir"} count={likesCount} icon={<Heart className={cn("h-6 w-6 transition-transform active:scale-125", liked ? "fill-red-500 text-red-500" : "text-white")} />} />
-          <ActionBtn onClick={() => onOpenComments(cut)} label="Comentários" count={cut.comments_count} icon={<MessageCircle className={cn("h-6 w-6", commentsActive ? "fill-white/20 text-primary" : "text-white")} />} />
-          <ActionBtn onClick={() => setShareOpen(true)} label="Compartilhar" icon={<Send className="h-6 w-6 text-white" />} />
+          <ActionBtn surface="page" onClick={handleLikeClick} label={liked ? "Descurtir" : "Curtir"} count={likesCount} icon={<Heart className={cn("h-6 w-6 transition-transform active:scale-125", liked ? "fill-red-500 text-red-500" : "text-foreground dark:text-white")} />} />
+          <ActionBtn surface="page" onClick={() => onOpenComments(cut)} label="Comentários" count={cut.comments_count} icon={<MessageCircle className={cn("h-6 w-6", commentsActive ? "fill-primary/20 text-primary dark:fill-white/20" : "text-foreground dark:text-white")} />} />
+          <ActionBtn surface="page" onClick={() => setShareOpen(true)} label="Compartilhar" icon={<Send className="h-6 w-6 text-foreground dark:text-white" />} />
           <BookmarkButton
             item={cut}
             contentType="cut"
             size="lg"
-            triggerClassName="h-auto w-auto p-0 text-white hover:text-white hover:bg-transparent active:scale-125 transition-transform"
+            triggerClassName="h-auto w-auto p-0 text-foreground hover:text-foreground dark:text-white dark:hover:text-white hover:bg-transparent active:scale-125 transition-transform"
           />
-          <CutOptionsMenu cut={cut} onShare={() => setShareOpen(true)} onDeleted={onDeleted} onCutUpdate={onCutUpdate} />
+          <CutOptionsMenu cut={cut} onShare={() => setShareOpen(true)} onDeleted={onDeleted} onCutUpdate={onCutUpdate} iconClassName="text-foreground dark:text-white" />
         </div>
       </div>
 
@@ -432,11 +432,13 @@ function ActionBtn({
   label,
   icon,
   count,
+  surface = "video",
 }: {
   onClick: () => void;
   label: string;
   icon: React.ReactNode;
   count?: number;
+  surface?: "video" | "page";
 }) {
   return (
     <button
@@ -447,7 +449,14 @@ function ActionBtn({
     >
       {icon}
       {count !== undefined && (
-        <span className="text-xs font-semibold text-white drop-shadow">{formatCount(count)}</span>
+        <span
+          className={cn(
+            "text-xs font-semibold",
+            surface === "video" ? "text-white drop-shadow" : "text-foreground dark:text-white dark:drop-shadow",
+          )}
+        >
+          {formatCount(count)}
+        </span>
       )}
     </button>
   );

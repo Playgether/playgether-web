@@ -3,7 +3,7 @@ import BaseLayout from "../base-layout/components/structure/BaseLayout";
 import FeedPage from "./components/FeedPage";
 
 export const metadata: Metadata = {
-  title: "Playgether - Feed",
+  title: "Feed",
   description: "Share your posts and interact with the posts of your friends",
 };
 

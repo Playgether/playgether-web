@@ -35,7 +35,7 @@ export const QuickMessagesHistoryModal = ({
   const icons = BaseLayout.ServerQuickMessagesHistoryModal.icons;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[min(85dvh,720px)] max-w-4xl flex-col gap-0 overflow-hidden border border-primary/20 bg-background/95 p-4 backdrop-blur-xl sm:p-6">
+      <DialogContent className="flex max-h-[min(85dvh,720px)] max-w-4xl flex-col gap-0 overflow-hidden border border-primary/20 bg-background p-4 sm:p-6">
         <div className="shrink-0 border-b border-border/50 pb-3 sm:pb-4">
           <div className="flex items-start justify-between gap-3 pr-8">
             <div className="min-w-0 flex-1">

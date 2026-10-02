@@ -627,7 +627,7 @@ export default function DuoSteps({
     <div className="min-h-layout-main bg-gradient-background relative">
       {resolvingGameSelection || (hydratingFromUrl && gameFromQuery) ? (
         <div
-          className="fixed inset-0 z-[200] flex flex-col items-center justify-center gap-3 bg-background/85 backdrop-blur-sm"
+          className="fixed inset-0 z-[200] flex flex-col items-center justify-center gap-3 bg-background/90"
           aria-busy="true"
           aria-live="polite"
         >

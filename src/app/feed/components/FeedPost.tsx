@@ -152,7 +152,7 @@ export const FeedPost = ({ post }) => {
   };
 
   return (
-    <Card className="relative mb-3 animate-fade-up border-border/50 bg-card backdrop-blur-sm transition-all duration-300 hover:cursor-pointer hover:border-primary/40 hover:shadow-glow-primary/30 sm:mb-5 lg:mb-7 lg:hover:scale-[1.02]">
+    <Card className="relative mb-3 animate-fade-up border-border/50 bg-card transition-all duration-300 hover:cursor-pointer hover:border-primary/40  sm:mb-5 lg:mb-7 lg:hover:scale-[1.02]">
       <CardContent className="relative p-3 sm:p-5 lg:p-6">
         {post && (
           <>
@@ -219,7 +219,7 @@ export const FeedPost = ({ post }) => {
                       {components.MoreOptions}
                       <DropdownMenuContent
                         align="end"
-                        className="bg-background/95 backdrop-blur-xl border border-border/50"
+                        className="bg-background border border-border/50"
                       >
                         {post.is_own || post.isOwn ? (
                           <ContextMenuOwn

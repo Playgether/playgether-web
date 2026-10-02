@@ -147,6 +147,7 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
 
   const { sendMessage, readyState, isConnected, reconnect } = useSecureWebSocket({
     url: "/ws/presence/",
+    enabled: loggedIn,
     shouldReconnect: () => true,
     onMessage: handleMessage,
   });

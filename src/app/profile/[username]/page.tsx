@@ -8,7 +8,7 @@ import { notFound } from "next/navigation";
 import { ensureAccessTokenCookie } from "@/lib/server/authTokens";
 import { decodeAccessToken } from "@/lib/decodeAccessToken";
 export const metadata: Metadata = {
-  title: "Playgether - Profile",
+  title: "Profile",
   description: "Find people to chat with",
 };
 

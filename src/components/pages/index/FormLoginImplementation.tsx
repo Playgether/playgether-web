@@ -232,7 +232,7 @@ export const FormLoginImplementation = ({
           placeholder="Email"
           register={{ ...register("email") }}
           name="email"
-          inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue focus:shadow-glow-neon transition-all duration-300 backdrop-blur-sm"
+          inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue transition-colors duration-300"
         />
       </div>
 
@@ -243,7 +243,7 @@ export const FormLoginImplementation = ({
           register={{ ...register("password") }}
           name="password"
           autoComplete="off"
-          inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue focus:shadow-glow-neon transition-all duration-300 backdrop-blur-sm"
+          inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue transition-colors duration-300"
         />
         <div className="flex justify-end pt-0.5">
           <Link

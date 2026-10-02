@@ -8,6 +8,8 @@ import { NotificationsModal } from "./NotificationsModal";
 import { SettingsModal } from "../../SettingsModal";
 import { useBaseLayoutServerContext } from "../../context/BaseLayoutServerContext";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { BrandLogo } from "@/components/general/BrandLogo";
 import { useDMUnread } from "@/context/DMUnreadContext";
 import { GlobalSearchDropdown } from "./GlobalSearchDropdown";
 import { FriendsModal } from "../friends/FriendsModal";
@@ -42,7 +44,15 @@ export const TopNavigation = () => {
     "h-9 w-9 rounded-xl transition-all duration-300 hover:bg-muted/50 hover:shadow-glow-neon sm:h-10 sm:w-10 lg:h-11 lg:w-11";
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-border/50 bg-background/80 px-3 backdrop-blur-xl sm:gap-3 sm:px-4 lg:left-20 lg:h-16 lg:px-6">
+    <header className="fixed top-0 left-0 right-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-border/50 bg-background px-3 sm:gap-3 sm:px-4 lg:left-20 lg:h-16 lg:px-6">
+      <Link
+        href="/feed"
+        aria-label="Playgether"
+        className={`shrink-0 lg:hidden ${searchOpen ? "max-sm:hidden" : ""}`}
+      >
+        <BrandLogo variant="icon" className="h-8 w-8" priority />
+      </Link>
+
       <div className="min-w-0 flex-1 lg:max-w-xl">
         <GlobalSearchDropdown onOpenChange={setSearchOpen} />
       </div>

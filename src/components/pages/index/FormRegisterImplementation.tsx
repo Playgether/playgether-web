@@ -82,7 +82,7 @@ export const FormRegisterImplementation = ({
               placeholder="Nome de usuário"
               register={{ ...register("username") }}
               className="mb-0"
-              inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue focus:shadow-glow-neon transition-all duration-300 backdrop-blur-sm"
+              inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue transition-colors duration-300"
             />
             {availableUsernameResult}
             <ErrosInput
@@ -108,7 +108,7 @@ export const FormRegisterImplementation = ({
             type="email"
             placeholder="Email"
             register={{ ...register("email") }}
-            inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue focus:shadow-glow-neon transition-all duration-300 backdrop-blur-sm"
+            inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue transition-colors duration-300"
           />
           <ErrosInput
             field={
@@ -125,7 +125,7 @@ export const FormRegisterImplementation = ({
             placeholder="Senha"
             register={{ ...register("password") }}
             autoComplete="new-password"
-            inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue focus:shadow-glow-neon transition-all duration-300 backdrop-blur-sm"
+            inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue transition-colors duration-300"
           />
           <ErrosInput field={errors.password} />
         </div>
@@ -135,7 +135,7 @@ export const FormRegisterImplementation = ({
             placeholder="Repita a senha"
             register={{ ...register("repeatPassword") }}
             autoComplete="new-password"
-            inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue focus:shadow-glow-neon transition-all duration-300 backdrop-blur-sm"
+            inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue transition-colors duration-300"
           />
           <ErrosInput field={errors.repeatPassword} />
         </div>
@@ -146,7 +146,7 @@ export const FormRegisterImplementation = ({
               type="text"
               placeholder="Primeiro nome"
               register={{ ...register("first_name") }}
-              inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue focus:shadow-glow-neon transition-all duration-300 backdrop-blur-sm"
+              inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue transition-colors duration-300"
             />
             <ErrosInput field={errors.first_name} />
           </div>
@@ -156,7 +156,7 @@ export const FormRegisterImplementation = ({
               type="text"
               placeholder="Sobrenome"
               register={{ ...register("last_name") }}
-              inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue focus:shadow-glow-neon transition-all duration-300 backdrop-blur-sm"
+              inputClassName="bg-background/40 border border-border/60 text-foreground placeholder:text-muted-foreground outline-none focus:border-neon-blue transition-colors duration-300"
             />
             <ErrosInput field={errors.last_name} />
           </div>

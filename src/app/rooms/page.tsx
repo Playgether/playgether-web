@@ -8,7 +8,7 @@ import React, { Suspense } from "react";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Playgether - Rooms",
+  title: "Rooms",
   description: "Find people to chat with",
 };
 

@@ -1,4 +1,5 @@
 import React from "react";
+import { BrandLogo } from "@/components/general/BrandLogo";
 
 interface NormalProps {
   onClickCadastrar: () => void;
@@ -8,27 +9,20 @@ interface NormalProps {
 const Normal = ({ onClickCadastrar, onClickLogar }: NormalProps) => {
   return (
     <section className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 text-center">
-      <div className="flex items-center -space-x-3 mb-6 animate-fade-up">
-        <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-secondary opacity-90" />
-        <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-neon-blue opacity-90" />
-      </div>
-
-      <h1 className="mb-4 max-w-full animate-fade-up px-2 text-[2.25rem] font-bold leading-tight tracking-[0.06em] text-foreground xs:text-5xl sm:tracking-[0.12em] md:text-7xl md:tracking-[0.2em] lg:text-8xl lg:tracking-[0.28em]">
-        <span className="text-secondary">PLAY</span>
+      <h1 className="relative isolate mb-12 animate-fade-up">
+        <span className="sr-only">Playgether</span>
         <span
-          className="text-neon-blue"
-          style={{ textShadow: "0 0 30px hsl(var(--neon-blue) / 0.35)" }}
-        >
-          GETHER
-        </span>
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[110%] w-[110%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-transparent blur-3xl dark:bg-white/30"
+        />
+        <BrandLogo
+          variant="vertical"
+          tone="color"
+          alt=""
+          className="mx-auto h-auto w-[min(85vw,22rem)] dark:[filter:drop-shadow(0_0_14px_rgba(255,255,255,0.45))] md:w-[min(70vw,30rem)]"
+          priority
+        />
       </h1>
-
-      <p
-        className="text-muted-foreground text-lg md:text-xl tracking-wider mb-12 max-w-md animate-fade-up"
-        style={{ animationDelay: "0.2s" }}
-      >
-        Conecte-se. Jogue. Conquiste.
-      </p>
 
       <div
         className="flex flex-col sm:flex-row gap-4 animate-fade-up"
@@ -44,7 +38,7 @@ const Normal = ({ onClickCadastrar, onClickLogar }: NormalProps) => {
         <button
           type="button"
           onClick={onClickLogar}
-          className="px-10 py-3 text-lg font-semibold tracking-widest uppercase rounded-lg border-2 border-foreground/30 text-foreground hover:border-neon-blue hover:text-neon-blue hover:shadow-glow-neon hover:scale-105 transition-all duration-300 backdrop-blur-sm bg-background/10"
+          className="px-10 py-3 text-lg font-semibold tracking-widest uppercase rounded-lg border-2 border-white/70 bg-black/40 text-white shadow-sm backdrop-blur-md hover:border-white hover:bg-black/55 hover:scale-105 transition-all duration-300 dark:border-foreground/30 dark:bg-background/20 dark:shadow-none dark:backdrop-blur-none dark:hover:border-neon-blue dark:hover:bg-background/20 dark:hover:text-neon-blue dark:hover:shadow-glow-neon"
         >
           LOGAR
         </button>

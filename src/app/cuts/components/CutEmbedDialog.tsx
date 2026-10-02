@@ -60,7 +60,7 @@ export function CutEmbedDialog({ cut, open, onOpenChange }: CutEmbedDialogProps)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg border-border/50 bg-background/95 backdrop-blur-xl">
+      <DialogContent className="max-w-lg border-border/50 bg-background">
         <DialogHeader className="space-y-1">
           <DialogTitle className="flex items-center gap-2">
             <Code2 className="h-4 w-4 text-primary" />

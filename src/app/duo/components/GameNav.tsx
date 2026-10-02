@@ -1,4 +1,5 @@
 import { Home, Users, Search, Settings, Trophy } from "lucide-react";
+import { BrandLogo } from "@/components/general/BrandLogo";
 import { cn } from "@/lib/utils";
 
 interface GameNavProps {
@@ -16,12 +17,12 @@ const navItems = [
 
 export const GameNav = ({ currentStep, onStepChange }: GameNavProps) => {
   return (
-    <nav className="fixed left-0 top-0 h-full w-20 bg-background-secondary/80 backdrop-blur-xl border-r border-border-bright/20 z-50">
+    <nav className="fixed left-0 top-0 h-full w-20 bg-background-secondary border-r border-border-bright/20 z-50">
       <div className="flex flex-col items-center py-8 h-full">
         {/* Logo */}
         <div className="mb-12">
-          <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center shadow-glow-primary">
-            <Trophy className="w-6 h-6 text-primary-foreground" />
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden">
+            <BrandLogo variant="icon" className="h-12 w-12" />
           </div>
         </div>
 
@@ -51,7 +52,7 @@ export const GameNav = ({ currentStep, onStepChange }: GameNavProps) => {
                 )}
                 
                 {/* Tooltip */}
-                <div className="absolute left-16 top-1/2 -translate-y-1/2 bg-card-secondary/90 backdrop-blur-sm text-card-foreground px-3 py-2 rounded-lg text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap border border-border/30">
+                <div className="absolute left-16 top-1/2 -translate-y-1/2 bg-card-secondary text-card-foreground px-3 py-2 rounded-lg text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap border border-border/30">
                   {item.label}
                 </div>
               </button>

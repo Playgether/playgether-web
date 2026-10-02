@@ -271,7 +271,7 @@ export default function ChatHeader({
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="z-[100] border border-border/50 bg-background/95 backdrop-blur-xl"
+              className="z-[100] border border-border/50 bg-background"
             >
               <DropdownMenuItem
                 onSelect={(e) => {

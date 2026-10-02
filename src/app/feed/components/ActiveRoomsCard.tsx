@@ -54,7 +54,7 @@ export function ActiveRoomsCard() {
   }, [authSessionResolved, user]);
 
   return (
-    <Card className="flex max-h-[calc(100dvh-var(--layout-header-height)-3.5rem)] min-w-0 w-full flex-col overflow-hidden border-border/50 bg-card backdrop-blur-sm transition-all duration-300 hover:border-primary/40 hover:shadow-glow-primary/30">
+    <Card className="flex max-h-[calc(100dvh-var(--layout-header-height)-3.5rem)] min-w-0 w-full flex-col overflow-hidden border-border/50 bg-card transition-all duration-300 hover:border-primary/40 hover:shadow-glow-primary/30">
       <CardHeader className="shrink-0 pb-3">
         <CardTitle className="flex items-center gap-2 text-lg font-bold">
           <DoorOpen className="h-5 w-5 text-neon-green" />

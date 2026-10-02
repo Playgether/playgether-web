@@ -22,7 +22,7 @@ import { CustomToast } from "@/components/ui/customSonner";
 import { useAuthContext } from "@/context/AuthContext";
 
 const footerPositionClass =
-  "fixed bottom-[var(--layout-bottom-nav-height)] left-0 right-0 z-40 border-t border-border/50 bg-background/95 backdrop-blur-xl lg:bottom-0 lg:left-20";
+  "fixed bottom-[var(--layout-bottom-nav-height)] left-0 right-0 z-40 border-t border-border/50 bg-background lg:bottom-0 lg:left-20";
 
 function QuickMessagesModals({
   historyOpen,

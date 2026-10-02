@@ -24,7 +24,7 @@ export function DeleteCommentModal({
 }: DeleteCommentModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg bg-background/95 backdrop-blur-xl border border-border/50">
+      <DialogContent className="max-w-lg bg-background border border-border/50">
         <VisuallyHidden>
           <DialogTitle>Excluir comentário</DialogTitle>
         </VisuallyHidden>

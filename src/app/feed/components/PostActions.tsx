@@ -137,7 +137,7 @@ export default function PostActions({
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className="bg-background/95 backdrop-blur-xl border border-border/50"
+            className="bg-background border border-border/50"
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();

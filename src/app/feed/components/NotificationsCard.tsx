@@ -38,7 +38,7 @@ export const NotificationsCard = () => {
   return (
     <Card
       className={cn(
-        "bg-card border-border/50 backdrop-blur-sm animate-fade-up hover:shadow-glow-primary/30 hover:scale-[1.02] hover:border-primary/40 transition-all duration-300",
+        "bg-card border-border/50 animate-fade-up hover:shadow-glow-primary/30 hover:scale-[1.02] hover:border-primary/40 transition-all duration-300",
         "flex min-w-0 w-full flex-col overflow-hidden",
         profileCardHeightPx == null && "max-h-[min(70vh,28rem)]",
       )}

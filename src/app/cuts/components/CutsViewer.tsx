@@ -129,8 +129,8 @@ export function CutsViewer({ initialCuts, initialNext, isAuthenticated }: CutsVi
 
   if (cuts.length === 0) {
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-black">
-        <p className="text-white/60">Nenhum cut ainda.</p>
+      <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-white dark:bg-black">
+        <p className="text-muted-foreground dark:text-white/60">Nenhum cut ainda.</p>
         {isAuthenticated && (
           <>
             <button
@@ -154,7 +154,7 @@ export function CutsViewer({ initialCuts, initialNext, isAuthenticated }: CutsVi
       <div className="relative flex h-full min-w-0 flex-1">
         <div
           ref={containerRef}
-          className="h-full w-full overflow-y-scroll snap-y snap-mandatory scrollbar-none bg-black"
+          className="h-full w-full overflow-y-scroll snap-y snap-mandatory scrollbar-none bg-white dark:bg-black"
         >
           {cuts.map((cut, idx) => (
             <div key={cut.id} ref={(el) => { cardRefs.current[idx] = el; }} className="h-full w-full snap-start">
@@ -171,21 +171,21 @@ export function CutsViewer({ initialCuts, initialNext, isAuthenticated }: CutsVi
           ))}
 
           {loadingMore && (
-            <div className="flex h-16 items-center justify-center bg-black">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+            <div className="flex h-16 items-center justify-center bg-white dark:bg-black">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-black/20 border-t-black dark:border-white/30 dark:border-t-white" />
             </div>
           )}
         </div>
 
         {/* Toolbar flutuante — desktop: setas de navegação + criar, agrupados */}
         <div className="pointer-events-none absolute inset-y-0 right-4 z-40 hidden items-center lg:flex">
-          <div className="pointer-events-auto flex flex-col items-center gap-3 rounded-full bg-black/20 p-2 backdrop-blur-sm">
+          <div className="pointer-events-auto flex flex-col items-center gap-3 rounded-full bg-black/5 p-2 backdrop-blur-sm dark:bg-black/20">
             <button
               type="button"
               aria-label="Cut anterior"
               onClick={() => goTo(Math.max(0, activeIndex - 1))}
               disabled={activeIndex === 0}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 disabled:opacity-30"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-black/5 text-foreground transition hover:bg-black/10 disabled:opacity-30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
             >
               <ChevronUp className="h-5 w-5" />
             </button>
@@ -194,13 +194,13 @@ export function CutsViewer({ initialCuts, initialNext, isAuthenticated }: CutsVi
               aria-label="Próximo cut"
               onClick={() => goTo(Math.min(cuts.length - 1, activeIndex + 1))}
               disabled={activeIndex >= cuts.length - 1}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 disabled:opacity-30"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-black/5 text-foreground transition hover:bg-black/10 disabled:opacity-30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
             >
               <ChevronDown className="h-5 w-5" />
             </button>
             {isAuthenticated && (
               <>
-                <div className="h-px w-6 bg-white/15" />
+                <div className="h-px w-6 bg-black/10 dark:bg-white/15" />
                 <button
                   type="button"
                   aria-label="Criar Cut"

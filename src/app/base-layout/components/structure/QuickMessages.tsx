@@ -49,7 +49,7 @@ const quickMessages: QuickMessage[] = [
 
 export const QuickMessages = () => {
   return (
-    <Card className="bg-card border-border/50 backdrop-blur-sm animate-fade-up">
+    <Card className="bg-card border-border/50 animate-fade-up">
       <CardHeader className="pb-4">
         <CardTitle className="text-lg font-bold flex items-center space-x-2">
           <div className="w-8 h-8 bg-gradient-secondary rounded-lg flex items-center justify-center">

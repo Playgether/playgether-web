@@ -5,7 +5,7 @@ import { getCuts } from "@/actions/getCuts";
 import { CutsViewer } from "./components/CutsViewer";
 
 export const metadata: Metadata = {
-  title: "Playgether - Cuts",
+  title: "Cuts",
   description: "Vídeos curtos da comunidade gamer",
 };
 
@@ -18,7 +18,7 @@ export default async function CutsPage() {
 
   return (
     <BaseLayout>
-      <div className="flex h-layout-main min-h-0 w-full overflow-hidden bg-black lg:pl-20">
+      <div className="flex h-layout-main min-h-0 w-full overflow-hidden bg-white dark:bg-black lg:pl-20">
         <CutsViewer
           initialCuts={initialCuts}
           initialNext={initialNext}

@@ -78,7 +78,7 @@ export const NotificationsModal = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-md w-[calc(100%-1.5rem)] sm:w-full min-w-0 overflow-hidden bg-card/95 backdrop-blur-xl border border-primary/20 shadow-glow-primary p-0 gap-0"
+        className="max-w-md w-[calc(100%-1.5rem)] sm:w-full min-w-0 overflow-hidden bg-card border border-primary/20 shadow-lg p-0 gap-0"
         onCloseAutoFocus={(e) => {
           const href = pendingHrefRef.current;
           if (!href) return;

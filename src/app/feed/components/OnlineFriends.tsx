@@ -152,7 +152,7 @@ export const OnlineFriends = () => {
 
   return (
     <>
-      <Card className="flex max-h-[calc(100dvh-var(--layout-header-height)-3.5rem)] min-w-0 w-full flex-col overflow-hidden border-border/50 bg-card backdrop-blur-sm animate-fade-up hover:shadow-glow-primary/30 hover:border-primary/40 transition-all duration-300">
+      <Card className="flex max-h-[calc(100dvh-var(--layout-header-height)-3.5rem)] min-w-0 w-full flex-col overflow-hidden border-border/50 bg-card animate-fade-up hover:shadow-glow-primary/30 hover:border-primary/40 transition-all duration-300">
         <CardHeader className="shrink-0 pb-4">
           <CardTitle className="text-lg font-bold">Amigos online</CardTitle>
           <div className="relative">

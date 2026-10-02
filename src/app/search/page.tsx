@@ -4,7 +4,7 @@ import BaseLayout from "../base-layout/components/structure/BaseLayout";
 import { SearchResults } from "./SearchResults";
 
 export const metadata: Metadata = {
-  title: "Pesquisar — Playgether",
+  title: "Pesquisar",
 };
 
 export default function SearchPage() {
