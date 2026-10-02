@@ -12,8 +12,8 @@ export default function Initial() {
     <div className="relative isolate min-h-screen overflow-x-hidden">
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <Video />
-        <div className="absolute inset-0 hidden bg-background/60 dark:block" />
-        <div className="absolute inset-0 hidden bg-gradient-to-t from-background/80 via-transparent to-background/40 dark:block" />
+        <div className="absolute inset-0 bg-background/10 dark:bg-background/60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/20 via-transparent to-background/10 dark:from-background/80 dark:to-background/40" />
       </div>
       <ContentSection />
     </div>
