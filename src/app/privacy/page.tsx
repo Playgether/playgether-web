@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { PublicLegalDocument } from "@/components/legal/PublicLegalDocument";
 
 export const metadata: Metadata = {

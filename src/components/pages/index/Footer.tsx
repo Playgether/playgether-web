@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { TermsLink } from "@/components/terms/TermsLink";
 
 const LEGAL_LINK_CLASS =
