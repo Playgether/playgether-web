@@ -24,24 +24,24 @@ export async function generateMetadata({ params }): Promise<Metadata> {
   const { roomSlug, mode } = await params;
   const sessionMode = resolveSessionMode(mode);
   if (sessionMode === "live-legacy") {
-    return { title: "Playgether - Salas" };
+    return { title: "Salas" };
   }
 
   const detailed = await getChatRoomDetailed(String(roomSlug));
   if (detailed.status === "banned") {
-    return { title: "Playgether - Salas" };
+    return { title: "Salas" };
   }
   const payload = detailed.status === "ok" ? detailed.data : null;
   const { room } = extractRoomFromDetailedBody(payload ?? undefined);
   const roomName = room?.group_name || "Sala";
 
   if (sessionMode === "watch") {
-    return { title: `Playgether - ${roomName} · Assistindo` };
+    return { title: `${roomName} · Assistindo` };
   }
   if (sessionMode === "game") {
-    return { title: `Playgether - ${roomName} · Jogo` };
+    return { title: `${roomName} · Jogo` };
   }
-  return { title: `Playgether - ${roomName}` };
+  return { title: roomName };
 }
 
 export default async function Page({

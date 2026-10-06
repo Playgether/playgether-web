@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CustomToast, CustomToaster } from "@/components/ui/customSonner";
+import { BrandLogo } from "@/components/general/BrandLogo";
 
 type Stage = "form" | "sent";
 
@@ -56,18 +57,15 @@ export default function ForgotPasswordPage() {
       <div className="relative w-full max-w-md">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="flex items-center -space-x-3 mb-4">
-            <div className="w-11 h-11 rounded-full bg-secondary shadow-glow-secondary" />
-            <div className="w-11 h-11 rounded-full bg-neon-blue shadow-glow-neon" />
-          </div>
-          <h1 className="text-2xl font-bold tracking-[0.2em]">
-            <span className="text-secondary">PLAY</span>
-            <span className="text-neon-blue">GETHER</span>
-          </h1>
+          <BrandLogo
+            variant="vertical"
+            className="h-auto w-[min(85vw,23rem)] sm:w-96"
+            priority
+          />
         </div>
 
         {/* Card */}
-        <div className="rounded-2xl border border-border/50 bg-card/60 backdrop-blur-xl shadow-glow-primary overflow-hidden">
+        <div className="rounded-2xl border border-border/50 bg-card shadow-lg overflow-hidden">
           {stage === "form" ? (
             <div className="p-8">
               <div className="mb-6 text-center">

@@ -41,3 +41,5 @@ next-env.d.ts
 /testPage
 
 *storybook.log
+# vídeo original (>100MB, limite do GitHub)
+public/index/Background.mp4

@@ -364,7 +364,7 @@ export function ProfileEditModal({
         onOpenChange={(open) => !open && !isWidgetOpen && onClose()}
       >
         <DialogContent
-          className="flex max-h-[min(90vh,720px)] max-w-md flex-col gap-0 overflow-hidden bg-background/95 backdrop-blur-xl border border-border/50 z-[100] p-0"
+          className="flex max-h-[min(90vh,720px)] max-w-md flex-col gap-0 overflow-hidden bg-background border border-border/50 z-[100] p-0"
           onInteractOutside={(e) => isWidgetOpen && e.preventDefault()}
           onPointerDownOutside={(e) => isWidgetOpen && e.preventDefault()}
         >

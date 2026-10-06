@@ -229,6 +229,11 @@ All colors MUST be HSL.
     scrollbar-gutter: stable;
   }
 
+  /* Index tem vídeo full-bleed: o gutter reservado aparece como faixa vazia à direita. */
+  html:has([data-page="index"]) {
+    scrollbar-gutter: auto;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import {
   buildAuthenticatedWebSocketUrl,
@@ -9,6 +9,8 @@ import {
 
 interface UseSecureWebSocketOptions {
   url: string;
+  /** When false, the socket stays closed and does not call /api/ws/authorize. */
+  enabled?: boolean;
   shouldReconnect?: (closeEvent: CloseEvent) => boolean;
   reconnectAttempts?: number;
   reconnectInterval?: number;
@@ -21,6 +23,7 @@ interface UseSecureWebSocketOptions {
 export const useSecureWebSocket = (options: UseSecureWebSocketOptions) => {
   const {
     url,
+    enabled = true,
     shouldReconnect = () => true,
     reconnectAttempts = 10,
     reconnectInterval = 3000,
@@ -32,6 +35,7 @@ export const useSecureWebSocket = (options: UseSecureWebSocketOptions) => {
 
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const authFailedRef = useRef(false);
 
   // Troca o access token por um ticket opaco de uso único (TTL 120s) e monta
   // a URL autenticada do WebSocket — chamado pelo useWebSocket a cada conexão.
@@ -40,10 +44,12 @@ export const useSecureWebSocket = (options: UseSecureWebSocketOptions) => {
 
     try {
       const { ticket } = await requestWebSocketTicket(url);
+      authFailedRef.current = false;
       setIsAuthorized(true);
       setConnectionError(null);
       return buildAuthenticatedWebSocketUrl(url, ticket);
     } catch {
+      authFailedRef.current = true;
       setIsAuthorized(false);
       setConnectionError("Erro ao verificar autorização");
       throw new Error("WebSocket authorization failed.");
@@ -53,7 +59,10 @@ export const useSecureWebSocket = (options: UseSecureWebSocketOptions) => {
   const { sendMessage, lastMessage, readyState, getWebSocket } = useWebSocket(
     getSocketUrl,
     {
-      shouldReconnect,
+      shouldReconnect: (event) => {
+        if (authFailedRef.current) return false;
+        return shouldReconnect(event);
+      },
       reconnectAttempts,
       reconnectInterval,
       retryOnError: true,
@@ -61,7 +70,7 @@ export const useSecureWebSocket = (options: UseSecureWebSocketOptions) => {
         setConnectionError(null);
         onOpen?.();
       },
-      onClose: (event) => {
+      onClose: () => {
         onClose?.();
       },
       onError: (event) => {
@@ -77,7 +86,7 @@ export const useSecureWebSocket = (options: UseSecureWebSocketOptions) => {
         }
       },
     },
-    Boolean(url),
+    Boolean(url) && enabled,
   );
 
   const connectionStatus = {
@@ -89,6 +98,7 @@ export const useSecureWebSocket = (options: UseSecureWebSocketOptions) => {
   }[readyState];
 
   const reconnect = useCallback(() => {
+    authFailedRef.current = false;
     getWebSocket()?.close();
   }, [getWebSocket]);
 

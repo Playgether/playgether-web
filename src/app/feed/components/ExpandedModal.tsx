@@ -196,7 +196,7 @@ export const ExpandedModal = ({ open, onOpenChange, post }: ExpandedModalProps) 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-7xl h-[90vh] p-0 bg-background/95 backdrop-blur-xl border border-primary/20">
+        <DialogContent className="max-w-7xl h-[90vh] p-0 bg-background border border-primary/20">
           <div className="flex h-full">
             {/* Media Section */}
             {hasMedia && (
@@ -263,7 +263,7 @@ export const ExpandedModal = ({ open, onOpenChange, post }: ExpandedModalProps) 
             {/* Content Section */}
             <div className={`${hasMedia ? 'w-2/5' : 'w-full'} flex flex-col`}>
               {/* Sticky Header */}
-              <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-xl border-b border-border/50 p-6">
+              <div className="sticky top-0 z-10 bg-background border-b border-border/50 p-6">
                 <div className="flex items-center space-x-3 mb-4">
                   <Avatar className="w-12 h-12 ring-2 ring-primary/30">
                     <AvatarImage src={post.user.avatar} alt={post.user.name} />
@@ -288,7 +288,7 @@ export const ExpandedModal = ({ open, onOpenChange, post }: ExpandedModalProps) 
                 {post.content && (
                   <div className="mb-4 relative">
                     {showFullText ? (
-                      <div className="absolute inset-0 bg-background/95 backdrop-blur-xl z-20 p-4 rounded-lg border border-border/50">
+                      <div className="absolute inset-0 bg-background z-20 p-4 rounded-lg border border-border/50">
                         <p className="text-foreground leading-relaxed mb-4">{post.content}</p>
                         <Button
                           variant="ghost"
@@ -480,7 +480,7 @@ export const ExpandedModal = ({ open, onOpenChange, post }: ExpandedModalProps) 
                 </ScrollArea>
                 
                 {/* Comment Input */}
-                <div className="p-4 border-t border-border/50 bg-background/95 backdrop-blur-xl">
+                <div className="p-4 border-t border-border/50 bg-background">
                   <div className="flex space-x-3">
                     <Input
                       value={newComment}

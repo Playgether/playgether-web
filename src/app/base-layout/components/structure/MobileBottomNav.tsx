@@ -36,7 +36,7 @@ export function MobileBottomNav() {
   return (
     <nav
       aria-label="Navegação principal"
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-background/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom,0px)] lg:hidden"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-background pb-[env(safe-area-inset-bottom,0px)] lg:hidden"
     >
       <div className="mx-auto grid h-14 max-w-lg grid-cols-5 items-stretch px-2">
         {navItems.map(({ icon: Icon, label, href }) => {

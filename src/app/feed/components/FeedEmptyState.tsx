@@ -17,7 +17,7 @@ export function FeedEmptyState({
   const isFollowing = mode === "following";
 
   return (
-    <div className="flex flex-col items-center rounded-2xl border border-border/50 bg-card/50 px-6 py-12 text-center backdrop-blur-sm">
+    <div className="flex flex-col items-center rounded-2xl border border-border/50 bg-card/50 px-6 py-12 text-center">
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20">
         {isFollowing ? (
           <UserPlus className="h-7 w-7 text-primary" />

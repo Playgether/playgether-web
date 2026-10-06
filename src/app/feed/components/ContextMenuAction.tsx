@@ -20,7 +20,7 @@ function ContextMenuAction({
   const titles = Feed.ContextMenuAction.titles;
   return (
     <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
-      <AlertDialogContent className="bg-background/95 backdrop-blur-xl border border-border/50">
+      <AlertDialogContent className="bg-background border border-border/50">
         <AlertDialogHeader>
           {titles.confirm}
           <AlertDialogDescription>

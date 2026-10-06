@@ -72,7 +72,7 @@ export const ShareModal = ({
         if (onOpenChange) onOpenChange(open);
       }}
     >
-      <DialogContent className="max-w-2xl bg-background/95 backdrop-blur-xl border border-border/50">
+      <DialogContent className="max-w-2xl bg-background border border-border/50">
         {components.ShareModalHeader}
 
         <div className="space-y-4">

@@ -465,7 +465,7 @@ export const PostModal = ({
   const hasMedia = post && post.medias && post.medias.length > 0;
 
   const postShellClassName =
-    "bg-card border border-border/50 backdrop-blur-sm shadow-card rounded-2xl overflow-hidden";
+    "bg-card border border-border/50 shadow-card rounded-2xl overflow-hidden";
 
   const isRepliesOpen = (id: string) => openReplies.has(id);
   const isRepliesLoading = (id: string) => loadingReplies.has(id);
@@ -673,7 +673,7 @@ export const PostModal = ({
           <MoreHorizontal className="h-5 w-5" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="bg-background/95 backdrop-blur-xl border border-border/50">
+      <DropdownMenuContent align="end" className="bg-background border border-border/50">
         {isPostOwner ? (
           <ContextMenuOwn
             handleContextAction={handlePostContextAction}
@@ -795,7 +795,7 @@ export const PostModal = ({
                 style={{ opacity: textHeroOpacity }}
               >
                 {/* Hug content quando curto; scroll com padding quando longo */}
-                <div className="mx-auto max-h-full w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-border/50 bg-card/70 shadow-lg backdrop-blur-md">
+                <div className="mx-auto max-h-full w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-border/50 bg-card shadow-lg">
                   <div className="p-5">
                     <div className="flex items-center gap-2.5">
                       <ProfileAvatar
@@ -1267,7 +1267,7 @@ export const PostModal = ({
                   {!isGuest ? (
                   <DropdownMenuContent
                     align="end"
-                    className="bg-background/95 backdrop-blur-xl border border-border/50"
+                    className="bg-background border border-border/50"
                   >
                     {post.user_repost_id ? (
                       <DropdownMenuItem

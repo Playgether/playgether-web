@@ -258,7 +258,7 @@ export const CreatePostModal = () => {
 
       <Dialog open={modalOpen} onOpenChange={handleCloseModal}>
         <DialogContent
-          className="flex max-h-[min(90dvh,calc(100dvh-var(--layout-header-height)-2rem))] max-w-2xl flex-col overflow-hidden bg-background/95 backdrop-blur-xl border border-border/50"
+          className="flex max-h-[min(90dvh,calc(100dvh-var(--layout-header-height)-2rem))] max-w-2xl flex-col overflow-hidden bg-background border border-border/50"
           // Previne que o modal feche quando o widget estiver aberto
           onInteractOutside={(e) => {
             if (isWidgetOpen) {

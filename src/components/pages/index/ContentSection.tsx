@@ -17,6 +17,7 @@ const ContentSection = () => {
           <HeaderIndex
             onClickLogo={() => handleButtonClick("normal")}
             onClickSobre={() => handleButtonClick("sobre")}
+            isSobreOpen={active === "sobre"}
           />
 
           <Normal

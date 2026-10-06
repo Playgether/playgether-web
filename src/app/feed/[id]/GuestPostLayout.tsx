@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type CSSProperties, type ReactNode } from "react";
+import { BrandLogo } from "@/components/general/BrandLogo";
 import Link from "next/link";
 import Login from "@/components/pages/index/Login";
 import Cadastro from "@/components/pages/index/Cadastro";
@@ -30,14 +31,10 @@ export function GuestPostLayout({ children }: GuestPostLayoutProps) {
         } as CSSProperties
       }
     >
-      <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-border/40 bg-background">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-          <Link
-            href="/"
-            className="text-lg font-bold tracking-[0.12em] sm:tracking-[0.16em]"
-          >
-            <span className="text-secondary">PLAY</span>
-            <span className="text-neon-blue">GETHER</span>
+          <Link href="/" className="flex items-center" aria-label="Playgether">
+            <BrandLogo className="h-8 w-auto sm:h-9" priority />
           </Link>
           <Button
             type="button"

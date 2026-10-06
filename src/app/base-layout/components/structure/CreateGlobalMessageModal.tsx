@@ -173,7 +173,7 @@ export function CreateGlobalMessageModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="z-[60] flex max-h-[min(85dvh,720px)] max-w-lg flex-col gap-0 overflow-hidden border border-primary/20 bg-background/95 p-0 backdrop-blur-xl">
+      <DialogContent className="z-[60] flex max-h-[min(85dvh,720px)] max-w-lg flex-col gap-0 overflow-hidden border border-primary/20 bg-background p-0">
         <DialogHeader className="shrink-0 border-b border-border/50 px-4 py-4 pr-12 sm:px-6">
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Megaphone className="h-5 w-5 text-primary" />

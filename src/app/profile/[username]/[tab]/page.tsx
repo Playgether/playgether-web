@@ -8,7 +8,7 @@ import { getCommentsServer } from "@/services/getCommentsServer";
 import { notFound } from "next/navigation";
 
 export const metadata: Metadata = {
-  title: "Playgether - Profile",
+  title: "Profile",
   description: "Find people to chat with",
 };
 

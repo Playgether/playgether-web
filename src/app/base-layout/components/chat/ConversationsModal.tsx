@@ -98,7 +98,7 @@ export const ConversationsModal = ({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="flex max-h-[min(90dvh,720px)] max-w-6xl flex-col gap-0 overflow-hidden p-0 bg-background/95 backdrop-blur-xl border border-primary/20">
+      <DialogContent className="flex max-h-[min(90dvh,720px)] max-w-6xl flex-col gap-0 overflow-hidden p-0 bg-background border border-primary/20">
         <VisuallyHidden>
           <DialogTitle>Conversas</DialogTitle>
         </VisuallyHidden>

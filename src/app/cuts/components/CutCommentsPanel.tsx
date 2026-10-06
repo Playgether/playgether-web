@@ -681,7 +681,7 @@ export function CutCommentsPanel({
       ) : null}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="border border-border/50 bg-background/95 backdrop-blur-xl">
+        <AlertDialogContent className="border border-border/50 bg-background">
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir comentário?</AlertDialogTitle>
             <AlertDialogDescription>

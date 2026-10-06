@@ -158,7 +158,7 @@ export function CommentActionMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="bg-background/95 backdrop-blur-xl border border-border/50"
+        className="bg-background border border-border/50"
       >
         {isMyComment && (
           <>

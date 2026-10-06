@@ -302,7 +302,7 @@ export function GamesCanvasUserProfile({
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className="border border-border/50 bg-background/95 backdrop-blur-xl"
+            className="border border-border/50 bg-background"
           >
             <DropdownMenuItem
               onSelect={(e) => {

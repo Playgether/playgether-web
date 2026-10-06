@@ -8,6 +8,7 @@ interface UseNotificationsOptions {
   onNewNotification?: (notification: NotificationProps) => void;
   onNotificationRemoved?: (notification: NotificationProps) => void;
   notificationsList?: NotificationProps[];
+  enabled?: boolean;
 }
 
 function isSameNotification(a: NotificationProps, b: NotificationProps) {
@@ -102,6 +103,7 @@ export const useNotifications = (options?: UseNotificationsOptions) => {
   const { connectionStatus, isConnected, connectionError, reconnect } =
     useSecureWebSocket({
       url: "/ws/notifications/",
+      enabled: options?.enabled !== false,
       shouldReconnect: () => true,
       onMessage: handleMessage,
     });

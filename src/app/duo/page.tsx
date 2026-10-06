@@ -1,6 +1,11 @@
 import React from 'react'
+import type { Metadata } from 'next';
 import BaseLayout from '../base-layout/components/structure/BaseLayout'
 import DuoSteps from './components/DuoStep';
+
+export const metadata: Metadata = {
+  title: "Duo",
+};
 
 export default async function Duo({
   searchParams,

@@ -28,9 +28,10 @@ interface CutOptionsMenuProps {
   onShare: () => void;
   onDeleted?: (cutId: string) => void;
   onCutUpdate?: (cut: Cut) => void;
+  iconClassName?: string;
 }
 
-export function CutOptionsMenu({ cut, onShare, onDeleted, onCutUpdate }: CutOptionsMenuProps) {
+export function CutOptionsMenu({ cut, onShare, onDeleted, onCutUpdate, iconClassName = "text-white" }: CutOptionsMenuProps) {
   const [open, setOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reporting, setReporting] = useState(false);
@@ -127,10 +128,10 @@ export function CutOptionsMenu({ cut, onShare, onDeleted, onCutUpdate }: CutOpti
       <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
           <button type="button" aria-label="Mais opções" className="flex flex-col items-center gap-1">
-            <MoreHorizontal className="h-6 w-6 text-white" />
+            <MoreHorizontal className={`h-6 w-6 ${iconClassName}`} />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56 border-border/50 bg-background/95 backdrop-blur-xl">
+        <DropdownMenuContent align="end" className="w-56 border-border/50 bg-background">
           {cut.is_own ? (
             <>
               <DropdownMenuItem onClick={() => void handleToggleComments()}>
@@ -213,7 +214,7 @@ export function CutOptionsMenu({ cut, onShare, onDeleted, onCutUpdate }: CutOpti
       </DropdownMenu>
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent className="border border-border/50 bg-background/95 backdrop-blur-xl">
+        <AlertDialogContent className="border border-border/50 bg-background">
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir este Cut?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -234,7 +235,7 @@ export function CutOptionsMenu({ cut, onShare, onDeleted, onCutUpdate }: CutOpti
       </AlertDialog>
 
       <AlertDialog open={reportOpen} onOpenChange={setReportOpen}>
-        <AlertDialogContent className="border border-border/50 bg-background/95 backdrop-blur-xl">
+        <AlertDialogContent className="border border-border/50 bg-background">
           <AlertDialogHeader>
             <AlertDialogTitle>Denunciar este cut?</AlertDialogTitle>
             <AlertDialogDescription>

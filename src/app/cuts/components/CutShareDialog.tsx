@@ -201,7 +201,7 @@ export function CutShareDialog({ cut, open, onOpenChange }: CutShareDialogProps)
 
   return (
     <Dialog open={open} onOpenChange={(next) => !sending && onOpenChange(next)}>
-      <DialogContent className="max-w-md border-border/50 bg-background/95 backdrop-blur-xl">
+      <DialogContent className="max-w-md border-border/50 bg-background">
         <DialogHeader>
           <DialogTitle>Enviar cut</DialogTitle>
         </DialogHeader>

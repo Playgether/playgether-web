@@ -363,7 +363,7 @@ export function SearchResults() {
       )}
 
       {/* Tab bar */}
-      <div className="sticky top-[var(--layout-header-height)] z-20 border-b border-border/40 bg-background/95 backdrop-blur-xl">
+      <div className="sticky top-[var(--layout-header-height)] z-20 border-b border-border/40 bg-background">
         <div className="flex overflow-x-auto scrollbar-hide">
           {TABS.map((tab) => (
             <button

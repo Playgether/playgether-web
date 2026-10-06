@@ -32,7 +32,7 @@ export const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm bg-card/95 backdrop-blur-xl border border-primary/20 shadow-glow-primary">
+      <DialogContent className="max-w-sm bg-card border border-primary/20 shadow-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             <Settings className="w-4 h-4 text-primary" />

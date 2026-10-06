@@ -1,4 +1,5 @@
 import React from "react";
+import { BrandLogo } from "@/components/general/BrandLogo";
 
 interface SobreProps {
   onClickVoltar: () => void;
@@ -7,18 +8,17 @@ interface SobreProps {
 const Sobre = ({ onClickVoltar }: SobreProps) => {
   return (
     <section className="fixed inset-0 z-40 flex flex-col items-center justify-center px-4 animate-fade-up">
-      <div className="absolute inset-0 bg-background/90 backdrop-blur-md" />
+      <div className="absolute inset-0 bg-background/95" />
 
       <div className="relative z-10 max-w-3xl text-center">
-        <div className="flex items-center justify-center -space-x-3 mb-6">
-          <div className="w-14 h-14 rounded-full bg-secondary opacity-90" />
-          <div className="w-14 h-14 rounded-full bg-neon-blue opacity-90" />
+        <div className="mb-2 flex justify-center">
+          <BrandLogo
+            variant="vertical"
+            tone="mono"
+            className="h-auto w-[min(85vw,30rem)]"
+            priority
+          />
         </div>
-
-        <h2 className="text-4xl md:text-6xl font-bold tracking-[0.2em] mb-8 text-foreground">
-          <span className="text-secondary">PLAY</span>
-          <span className="text-neon-blue">GETHER</span>
-        </h2>
 
         <p className="text-muted-foreground text-base md:text-lg leading-relaxed mb-10 tracking-wide">
           Nós somos uma rede social que conecta gamers de todo o mundo. Aqui,
@@ -32,7 +32,7 @@ const Sobre = ({ onClickVoltar }: SobreProps) => {
         <button
           type="button"
           onClick={onClickVoltar}
-          className="px-8 py-3 text-lg font-semibold tracking-widest uppercase rounded-lg border-2 border-foreground/30 text-foreground hover:border-neon-blue hover:text-neon-blue transition-all duration-300 bg-background/10 backdrop-blur-sm"
+          className="px-8 py-3 text-lg font-semibold tracking-widest uppercase rounded-lg border-2 border-foreground/30 text-foreground hover:border-neon-blue hover:text-neon-blue transition-all duration-300 bg-background/20"
         >
           Voltar
         </button>

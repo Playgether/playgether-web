@@ -48,7 +48,7 @@ export function ConversationsWidget() {
   return (
     <div className="fixed bottom-[calc(var(--layout-quick-messages-height)+0.75rem)] right-3 z-[70] flex flex-col items-end gap-3 sm:bottom-6 sm:right-6">
       {open && (
-        <div className="flex h-[min(70dvh,480px)] w-[min(calc(100vw-1.5rem),720px)] flex-col overflow-hidden rounded-2xl border border-primary/20 bg-background/95 shadow-2xl backdrop-blur-xl sm:h-[480px] sm:w-[min(calc(100vw-3rem),560px)] lg:w-[720px]">
+        <div className="flex h-[min(70dvh,480px)] w-[min(calc(100vw-1.5rem),720px)] flex-col overflow-hidden rounded-2xl border border-primary/20 bg-background shadow-2xl sm:h-[480px] sm:w-[min(calc(100vw-3rem),560px)] lg:w-[720px]">
           <div className="flex h-12 shrink-0 items-center justify-between border-b border-border/50 px-4">
             <span className="text-sm font-semibold">Conversas</span>
             <button

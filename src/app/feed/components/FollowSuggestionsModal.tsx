@@ -70,7 +70,7 @@ export function FollowSuggestionsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[min(90vh,720px)] max-w-lg flex-col gap-0 overflow-hidden border border-primary/20 bg-background/95 p-0 backdrop-blur-xl sm:max-w-xl">
+      <DialogContent className="flex max-h-[min(90vh,720px)] max-w-lg flex-col gap-0 overflow-hidden border border-primary/20 bg-background p-0 sm:max-w-xl">
         <DialogHeader className="shrink-0 border-b border-border/50 px-6 pb-4 pt-6">
           <DialogTitle className="mb-2 flex items-center gap-3 text-xl font-bold">
             <div className="rounded-xl bg-gradient-primary p-2">

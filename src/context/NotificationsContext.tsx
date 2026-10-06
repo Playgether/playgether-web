@@ -119,6 +119,7 @@ const NotificationsContextProvider = ({
   );
 
   useNotifications({
+    enabled: Boolean(user?.user_id),
     onNewNotification: handleLiveNotification,
     onNotificationRemoved: refetchSilent,
   });

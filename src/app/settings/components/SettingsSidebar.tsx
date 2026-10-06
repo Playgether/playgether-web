@@ -69,7 +69,7 @@ export function SettingsMobileNav() {
   return (
     <nav
       aria-label="Seções de configurações"
-      className="sticky top-0 z-10 border-b border-border/40 bg-background/95 backdrop-blur-xl md:hidden"
+      className="sticky top-0 z-10 border-b border-border/40 bg-background md:hidden"
     >
       <div className="flex gap-1 overflow-x-auto px-3 py-2.5 scrollbar-hide">
         {navItems.map((item) => {

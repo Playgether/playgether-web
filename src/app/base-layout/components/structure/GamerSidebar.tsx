@@ -3,7 +3,6 @@
 import {
   Home,
   Users,
-  GamepadIcon,
   Swords,
   Plus,
   DoorOpen,
@@ -11,6 +10,7 @@ import {
   Clapperboard,
 } from "lucide-react";
 import Image from "next/image";
+import { BrandLogo } from "@/components/general/BrandLogo";
 import { profilePhotoToAvatarSrc } from "@/components/profile/ProfileAvatar";
 import { useCreatePostContext } from "@/context/CreatePostContext";
 import { useAuthContext } from "@/context/AuthContext";
@@ -69,8 +69,13 @@ export const GamerSidebar = () => {
 
   return (
     <div className="group/sidebar fixed left-0 top-0 z-50 flex h-full w-20 flex-col items-center overflow-hidden border-r border-sidebar-border bg-gradient-primary py-6 transition-[width] duration-300 ease-in-out short:py-3 hover:w-56">
-      <div className="mb-8 rounded-xl bg-white/10 p-3 backdrop-blur-sm short:mb-3 short:p-2">
-        <GamepadIcon className="h-8 w-8 text-white short:h-6 short:w-6" />
+      <div className="mb-8 flex items-center justify-center rounded-xl bg-white/10 p-2 short:mb-3 short:p-1.5">
+        <BrandLogo
+          variant="icon"
+          tone="white"
+          className="h-8 w-8 short:h-6 short:w-6"
+          priority
+        />
       </div>
 
       <button
