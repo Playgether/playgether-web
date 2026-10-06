@@ -25,9 +25,15 @@ export function GameHoverCardContent({
             className="h-12 w-12 shrink-0 rounded-md border border-border bg-card/50"
             spinnerClassName="h-4 w-4"
           />
-        ) : (
+        ) : null}
+        {/* Placeholder do quadradinho de logo removido por enquanto — várias
+            empresas/jogos (ex.: Riot Games) ainda não têm logo cadastrada, e
+            o quadrado vazio ficava estranho na UI. Reativar aqui quando
+            tiver uma logo de fallback de verdade:
+        : (
           <div className="h-12 w-12 shrink-0 rounded-md border border-border bg-card/50" />
-        )}
+        )
+        */}
 
         <div className="min-w-0">
           <div className="truncate font-semibold">{title}</div>
