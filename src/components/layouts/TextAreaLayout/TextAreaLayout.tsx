@@ -1,7 +1,6 @@
 import React, { HTMLProps, TextareaHTMLAttributes } from "react";
 import { twMerge, twJoin } from "tailwind-merge";
-import TextareaAutosize from "react-textarea-autosize";
-import { TextareaAutosizeProps } from "react-textarea-autosize/dist/declarations/src";
+import TextareaAutosize, { type TextareaAutosizeProps } from "react-textarea-autosize";
 
 interface InputProps extends TextareaAutosizeProps {
   /** Esta prop recebe o register que será gerado do "UseFormState" da lib zod */

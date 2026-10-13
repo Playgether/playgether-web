@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
+import { GameTextIcon, getGameTextIcon } from "@/components/media/GameTextIcon";
 import { cn } from "@/lib/utils";
 
 type GameMediaSize = "icon" | "banner" | "asset";
@@ -24,7 +25,15 @@ type GameMediaImageProps = {
   fallback?: ReactNode;
 };
 
-export function GameMediaImage({
+export function GameMediaImage(props: GameMediaImageProps) {
+  const textIcon = (props.size ?? "icon") === "icon" ? getGameTextIcon(props.src) : null;
+  if (textIcon) {
+    return <GameTextIcon spec={textIcon} alt={props.alt} className={props.className} />;
+  }
+  return <CloudinaryGameMediaImage {...props} />;
+}
+
+function CloudinaryGameMediaImage({
   src,
   alt,
   size = "icon",
