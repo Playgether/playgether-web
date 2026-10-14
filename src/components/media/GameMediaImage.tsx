@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
-import { GameTextIcon, getGameTextIcon } from "@/components/media/GameTextIcon";
+// import { GameTextIcon, getGameTextIcon } from "@/components/media/GameTextIcon";
 import { cn } from "@/lib/utils";
 
 type GameMediaSize = "icon" | "banner" | "asset";
@@ -26,10 +26,13 @@ type GameMediaImageProps = {
 };
 
 export function GameMediaImage(props: GameMediaImageProps) {
-  const textIcon = (props.size ?? "icon") === "icon" ? getGameTextIcon(props.src) : null;
-  if (textIcon) {
-    return <GameTextIcon spec={textIcon} alt={props.alt} className={props.className} />;
-  }
+  // Substituição por plaquinha de texto (LoL/VAL) desativada por pedido do
+  // usuário — a imagem real do jogo deve sempre aparecer. Reativar aqui se
+  // a questão de política da API da Riot voltar a ser um bloqueio:
+  // const textIcon = (props.size ?? "icon") === "icon" ? getGameTextIcon(props.src) : null;
+  // if (textIcon) {
+  //   return <GameTextIcon spec={textIcon} alt={props.alt} className={props.className} />;
+  // }
   return <CloudinaryGameMediaImage {...props} />;
 }
 
