@@ -135,6 +135,7 @@ export function LolSelfDeclaredProfile({
               src={gameIcon}
               alt=""
               size="icon"
+              game={{ acronym: "LoL" }}
               className="h-16 w-16 shrink-0 rounded-2xl border-2 border-primary/25 bg-background/80 shadow-md ring-2 ring-primary/20"
               spinnerClassName="h-5 w-5"
             />

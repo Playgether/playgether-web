@@ -62,7 +62,7 @@ function handleConnectSteam() {
     .catch(() => {});
 }
 
-function GameIcon({ icon, image, avatar, name }: { icon?: string | null; image?: string | null; avatar?: string | null; name: string }) {
+function GameIcon({ icon, image, avatar, name, acronym }: { icon?: string | null; image?: string | null; avatar?: string | null; name: string; acronym?: string | null }) {
   const src = avatar ?? icon ?? image;
   if (src) {
     return (
@@ -70,6 +70,7 @@ function GameIcon({ icon, image, avatar, name }: { icon?: string | null; image?:
         src={src}
         alt={name}
         size="icon"
+        game={{ acronym, name }}
         objectFit="cover"
         className="h-10 w-10 rounded-xl"
         spinnerClassName="h-4 w-4"
@@ -121,7 +122,7 @@ function GameRow({
   return (
     <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50 hover:bg-muted/70 transition-colors">
       <div className="flex items-center gap-3">
-        <GameIcon icon={game.icon} image={game.image} avatar={avatar} name={game.name} />
+        <GameIcon icon={game.icon} image={game.image} avatar={avatar} name={game.name} acronym={game.acronym} />
         <div>
           <p className="text-sm font-medium text-foreground">{game.name}</p>
           <div className="flex items-center gap-1 mt-0.5">

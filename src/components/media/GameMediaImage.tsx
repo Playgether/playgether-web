@@ -3,7 +3,11 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { LoadingComponent } from "@/components/layouts/components/LoadingComponent";
 import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
-import { GameTextIcon, getGameTextIcon } from "@/components/media/GameTextIcon";
+import {
+  GameTextIcon,
+  getGameTextIcon,
+  type GameTextIconIdentity,
+} from "@/components/media/GameTextIcon";
 import { cn } from "@/lib/utils";
 
 type GameMediaSize = "icon" | "banner" | "asset";
@@ -23,13 +27,17 @@ type GameMediaImageProps = {
   spinnerClassName?: string;
   objectFit?: "contain" | "cover";
   fallback?: ReactNode;
+  /** Jogo (acronym/name) a identificar pra decidir a plaquinha de texto do LoL/VAL — independente do que está salvo em `src`. */
+  game?: GameTextIconIdentity | null;
 };
 
 export function GameMediaImage(props: GameMediaImageProps) {
   // LoL e Valorant são jogos da Riot — a política da API deles proíbe usar a
   // logo oficial sem autorização, então mostramos uma plaquinha de texto no
   // lugar. CS2 (Valve) não tem essa restrição e sempre mostra a imagem real.
-  const textIcon = (props.size ?? "icon") === "icon" ? getGameTextIcon(props.src) : null;
+  // A decisão é pelo acronym/name do jogo (prop `game`), não pelo valor
+  // salvo em `src` — assim não depende do Cloudinary/banco estar certo.
+  const textIcon = (props.size ?? "icon") === "icon" ? getGameTextIcon(props.game) : null;
   if (textIcon) {
     return <GameTextIcon spec={textIcon} alt={props.alt} className={props.className} />;
   }
