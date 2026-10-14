@@ -9,6 +9,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { GameHoverCardContent } from "@/components/pages/profile/components/GameHoverCardContent";
+import { cn } from "@/lib/utils";
 import type { Game } from "../../types/duo";
 import { getGames } from "../../services/duoApi";
 
@@ -97,14 +98,20 @@ export function GameSelection({ onSelect }: GameSelectionProps) {
                       className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,hsl(var(--primary)_/_0.08),transparent_70%)]"
                       aria-hidden
                     />
-                    <div className="relative flex h-full w-full items-center justify-center p-4 sm:p-5">
+                    <div
+                      className={cn(
+                        "relative flex h-full w-full items-center justify-center",
+                        !game.image && "p-4 sm:p-5",
+                      )}
+                    >
                       {game.image ? (
                         <GameMediaImage
                           src={game.image}
                           alt=""
                           size="banner"
+                          objectFit="cover"
                           className="h-full w-full"
-                          imgClassName="max-h-full max-w-full drop-shadow-md transition-transform duration-300 group-hover:scale-[1.03]"
+                          imgClassName="transition-transform duration-300 group-hover:scale-[1.03]"
                           spinnerClassName="h-6 w-6"
                         />
                       ) : (

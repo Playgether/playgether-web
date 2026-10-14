@@ -13,6 +13,7 @@ import { decodeUser } from "@/actions/decodeUser";
 import { logoutServer } from "@/actions/logout";
 import { refreshTokenServer } from "@/actions/refreshToken";
 import { clearCachedPrivateKey } from "@/lib/e2e-crypto";
+import { isPublicRoute } from "@/lib/authRoutes";
 
 // Renova 10 min antes do access token de 60 min (produção) expirar.
 // Em dev (30 dias) é mais frequente que o necessário, mas inofensivo.
@@ -86,13 +87,18 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         cachedUser = null;
       }
 
-      let fromJwt = await decodeUser();
-      if (!fromJwt) {
-        const renewed = await refreshTokenServer();
-        if (renewed) {
-          markAccessRefreshed();
-          fromJwt = await decodeUser();
+      let fromJwt: UserProps | null = null;
+      try {
+        fromJwt = await decodeUser();
+        if (!fromJwt) {
+          const renewed = await refreshTokenServer();
+          if (renewed) {
+            markAccessRefreshed();
+            fromJwt = await decodeUser();
+          }
         }
+      } catch {
+        fromJwt = null;
       }
 
       // Só considera logado com JWT válido (access ou após refresh).
@@ -114,11 +120,22 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
         markAccessRefreshed();
       } else {
+        const onProtectedRoute =
+          typeof window !== "undefined" && !isPublicRoute(window.location.pathname);
         if (typeof window !== "undefined") {
           localStorage.removeItem("user");
+          if (onProtectedRoute || cachedUser) clearCachedPrivateKey();
         }
         setUser(null);
         setIsLoggedOut(true);
+        if (onProtectedRoute || cachedUser) {
+          await logoutServer().catch(() => undefined);
+        }
+        if (onProtectedRoute) {
+          // Hard navigation: nenhuma rota protegida pode ficar montada sem sessão válida.
+          window.location.replace("/");
+          return;
+        }
       }
       setAuthSessionResolved(true);
     })();

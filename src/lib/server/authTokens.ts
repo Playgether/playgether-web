@@ -12,13 +12,17 @@ import {
 
 type RefreshCookiesResult = { ok: true; access: string } | { ok: false };
 
-let refreshInFlight: Promise<RefreshCookiesResult> | null = null;
+type RotatedTokens = {
+  access: string;
+  refresh: string | null;
+  userId: string;
+  exp?: number;
+};
 
-async function doRefreshCookiesFromRefreshToken(): Promise<RefreshCookiesResult> {
-  const cookieStore = await cookies();
-  const refreshToken = cookieStore.get("refreshToken")?.value;
-  if (!refreshToken) return { ok: false };
+/** Keyed by refresh token: concurrent calls of the same session share one backend call. */
+const refreshInFlight = new Map<string, Promise<RotatedTokens | null>>();
 
+async function rotateAtBackend(refreshToken: string): Promise<RotatedTokens | null> {
   try {
     const response = await api.post("/api/token/refresh/", {
       refresh: refreshToken,
@@ -28,36 +32,85 @@ async function doRefreshCookiesFromRefreshToken(): Promise<RefreshCookiesResult>
       user_id: string | number;
       exp?: number;
     }>(access);
-    if (decodedAccess.user_id == null) return { ok: false };
+    if (decodedAccess.user_id == null) return null;
+    return {
+      access,
+      refresh: newRefresh ?? null,
+      userId: String(decodedAccess.user_id),
+      exp: decodedAccess.exp,
+    };
+  } catch {
+    return null;
+  }
+}
 
-    cookieStore.set("accessToken", access, {
-      ...AUTH_COOKIE_BASE,
-      maxAge: accessTokenMaxAgeSec(decodedAccess.exp),
-    });
-    if (newRefresh) {
-      cookieStore.set("refreshToken", newRefresh, {
-        ...AUTH_COOKIE_BASE,
-        maxAge: REFRESH_TOKEN_MAX_AGE_SEC,
-      });
-    }
-    cookieStore.set("user_id", String(decodedAccess.user_id), {
+/**
+ * Server Components can't write cookies. Rotating the refresh token there would blacklist
+ * the old one on the backend while the browser keeps it, killing the session.
+ */
+function canWriteCookies(
+  cookieStore: Awaited<ReturnType<typeof cookies>>,
+  refreshToken: string,
+): boolean {
+  try {
+    cookieStore.set("refreshToken", refreshToken, {
       ...AUTH_COOKIE_BASE,
       maxAge: REFRESH_TOKEN_MAX_AGE_SEC,
     });
-
-    return { ok: true, access };
+    return true;
   } catch {
-    return { ok: false };
+    return false;
   }
 }
 
 export async function refreshCookiesFromRefreshToken(): Promise<RefreshCookiesResult> {
-  if (!refreshInFlight) {
-    refreshInFlight = doRefreshCookiesFromRefreshToken().finally(() => {
-      refreshInFlight = null;
+  const cookieStore = await cookies();
+  const refreshToken = cookieStore.get("refreshToken")?.value;
+  if (!refreshToken || !canWriteCookies(cookieStore, refreshToken)) {
+    return { ok: false };
+  }
+
+  let pending = refreshInFlight.get(refreshToken);
+  if (!pending) {
+    pending = rotateAtBackend(refreshToken).finally(() => {
+      refreshInFlight.delete(refreshToken);
+    });
+    refreshInFlight.set(refreshToken, pending);
+  }
+  const tokens = await pending;
+  if (!tokens) return { ok: false };
+
+  cookieStore.set("accessToken", tokens.access, {
+    ...AUTH_COOKIE_BASE,
+    maxAge: accessTokenMaxAgeSec(tokens.exp),
+  });
+  if (tokens.refresh) {
+    cookieStore.set("refreshToken", tokens.refresh, {
+      ...AUTH_COOKIE_BASE,
+      maxAge: REFRESH_TOKEN_MAX_AGE_SEC,
     });
   }
-  return refreshInFlight;
+  cookieStore.set("user_id", tokens.userId, {
+    ...AUTH_COOKIE_BASE,
+    maxAge: REFRESH_TOKEN_MAX_AGE_SEC,
+  });
+
+  return { ok: true, access: tokens.access };
+}
+
+/** Best-effort: no-op inside Server Components, where cookies are read-only. */
+function trySetUserIdCookie(
+  cookieStore: Awaited<ReturnType<typeof cookies>>,
+  userId: string,
+) {
+  try {
+    cookieStore.set("user_id", userId, {
+      ...AUTH_COOKIE_BASE,
+      maxAge: REFRESH_TOKEN_MAX_AGE_SEC,
+    });
+  } catch {
+    // read-only cookie store
+  }
 }
 
 export async function ensureAccessTokenCookie(): Promise<string | null> {
@@ -66,25 +119,20 @@ export async function ensureAccessTokenCookie(): Promise<string | null> {
   const existingUserId = cookieStore.get("user_id")?.value;
 
   if (existing) {
+    let decoded: { exp?: number; user_id?: string | number } | null = null;
     try {
-      const decoded = jwt_decode<{
+      decoded = jwt_decode<{
         exp?: number;
         user_id?: string | number;
       }>(existing);
-      if (!decoded.exp || decoded.exp * 1000 > Date.now()) {
-        if (
-          decoded.user_id != null &&
-          !isValidUserId(existingUserId)
-        ) {
-          cookieStore.set("user_id", String(decoded.user_id), {
-            ...AUTH_COOKIE_BASE,
-            maxAge: REFRESH_TOKEN_MAX_AGE_SEC,
-          });
-        }
-        return existing;
-      }
     } catch {
       // A malformed access token falls through to refresh.
+    }
+    if (decoded && (!decoded.exp || decoded.exp * 1000 > Date.now())) {
+      if (decoded.user_id != null && !isValidUserId(existingUserId)) {
+        trySetUserIdCookie(cookieStore, String(decoded.user_id));
+      }
+      return existing;
     }
   }
 
@@ -105,16 +153,11 @@ export async function ensureSessionAuth(): Promise<{
   if (!isValidUserId(userId)) {
     try {
       const payload = jwt_decode<{ user_id?: string | number }>(access);
-      if (payload.user_id != null) {
-        userId = String(payload.user_id);
-        cookieStore.set("user_id", userId, {
-          ...AUTH_COOKIE_BASE,
-          maxAge: REFRESH_TOKEN_MAX_AGE_SEC,
-        });
-      }
+      if (payload.user_id != null) userId = String(payload.user_id);
     } catch {
       return null;
     }
+    if (isValidUserId(userId)) trySetUserIdCookie(cookieStore, userId);
   }
 
   if (!isValidUserId(userId)) return null;
