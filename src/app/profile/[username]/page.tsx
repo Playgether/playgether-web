@@ -6,7 +6,8 @@ import GamesCanvasProfile from "@/components/pages/profile/GamesCanvasProfile";
 import { getCommentsServer } from "@/services/getCommentsServer";
 import { notFound } from "next/navigation";
 import { ensureAccessTokenCookie } from "@/lib/server/authTokens";
-import { decodeAccessToken } from "@/lib/decodeAccessToken";
+import { getCurrentUsername } from "@/lib/server/currentUser";
+
 export const metadata: Metadata = {
   title: "Profile",
   description: "Find people to chat with",
@@ -15,6 +16,27 @@ export const metadata: Metadata = {
 export interface Props {
   params?: { username: string };
 }
+
+const PROFILE_TAB_SLUGS = new Set([
+  "bio",
+  "midias",
+  "textos",
+  "reposts",
+  "estatisticas",
+  "marcos",
+  "conquistas",
+  "biblioteca",
+  "curtidas",
+  "salvos",
+]);
+
+function normalizeSlug(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
+}
+
 export default async function Profile({ params }) {
   const { username } = await params;
   const token = await ensureAccessTokenCookie();
@@ -30,30 +52,17 @@ export default async function Profile({ params }) {
   // Suporta URLs de aba no formato `/profile/<tab>`.
   // Como existe o route `/profile/[username]`, precisamos detectar quando
   // o "username" é na verdade um slug de aba.
-  const tabSlugs = new Set([
-    "bio",
-    "midias",
-    "textos",
-    "reposts",
-    "estatisticas",
-    "marcos",
-    "conquistas",
-    "biblioteca",
-    "curtidas",
-    "salvos",
-  ]);
-
-  const normalizedParam = String(username)
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase();
-
   let usernameToFetch = username;
-  if (tabSlugs.has(normalizedParam)) {
-    const pl = decodeAccessToken(token);
-    if (pl?.username) {
-      usernameToFetch = pl.username;
+  if (PROFILE_TAB_SLUGS.has(normalizeSlug(username))) {
+    const meUsername = await getCurrentUsername();
+    if (!meUsername) {
+      return (
+        <BaseLayout>
+          <NotFoundPages message="Token não encontrado" />
+        </BaseLayout>
+      );
     }
+    usernameToFetch = meUsername;
   }
 
   const profileResponse = await getProfileByUsername(usernameToFetch);

@@ -5,8 +5,7 @@ import NotFoundPages from "@/components/elements/NotFound/NotFoundPages";
 import { getProfileByUsername } from "@/services/getProfileByUsername";
 import GamesCanvasProfile from "@/components/pages/profile/GamesCanvasProfile";
 import { getCommentsServer } from "@/services/getCommentsServer";
-import { ensureAccessTokenCookie } from "@/lib/server/authTokens";
-import { decodeAccessToken } from "@/lib/decodeAccessToken";
+import { getCurrentUsername } from "@/lib/server/currentUser";
 
 export const metadata: Metadata = {
   title: "Profile",
@@ -14,23 +13,12 @@ export const metadata: Metadata = {
 };
 
 export default async function PageProfile() {
-  const token = await ensureAccessTokenCookie();
-
-  if (!token) {
-    return (
-      <BaseLayout>
-        <NotFoundPages message="Token não encontrado" />
-      </BaseLayout>
-    );
-  }
-
-  const payload = decodeAccessToken(token);
-  const username = payload?.username;
+  const username = await getCurrentUsername();
 
   if (!username) {
     return (
       <BaseLayout>
-        <NotFoundPages message="Token expirado ou inválido" />
+        <NotFoundPages message="Token não encontrado" />
       </BaseLayout>
     );
   }
