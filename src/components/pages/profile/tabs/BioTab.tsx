@@ -252,6 +252,7 @@ export function BioTab({
             src={icon}
             alt={game.name}
             size="icon"
+            game={game}
             objectFit="cover"
             className="h-8 w-8 rounded"
             spinnerClassName="h-3.5 w-3.5"

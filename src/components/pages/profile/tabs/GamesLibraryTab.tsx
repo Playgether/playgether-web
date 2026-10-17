@@ -204,6 +204,7 @@ export function GamesLibraryTab({
                         src={gameIconSrc}
                         alt={game.name}
                         size="icon"
+                        game={game}
                         objectFit="cover"
                         className="h-12 w-12 rounded"
                         spinnerClassName="h-4 w-4"
@@ -224,6 +225,7 @@ export function GamesLibraryTab({
                             title={game.name}
                             description={game.description}
                             logo={game.icon}
+                            game={game}
                           />
                           {game.acronym ? (
                             <div className="mt-3 text-xs text-muted-foreground text-center w-full">

@@ -66,6 +66,7 @@ export function GameSelection({ onSelect }: GameSelectionProps) {
                       src={game.icon}
                       alt=""
                       size="icon"
+                      game={game}
                       className="h-10 w-10 shrink-0 rounded-lg border border-border/50 bg-background/80 shadow-sm"
                       spinnerClassName="h-4 w-4"
                     />
@@ -131,6 +132,7 @@ export function GameSelection({ onSelect }: GameSelectionProps) {
                             title={game.name}
                             description={game.description}
                             logo={game.icon}
+                            game={game}
                           />
                         </HoverCardContent>
                       </HoverCard>

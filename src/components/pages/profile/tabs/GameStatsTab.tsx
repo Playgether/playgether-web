@@ -414,6 +414,7 @@ export function GameStatsTab({
                       src={game.icon ?? game.image}
                       alt={game.name}
                       size="icon"
+                      game={game}
                       objectFit="cover"
                       className="mx-auto h-16 w-16 rounded-lg transition-transform duration-200 group-hover:scale-105"
                       spinnerClassName="h-5 w-5"
@@ -428,6 +429,7 @@ export function GameStatsTab({
                         title={game.name}
                         description={game.description}
                         logo={game.icon}
+                        game={game}
                       />
                       {game.acronym ? (
                         <div className="mt-3 text-xs text-muted-foreground text-center w-full">

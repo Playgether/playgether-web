@@ -309,7 +309,7 @@ export function GlobalSearchDropdown({
                       <ResultRow
                         key={game.id}
                         icon={
-                          <GameIcon icon={game.icon} name={game.name} />
+                          <GameIcon icon={game.icon} name={game.name} acronym={game.acronym} />
                         }
                         label={game.name}
                         sublabel={game.acronym || undefined}
@@ -409,7 +409,7 @@ export function GlobalSearchDropdown({
                       <ResultRow
                         key={game.id}
                         icon={
-                          <GameIcon icon={game.icon} name={game.name} />
+                          <GameIcon icon={game.icon} name={game.name} acronym={game.acronym} />
                         }
                         label={game.name}
                         sublabel={game.acronym || undefined}
@@ -438,7 +438,7 @@ export function GlobalSearchDropdown({
 
 // ─── icon helpers ─────────────────────────────────────────────────────────────
 
-function GameIcon({ icon, name }: { icon: string | null; name: string }) {
+function GameIcon({ icon, name, acronym }: { icon: string | null; name: string; acronym?: string | null }) {
   return (
     <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
       {icon ? (
@@ -446,6 +446,7 @@ function GameIcon({ icon, name }: { icon: string | null; name: string }) {
           src={icon}
           alt={name}
           size="icon"
+          game={{ acronym, name }}
           objectFit="cover"
           className="h-full w-full"
           spinnerClassName="h-3.5 w-3.5"
