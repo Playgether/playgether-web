@@ -1,3 +1,5 @@
+import type { HighlightedAchievementPublic } from "@/types/highlightedAchievements";
+
 export interface ProfileProps {
   id: number;
   bio: string;
@@ -15,4 +17,5 @@ export interface ProfileProps {
   name: string;
   /** API pode enviar string (ex.: serializer com f-string). */
   quantity_posts?: string | number;
+  highlighted_achievements?: HighlightedAchievementPublic[];
 }

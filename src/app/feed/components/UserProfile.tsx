@@ -6,6 +6,8 @@ import { PresenceStatusDot } from "@/components/presence/PresenceStatusDot";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import TextLimitComponent from "@/components/layouts/SuspenseFallBack/TextLimitComponent/TextLimitComponent";
+import { HighlightedAchievementBadges } from "@/components/achievements/HighlightedAchievementBadges";
+import type { HighlightedAchievementPublic } from "@/types/highlightedAchievements";
 
 interface UserProfileProps {
   user: {
@@ -21,6 +23,7 @@ interface UserProfileProps {
   profilePhotoPublicId?: string | null;
   guestAvatar?: string | StaticImageData;
   profileDataPending?: boolean;
+  highlightedAchievements?: HighlightedAchievementPublic[] | null;
 }
 
 export const UserProfile = ({
@@ -30,6 +33,7 @@ export const UserProfile = ({
   profilePhotoPublicId,
   guestAvatar,
   profileDataPending = false,
+  highlightedAchievements,
 }: UserProfileProps) => {
   const isOwnerCard = userId != null;
   const guestPhotoSrc =
@@ -86,7 +90,32 @@ export const UserProfile = ({
         </div>
 
         <h3 className="font-bold text-xl text-foreground mb-1">{user.name}</h3>
-        <p className="text-sm text-muted-foreground mb-4">@{user.username}</p>
+        <p
+          className={`text-sm text-muted-foreground ${
+            profileDataPending ||
+            (highlightedAchievements && highlightedAchievements.length > 0)
+              ? "mb-2"
+              : "mb-4"
+          }`}
+        >
+          @{user.username}
+        </p>
+
+        {profileDataPending ? (
+          <div className="mb-4 flex justify-center gap-1">
+            <Skeleton className="h-6 w-6 rounded-full" />
+            <Skeleton className="h-6 w-6 rounded-full" />
+            <Skeleton className="h-6 w-6 rounded-full" />
+          </div>
+        ) : highlightedAchievements && highlightedAchievements.length > 0 ? (
+          <div className="mb-4 flex justify-center">
+            <HighlightedAchievementBadges
+              achievements={highlightedAchievements}
+              iconOnly
+              className="justify-center"
+            />
+          </div>
+        ) : null}
 
         {profileDataPending ? (
           <div className="mb-6 space-y-2">

@@ -1,12 +1,15 @@
 "use client";
 import { GameMediaImage } from "@/components/media/GameMediaImage";
-import type { GameTextIconIdentity } from "@/components/media/GameTextIcon";
+import {
+  getGameTextIcon,
+  type GameTextIconIdentity,
+} from "@/components/media/GameTextIcon";
 
 type Props = {
   title: string;
   description?: string | null;
   logo?: string | null;
-  /** Só pra cards de jogo (LoL/VAL mostram plaquinha de texto); omitir em cards de empresa. */
+  /** Card de jogo: passa acronym/name. Card de empresa: omitir — usamos o `title`. */
   game?: GameTextIconIdentity | null;
 };
 
@@ -16,7 +19,9 @@ export function GameHoverCardContent({
   logo,
   game,
 }: Props) {
-  const hasLogo = Boolean(logo) || Boolean(game);
+  // Empresa Riot (e LoL/VAL) caem na plaquinha de texto mesmo sem prop `game`.
+  const identity = game ?? { name: title };
+  const hasLogo = Boolean(logo) || Boolean(getGameTextIcon(identity));
 
   return (
     <div className="max-h-64 overflow-y-auto pr-1 text-left">
@@ -26,19 +31,11 @@ export function GameHoverCardContent({
             src={logo}
             alt={`${title} logo`}
             size="icon"
-            game={game}
+            game={identity}
             className="h-12 w-12 shrink-0 rounded-md border border-border bg-card/50"
             spinnerClassName="h-4 w-4"
           />
         ) : null}
-        {/* Placeholder do quadradinho de logo removido por enquanto — várias
-            empresas/jogos (ex.: Riot Games) ainda não têm logo cadastrada, e
-            o quadrado vazio ficava estranho na UI. Reativar aqui quando
-            tiver uma logo de fallback de verdade:
-        : (
-          <div className="h-12 w-12 shrink-0 rounded-md border border-border bg-card/50" />
-        )
-        */}
 
         <div className="min-w-0">
           <div className="truncate font-semibold">{title}</div>

@@ -73,6 +73,9 @@ export default function LeftColumn() {
         }
         guestAvatar={user ? undefined : avatarRaymond}
         profileDataPending={Boolean(user?.user_id) && profile === undefined}
+        highlightedAchievements={
+          user ? (profile?.highlighted_achievements ?? null) : null
+        }
       />
       <div className="sticky top-24">
         <OnlineFriends />

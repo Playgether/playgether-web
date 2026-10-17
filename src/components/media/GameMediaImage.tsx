@@ -6,6 +6,7 @@ import { resolveGameMediaUrl } from "@/app/utils/getCloudinaryUrl";
 import {
   GameTextIcon,
   getGameTextIcon,
+  getGameTextIconFromSrc,
   type GameTextIconIdentity,
 } from "@/components/media/GameTextIcon";
 import { cn } from "@/lib/utils";
@@ -27,17 +28,19 @@ type GameMediaImageProps = {
   spinnerClassName?: string;
   objectFit?: "contain" | "cover";
   fallback?: ReactNode;
-  /** Jogo (acronym/name) a identificar pra decidir a plaquinha de texto do LoL/VAL — independente do que está salvo em `src`. */
+  /** Jogo/empresa (acronym/name) pra plaquinha LoL/VAL/Riot — independente do que está salvo em `src`. */
   game?: GameTextIconIdentity | null;
 };
 
 export function GameMediaImage(props: GameMediaImageProps) {
-  // LoL e Valorant são jogos da Riot — a política da API deles proíbe usar a
-  // logo oficial sem autorização, então mostramos uma plaquinha de texto no
-  // lugar. CS2 (Valve) não tem essa restrição e sempre mostra a imagem real.
-  // A decisão é pelo acronym/name do jogo (prop `game`), não pelo valor
-  // salvo em `src` — assim não depende do Cloudinary/banco estar certo.
-  const textIcon = (props.size ?? "icon") === "icon" ? getGameTextIcon(props.game) : null;
+  // LoL, Valorant e a empresa Riot — a política da API proíbe logos oficiais
+  // sem autorização, então mostramos uma plaquinha de texto. CS2 (Valve) não
+  // tem essa restrição. Preferimos acronym/name; se vier só o path do
+  // Cloudinary (ex.: companies/riot), o fallback por `src` ainda bloqueia.
+  const textIcon =
+    (props.size ?? "icon") === "icon"
+      ? getGameTextIcon(props.game) ?? getGameTextIconFromSrc(props.src)
+      : null;
   if (textIcon) {
     return <GameTextIcon spec={textIcon} alt={props.alt} className={props.className} />;
   }
