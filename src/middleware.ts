@@ -131,6 +131,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4|webm|mov|ogg|mp3|wav|ico)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|riot\\.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4|webm|mov|ogg|mp3|wav|ico)$).*)",
   ],
 };

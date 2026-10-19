@@ -7,6 +7,7 @@ export const PUBLIC_ROUTES = [
   "/privacy",
   "/community",
   "/cookies",
+  "/riot.txt",
 ];
 
 /** Marketing/auth pages: a logged-in user is sent straight to /feed. */
